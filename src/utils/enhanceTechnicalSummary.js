@@ -40,14 +40,15 @@ export default async function enhanceTechnicalSummary(userInput, skills) {
 Your task is to enhance a user's technical summary section for their resume.
 You will be given their current technical summary along with their skills as context.
 Generate exactly TWO enhanced versions:
-1. "atsFriendly" - Optimized for Applicant Tracking Systems. Uses relevant keywords from the skills list. Concise, 2-3 sentences. No fluff, just impactful keyword-rich content.
-2. "informative" - A detailed, human-readable summary that tells a story. 4-5 sentences. Highlights technical depth, breadth of skills, and value the candidate brings.
+1. "atsFriendly" - Optimized for Applicant Tracking Systems. Must be written as exactly 6 bullet points (each starting with "• "). Each bullet is one concise, keyword-rich sentence using relevant skills. No paragraphs, no prose.
+2. "informative" - Must be written as exactly 6 bullet points (each starting with "• "). Each bullet is a detailed sentence highlighting technical depth, breadth, and value. No paragraphs, no prose.
 
 Both versions must naturally incorporate the provided skills.
+Each version MUST have exactly 6 bullet points. No more, no less.
 Respond ONLY with a valid JSON object in this exact format (no markdown, no explanation, no code fences):
 {
-  "atsFriendly": "...",
-  "informative": "..."
+  "atsFriendly": "• point 1\n• point 2\n• point 3\n• point 4\n• point 5\n• point 6",
+  "informative": "• point 1\n• point 2\n• point 3\n• point 4\n• point 5\n• point 6"
 }`;
 
   const userPrompt = `Current Technical Summary:
@@ -73,7 +74,7 @@ Generate two enhanced versions as specified.`;
             { role: "user", content: userPrompt },
           ],
           temperature: 0.7,
-          max_tokens: 600,
+          max_tokens: 900,
         }),
       });
 
@@ -98,14 +99,26 @@ Generate two enhanced versions as specified.`;
       const raw = data?.choices?.[0]?.message?.content || "";
 
       // Strip any markdown code fences if present
-      const cleaned = raw.replace(/```json|```/g, "").trim();
+      // Strip any markdown code fences if present
+const cleaned = raw.replace(/```json|```/g, "").trim();
 
-      let parsed;
-      try {
-        parsed = JSON.parse(cleaned);
-      } catch {
-        throw new Error("Failed to parse AI response. Please try again.");
-      }
+let parsed;
+try {
+  // Fix unescaped newlines inside JSON string values before parsing
+  const sanitized = cleaned.replace(
+    /"(atsFriendly|informative)":\s*"([\s\S]*?)(?<!\\)"/g,
+    (match, key, value) => {
+      const escaped = value
+        .replace(/\n/g, "\\n")
+        .replace(/\r/g, "\\r")
+        .replace(/\t/g, "\\t");
+      return `"${key}": "${escaped}"`;
+    }
+  );
+  parsed = JSON.parse(sanitized);
+} catch {
+  throw new Error("Failed to parse AI response. Please try again.");
+}
 
       if (!parsed.atsFriendly || !parsed.informative) {
         throw new Error("Incomplete AI response. Please try again.");

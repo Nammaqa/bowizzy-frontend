@@ -65,9 +65,12 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
     useState<string>("");
   const [hiddenSaveIds, setHiddenSaveIds] = useState<Set<string>>(new Set());
 
-const [isEnhancingSummary, setIsEnhancingSummary] = useState(false);
-const [enhanceSummaryError, setEnhanceSummaryError] = useState("");
-const [enhancedSummaryVersions, setEnhancedSummaryVersions] = useState<{ atsFriendly: string; informative: string } | null>(null);
+  const [isEnhancingSummary, setIsEnhancingSummary] = useState(false);
+  const [enhanceSummaryError, setEnhanceSummaryError] = useState("");
+  const [enhancedSummaryVersions, setEnhancedSummaryVersions] = useState<{
+    atsFriendly: string;
+    informative: string;
+  } | null>(null);
 
   // Refs for tracking initial data
   const initialSkillsRef = useRef<Record<string, Skill>>({});
@@ -179,9 +182,7 @@ const [enhancedSummaryVersions, setEnhancedSummaryVersions] = useState<{ atsFrie
 
     if (
       type === "Portfolio" &&
-      value 
-      // &&
-      // !value.toLowerCase().includes("portfolio")
+      value
     )
       return "Please enter a valid Portfolio URL";
 
@@ -277,10 +278,10 @@ const [enhancedSummaryVersions, setEnhancedSummaryVersions] = useState<{ atsFrie
 
     setSkillChanges({});
     setSkillFeedback({ ["all"]: finalMessage });
-    setHiddenSaveIds(prev => new Set([...prev, "skills"]));
+    setHiddenSaveIds((prev) => new Set([...prev, "skills"]));
     setTimeout(() => {
       setSkillFeedback({});
-      setHiddenSaveIds(prev => {
+      setHiddenSaveIds((prev) => {
         const updated = new Set(prev);
         updated.delete("skills");
         return updated;
@@ -308,7 +309,8 @@ const [enhancedSummaryVersions, setEnhancedSummaryVersions] = useState<{ atsFrie
   };
 
   // Handler for saving all links
-  const cleanUrl = (url: string) => url.replace(/^https?:\/\//i, '').replace(/^www\./i, '');
+  const cleanUrl = (url: string) =>
+    url.replace(/^https?:\/\//i, "").replace(/^www\./i, "");
 
   const handleSaveAllLinks = async () => {
     if (!linkChanges) {
@@ -426,10 +428,10 @@ const [enhancedSummaryVersions, setEnhancedSummaryVersions] = useState<{ atsFrie
 
     setLinkChanges(false);
     setLinkFeedback(finalMessage);
-    setHiddenSaveIds(prev => new Set([...prev, "links"]));
+    setHiddenSaveIds((prev) => new Set([...prev, "links"]));
     setTimeout(() => {
       setLinkFeedback("");
-      setHiddenSaveIds(prev => {
+      setHiddenSaveIds((prev) => {
         const updated = new Set(prev);
         updated.delete("links");
         return updated;
@@ -489,10 +491,10 @@ const [enhancedSummaryVersions, setEnhancedSummaryVersions] = useState<{ atsFrie
       initialTechnicalSummaryRef.current = data.technicalSummary;
       setTechnicalSummaryChanges(false);
       setTechnicalSummaryFeedback("Technical summary saved successfully!");
-      setHiddenSaveIds(prev => new Set([...prev, "technicalSummary"]));
+      setHiddenSaveIds((prev) => new Set([...prev, "technicalSummary"]));
       setTimeout(() => {
         setTechnicalSummaryFeedback("");
-        setHiddenSaveIds(prev => {
+        setHiddenSaveIds((prev) => {
           const updated = new Set(prev);
           updated.delete("technicalSummary");
           return updated;
@@ -629,45 +631,56 @@ const [enhancedSummaryVersions, setEnhancedSummaryVersions] = useState<{ atsFrie
   };
 
   const getPlainText = (html: string) => {
-  if (!html) return "";
-  return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
-};
+    if (!html) return "";
+    return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
+  };
 
-const hasTechnicalSummaryInput = getPlainText(data.technicalSummary ?? "").length > 0;
+  const hasTechnicalSummaryInput =
+    getPlainText(data.technicalSummary ?? "").length > 0;
 
-const handleEnhanceTechnicalSummary = async () => {
-  if (!hasTechnicalSummaryInput) return;
-  setIsEnhancingSummary(true);
-  setEnhanceSummaryError("");
-  setEnhancedSummaryVersions(null);
-  try {
-    const skillNames = data.skills
-      .filter((s) => s.enabled && s.skillName)
-      .map((s) => s.skillName);
-    const result = await enhanceTechnicalSummary(data.technicalSummary, skillNames);
-    setEnhancedSummaryVersions(result);
-  } catch (err: any) {
-    setEnhanceSummaryError(err.message || "Failed to enhance. Please try again.");
-  } finally {
-    setIsEnhancingSummary(false);
-  }
-};
+  const handleEnhanceTechnicalSummary = async () => {
+    if (!hasTechnicalSummaryInput) return;
+    setIsEnhancingSummary(true);
+    setEnhanceSummaryError("");
+    setEnhancedSummaryVersions(null);
+    try {
+      const skillNames = data.skills
+        .filter((s) => s.enabled && s.skillName)
+        .map((s) => s.skillName);
+      const result = await enhanceTechnicalSummary(
+        data.technicalSummary,
+        skillNames
+      );
+      setEnhancedSummaryVersions(result);
+    } catch (err: any) {
+      setEnhanceSummaryError(
+        err.message || "Failed to enhance. Please try again."
+      );
+    } finally {
+      setIsEnhancingSummary(false);
+    }
+  };
 
-const handleApplySummaryVersion = (type: "atsFriendly" | "informative") => {
-  if (!enhancedSummaryVersions) return;
-  const html = `<p>${enhancedSummaryVersions[type]}</p>`;
-  onChange({ ...data, technicalSummary: html });
-  setTechnicalSummaryChanges(true);
-  setEnhancedSummaryVersions(null);
-  setEnhanceSummaryError("");
-};
+  // ✅ UPDATED: Apply version as individual bullet <div> elements
+  const handleApplySummaryVersion = (type: "atsFriendly" | "informative") => {
+    if (!enhancedSummaryVersions) return;
+    const html = enhancedSummaryVersions[type]
+      .split("\n")
+      .filter((line) => line.trim())
+      .map((line) => `<div>${line.trim()}</div>`)
+      .join("");
+    onChange({ ...data, technicalSummary: html });
+    setTechnicalSummaryChanges(true);
+    setEnhancedSummaryVersions(null);
+    setEnhanceSummaryError("");
+  };
 
-const handleDismissEnhancedSummary = () => {
-  setEnhancedSummaryVersions(null);
-  setEnhanceSummaryError("");
-};
+  const handleDismissEnhancedSummary = () => {
+    setEnhancedSummaryVersions(null);
+    setEnhanceSummaryError("");
+  };
 
-const hasSkillChanges = Object.keys(skillChanges).length > 0;
+  const hasSkillChanges = Object.keys(skillChanges).length > 0;
 
   return (
     <div className="flex flex-col gap-5">
@@ -944,17 +957,23 @@ const hasSkillChanges = Object.keys(skillChanges).length > 0;
             type="button"
             onClick={handleEnhanceTechnicalSummary}
             disabled={!hasTechnicalSummaryInput || isEnhancingSummary}
-            title={!hasTechnicalSummaryInput ? "Add some text to enable AI enhancement" : "Enhance with AI"}
+            title={
+              !hasTechnicalSummaryInput
+                ? "Add some text to enable AI enhancement"
+                : "Enhance with AI"
+            }
             className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
-              ${hasTechnicalSummaryInput && !isEnhancingSummary
-                ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-sm hover:from-violet-600 hover:to-purple-700 cursor-pointer"
-                : "bg-gray-100 text-gray-400 cursor-not-allowed"
+              ${
+                hasTechnicalSummaryInput && !isEnhancingSummary
+                  ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-sm hover:from-violet-600 hover:to-purple-700 cursor-pointer"
+                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
               }`}
           >
-            {isEnhancingSummary
-              ? <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />
-              : <Sparkles className="w-4 h-4" strokeWidth={2} />
-            }
+            {isEnhancingSummary ? (
+              <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />
+            ) : (
+              <Sparkles className="w-4 h-4" strokeWidth={2} />
+            )}
             {isEnhancingSummary ? "Enhancing..." : "Enhance with AI"}
           </button>
         </div>
@@ -978,21 +997,34 @@ const hasSkillChanges = Object.keys(skillChanges).length > 0;
           <div className="mt-3 flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
             <span className="text-red-500 text-xs mt-0.5">⚠</span>
             <p className="text-xs text-red-600 flex-1">{enhanceSummaryError}</p>
-            <button type="button" onClick={() => setEnhanceSummaryError("")} className="text-red-400 hover:text-red-600">
+            <button
+              type="button"
+              onClick={() => setEnhanceSummaryError("")}
+              className="text-red-400 hover:text-red-600"
+            >
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
         )}
 
-        {/* AI Results Panel */}
+        {/* ✅ UPDATED: AI Results Panel with bullet point rendering */}
         {enhancedSummaryVersions && (
           <div className="mt-4 border border-purple-200 rounded-xl overflow-hidden">
             <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-violet-50 to-purple-50 border-b border-purple-200">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-purple-500" strokeWidth={2} />
-                <span className="text-sm font-semibold text-purple-800">AI Enhanced Versions</span>
+                <Sparkles
+                  className="w-4 h-4 text-purple-500"
+                  strokeWidth={2}
+                />
+                <span className="text-sm font-semibold text-purple-800">
+                  AI Enhanced Versions
+                </span>
               </div>
-              <button type="button" onClick={handleDismissEnhancedSummary} className="text-purple-400 hover:text-purple-700 transition-colors">
+              <button
+                type="button"
+                onClick={handleDismissEnhancedSummary}
+                className="text-purple-400 hover:text-purple-700 transition-colors"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -1003,15 +1035,31 @@ const hasSkillChanges = Object.keys(skillChanges).length > 0;
                 <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-200">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
-                    <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">ATS Friendly</span>
-                    <span className="text-xs text-gray-400">— Keyword optimized</span>
+                    <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                      ATS Friendly
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      — Keyword optimized
+                    </span>
                   </div>
-                  <button type="button" onClick={() => handleApplySummaryVersion("atsFriendly")} className="text-xs px-3 py-1 bg-blue-500 text-white rounded-md font-medium hover:bg-blue-600 transition-colors cursor-pointer">
+                  <button
+                    type="button"
+                    onClick={() => handleApplySummaryVersion("atsFriendly")}
+                    className="text-xs px-3 py-1 bg-blue-500 text-white rounded-md font-medium hover:bg-blue-600 transition-colors cursor-pointer"
+                  >
                     Use This
                   </button>
                 </div>
-                <div className="p-3">
-                  <p className="text-sm text-gray-700 leading-relaxed">{enhancedSummaryVersions.atsFriendly}</p>
+                {/* ✅ Renders each bullet as its own line */}
+                <div className="p-3 flex flex-col gap-1">
+                  {enhancedSummaryVersions.atsFriendly
+                    .split("\n")
+                    .filter((l) => l.trim())
+                    .map((line, i) => (
+                      <p key={i} className="text-sm text-gray-700 leading-relaxed">
+                        {line}
+                      </p>
+                    ))}
                 </div>
               </div>
 
@@ -1020,26 +1068,51 @@ const hasSkillChanges = Object.keys(skillChanges).length > 0;
                 <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-200">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-                    <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Informative</span>
-                    <span className="text-xs text-gray-400">— Detailed narrative</span>
+                    <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                      Informative
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      — Detailed narrative
+                    </span>
                   </div>
-                  <button type="button" onClick={() => handleApplySummaryVersion("informative")} className="text-xs px-3 py-1 bg-emerald-500 text-white rounded-md font-medium hover:bg-emerald-600 transition-colors cursor-pointer">
+                  <button
+                    type="button"
+                    onClick={() => handleApplySummaryVersion("informative")}
+                    className="text-xs px-3 py-1 bg-emerald-500 text-white rounded-md font-medium hover:bg-emerald-600 transition-colors cursor-pointer"
+                  >
                     Use This
                   </button>
                 </div>
-                <div className="p-3">
-                  <p className="text-sm text-gray-700 leading-relaxed">{enhancedSummaryVersions.informative}</p>
+                {/* ✅ Renders each bullet as its own line */}
+                <div className="p-3 flex flex-col gap-1">
+                  {enhancedSummaryVersions.informative
+                    .split("\n")
+                    .filter((l) => l.trim())
+                    .map((line, i) => (
+                      <p key={i} className="text-sm text-gray-700 leading-relaxed">
+                        {line}
+                      </p>
+                    ))}
                 </div>
               </div>
 
-              <p className="text-xs text-gray-400 text-center">Click "Use This" to apply a version, or dismiss to keep your current text.</p>
+              <p className="text-xs text-gray-400 text-center">
+                Click "Use This" to apply a version, or dismiss to keep your
+                current text.
+              </p>
             </div>
           </div>
         )}
 
         <div className="flex items-center justify-end gap-2 mt-8 pt-4 border-t border-gray-200">
           {technicalSummaryFeedback && (
-            <span className={`text-xs px-2 py-1 rounded-full ${technicalSummaryFeedback.includes("successfully") ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+            <span
+              className={`text-xs px-2 py-1 rounded-full ${
+                technicalSummaryFeedback.includes("successfully")
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
+              }`}
+            >
               {technicalSummaryFeedback}
             </span>
           )}
@@ -1060,7 +1133,10 @@ const hasSkillChanges = Object.keys(skillChanges).length > 0;
             className="w-6 h-6 flex items-center justify-center rounded-full border-2 border-gray-600 hover:bg-gray-100 transition-colors"
             title="Reset to saved value"
           >
-            <RotateCcw className="w-3 h-3 text-gray-600 cursor-pointer" strokeWidth={2.5} />
+            <RotateCcw
+              className="w-3 h-3 text-gray-600 cursor-pointer"
+              strokeWidth={2.5}
+            />
           </button>
         </div>
       </FormSection>
