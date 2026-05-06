@@ -124,6 +124,28 @@ export default function Login() {
               <p className="text-red-500 text-sm text-center">{error}</p>
             )}
 
+            <p className="text-center text-xs text-gray-500">
+              By clicking Login, you agree to our{" "}
+              <a
+                href="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-orange-600 font-semibold hover:underline"
+              >
+                Terms and Conditions
+              </a>
+              {" "}and{" "}
+              <a
+                href="/privacy-policy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-orange-600 font-semibold hover:underline"
+              >
+                Privacy Policy
+              </a>
+              .
+            </p>
+
             <button
               type="submit"
               disabled={loading}
@@ -151,7 +173,7 @@ export default function Login() {
               Don’t have an account?{" "}
               <span
                 onClick={() => navigate("/signup")}
-                className="text-orange-500 cursor-pointer font-medium hover:underline cursor-pointer"
+                className="text-orange-500 font-medium hover:underline cursor-pointer"
               >
                 Sign Up
               </span>

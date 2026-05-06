@@ -559,7 +559,25 @@ export default function Register() {
                 onChange={(e) => setAgree(e.target.checked)}
               />
               <p className="text-sm">
-                I agree to the Terms and Privacy Policy.
+                I agree to the{" "}
+                <a
+                  href="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-orange-600 font-semibold hover:underline"
+                >
+                  Terms and Conditions
+                </a>
+                {" "}and{" "}
+                <a
+                  href="/privacy-policy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-orange-600 font-semibold hover:underline"
+                >
+                  Privacy Policy
+                </a>
+                .
               </p>
             </div>
 

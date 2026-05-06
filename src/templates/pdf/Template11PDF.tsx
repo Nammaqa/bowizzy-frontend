@@ -189,11 +189,11 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
     // If we found list items, render them as bullets
     if (items.length > 0) {
       return (
-        <View style={{ marginTop: 6 }}>
+        <View style={{ marginTop: 6, width: '100%' }}>
           {items.map((it, idx) => (
-            <View key={idx} style={{ flexDirection: 'row', marginTop: idx > 0 ? 4 : 0, alignItems: 'flex-start' }}>
-              <Text style={{ width: 10, color: '#000000', fontSize: 10 }}>•</Text>
-              <Text style={{ flex: 1, color: '#000000', fontSize: 10, lineHeight: 1.3 }}>{it}</Text>
+            <View key={idx} style={{ flexDirection: 'row', marginTop: idx > 0 ? 4 : 0, alignItems: 'flex-start', width: '100%' }}>
+              <Text style={{ width: 10, color: '#000000', fontSize: 10, flexShrink: 0 }}>•</Text>
+              <Text style={{ flex: 1, color: '#000000', fontSize: 10, lineHeight: 1.3, textAlign: 'justify' }}>{it}</Text>
             </View>
           ))}
         </View>
@@ -212,10 +212,10 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
     const lines = text.split('\n').map((l: string) => l.trim()).filter(Boolean);
 
     return (
-      <View style={{ marginTop: 6 }}>
+      <View style={{ marginTop: 6, width: '100%' }}>
         {lines.map((line: string, idx: number) => (
-          <View key={idx} style={{ marginTop: idx > 0 ? 6 : 0 }}>
-            <Text style={{ color: '#000000', fontSize: 10, lineHeight: 1.35 }}>{line}</Text>
+          <View key={idx} style={{ marginTop: idx > 0 ? 6 : 0, width: '100%' }}>
+            <Text style={{ color: '#000000', fontSize: 10, lineHeight: 1.35, textAlign: 'justify' }}>{line}</Text>
           </View>
         ))}
       </View>
@@ -322,7 +322,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
                     {w.location ? <Text style={{ fontSize: 11, color: '#000000', fontFamily: pdfFontFamilyBold, textAlign: 'right' }}>{w.location}</Text> : null}
                   </View>
                   {w.description ? (
-                    <View style={{ marginLeft: 12 }}>
+                    <View style={{ width: '100%' }}>
                       {renderBulletedParagraph(w.description, { fontSize: 11, color: '#000000' })}
                     </View>
                   ) : null}

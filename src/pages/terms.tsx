@@ -1,0 +1,390 @@
+import React from "react";
+
+export default function Terms() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <div className="bg-white rounded-lg shadow-md p-8 space-y-8">
+          
+          {/* Header */}
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">Bowizzy</h1>
+            <h2 className="text-2xl font-semibold text-gray-700">Terms and Conditions</h2>
+          </div>
+
+          {/* Introduction */}
+          <div className="space-y-4 text-gray-700 leading-relaxed">
+            <p>
+              Welcome to Bowizzy (referred to herein as the "Platform," "Company," "we," "our," or "us"). These Terms and Conditions ("Terms") constitute a legally binding agreement between you ("User," "you," or "your") and Bowizzy governing your access to and use of all AI-powered services, features, and tools made available through the Platform.
+            </p>
+            <p>
+              By creating an account, accessing, or using the Platform in any capacity — including browsing, uploading content, participating in mock interviews, or using any AI-assisted feature — you acknowledge that you have read, fully understood, and unconditionally agreed to be bound by these Terms, along with our Privacy Policy. If you do not agree with any part of these Terms, you must immediately discontinue all use of the Platform and, if applicable, delete your account.
+            </p>
+            <p>
+              These Terms apply to all users of the Platform globally, regardless of location or method of access, unless specific provisions indicate otherwise.
+            </p>
+          </div>
+
+          {/* Section 1 */}
+          <div className="space-y-4">
+            <h3 className="text-2xl font-bold text-gray-900">1. Scope of Services</h3>
+            <p className="text-gray-700 leading-relaxed">
+              Bowizzy is an AI-powered career technology platform designed to assist individuals in enhancing their professional profiles, optimizing their resumes for digital hiring systems, and preparing for employment interviews. The Platform offers a range of tools and functionalities, which may include, but are not limited to, the following:
+            </p>
+            
+            <div className="space-y-3 ml-4">
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-2">Resume Intelligence Tools</h4>
+                <ul className="list-disc list-inside space-y-1 text-gray-700">
+                  <li>AI-powered resume analysis that evaluates structure, content, and formatting for professional impact</li>
+                  <li>Applicant Tracking System (ATS) compatibility scoring and in-depth feedback reports</li>
+                  <li>Personalized resume enhancement suggestions tailored to your industry, role, and experience level</li>
+                  <li>Keyword gap analysis comparing your resume against specific job descriptions to optimize match rates</li>
+                  <li>Professionally designed, ATS-optimized resume templates with formatting guidance</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-2">Interview Preparation Features</h4>
+                <ul className="list-disc list-inside space-y-1 text-gray-700">
+                  <li>AI-powered mock interview simulations covering behavioral, technical, and role-specific questions</li>
+                  <li>Real-time or post-session AI feedback on answer quality, structure, tone, and relevance</li>
+                  <li>Video and audio interview simulations with optional facial expression and speech pattern analysis</li>
+                  <li>Custom question banks tailored to industry, seniority level, and job function</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-2">Career Optimization Tools</h4>
+                <ul className="list-disc list-inside space-y-1 text-gray-700">
+                  <li>AI-generated professional content including summaries, cover letters, and LinkedIn profile suggestions</li>
+                  <li>Job description keyword analysis to guide application targeting</li>
+                  <li>Career progression guidance and skill gap identification tools</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="bg-orange-50 border-l-4 border-orange-500 p-4 mt-6">
+              <p className="font-semibold text-gray-900 mb-2">Important Disclaimer:</p>
+              <p className="text-gray-700">
+                All services provided by the Platform are intended solely for informational, productivity, and self-improvement purposes. The Platform does not constitute professional legal, recruitment, HR, or career advisory services. Outputs generated by the Platform are AI-assisted and should be reviewed by the User before any professional or public application.
+              </p>
+            </div>
+          </div>
+
+          {/* Section 2 */}
+          <div className="space-y-4">
+            <h3 className="text-2xl font-bold text-gray-900">2. User Eligibility and Account Responsibilities</h3>
+            <p className="text-gray-700 leading-relaxed">
+              By registering for and using the Platform, you represent, warrant, and covenant to the following:
+            </p>
+            <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2">
+              <li>You are at least 18 years of age or have reached the age of majority in your jurisdiction of residence</li>
+              <li>You possess the legal authority and capacity to enter into a binding contractual agreement under applicable laws</li>
+              <li>All personal, professional, and biographical information you provide is truthful, accurate, complete, and current to the best of your knowledge</li>
+              <li>You will maintain the security and confidentiality of your account credentials and will not share access with unauthorized third parties</li>
+              <li>You will promptly notify the Platform of any unauthorized use of your account or suspected security breach</li>
+              <li>You will use the Platform solely for lawful, personal, and non-commercial career development purposes unless expressly authorized otherwise</li>
+              <li>You will not attempt to reverse engineer, extract, scrape, or replicate Platform features, algorithms, or AI models</li>
+            </ul>
+            <p className="text-gray-700 leading-relaxed mt-4">
+              The Platform reserves the right to verify user eligibility and may request additional documentation at any time. Accounts found to be in violation of eligibility requirements may be suspended or permanently terminated.
+            </p>
+          </div>
+
+          {/* Section 3 */}
+          <div className="space-y-4">
+            <h3 className="text-2xl font-bold text-gray-900">3. AI-Generated Content and Limitations</h3>
+            <p className="text-gray-700 leading-relaxed">
+              The Platform leverages state-of-the-art artificial intelligence, machine learning, and natural language processing technologies to generate content recommendations, analysis, and simulations. These systems are probabilistic in nature and operate based on pattern recognition and statistical modeling rather than deterministic rule-based logic.
+            </p>
+            <p className="text-gray-700 leading-relaxed">
+              By using the Platform, you acknowledge, understand, and expressly accept the following AI-related limitations:
+            </p>
+
+            <div className="space-y-3 ml-4">
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-2">Nature of AI Output</h4>
+                <ul className="list-disc list-inside space-y-1 text-gray-700">
+                  <li>AI-generated content is non-deterministic — identical inputs may produce different outputs across sessions or time periods</li>
+                  <li>AI systems can generate recommendations that are factually incorrect, contextually inappropriate, or professionally suboptimal</li>
+                  <li>Outputs may be incomplete, overly generic, or fail to account for niche industries, regional hiring practices, or specific employer expectations</li>
+                  <li>AI models are trained on historical data and may not accurately reflect current hiring trends, emerging job roles, or evolving ATS systems</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-2">No Guarantees Provided</h4>
+                <ul className="list-disc list-inside space-y-1 text-gray-700">
+                  <li>The Platform makes no representation or warranty that AI-generated resumes, cover letters, or suggestions will result in job interviews or employment offers</li>
+                  <li>ATS scoring provided by the Platform is an estimate based on common ATS patterns and does not guarantee compatibility with all ATS platforms used by employers</li>
+                  <li>Mock interview feedback represents general best-practice guidance and should not be considered a substitute for professional coaching or mentorship</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-2">User Responsibility</h4>
+                <ul className="list-disc list-inside space-y-1 text-gray-700">
+                  <li>You are solely responsible for reviewing, verifying, editing, and validating all AI-generated content before using it for professional or public purposes</li>
+                  <li>The Platform strongly recommends that all AI-generated documents be reviewed by a qualified human professional before submission to employers</li>
+                  <li>Submission of inaccurate, misleading, or fabricated information in AI-generated content is the sole responsibility of the User</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 4 */}
+          <div className="space-y-4">
+            <h3 className="text-2xl font-bold text-gray-900">4. Resume Template Usage Restrictions</h3>
+            <p className="text-gray-700 leading-relaxed">
+              The Platform provides professionally designed resume templates that have been developed and optimized specifically for compatibility with modern Applicant Tracking Systems (ATS). These templates incorporate layout standards, typography choices, and structural formatting that align with widely used ATS parsing algorithms.
+            </p>
+            <p className="text-gray-700 leading-relaxed">
+              By using these templates, you agree to the following conditions:
+            </p>
+            <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2">
+              <li>Templates are licensed for your personal, non-commercial career use only and may not be resold, redistributed, sublicensed, or repurposed for commercial gain</li>
+              <li>Excessive modification of template structures — including drastic changes to column layouts, header formats, font hierarchies, or section ordering — may compromise ATS compatibility, and the Platform accepts no liability for reduced performance resulting from such modifications</li>
+              <li>You must not use templates to create resumes or application materials that contain false, misleading, exaggerated, or fraudulent information</li>
+              <li>Templates may not be reproduced or made publicly available in modified or unmodified form without express written consent from the Platform</li>
+            </ul>
+            <p className="text-gray-700 leading-relaxed mt-4">
+              The Platform shall not be held responsible for ATS failures, parsing errors, or employer rejections caused by user modifications to templates that deviate materially from the original design structure.
+            </p>
+          </div>
+
+          {/* Section 5 */}
+          <div className="space-y-4">
+            <h3 className="text-2xl font-bold text-gray-900">5. Interview Feature Consent and Data Processing</h3>
+            <p className="text-gray-700 leading-relaxed">
+              Certain features of the Platform include AI-powered mock interview simulations, behavioral assessments, video interview simulations, and audio analysis capabilities. These features are entirely optional and designed to assist users in preparing for real-world job interviews in a safe and supportive environment.
+            </p>
+            <p className="text-gray-700 leading-relaxed">
+              By opting into and activating any interview-related feature, you are providing explicit, informed consent to the following:
+            </p>
+
+            <div className="space-y-3 ml-4">
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-2">Audio and Video Processing Consent</h4>
+                <ul className="list-disc list-inside space-y-1 text-gray-700">
+                  <li>The Platform may capture, store, and process your audio recordings, voice patterns, verbal responses, and spoken interview answers</li>
+                  <li>Where camera permissions are granted, the Platform may capture and analyze video recordings, facial expressions, visual engagement cues, and non-verbal behavioral data</li>
+                  <li>Such recordings may be processed by AI systems designed to evaluate speech clarity, pacing, confidence indicators, and the quality of interview responses</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-2">Sharing with Recruitment Partners</h4>
+                <ul className="list-disc list-inside space-y-1 text-gray-700">
+                  <li>By opting into recruitment-related or career matching features, you expressly consent to the sharing of your resume, profile data, interview recordings, and AI-generated assessments with third-party employers, recruiters, hiring partners, and affiliated organizations solely for employment and recruitment purposes</li>
+                  <li>You may withdraw consent for such sharing at any time by contacting the Platform at the details provided in Section 14</li>
+                  <li>Withdrawal of consent may limit your access to certain recruitment-related features</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-2">Internal Use of Recordings</h4>
+                <p className="text-gray-700">
+                  Interview recordings may be used internally for quality assurance, product testing, platform improvement, and AI model training and optimization purposes. Such internal use will be conducted under reasonable data protection safeguards and in accordance with the Privacy Policy.
+                </p>
+              </div>
+            </div>
+
+            <p className="text-gray-700 leading-relaxed mt-4">
+              All interview features require active opt-in by the User. Participation is entirely voluntary, and you retain the right to discontinue use of these features at any time without affecting your access to other Platform services, subject to applicable subscription terms.
+            </p>
+          </div>
+
+          {/* Section 6 */}
+          <div className="space-y-4">
+            <h3 className="text-2xl font-bold text-gray-900">6. Audio and Video Permissions</h3>
+            <p className="text-gray-700 leading-relaxed">
+              Certain Platform features may request access to your device's microphone, camera, and audio/video recording capabilities. These permissions are required for the functioning of specific interactive features including but not limited to interview simulations, speech analysis tools, and AI response evaluation systems.
+            </p>
+            <p className="text-gray-700 leading-relaxed">
+              By granting audio and video permissions, you authorize the Platform to:
+            </p>
+            <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2">
+              <li>Access and activate your device microphone and/or camera while the relevant Platform feature is in use</li>
+              <li>Capture, process, and temporarily store audio and video inputs for the purposes of real-time AI analysis and session feedback</li>
+              <li>Retain recordings and associated analytical data for quality assurance, product improvement, internal training, and AI model optimization purposes, subject to the retention terms outlined in the Privacy Policy</li>
+            </ul>
+            <p className="text-gray-700 leading-relaxed mt-4">
+              You may revoke microphone and camera permissions at any time through your device's operating system or browser settings. However, doing so will disable interview simulation and audio-enabled features of the Platform. The Platform does not access your camera or microphone outside of active feature sessions and will not record without your knowledge during active use.
+            </p>
+          </div>
+
+          {/* Section 7 */}
+          <div className="space-y-4">
+            <h3 className="text-2xl font-bold text-gray-900">7. Marketing, Promotional Use, and Data Licensing</h3>
+            <p className="text-gray-700 leading-relaxed">
+              By using the Platform, you acknowledge and agree that certain categories of data generated through your use of the Platform may be utilized for internal analytical, promotional, and marketing purposes. This may include:
+            </p>
+            <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2">
+              <li>Anonymized or aggregated usage data and engagement analytics used to measure Platform performance and feature effectiveness</li>
+              <li>Aggregated behavioral patterns used to improve AI models and product features without identifying individual users</li>
+              <li>Testimonials, case studies, or success stories shared voluntarily by users, which may be used for brand promotion and marketing materials with prior consent</li>
+              <li>General platform usage statistics that may be shared with investors, partners, or media to communicate Platform growth and adoption</li>
+            </ul>
+            <p className="text-gray-700 leading-relaxed mt-4">
+              Data may also be used across parent companies, subsidiary brands, and affiliated business entities for internal analytics and operational purposes. Where applicable law requires additional consent mechanisms for marketing activities, such mechanisms will be implemented in compliance with relevant regulations.
+            </p>
+            <p className="text-gray-700 leading-relaxed">
+              You may opt out of non-essential marketing communications at any time by adjusting your notification preferences in account settings or contacting the Platform directly. Opting out of marketing does not affect the Platform's ability to send transactional, account-related, or legally required communications.
+            </p>
+          </div>
+
+          {/* Section 8 */}
+          <div className="space-y-4">
+            <h3 className="text-2xl font-bold text-gray-900">8. Subscription, Payments, and Refund Policy</h3>
+            <p className="text-gray-700 leading-relaxed">
+              Access to certain features of the Platform may require the purchase of a paid subscription, one-time payment, or feature upgrade. All transactions are processed through secure third-party payment providers in accordance with applicable payment industry standards.
+            </p>
+
+            <div className="bg-red-50 border-l-4 border-red-500 p-4">
+              <h4 className="font-semibold text-gray-900 mb-2">No Refund Policy</h4>
+              <p className="text-gray-700 mb-3">
+                All purchases, subscription activations, and payments made through the Platform are final, non-refundable, and non-reversible unless expressly required by applicable consumer protection laws in your jurisdiction. The Platform does not issue refunds for any of the following:
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-gray-700 ml-2">
+                <li>Dissatisfaction with AI-generated outputs, suggestions, or resume content</li>
+                <li>Variability or inconsistency in AI-generated results across sessions</li>
+                <li>Failure to receive interview calls, employment offers, or recruiter responses following Platform use</li>
+                <li>Technical incompatibilities between user devices and Platform features</li>
+                <li>Subscription periods that were partially unused at time of cancellation</li>
+                <li>Feature limitations or changes made to the Platform following purchase</li>
+              </ul>
+            </div>
+
+            <p className="text-gray-700 leading-relaxed mt-4">
+              Where required by law, the Platform may issue refunds at its sole discretion or in accordance with mandatory legal requirements. Users who believe they qualify for a legally mandated refund should contact the Platform at the details in Section 14.
+            </p>
+          </div>
+
+          {/* Section 9 */}
+          <div className="space-y-4">
+            <h3 className="text-2xl font-bold text-gray-900">9. Intellectual Property Rights</h3>
+            <p className="text-gray-700 leading-relaxed">
+              All intellectual property comprising the Platform — including but not limited to software code, AI models, algorithms, interfaces, visual designs, branding, logos, trademarks, written content, templates, and promotional materials — is and shall remain the exclusive intellectual property of Bowizzy and is protected under applicable intellectual property laws, including copyright, trademark, and trade secret protections.
+            </p>
+
+            <div className="space-y-3 ml-4">
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-2">Platform Ownership</h4>
+                <ul className="list-disc list-inside space-y-1 text-gray-700">
+                  <li>You acknowledge that no ownership interest in the Platform's intellectual property is transferred to you through your use of the Platform</li>
+                  <li>You may not copy, reproduce, modify, distribute, republish, reverse engineer, decompile, disassemble, or create derivative works from any Platform content without prior written authorization</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-2">User Content License</h4>
+                <ul className="list-disc list-inside space-y-1 text-gray-700">
+                  <li>You retain full ownership of any personal documents, resumes, and content that you upload to the Platform</li>
+                  <li>By uploading content, you grant Bowizzy a limited, non-exclusive, worldwide, royalty-free license to access, process, store, and analyze your uploaded content solely for the purpose of delivering Platform services to you</li>
+                  <li>This license terminates when you delete your uploaded content or close your account, subject to legally mandated retention obligations</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 10 */}
+          <div className="space-y-4">
+            <h3 className="text-2xl font-bold text-gray-900">10. Limitation of Liability</h3>
+            <p className="text-gray-700 leading-relaxed">
+              To the maximum extent permitted by applicable law, Bowizzy, its directors, employees, affiliates, partners, AI service providers, and technology suppliers shall not be liable for any direct, indirect, incidental, special, consequential, punitive, or exemplary damages arising from or related to your use of or inability to use the Platform.
+            </p>
+            <p className="text-gray-700 leading-relaxed">
+              This limitation of liability applies to, but is not limited to:
+            </p>
+            <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2">
+              <li>Employment decisions, hiring outcomes, or recruiter responses influenced by or based on AI-generated Platform outputs</li>
+              <li>Lost job opportunities, career setbacks, or financial losses arising from reliance on Platform content</li>
+              <li>Inaccuracies, errors, omissions, or outdated information in AI-generated outputs</li>
+              <li>Service interruptions, technical failures, data loss, or unauthorized access events beyond the Platform's reasonable control</li>
+              <li>Third-party actions, decisions, or misuse of data shared in accordance with these Terms</li>
+            </ul>
+            <p className="text-gray-700 leading-relaxed mt-4">
+              Your sole and exclusive remedy for dissatisfaction with the Platform or its services is to discontinue use. The Platform's total liability to you for any claim shall not exceed the total amount paid by you to the Platform in the twelve (12) months preceding the claim.
+            </p>
+          </div>
+
+          {/* Section 11 */}
+          <div className="space-y-4">
+            <h3 className="text-2xl font-bold text-gray-900">11. Service Modifications and Availability</h3>
+            <p className="text-gray-700 leading-relaxed">
+              Bowizzy reserves the right to modify, enhance, restrict, suspend, or permanently discontinue any features, services, or components of the Platform at any time and at its sole discretion. This includes but is not limited to:
+            </p>
+            <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2">
+              <li>Adding, removing, or altering AI features and capabilities</li>
+              <li>Modifying subscription plans, pricing structures, or feature access tiers</li>
+              <li>Updating or retiring specific resume templates or interview question banks</li>
+              <li>Performing scheduled or emergency maintenance that may result in temporary service unavailability</li>
+            </ul>
+            <p className="text-gray-700 leading-relaxed mt-4">
+              While the Platform will make reasonable efforts to communicate significant changes in advance, it is not obligated to provide prior notice for all modifications. Continued use of the Platform after changes have been implemented constitutes your acceptance of the modified service.
+            </p>
+          </div>
+
+          {/* Section 12 */}
+          <div className="space-y-4">
+            <h3 className="text-2xl font-bold text-gray-900">12. Account Termination and Suspension</h3>
+            <p className="text-gray-700 leading-relaxed">
+              The Platform reserves the right, at its sole and absolute discretion, to suspend, restrict, or permanently terminate your access to the Platform under any of the following circumstances:
+            </p>
+            <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2">
+              <li>Violation of any provision of these Terms or the Privacy Policy</li>
+              <li>Submission of fraudulent, misleading, or illegal content through the Platform</li>
+              <li>Attempts to interfere with, disrupt, or gain unauthorized access to Platform systems, servers, or databases</li>
+              <li>Abusive, harassing, or otherwise inappropriate behavior toward Platform staff or other users</li>
+              <li>Non-payment of applicable subscription fees or chargebacks initiated without legal basis</li>
+              <li>Requests from law enforcement or regulatory authorities requiring account action</li>
+            </ul>
+            <p className="text-gray-700 leading-relaxed mt-4">
+              Upon termination, your license to use the Platform and all associated features ceases immediately. You may request retrieval of your uploaded documents within thirty (30) days of termination, after which personal content may be permanently deleted in accordance with our data retention practices.
+            </p>
+          </div>
+
+          {/* Section 13 */}
+          <div className="space-y-4">
+            <h3 className="text-2xl font-bold text-gray-900">13. Updates to These Terms</h3>
+            <p className="text-gray-700 leading-relaxed">
+              These Terms may be updated, amended, or revised periodically to reflect changes in our services, applicable laws, technological developments, or business practices. We will notify users of significant changes through one or more of the following methods:
+            </p>
+            <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2">
+              <li>Email notification to the address associated with your account</li>
+              <li>Prominent in-app notification or banner on the Platform</li>
+              <li>Update to the 'Last Updated' date at the top of this document</li>
+            </ul>
+            <p className="text-gray-700 leading-relaxed mt-4">
+              Your continued access to or use of the Platform following the effective date of any revised Terms constitutes your acknowledgment and acceptance of those revisions. If you do not agree with updated Terms, you must discontinue use of the Platform and, if desired, delete your account before the revised Terms take effect.
+            </p>
+          </div>
+
+          {/* Section 14 */}
+          <div className="space-y-4">
+            <h3 className="text-2xl font-bold text-gray-900">14. Contact Information</h3>
+            <p className="text-gray-700 leading-relaxed">
+              If you have questions, concerns, or requests relating to these Terms and Conditions, please contact us at:
+            </p>
+            <div className="bg-gray-50 p-4 rounded-lg mt-4">
+              <p className="text-gray-700">
+                <span className="font-semibold">Email:</span> support@bowizzy.com
+              </p>
+            </div>
+            <p className="text-gray-700 leading-relaxed mt-4">
+              We aim to respond to all formal inquiries within 10 business days. For urgent matters related to data privacy or account security, please indicate the urgency in your communication subject line.
+            </p>
+          </div>
+
+          {/* Footer */}
+          <div className="text-center text-gray-500 text-sm mt-12 pt-8 border-t border-gray-200">
+            <p>Last Updated: May 6, 2026</p>
+            <p className="mt-2">© 2026 Bowizzy. All rights reserved.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
