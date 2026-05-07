@@ -149,9 +149,8 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full py-3 rounded-lg text-white font-medium cursor-pointer flex items-center justify-center ${
-                loading ? "opacity-60 cursor-not-allowed" : ""
-              }`}
+              className={`w-full py-3 rounded-lg text-white font-medium cursor-pointer flex items-center justify-center ${loading ? "opacity-60 cursor-not-allowed" : ""
+                }`}
               style={{
                 background: "linear-gradient(180deg, #FF9D48 0%, #FF8251 100%)",
               }}
@@ -164,9 +163,9 @@ export default function Login() {
             </button>
 
             <div className="text-right text-sm">
-              <button type="button" className="text-orange-500 hover:underline">
+              {/* <button type="button" className="text-orange-500 hover:underline">
                 Forgot Password?
-              </button>
+              </button> */}
             </div>
 
             <p className="text-center text-sm text-gray-600 cursor-pointer">

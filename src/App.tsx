@@ -67,9 +67,9 @@ import AiResumeLanding from "./pages/AiResumeLanding";
 import AIBuilder from "./pages/(AIResumeBuilder)/AiBuilder";
 import Terms from "./pages/terms";
 import PrivacyPolicy from "./pages/privacy-policy";
-// import PortfolioLanding from "./pages/PortfolioLanding";
-// import PortfolioList from "./pages/(Portfolio)/PortfolioList";
-// import CreatePortfolio from "./pages/(Portfolio)/CreatePortfolio";
+import CreatePortfolio from "./pages/(Portfolio)/CreatePortfolio";
+import PortfolioList from "./pages/(Portfolio)/PortfolioList";
+import PortfolioLanding from "./pages/PortfolioLanding";
 
 const isAuthenticated = () => {
   const raw = localStorage.getItem("user");
@@ -105,11 +105,11 @@ const careerMap = [
     icon: <BrainCircuit color="#3B3B3B" size={16} />,
     label: "AI Resume Builder",
   },
-  // {
-  //   href: "/portfolio",
-  //   icon: <Globe color="#3B3B3B" size={16} />,
-  //   label: "Portfolio",
-  // },
+  {
+    href: "/portfolio",
+    icon: <Globe color="#3B3B3B" size={16} />,
+    label: "Portfolio",
+  },
   // {
   //   href: "/linkedin-optimization",
   //   icon: <Linkedin color="#3B3B3B" size={16} />,
@@ -590,36 +590,36 @@ function App() {
       path: "privacy-policy",
       Component: () => <PrivacyPolicy />
     },
-    // {
-    //   path: "portfolio",
-    //   Component: () => (
-    //     <ProtectedRoute>
-    //       <LayoutWrapper>
-    //         <PortfolioLanding />
-    //       </LayoutWrapper>
-    //     </ProtectedRoute>
-    //   ),
-    // },
-    // {
-    //   path: "portfolio/list",
-    //   Component: () => (
-    //     <ProtectedRoute>
-    //       <LayoutWrapper>
-    //         <PortfolioList />
-    //       </LayoutWrapper>
-    //     </ProtectedRoute>
-    //   ),
-    // },
-    // {
-    //   path: "portfolio/create",
-    //   Component: () => (
-    //     <ProtectedRoute>
-    //       <LayoutWrapper>
-    //         <CreatePortfolio />
-    //       </LayoutWrapper>
-    //     </ProtectedRoute>
-    //   ),
-    // },
+    {
+      path: "portfolio",
+      Component: () => (
+        <ProtectedRoute>
+          <LayoutWrapper>
+            <PortfolioLanding />
+          </LayoutWrapper>
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "portfolio/list",
+      Component: () => (
+        <ProtectedRoute>
+          <LayoutWrapper>
+            <PortfolioList />
+          </LayoutWrapper>
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "portfolio/create",
+      Component: () => (
+        <ProtectedRoute>
+          <LayoutWrapper>
+            <CreatePortfolio />
+          </LayoutWrapper>
+        </ProtectedRoute>
+      ),
+    },
   ]);
 
   return <RouterProvider router={router} />;
