@@ -12,15 +12,15 @@ import { getSubscriptionByUserId } from "@/services/subscriptionService";
 // Cloudinary PDF URLs for template previews (11-20)
 const CLOUDINARY_PDF_URLS: Record<number, string> = {
   11: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133626/template11_soi28o.pdf",
-  12: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133625/template12_yvmsnh.pdf",
-  13: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133625/template13_hpcur9.pdf",
-  14: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133625/template14_k2igcj.pdf",
-  15: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133625/template15_zyqhkj.pdf",
-  16: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133626/template16_xbpyzn.pdf",
-  17: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133626/template17_jdyycc.pdf",
-  18: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133627/template18_p1ueu3.pdf",
-  19: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133627/template19_zeegzv.pdf",
-  20: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133628/template20_kdsh6k.pdf",
+  12: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133625/Template12_aq6vuu.pdf",
+  13: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133625/Template13_jrls5n.pdf",
+  14: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133625/Template14_yrmajx.pdf",
+  15: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133625/Template15_bjuyrx.pdf",
+  16: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133626/Template16_jgd1p6.pdf",
+  17: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133626/Template17_gsfq7r.pdf",
+  18: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133627/Template18_kkpbfh.pdf",
+  19: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133627/Template19_orufxn.pdf",
+  20: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133628/Template20_el0es9.pdf",
 };
 
 export default function TemplateSelection() {
