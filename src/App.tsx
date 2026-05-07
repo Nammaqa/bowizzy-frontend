@@ -6,6 +6,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 import Home from "./pages/Home";
+// import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import WelcomeBonusManager from "./components/WelcomeBonusManager";
@@ -35,6 +36,7 @@ import {
   Video,
   BrainCircuit,
   Globe,
+  Settings as SettingsIcon,
 } from "lucide-react";
 
 import Dashboard from "./pages/Dashboard";
@@ -63,9 +65,11 @@ import ResumeEditor from "./pages/(ResumeBuilder)/ResumeEditor";
 import Premium from "./pages/Premium";
 import AiResumeLanding from "./pages/AiResumeLanding";
 import AIBuilder from "./pages/(AIResumeBuilder)/AiBuilder";
-// import PortfolioLanding from "./pages/PortfolioLanding";
-// import PortfolioList from "./pages/(Portfolio)/PortfolioList";
+import Terms from "./pages/terms";
+import PrivacyPolicy from "./pages/privacy-policy";
 // import CreatePortfolio from "./pages/(Portfolio)/CreatePortfolio";
+// import PortfolioList from "./pages/(Portfolio)/PortfolioList";
+// import PortfolioLanding from "./pages/PortfolioLanding";
 
 const isAuthenticated = () => {
   const raw = localStorage.getItem("user");
@@ -101,11 +105,11 @@ const careerMap = [
     icon: <BrainCircuit color="#3B3B3B" size={16} />,
     label: "AI Resume Builder",
   },
-  // {
-  //   href: "/portfolio",
-  //   icon: <Globe color="#3B3B3B" size={16} />,
-  //   label: "Portfolio",
-  // },
+  {
+    href: "/portfolio",
+    icon: <Globe color="#3B3B3B" size={16} />,
+    label: "Portfolio",
+  },
   // {
   //   href: "/linkedin-optimization",
   //   icon: <Linkedin color="#3B3B3B" size={16} />,
@@ -191,12 +195,12 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
                 >
                   <a
                     href={item.href}
-                    onClick={(e) => {
-                      if ((item as any).comingSoon) {
-                        e.preventDefault();
-                        alert("Coming Soon!");
-                      }
-                    }}
+                  // onClick={(e) => {
+                  //   if ((item as any).comingSoon) {
+                  //     e.preventDefault();
+                  //     alert("Coming Soon!");
+                  //   }
+                  // }}
                   >
                     {item.icon}
                     <span className="ml-4" style={{ fontSize: "14px" }}>
@@ -234,33 +238,45 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
         */}
 
         <SidebarFooter className="mt-auto mb-4">
-          <SidebarMenuButton
-            asChild
-            className="p-5 flex items-center border-2 border-[#FF0000]"
-          >
-            <a
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                try {
-                  localStorage.removeItem("user");
-                  localStorage.removeItem("token");
-                } catch {
-                  /* ignore */
-                }
-                window.location.href = "/login";
-                window.location.reload();
-              }}
-            >
-              <LogOut color="#FF0000" size={16} />
-              <span
-                className="ml-4"
-                style={{ fontSize: "14px", color: "#FF0000" }}
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                className="p-5 flex items-center"
               >
-                Logout
-              </span>
-            </a>
-          </SidebarMenuButton>
+                <a href="/settings">
+                  <SettingsIcon color="#3B3B3B" size={16} />
+                  <span className="ml-4" style={{ fontSize: "14px" }}>
+                    Settings
+                  </span>
+                </a>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                className="p-5 flex items-center border-2 border-[#FF0000]"
+                onClick={(e) => {
+                  e.preventDefault();
+                  try {
+                    localStorage.removeItem("user");
+                    localStorage.removeItem("token");
+                  } catch {
+                    /* ignore */
+                  }
+                  window.location.href = "/login";
+                  window.location.reload();
+                }}
+              >
+                <LogOut color="#FF0000" size={16} />
+                <span
+                  className="ml-4"
+                  style={{ fontSize: "14px", color: "#FF0000" }}
+                >
+                  Logout
+                </span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
 
@@ -555,6 +571,24 @@ function App() {
           </LayoutWrapper>
         </ProtectedRoute>
       )
+    },
+    // {
+    //   path: "settings",
+    //   Component: () => (
+    //     <ProtectedRoute>
+    //       <LayoutWrapper>
+    //         <Settings />
+    //       </LayoutWrapper>
+    //     </ProtectedRoute>
+    //   )
+    // },
+    {
+      path: "terms",
+      Component: () => <Terms />
+    },
+    {
+      path: "privacy-policy",
+      Component: () => <PrivacyPolicy />
     },
     // {
     //   path: "portfolio",
