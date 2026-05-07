@@ -620,7 +620,7 @@ export default function TemplateSelection() {
                     <div className="max-h-[80vh] overflow-auto flex items-center justify-center bg-gray-50">
                       {hasPdf && pdfUrl ? (
                         <iframe
-                          src={pdfUrl}
+                          src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
                           title={`Preview ${previewTemplate.label || previewTemplate.name}`}
                           className="w-full border-0"
                           style={{ height: "80vh" }}
