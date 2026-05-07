@@ -124,12 +124,33 @@ export default function Login() {
               <p className="text-red-500 text-sm text-center">{error}</p>
             )}
 
+            <p className="text-center text-xs text-gray-500">
+              By clicking Login, you agree to our{" "}
+              <a
+                href="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-orange-600 font-semibold hover:underline"
+              >
+                Terms and Conditions
+              </a>
+              {" "}and{" "}
+              <a
+                href="/privacy-policy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-orange-600 font-semibold hover:underline"
+              >
+                Privacy Policy
+              </a>
+              .
+            </p>
+
             <button
               type="submit"
               disabled={loading}
-              className={`w-full py-3 rounded-lg text-white font-medium cursor-pointer flex items-center justify-center ${
-                loading ? "opacity-60 cursor-not-allowed" : ""
-              }`}
+              className={`w-full py-3 rounded-lg text-white font-medium cursor-pointer flex items-center justify-center ${loading ? "opacity-60 cursor-not-allowed" : ""
+                }`}
               style={{
                 background: "linear-gradient(180deg, #FF9D48 0%, #FF8251 100%)",
               }}
@@ -142,16 +163,16 @@ export default function Login() {
             </button>
 
             <div className="text-right text-sm">
-              <button type="button" className="text-orange-500 hover:underline">
+              {/* <button type="button" className="text-orange-500 hover:underline">
                 Forgot Password?
-              </button>
+              </button> */}
             </div>
 
             <p className="text-center text-sm text-gray-600 cursor-pointer">
               Don’t have an account?{" "}
               <span
                 onClick={() => navigate("/signup")}
-                className="text-orange-500 cursor-pointer font-medium hover:underline cursor-pointer"
+                className="text-orange-500 font-medium hover:underline cursor-pointer"
               >
                 Sign Up
               </span>
