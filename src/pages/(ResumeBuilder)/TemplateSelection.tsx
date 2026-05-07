@@ -9,6 +9,32 @@ import { Lock, Crown } from "lucide-react";
 import Premium from "@/pages/Premium";
 import { getSubscriptionByUserId } from "@/services/subscriptionService";
 
+// Import preview PDFs for templates 11-20
+import template11PDF from "@/templates/preview/pdfs/template11.pdf";
+import template12PDF from "@/templates/preview/pdfs/template12.pdf";
+import template13PDF from "@/templates/preview/pdfs/template13.pdf";
+import template14PDF from "@/templates/preview/pdfs/template14.pdf";
+import template15PDF from "@/templates/preview/pdfs/template15.pdf";
+import template16PDF from "@/templates/preview/pdfs/template16.pdf";
+import template17PDF from "@/templates/preview/pdfs/template17.pdf";
+import template18PDF from "@/templates/preview/pdfs/template18.pdf";
+import template19PDF from "@/templates/preview/pdfs/template19.pdf";
+import template20PDF from "@/templates/preview/pdfs/template20.pdf";
+
+// Map template numbers to PDF imports
+const PREVIEW_PDF_MAP: Record<number, string> = {
+  11: template11PDF,
+  12: template12PDF,
+  13: template13PDF,
+  14: template14PDF,
+  15: template15PDF,
+  16: template16PDF,
+  17: template17PDF,
+  18: template18PDF,
+  19: template19PDF,
+  20: template20PDF,
+};
+
 export default function TemplateSelection() {
   const navigate = useNavigate();
   const templates = getAllTemplates();
@@ -569,8 +595,8 @@ export default function TemplateSelection() {
           {/* Preview Modal */}
           {showPreviewModal && previewTemplate && (() => {
             const templateNum = parseInt(previewTemplate.id?.replace("template", "") || "0", 10);
-            const hasPdf = templateNum >= 11 && templateNum <= 20;
-            const pdfUrl = hasPdf ? `/resume-templates/pdfs/template${templateNum}.pdf#toolbar=0&navpanes=0&scrollbar=0` : null;
+            const pdfUrl = PREVIEW_PDF_MAP[templateNum];
+            const hasPdf = !!pdfUrl;
 
             return (
               <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -604,9 +630,9 @@ export default function TemplateSelection() {
                       </button>
                     </div>
                     <div className="max-h-[80vh] overflow-auto flex items-center justify-center bg-gray-50">
-                      {hasPdf && pdfUrl ? (
+                      {hasPdf ? (
                         <iframe
-                          src={pdfUrl}
+                          src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
                           title={`Preview ${previewTemplate.label || previewTemplate.name}`}
                           className="w-full border-0"
                           style={{ height: "80vh" }}
