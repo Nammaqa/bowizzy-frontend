@@ -9,6 +9,20 @@ import { Lock, Crown } from "lucide-react";
 import Premium from "@/pages/Premium";
 import { getSubscriptionByUserId } from "@/services/subscriptionService";
 
+// Cloudinary PDF URLs for template previews (11-20)
+const CLOUDINARY_PDF_URLS: Record<number, string> = {
+  11: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133626/template11_soi28o.pdf",
+  12: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133625/template12_yvmsnh.pdf",
+  13: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133625/template13_hpcur9.pdf",
+  14: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133625/template14_k2igcj.pdf",
+  15: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133625/template15_zyqhkj.pdf",
+  16: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133626/template16_xbpyzn.pdf",
+  17: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133626/template17_jdyycc.pdf",
+  18: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133627/template18_p1ueu3.pdf",
+  19: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133627/template19_zeegzv.pdf",
+  20: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133628/template20_kdsh6k.pdf",
+};
+
 export default function TemplateSelection() {
   const navigate = useNavigate();
   const templates = getAllTemplates();
@@ -569,8 +583,8 @@ export default function TemplateSelection() {
           {/* Preview Modal */}
           {showPreviewModal && previewTemplate && (() => {
             const templateNum = parseInt(previewTemplate.id?.replace("template", "") || "0", 10);
-            const hasPdf = templateNum >= 11 && templateNum <= 20;
-            const pdfUrl = hasPdf ? `/resume-templates/pdfs/template${templateNum}.pdf` : null;
+            const pdfUrl = CLOUDINARY_PDF_URLS[templateNum];
+            const hasPdf = !!pdfUrl;
 
             return (
               <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -606,7 +620,7 @@ export default function TemplateSelection() {
                     <div className="max-h-[80vh] overflow-auto flex items-center justify-center bg-gray-50">
                       {hasPdf && pdfUrl ? (
                         <iframe
-                          src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                          src={pdfUrl}
                           title={`Preview ${previewTemplate.label || previewTemplate.name}`}
                           className="w-full border-0"
                           style={{ height: "80vh" }}
