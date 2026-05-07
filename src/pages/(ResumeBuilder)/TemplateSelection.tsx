@@ -3,11 +3,25 @@ import { useNavigate } from "react-router-dom";
 import { getAllTemplates, getTemplateById } from "@/templates/templateRegistry";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Check, Heart } from "lucide-react";
+import { Check, Heart, Eye } from "lucide-react";
 import * as subscriptionService from "@/services/subscriptionService";
 import { Lock, Crown } from "lucide-react";
 import Premium from "@/pages/Premium";
 import { getSubscriptionByUserId } from "@/services/subscriptionService";
+
+// Cloudinary PDF URLs for template previews (11-20)
+const CLOUDINARY_PDF_URLS: Record<number, string> = {
+  11: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133626/template11_soi28o.pdf",
+  12: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133625/Template12_aq6vuu.pdf",
+  13: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133625/Template13_jrls5n.pdf",
+  14: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133625/Template14_yrmajx.pdf",
+  15: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133625/Template15_bjuyrx.pdf",
+  16: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133626/Template16_jgd1p6.pdf",
+  17: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133626/Template17_gsfq7r.pdf",
+  18: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133627/Template18_kkpbfh.pdf",
+  19: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133627/Template19_orufxn.pdf",
+  20: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133628/Template20_el0es9.pdf",
+};
 
 export default function TemplateSelection() {
   const navigate = useNavigate();
@@ -25,6 +39,8 @@ export default function TemplateSelection() {
   const [savingSelection, setSavingSelection] = useState(false);
   const [ignoredFromBackend, setIgnoredFromBackend] = useState<string[]>([]);
   const [preSelectedTemplates, setPreSelectedTemplates] = useState<string[]>([]);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewTemplate, setPreviewTemplate] = useState<any>(null);
 
   const PAID_EXTRA_TEMPLATE_IDS = ["template9", "template10"];
   const EXTRA_PRICE = 100;
@@ -42,6 +58,12 @@ export default function TemplateSelection() {
     }
     if (locked) return;
     setSelectedTemplate(templateId);
+  };
+
+  const handlePreview = (template: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPreviewTemplate(template);
+    setShowPreviewModal(true);
   };
 
   const toggleSelect = (templateId: string) => {
@@ -438,6 +460,17 @@ export default function TemplateSelection() {
                       className="w-full h-[250px] md:h-[320px] lg:h-[439px] object-contain"
                     />
 
+                    {/* Preview icon — top-center, appears on hover */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/20">
+                      <button
+                        onClick={(e) => handlePreview(template, e)}
+                        className="flex items-center justify-center w-12 h-12 rounded-full bg-white text-gray-800 hover:bg-orange-500 hover:text-white transition-all shadow-lg"
+                        title="Preview template"
+                      >
+                        <Eye size={24} />
+                      </button>
+                    </div>
+
                     {/* Selection checkbox — top-left, selection mode only */}
                     { //selectionMode && (
                       // <div className="absolute top-3 left-3 z-20">
@@ -546,6 +579,65 @@ export default function TemplateSelection() {
               </div>
             </div>
           )}
+
+          {/* Preview Modal */}
+          {showPreviewModal && previewTemplate && (() => {
+            const templateNum = parseInt(previewTemplate.id?.replace("template", "") || "0", 10);
+            const pdfUrl = CLOUDINARY_PDF_URLS[templateNum];
+            const hasPdf = !!pdfUrl;
+
+            return (
+              <div className="fixed inset-0 z-50 flex items-center justify-center">
+                <div
+                  className="absolute inset-0 bg-black/60"
+                  onClick={() => setShowPreviewModal(false)}
+                />
+                <div className="relative z-10 p-4 w-full max-w-2xl">
+                  <div className="bg-white rounded-lg overflow-hidden shadow-2xl">
+                    <div className="flex items-center justify-between p-4 border-b">
+                      <h2 className="text-xl font-semibold text-gray-800">
+                        {previewTemplate.label || previewTemplate.name}
+                      </h2>
+                      <button
+                        onClick={() => setShowPreviewModal(false)}
+                        className="text-gray-500 hover:text-gray-700 transition-colors"
+                      >
+                        <svg
+                          className="w-6 h-6"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="max-h-[80vh] overflow-auto flex items-center justify-center bg-gray-50">
+                      {hasPdf && pdfUrl ? (
+                        <iframe
+                          src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                          title={`Preview ${previewTemplate.label || previewTemplate.name}`}
+                          className="w-full border-0"
+                          style={{ height: "80vh" }}
+                        />
+                      ) : (
+                        <img
+                          src={previewTemplate.thumbnail}
+                          alt={previewTemplate.name}
+                          className="w-full h-auto object-contain"
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
     </div>
