@@ -9,19 +9,34 @@ import { Lock, Crown } from "lucide-react";
 import Premium from "@/pages/Premium";
 import { getSubscriptionByUserId } from "@/services/subscriptionService";
 
-// Cloudinary PDF URLs for template previews (11-20)
-const CLOUDINARY_PDF_URLS: Record<number, string> = {
-  11: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133626/template11_soi28o.pdf",
-  12: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133625/Template12_aq6vuu.pdf",
-  13: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133625/Template13_jrls5n.pdf",
-  14: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133625/Template14_yrmajx.pdf",
-  15: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133625/Template15_bjuyrx.pdf",
-  16: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133626/Template16_jgd1p6.pdf",
-  17: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133626/Template17_gsfq7r.pdf",
-  18: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133627/Template18_kkpbfh.pdf",
-  19: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133627/Template19_orufxn.pdf",
-  20: "https://res.cloudinary.com/dvyunapik/image/upload/v1778133628/Template20_el0es9.pdf",
+// Import preview images for templates 12-20
+import template11Img from "@/templates/preview/imgs/template11.jpg";
+import template12Img from "@/templates/preview/imgs/template12.png";
+import template13Img from "@/templates/preview/imgs/template13.png";
+import template14Img from "@/templates/preview/imgs/template14.png";
+import template15Img from "@/templates/preview/imgs/template15.png";
+import template16Img from "@/templates/preview/imgs/template16.png";
+import template17Img from "@/templates/preview/imgs/template17.png";
+import template18Img from "@/templates/preview/imgs/template18.png";
+import template19Img from "@/templates/preview/imgs/template19.png";
+import template20Img from "@/templates/preview/imgs/template20.png";
+
+
+
+// Preview Images for templates 12-20
+const PREVIEW_IMAGES: Record<number, string> = {
+  11: template11Img,
+  12: template12Img,
+  13: template13Img,
+  14: template14Img,
+  15: template15Img,
+  16: template16Img,
+  17: template17Img,
+  18: template18Img,
+  19: template19Img,
+  20: template20Img,
 };
+
 
 export default function TemplateSelection() {
   const navigate = useNavigate();
@@ -583,8 +598,7 @@ export default function TemplateSelection() {
           {/* Preview Modal */}
           {showPreviewModal && previewTemplate && (() => {
             const templateNum = parseInt(previewTemplate.id?.replace("template", "") || "0", 10);
-            const pdfUrl = CLOUDINARY_PDF_URLS[templateNum];
-            const hasPdf = !!pdfUrl;
+            const pdfUrl = PREVIEW_IMAGES[templateNum];
 
             return (
               <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -617,19 +631,19 @@ export default function TemplateSelection() {
                         </svg>
                       </button>
                     </div>
-                    <div className="max-h-[80vh] overflow-auto flex items-center justify-center bg-gray-50">
-                      {hasPdf && pdfUrl ? (
+                    <div className="max-h-[80vh] overflow-auto flex flex-col items-center justify-start bg-gray-50 pb-10">
+                      {PREVIEW_IMAGES[templateNum] ? (
+                        <img
+                          src={PREVIEW_IMAGES[templateNum]}
+                          alt={previewTemplate.name}
+                          className="w-full h-auto object-contain"
+                        />
+                      ) : (
                         <iframe
                           src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
                           title={`Preview ${previewTemplate.label || previewTemplate.name}`}
                           className="w-full border-0"
                           style={{ height: "80vh" }}
-                        />
-                      ) : (
-                        <img
-                          src={previewTemplate.thumbnail}
-                          alt={previewTemplate.name}
-                          className="w-full h-auto object-contain"
                         />
                       )}
                     </div>

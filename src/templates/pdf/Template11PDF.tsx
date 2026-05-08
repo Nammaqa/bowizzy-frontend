@@ -275,20 +275,24 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
     <Document>
       <Page size="A4" style={styles.page}>
 
-        {/* Tiled Watermark Pattern — 4 cols × 7 rows */}
-        {[
-          { top: 10, left: 10 }, { top: 10, left: 155 }, { top: 10, left: 300 }, { top: 10, left: 455 },
-          { top: 105, left: 10 }, { top: 105, left: 155 }, { top: 105, left: 300 }, { top: 105, left: 455 },
-          { top: 200, left: 10 }, { top: 200, left: 155 }, { top: 200, left: 300 }, { top: 200, left: 455 },
-          { top: 295, left: 10 }, { top: 295, left: 155 }, { top: 295, left: 300 }, { top: 295, left: 455 },
-          { top: 390, left: 10 }, { top: 390, left: 155 }, { top: 390, left: 300 }, { top: 390, left: 455 },
-          { top: 485, left: 10 }, { top: 485, left: 155 }, { top: 485, left: 300 }, { top: 485, left: 455 },
-          { top: 580, left: 10 }, { top: 580, left: 155 }, { top: 580, left: 300 }, { top: 580, left: 445 },
-        ].map((pos, i) => (
-          <View key={i} style={{ position: 'absolute', top: pos.top, left: pos.left, zIndex: -1 }} fixed>
-            <Image src={logo} style={{ width: 95, opacity: 0.2 }} />
-          </View>
-        ))}
+        {/* Tiled Watermark Pattern — Diagonal Staggered */}
+        {(() => {
+          const positions = [];
+          for (let row = 0; row < 12; row++) {
+            for (let col = 0; col < 6; col++) {
+              positions.push({
+                top: row * 85 - 20,
+                left: col * 140 - 40 + (row % 2 === 0 ? 0 : 70),
+              });
+            }
+          }
+          return positions.map((pos, i) => (
+            <View key={i} style={{ position: "absolute", top: pos.top, left: pos.left, zIndex: -1 }} fixed>
+              <Image src={logo} style={{ width: 80, opacity: 0.2, transform: "rotate(-30deg)" }} />
+            </View>
+          ));
+        })()}
+
 
         {/* ── Header ── */}
         <View style={{ paddingTop: 18, paddingBottom: 6, paddingLeft: 36, paddingRight: 36 }}>
