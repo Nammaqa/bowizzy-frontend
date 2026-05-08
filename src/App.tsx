@@ -105,11 +105,11 @@ const careerMap = [
     icon: <BrainCircuit color="#3B3B3B" size={16} />,
     label: "AI Resume Builder",
   },
-  {
-    href: "/portfolio",
-    icon: <Globe color="#3B3B3B" size={16} />,
-    label: "Portfolio",
-  },
+  // {
+  //   href: "/portfolio",
+  //   icon: <Globe color="#3B3B3B" size={16} />,
+  //   label: "Portfolio",
+  // },
   // {
   //   href: "/linkedin-optimization",
   //   icon: <Linkedin color="#3B3B3B" size={16} />,
