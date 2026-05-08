@@ -137,18 +137,33 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
   console.log("edu", education.preUniversityEnabled, education.preUniversity.instituteName)
   return (
     <div className="w-[210mm] bg-white relative" style={{ minHeight: '297mm', fontFamily: fontFamily, }}>
-      {/* Faded Watermark */}
+      {/* Tiled Watermark Pattern — 4 cols × 6 rows */}
       <div style={{
         position: 'absolute',
         top: 0, left: 0, right: 0, bottom: 0,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
         zIndex: 0,
         pointerEvents: 'none',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(4, 1fr)',
+        gridTemplateRows: 'repeat(6, 1fr)',
+        gap: '0px',
+        alignItems: 'center',
+        justifyItems: 'center',
       }}>
-        <img src={logo} alt="Watermark" style={{ width: '400px', opacity: 0.2 }} />
+        {Array.from({ length: 24 }).map((_, i) => (
+          <img
+            key={i}
+            src={logo}
+            alt=""
+            style={{
+              width: '85px',
+              opacity: 0.2,
+              transform: 'rotate(-30deg)',
+              userSelect: 'none',
+            }}
+          />
+        ))}
       </div>
 
       <div style={{ position: 'relative', zIndex: 1 }}>
