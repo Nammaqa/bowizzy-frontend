@@ -146,7 +146,9 @@ export default function AIBuilder() {
           sessions.map((s) => ({
             ...s,
             id: String(s.id),
-            messages: s.messages || [],
+            messages: (s.messages || []).filter(
+  (m: ChatMessage) => !(m.role === "user" && m.content === "Hi, I need help to build my resume.")
+),
             started: s.started ?? false,
             createdAt: s.createdAt,
             infoJson: s.infoJson || null,
@@ -362,8 +364,11 @@ export default function AIBuilder() {
     setSidebarOpen(false);
     try {
       const chats = await getSessionChats(id, token);
+      const filteredChats = (chats || []).filter(
+        (m: ChatMessage) => !(m.role === "user" && m.content === "Hi, I need help to build my resume.")
+      );
       setChatSessions((prev) =>
-        prev.map((s) => s.id === id ? { ...s, messages: chats, started: chats?.length > 0 } : s)
+        prev.map((s) => s.id === id ? { ...s, messages: filteredChats, started: filteredChats?.length > 0 } : s)
       );
     } catch (err) { console.error("Failed to fetch session chats", err); }
   };
@@ -393,25 +398,13 @@ export default function AIBuilder() {
     if (!currentSessionId) return;
     try {
       await startAiSession(currentSessionId, token);
-      const openingMsg: ChatMessage = {
-        id: `msg-${Date.now()}`,
-        role: "user",
-        content: "Hi, I need help to build my resume.",
-        createdAt: new Date().toISOString(),
-      };
       setChatSessions((prev) =>
         prev.map((s) =>
           s.id === currentSessionId
-            ? {
-              ...s,
-              started: true,
-              messages: [...(Array.isArray(s.messages) ? s.messages : []), openingMsg],
-              title: "Hi, I need help to build my resume.",
-            }
+            ? { ...s, started: true, messages: [], title: "AI Resume Session" }
             : s
         )
       );
-      await createChat(currentSessionId, openingMsg.content, "user", null, token);
       setQuestionIndex((prev) => ({ ...prev, [currentSessionId]: 0 }));
       await appendBotMessage(currentSessionId, getQuestion(0, null));
     } catch (err) { console.error("Failed to start session", err); }
