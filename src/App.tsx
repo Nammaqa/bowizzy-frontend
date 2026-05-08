@@ -67,6 +67,7 @@ import AiResumeLanding from "./pages/AiResumeLanding";
 import AIBuilder from "./pages/(AIResumeBuilder)/AiBuilder";
 import Terms from "./pages/terms";
 import PrivacyPolicy from "./pages/privacy-policy";
+import Settings from "./pages/Settings";
 // import CreatePortfolio from "./pages/(Portfolio)/CreatePortfolio";
 // import PortfolioList from "./pages/(Portfolio)/PortfolioList";
 // import PortfolioLanding from "./pages/PortfolioLanding";
@@ -572,16 +573,16 @@ function App() {
         </ProtectedRoute>
       )
     },
-    // {
-    //   path: "settings",
-    //   Component: () => (
-    //     <ProtectedRoute>
-    //       <LayoutWrapper>
-    //         <Settings />
-    //       </LayoutWrapper>
-    //     </ProtectedRoute>
-    //   )
-    // },
+    {
+      path: "settings",
+      Component: () => (
+        <ProtectedRoute>
+          <LayoutWrapper>
+            <Settings />
+          </LayoutWrapper>
+        </ProtectedRoute>
+      )
+    },
     {
       path: "terms",
       Component: () => <Terms />
