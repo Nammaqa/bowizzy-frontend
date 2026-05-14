@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   createBrowserRouter,
   RouterProvider,
@@ -118,6 +118,14 @@ const careerMap = [
   // },
 ];
 
+const ALLOWED_EMAILS = [
+  "nikhilshasthri@gmail.com",
+  "keerthikumar@wizzybox.com",
+  "adarshannayak@gmail.com",
+];
+
+
+
 // All Bowizzy items hidden for now as requested.
 const bowizzy = [
   // {
@@ -139,11 +147,14 @@ const bowizzy = [
 
 function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
+  const [userEmail, setUserEmail] = useState<string>("");
 
   useEffect(() => {
-    const userData = JSON.parse(localStorage.getItem("user"));
+    const userData = JSON.parse(localStorage.getItem("user") || "{}");
     const userId = userData?.user_id;
     const token = userData?.token;
+    const email = userData?.email || "";
+    setUserEmail(email);
 
     if (userId && token) {
       getProfileProgress(userId, token)
@@ -156,6 +167,14 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
         });
     }
   }, [navigate]);
+
+  const filteredCareerMap = careerMap.filter((item) => {
+    if (item.label === "Interview Prep") {
+      return ALLOWED_EMAILS.includes(userEmail);
+    }
+    return true;
+  });
+
 
   return (
     <SidebarProvider>
@@ -188,7 +207,8 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
           <SidebarGroupLabel className="p-5">Career</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {careerMap.map((item, idx) => (
+              {filteredCareerMap.map((item, idx) => (
+
                 <SidebarMenuButton
                   asChild
                   className="p-5 flex items-center"
