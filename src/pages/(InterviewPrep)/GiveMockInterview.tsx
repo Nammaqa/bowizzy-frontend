@@ -1484,8 +1484,8 @@ const GiveMockInterview = () => {
                                         Mode
                                     </p>
                                     <div className="w-[110px] border border-[#FFE5D1] rounded-xl p-4 text-center">
-                                        <p className="text-sm font-semibold text-[#3A3A3A]">
-                                            Online
+                                        <p className="text-sm font-semibold text-[#3A3A3A] capitalize">
+                                            {bookingData.mode?.toLowerCase() || 'Online'}
                                         </p>
                                     </div>
                                 </div>
@@ -1777,7 +1777,18 @@ const GiveMockInterview = () => {
                 </div>
             )}
 
-            <div className="flex-1 max-h-screen overflow-auto bg-[#F0FF0] p-6">
+            <div className="flex-1 max-h-screen overflow-auto bg-[#F0F0F0] p-6">
+                <div className="max-w-[1400px] mx-auto mb-4">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="flex items-center gap-2 text-gray-600 hover:text-[#F26D3A] transition-colors font-medium w-fit cursor-pointer"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Back
+                    </button>
+                </div>
                 {currentScreen === 'form' && <FormScreen />}
                 {currentScreen === 'payment' && <PaymentScreen />}
                 {currentScreen === 'success' && <SuccessScreen />}

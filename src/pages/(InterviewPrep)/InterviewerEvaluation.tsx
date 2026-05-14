@@ -238,6 +238,7 @@ const InterviewerEvaluation = () => {
         final: "",
       });
       setValidationError(null);
+      navigate(-1);
     }
   };
 

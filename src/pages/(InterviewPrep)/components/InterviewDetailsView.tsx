@@ -58,6 +58,24 @@ interface Interview {
   } | null;
   candidateFeedbackProvided?: boolean;
   interviewerFeedbackProvided?: boolean;
+  interviewer_review?: {
+    interviewer_review_id?: number;
+    interviewer_id?: number;
+    interview_schedule_id?: number;
+    professionalism_conduct?: string;
+    clarity_of_questions?: string;
+    knowledge_of_role?: string;
+    engagement_during_interview?: string;
+    timeliness_organization?: string;
+    overall_experience?: string;
+    final_comments?: string;
+    professionalism_conduct_rating?: string;
+    clarity_of_questions_rating?: string;
+    knowledge_of_role_rating?: string;
+    engagement_during_interview_rating?: string;
+    timeliness_organization_rating?: string;
+    overall_experience_rating?: string;
+  } | null;
 }
 
 interface InterviewDetailsViewProps {
@@ -129,9 +147,14 @@ const InterviewDetailsView: React.FC<InterviewDetailsViewProps> = ({
       await createInterviewSchedule(userId, token, payload);
 
       setShowBookingModal(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Booking failed:", err);
-      setBookingError("Failed to book interview.");
+      const status = err?.response?.status ?? err?.status;
+      if (status === 409) {
+        setBookingError("You have already cancelled this interview. Please book another interview");
+      } else {
+        setBookingError("Failed to book interview.");
+      }
     } finally {
       setBookingLoading(false);
     }
@@ -495,7 +518,7 @@ const InterviewDetailsView: React.FC<InterviewDetailsViewProps> = ({
                   <div className="bg-[#E8E8E8] h-[1px] mb-4"></div>
                   <div className="mb-6">
                     <h3 className="text-xs font-semibold text-gray-800 uppercase tracking-wide mb-3">
-                      CANDIDATE REVIEW
+                      CANDIDATE REVIEW (Provided by you)
                     </h3>
                     <div className="space-y-4">
                       {/* Ratings */}
@@ -525,13 +548,12 @@ const InterviewDetailsView: React.FC<InterviewDetailsViewProps> = ({
                       {interview.candidate_review.final_recommendation && (
                         <div className="bg-gray-50 rounded-lg p-3">
                           <p className="text-xs font-medium text-gray-700 mb-1">Final Recommendation</p>
-                          <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${
-                            interview.candidate_review.final_recommendation === 'recommend'
-                              ? 'bg-green-100 text-green-700'
-                              : interview.candidate_review.final_recommendation === 'not_recommend'
+                          <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${interview.candidate_review.final_recommendation === 'recommend'
+                            ? 'bg-green-100 text-green-700'
+                            : interview.candidate_review.final_recommendation === 'not_recommend'
                               ? 'bg-red-100 text-red-700'
                               : 'bg-yellow-100 text-yellow-700'
-                          }`}>
+                            }`}>
                             {interview.candidate_review.final_recommendation === 'recommend' ? 'Recommended' : interview.candidate_review.final_recommendation === 'not_recommend' ? 'Not Recommended' : interview.candidate_review.final_recommendation}
                           </span>
                         </div>
@@ -542,6 +564,48 @@ const InterviewDetailsView: React.FC<InterviewDetailsViewProps> = ({
                         <div className="bg-gray-50 rounded-lg p-3">
                           <p className="text-xs font-medium text-gray-700 mb-1">Final Comments</p>
                           <p className="text-xs text-gray-600">{interview.candidate_review.final_comments}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {interview.interviewer_review && (
+                <>
+                  <div className="bg-[#E8E8E8] h-[1px] mb-4"></div>
+                  <div className="mb-6">
+                    <h3 className="text-xs font-semibold text-gray-800 uppercase tracking-wide mb-3">
+                      YOUR FEEDBACK (GIVEN BY THE CANDIDATE)
+                    </h3>
+                    <div className="space-y-4">
+                      {/* Ratings */}
+                      <div className="grid grid-cols-2 gap-3">
+                        {[
+                          { label: 'Professionalism & Conduct', rating: interview.interviewer_review.professionalism_conduct_rating, comment: interview.interviewer_review.professionalism_conduct },
+                          { label: 'Clarity of Questions', rating: interview.interviewer_review.clarity_of_questions_rating, comment: interview.interviewer_review.clarity_of_questions },
+                          { label: 'Knowledge of Role', rating: interview.interviewer_review.knowledge_of_role_rating, comment: interview.interviewer_review.knowledge_of_role },
+                          { label: 'Engagement', rating: interview.interviewer_review.engagement_during_interview_rating, comment: interview.interviewer_review.engagement_during_interview },
+                          { label: 'Timeliness & Organization', rating: interview.interviewer_review.timeliness_organization_rating, comment: interview.interviewer_review.timeliness_organization },
+                          { label: 'Overall Experience', rating: interview.interviewer_review.overall_experience_rating, comment: interview.interviewer_review.overall_experience },
+                        ].map((item, idx) => (
+                          <div key={idx} className="bg-gray-50 rounded-lg p-3">
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="text-xs font-medium text-gray-700">{item.label}</p>
+                              <span className="text-xs font-bold text-[#FF8351]">{item.rating}/5</span>
+                            </div>
+                            {item.comment && (
+                              <p className="text-xs text-gray-500">{item.comment}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Final Comments */}
+                      {interview.interviewer_review.final_comments && (
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          <p className="text-xs font-medium text-gray-700 mb-1">Final Comments</p>
+                          <p className="text-xs text-gray-600">{interview.interviewer_review.final_comments}</p>
                         </div>
                       )}
                     </div>

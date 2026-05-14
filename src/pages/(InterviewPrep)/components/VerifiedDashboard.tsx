@@ -56,6 +56,21 @@ interface Interview {
     cultural_team_fit_rating?: string;
     overall_impression_rating?: string;
   } | null;
+  interviewer_review?: {
+    professionalism_conduct?: string;
+    clarity_of_questions?: string;
+    knowledge_of_role?: string;
+    engagement_during_interview?: string;
+    timeliness_organization?: string;
+    overall_experience?: string;
+    final_comments?: string;
+    professionalism_conduct_rating?: string;
+    clarity_of_questions_rating?: string;
+    knowledge_of_role_rating?: string;
+    engagement_during_interview_rating?: string;
+    timeliness_organization_rating?: string;
+    overall_experience_rating?: string;
+  } | null;
   candidateFeedbackProvided?: boolean;
   interviewerFeedbackProvided?: boolean;
 }
@@ -93,43 +108,43 @@ function normalizeSlot(raw: Record<string, unknown>): Interview {
   const fmtDate = (v: unknown) =>
     v
       ? new Date(v as string).toLocaleDateString(undefined, {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        })
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
       : "";
 
   const fmtTime = (v: unknown) =>
     v
       ? new Date(v as string).toLocaleTimeString(undefined, {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        })
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
       : "";
 
   return {
     id: String(
       get("interview_schedule_id") ??
-        get("id") ??
-        get("_id") ??
-        get("interview_slot_id") ??
-        get("slotId") ??
-        Math.random()
+      get("id") ??
+      get("_id") ??
+      get("interview_slot_id") ??
+      get("slotId") ??
+      Math.random()
     ),
     interview_slot_id: String(
       get("interview_slot_id") ??
-        get("interviewSlotId") ??
-        get("slotId") ??
-        get("slot_id") ??
-        get("id") ??
-        ""
+      get("interviewSlotId") ??
+      get("slotId") ??
+      get("slot_id") ??
+      get("id") ??
+      ""
     ),
     interview_schedule_id: String(
       get("interview_schedule_id") ??
-        get("interviewScheduleId") ??
-        get("scheduleId") ??
-        ""
+      get("interviewScheduleId") ??
+      get("scheduleId") ??
+      ""
     ),
     job_role: (get("job_role") ?? get("title") ?? get("role")) as
       | string
@@ -171,6 +186,7 @@ function normalizeSlot(raw: Record<string, unknown>): Interview {
       | string
       | undefined,
     candidate_review: (get("candidate_review") ?? get("candidateReview") ?? null) as any,
+    interviewer_review: (get("interviewer_review") ?? get("interviewerReview") ?? null) as any,
     candidateFeedbackProvided: (get("candidateFeedbackProvided") ??
       get("candidate_feedback_provided")) as boolean | undefined,
     interviewerFeedbackProvided: (get("interviewerFeedbackProvided") ??
@@ -190,6 +206,22 @@ function normalizeSavedItem(item: Record<string, unknown>): Interview {
   };
 }
 
+function sortByStartDateAsc(interviews: Interview[]): Interview[] {
+  return [...interviews].sort((a, b) => {
+    const timeA = a.start_time_utc ? new Date(a.start_time_utc).getTime() : 0;
+    const timeB = b.start_time_utc ? new Date(b.start_time_utc).getTime() : 0;
+    return timeA - timeB;
+  });
+}
+
+function sortByStartDateDesc(interviews: Interview[]): Interview[] {
+  return [...interviews].sort((a, b) => {
+    const timeA = a.start_time_utc ? new Date(a.start_time_utc).getTime() : 0;
+    const timeB = b.start_time_utc ? new Date(b.start_time_utc).getTime() : 0;
+    return timeB - timeA;
+  });
+}
+
 function filterFuture(interviews: Interview[]): Interview[] {
   const now = Date.now();
   return interviews.filter((i) => {
@@ -201,6 +233,10 @@ function filterFuture(interviews: Interview[]): Interview[] {
 function isInterviewExpired(interview: Interview): boolean {
   if (!interview.start_time_utc) return false;
   return new Date(interview.start_time_utc).getTime() <= Date.now();
+}
+function isInterviewEnded(interview: Interview): boolean {
+  if (!interview.end_time_utc) return false;
+  return new Date(interview.end_time_utc).getTime() <= Date.now();
 }
 
 function isInterviewOlderThan12Hours(interview: Interview): boolean {
@@ -285,16 +321,17 @@ const VerifiedDashboard = ({
   const [savedError, setSavedError] = useState<string | null>(null);
 
   const [pastInterviews, setPastInterviews] = useState<Interview[]>([]);
+  const [cancelledInterviews, setCancelledInterviews] = useState<Interview[]>([]);
 
   // ── Shared array extractor ────────────────────────────────────────────────
   const extractScheduleArray = (data: unknown): unknown[] =>
     Array.isArray(data)
       ? data
       : Array.isArray((data as any).schedules)
-      ? (data as any).schedules
-      : Array.isArray((data as any).slots)
-      ? (data as any).slots
-      : [];
+        ? (data as any).schedules
+        : Array.isArray((data as any).slots)
+          ? (data as any).slots
+          : [];
 
   // ── Load scheduled + past ─────────────────────────────────────────────────
   const loadScheduled = async () => {
@@ -304,8 +341,9 @@ const VerifiedDashboard = ({
       const { token, userId } = getAuth();
       const path = `/users/${userId || 2}/mock-interview/interview-schedule`;
       const all = await fetchListAll(path, token, extractScheduleArray);
-      setScheduledInterviews(filterFuture(all));
-      setPastInterviews(extractPastInterviews(all));
+      setScheduledInterviews(sortByStartDateAsc(filterFuture(all).filter(i => i.interview_status !== "cancelled")));
+      setPastInterviews(sortByStartDateDesc(extractPastInterviews(all)));
+      setCancelledInterviews(sortByStartDateAsc(all.filter(i => i.interview_status === "cancelled")));
     } catch (err) {
       setScheduledError(
         (err as Error)?.message ?? "Failed to load scheduled interviews"
@@ -330,8 +368,8 @@ const VerifiedDashboard = ({
             Array.isArray(data)
               ? data
               : Array.isArray((data as any).slots)
-              ? (data as any).slots
-              : []
+                ? (data as any).slots
+                : []
         );
         const filtered = filterAvailableByAge(interviews).filter((i) => {
           if (isInterviewExpired(i)) return false;
@@ -343,7 +381,7 @@ const VerifiedDashboard = ({
             return false;
           return true;
         });
-        if (mounted) setAvailableInterviews(filtered);
+        if (mounted) setAvailableInterviews(sortByStartDateAsc(filtered));
       } catch (err) {
         if (mounted)
           setAvailableError(
@@ -373,8 +411,8 @@ const VerifiedDashboard = ({
       const items: unknown[] = Array.isArray(data)
         ? data
         : Array.isArray(data?.saved_interview_slots)
-        ? data.saved_interview_slots
-        : [];
+          ? data.saved_interview_slots
+          : [];
       setSavedInterviews(
         filterFuture(
           items.map((i) =>
@@ -467,7 +505,7 @@ const VerifiedDashboard = ({
           (s) =>
             !(
               s.interview_slot_id ===
-                (interview.interview_slot_id ?? interview.id) ||
+              (interview.interview_slot_id ?? interview.id) ||
               s.id === interview.id
             )
         )
@@ -558,7 +596,7 @@ const VerifiedDashboard = ({
           onBack={handleBack}
           savedInterviews={savedInterviews}
           showAllSaved={true}
-          onToggleSaved={() => {}}
+          onToggleSaved={() => { }}
           onViewDetails={handleViewDetails}
           onBook={handleBookInterview}
           onToggleSaveInterview={handleToggleSaveInterview}
@@ -647,17 +685,20 @@ const VerifiedDashboard = ({
               >
                 {scheduledInterviews.map((interview, i) => {
                   const { userId, token } = getAuth();
+                  const expired = isInterviewExpired(interview);
                   return (
                     <InterviewCard
                       key={interview.id ?? i}
                       interview={interview}
                       isScheduled
+                      isPast={expired}
                       userId={userId}
                       token={token}
                       onViewDetails={() =>
                         handleViewDetails(interview, "scheduled")
                       }
-                      onCancelSuccess={handleCancelInterviewSuccess}
+                      onCancelSuccess={expired ? undefined : handleCancelInterviewSuccess}
+                      onGiveFeedback={undefined}
                     />
                   );
                 })}
@@ -737,6 +778,7 @@ const VerifiedDashboard = ({
                   })
                   .map((interview, i) => {
                     const { userId, token } = getAuth();
+                    const expired = isInterviewEnded(interview);
                     return (
                       <InterviewCard
                         key={interview.id ?? i}
@@ -748,13 +790,44 @@ const VerifiedDashboard = ({
                         onViewDetails={() =>
                           handleViewDetails(interview, "scheduled")
                         }
-                        onGiveFeedback={() => handleGiveFeedback(interview)}
+                        onGiveFeedback={expired ? () => handleGiveFeedback(interview) : undefined}
                       />
                     );
                   })}
               </SectionBody>
             </div>
           </div>
+          {/* Cancelled Interviews */}
+          {cancelledInterviews.length > 0 && (
+            <div className="bg-white rounded-lg shadow-sm">
+              <div className="p-5 border-b border-gray-200">
+                <h2 className="text-lg font-medium text-gray-500">
+                  Cancelled Interview(s)
+                  <span className="ml-2 text-sm text-gray-400 font-normal">
+                    ({cancelledInterviews.length})
+                  </span>
+                </h2>
+              </div>
+              <div className="p-5 space-y-4">
+                {cancelledInterviews.map((interview, i) => {
+                  const { userId, token } = getAuth();
+                  return (
+                    <InterviewCard
+                      key={interview.id ?? i}
+                      interview={interview}
+                      isScheduled
+                      isPast
+                      userId={userId}
+                      token={token}
+                      onViewDetails={() =>
+                        handleViewDetails(interview, "scheduled")
+                      }
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Sidebar */}

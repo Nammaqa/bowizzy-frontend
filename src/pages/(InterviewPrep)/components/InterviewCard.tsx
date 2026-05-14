@@ -176,7 +176,7 @@ const InterviewCard = ({ interview, isScheduled, isExpired = false, isPast = fal
                 >
                   View Details
                 </button>
-                {!interview.candidateFeedbackProvided && (
+                {!interview.candidateFeedbackProvided && onGiveFeedback && (
                   <button
                     onClick={onGiveFeedback}
                     className="px-4 py-1.5 text-sm font-medium text-white bg-[#FF8351] rounded hover:bg-[#E67A45] transition-colors"
