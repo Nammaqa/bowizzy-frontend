@@ -319,12 +319,8 @@ export const ResumeEditor: React.FC = () => {
   const templateImportDoneRef = useRef(false);
 
   // Determines whether fetchAllData is allowed to run.
-  // Starts as false when a template import is expected, flipped to true once import finishes.
-  const [importReady, setImportReady] = useState<boolean>(() => {
-    const rtId = new URLSearchParams(window.location.search).get("resumeTemplateId");
-    if (rtId && !sessionStorage.getItem(`imported_template_${rtId}`)) return false;
-    return true;
-  });
+  // Starts as false when an external template import is expected, flipped to true once import finishes.
+  const [importReady, setImportReady] = useState<boolean>(true);
 
   const location = useLocation();
 
@@ -414,64 +410,7 @@ export const ResumeEditor: React.FC = () => {
     if (imported) applyImported(imported);
   }, [location]);
 
-  // If navigated here from 'Edit' with a resumeTemplate in state, or with resumeTemplateId in query, auto-import and apply it
-  useEffect(() => {
-    const resumeTemplate = (location && (location as any).state && (location as any).state.resumeTemplate) || null;
-    const resumeTemplateId = searchParams.get("resumeTemplateId");
-    const importKey = resumeTemplateId ? `imported_template_${resumeTemplateId}` : null;
-    if (templateImportDoneRef.current) return;
-    if (importKey && sessionStorage.getItem(importKey)) return;
 
-    const doImport = async (tmpl: any) => {
-      if (!tmpl || !tmpl.pdfUrl) return;
-      if (!userId || !token) return;
-      try {
-        setLoading(true);
-        const resp = await fetch(tmpl.pdfUrl);
-        if (!resp.ok) throw new Error("Failed to download template PDF");
-        const blob = await resp.blob();
-        const file = new File([blob], `${tmpl.name || 'imported'}.pdf`, { type: 'application/pdf' });
-        const uploadRes = await uploadResume(userId, file, token);
-        if (uploadRes && (uploadRes.status === 200 || uploadRes.status === 201)) {
-          const imported = uploadRes.data;
-          applyImported(imported);
-        }
-        // Signal that import is done so fetchAllData can run via its useEffect
-        setImportReady(true);
-      } catch (err) {
-        console.error("Failed to import template for editing:", err);
-        setImportReady(true); // allow fetchAllData even on error
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (resumeTemplate && resumeTemplate.pdfUrl && userId && token) {
-      templateImportDoneRef.current = true;
-      setImportReady(false);
-      doImport(resumeTemplate);
-    } else if (resumeTemplateId && userId && token) {
-      templateImportDoneRef.current = true;
-      if (importKey) sessionStorage.setItem(importKey, "true");
-      (async () => {
-        try {
-          setLoading(true);
-          const userStr = localStorage.getItem("user");
-          if (!userStr) return;
-          const user = JSON.parse(userStr);
-          const res = await getResumeTemplateById(user.user_id, user.token, resumeTemplateId);
-          const tmpl = res?.data || null;
-          if (tmpl && tmpl.template_file_url) {
-            await doImport({ pdfUrl: tmpl.template_file_url, name: tmpl.template_name });
-          }
-        } catch (err) {
-          console.error("Failed to fetch template for import:", err);
-        } finally {
-          setLoading(false);
-        }
-      })();
-    }
-  }, [location, searchParams, userId, token]);
 
   // User and token check
   useEffect(() => {
@@ -702,15 +641,7 @@ export const ResumeEditor: React.FC = () => {
     }
   };
 
-  const handleSaveAndExit = async () => {
-    try {
-      if (resumeData && userId && token) {
-        await uploadResume(userId, new Blob([JSON.stringify(resumeData)]), token);
-      }
-    } catch (error) {
-      console.error("Error saving resume:", error);
-    }
-  };
+
 
   const updatePersonalData = (data: typeof resumeData.personal) => {
     setResumeData({ ...resumeData, personal: data });
@@ -1095,7 +1026,6 @@ export const ResumeEditor: React.FC = () => {
         autoGeneratePreview={true}
         autoShowPdfPreview={true}
         onPreviewComplete={() => setPreviewLoading(false)}
-        onSaveAndExit={handleSaveAndExit}
         primaryColor={primaryColor}
         fontFamily={fontFamily}
       />

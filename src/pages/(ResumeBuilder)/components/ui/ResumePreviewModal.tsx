@@ -809,8 +809,6 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
         onPaymentSuccess={() => {
           setResumeUnlocked(true);
           setShowPayMsg(false);
-          window.location.reload();
-
 
         }}
         templateId={templateId}
