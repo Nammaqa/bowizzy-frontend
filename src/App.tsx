@@ -4,6 +4,7 @@ import {
   RouterProvider,
   Navigate,
   useNavigate,
+  useLocation,
 } from "react-router-dom";
 import Home from "./pages/Home";
 import Settings from "./pages/Settings";
@@ -70,6 +71,8 @@ import PrivacyPolicy from "./pages/privacy-policy";
 import CreatePortfolio from "./pages/(Portfolio)/CreatePortfolio";
 import PortfolioList from "./pages/(Portfolio)/PortfolioList";
 import PortfolioLanding from "./pages/PortfolioLanding";
+import PortfolioEditor from "./pages/(Portfolio)/PortfolioEditor";
+
 
 const isAuthenticated = () => {
   const raw = localStorage.getItem("user");
@@ -156,129 +159,134 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
     }
   }, [navigate]);
 
+  const location = useLocation();
+  const isPortfolioEditor = location.pathname.includes("/portfolio/editor/");
+
   return (
     <SidebarProvider>
       <WelcomeBonusManager />
-      <Sidebar className="overflow-y-auto z-50">
-        <SidebarHeader>
-          <div className="flex items-center justify-center p-6">
-            <img src={Bowizzy} alt="Bowizzard Logo" />
-          </div>
-        </SidebarHeader>
+      {!isPortfolioEditor && (
+        <Sidebar className="overflow-y-auto z-50">
+          <SidebarHeader>
+            <div className="flex items-center justify-center p-6">
+              <img src={Bowizzy} alt="Bowizzard Logo" />
+            </div>
+          </SidebarHeader>
 
-        <SidebarGroup>
-          <SidebarGroupContent>
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem key={"Dashboard"}>
+                  <SidebarMenuButton asChild className="p-5 flex items-center">
+                    <a href={"/dashboard"}>
+                      <LayoutDashboard color="#3B3B3B" size={16} />
+                      <span className="ml-4" style={{ fontSize: "14px" }}>
+                        Dashboard
+                      </span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          <SidebarGroup>
+            <SidebarGroupLabel className="p-5">Career</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {careerMap.map((item, idx) => (
+                  <SidebarMenuButton
+                    asChild
+                    className="p-5 flex items-center"
+                    key={item.label + idx}
+                  >
+                    <a
+                      href={item.href}
+                    // onClick={(e) => {
+                    //   if ((item as any).comingSoon) {
+                    //     e.preventDefault();
+                    //     alert("Coming Soon!");
+                    //   }
+                    // }}
+                    >
+                      {item.icon}
+                      <span className="ml-4" style={{ fontSize: "14px" }}>
+                        {item.label}
+                      </span>
+                    </a>
+                  </SidebarMenuButton>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          {/*
+          <SidebarGroup>
+            <SidebarGroupLabel className="p-5">Bowizzy</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {bowizzy.map((item, idx) => (
+                  <SidebarMenuButton
+                    asChild
+                    className="p-5 flex items-center"
+                    key={item.label + idx}
+                  >
+                    <a href={item.href}>
+                      {item.icon}
+                      <span className="ml-4" style={{ fontSize: "14px" }}>
+                        {item.label}
+                      </span>
+                    </a>
+                  </SidebarMenuButton>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+          */}
+
+          <SidebarFooter className="mt-auto mb-4">
             <SidebarMenu>
-              <SidebarMenuItem key={"Dashboard"}>
-                <SidebarMenuButton asChild className="p-5 flex items-center">
-                  <a href={"/dashboard"}>
-                    <LayoutDashboard color="#3B3B3B" size={16} />
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  className="p-5 flex items-center"
+                >
+                  <a href="/settings">
+                    <SettingsIcon color="#3B3B3B" size={16} />
                     <span className="ml-4" style={{ fontSize: "14px" }}>
-                      Dashboard
+                      Settings
                     </span>
                   </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel className="p-5">Career</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {careerMap.map((item, idx) => (
+              <SidebarMenuItem>
                 <SidebarMenuButton
-                  asChild
-                  className="p-5 flex items-center"
-                  key={item.label + idx}
+                  className="p-5 flex items-center border-2 border-[#FF0000]"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    try {
+                      localStorage.removeItem("user");
+                      localStorage.removeItem("token");
+                    } catch {
+                      /* ignore */
+                    }
+                    window.location.href = "/login";
+                    window.location.reload();
+                  }}
                 >
-                  <a
-                    href={item.href}
-                  // onClick={(e) => {
-                  //   if ((item as any).comingSoon) {
-                  //     e.preventDefault();
-                  //     alert("Coming Soon!");
-                  //   }
-                  // }}
+                  <LogOut color="#FF0000" size={16} />
+                  <span
+                    className="ml-4"
+                    style={{ fontSize: "14px", color: "#FF0000" }}
                   >
-                    {item.icon}
-                    <span className="ml-4" style={{ fontSize: "14px" }}>
-                      {item.label}
-                    </span>
-                  </a>
-                </SidebarMenuButton>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/*
-        <SidebarGroup>
-          <SidebarGroupLabel className="p-5">Bowizzy</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {bowizzy.map((item, idx) => (
-                <SidebarMenuButton
-                  asChild
-                  className="p-5 flex items-center"
-                  key={item.label + idx}
-                >
-                  <a href={item.href}>
-                    {item.icon}
-                    <span className="ml-4" style={{ fontSize: "14px" }}>
-                      {item.label}
-                    </span>
-                  </a>
-                </SidebarMenuButton>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        */}
-
-        <SidebarFooter className="mt-auto mb-4">
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                className="p-5 flex items-center"
-              >
-                <a href="/settings">
-                  <SettingsIcon color="#3B3B3B" size={16} />
-                  <span className="ml-4" style={{ fontSize: "14px" }}>
-                    Settings
+                    Logout
                   </span>
-                </a>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                className="p-5 flex items-center border-2 border-[#FF0000]"
-                onClick={(e) => {
-                  e.preventDefault();
-                  try {
-                    localStorage.removeItem("user");
-                    localStorage.removeItem("token");
-                  } catch {
-                    /* ignore */
-                  }
-                  window.location.href = "/login";
-                  window.location.reload();
-                }}
-              >
-                <LogOut color="#FF0000" size={16} />
-                <span
-                  className="ml-4"
-                  style={{ fontSize: "14px", color: "#FF0000" }}
-                >
-                  Logout
-                </span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
-      </Sidebar>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarFooter>
+        </Sidebar>
+      )}
 
       <main className="bg-[#F0F0F0] min-h-screen flex-1">{children}</main>
     </SidebarProvider>
@@ -616,6 +624,16 @@ function App() {
         <ProtectedRoute>
           <LayoutWrapper>
             <CreatePortfolio />
+          </LayoutWrapper>
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "portfolio/editor/:id",
+      Component: () => (
+        <ProtectedRoute>
+          <LayoutWrapper>
+            <PortfolioEditor />
           </LayoutWrapper>
         </ProtectedRoute>
       ),
