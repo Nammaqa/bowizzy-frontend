@@ -383,7 +383,7 @@ const GiveMockInterview = () => {
 
         try {
             // const data = await getAndProcess('/admin/pricing', token);
-            setPlanAmount(import.meta.env.VITE_RESUME_AMOUNT ? Number(import.meta.env.VITE_RESUME_AMOUNT) : 19);
+            setPlanAmount(import.meta.env.VITE_INTERVIEW_AMOUNT ? Number(import.meta.env.VITE_RESUME_AMOUNT) : 1);
             // if (Array.isArray(data)) {
             //     const found = data.find(item => String(item?.bowizzy_plan_type || '').toLowerCase() === 'interview');
             //     const amt = tryExtractAmount(found);
