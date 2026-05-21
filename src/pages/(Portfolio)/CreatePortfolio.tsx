@@ -286,11 +286,7 @@ export default function CreatePortfolio() {
           <h1 className="text-2xl font-extrabold text-gray-900">
             Create Your Portfolio
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Pay{" "}
-            <strong className="text-gray-700">₹{BASE_PRICE_INR}</strong> via
-            Razorpay — optionally apply credits to reduce your payment.
-          </p>
+
         </div>
 
         <form onSubmit={handleSubmit} noValidate>
@@ -686,7 +682,7 @@ export default function CreatePortfolio() {
             )}
 
             <div className="border-t border-violet-100 mt-2.5 pt-2.5 flex items-center justify-between">
-              <span className="text-sm font-bold text-gray-800">Total (via Razorpay)</span>
+              <span className="text-sm font-bold text-gray-800">Total</span>
               <span className="text-lg font-extrabold text-violet-700">
                 ₹{finalPriceINR.toFixed(2)}
               </span>

@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { uploadPdfToCloudinary } from "@/utils/uploadPdfToCloudinary";
+import { uploadToCloudinary } from "@/utils/uploadToCloudinary";
 import {
   ArrowLeft,
   Save,
@@ -17,6 +19,7 @@ import {
   Layers,
   Wand2,
   X,
+  Mail,
 } from "lucide-react";
 import RichTextEditor from "./RichTextEditor";
 
@@ -49,6 +52,12 @@ export interface PortfolioEditorComponentProps {
   setTwitterUrl: (val: string) => void;
   customUrl: string;
   setCustomUrl: (val: string) => void;
+  cvUrl: string;
+  setCvUrl: (val: string) => void;
+  profileImageUrl: string;
+  setProfileImageUrl: (val: string) => void;
+  email: string;
+  setEmail: (val: string) => void;
 
   projects: Project[];
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
@@ -62,6 +71,9 @@ export interface PortfolioEditorComponentProps {
   success: boolean;
   error: string | null;
   onBack: () => void;
+  onImportFromProfile?: () => void;
+  importing?: boolean;
+  importSuccess?: boolean;
 }
 
 export default function PortfolioEditorComponent({
@@ -79,6 +91,12 @@ export default function PortfolioEditorComponent({
   setTwitterUrl,
   customUrl,
   setCustomUrl,
+  cvUrl,
+  setCvUrl,
+  profileImageUrl,
+  setProfileImageUrl,
+  email,
+  setEmail,
   projects,
   setProjects,
   experiences,
@@ -90,6 +108,9 @@ export default function PortfolioEditorComponent({
   success,
   error,
   onBack,
+  onImportFromProfile,
+  importing = false,
+  importSuccess = false,
 }: PortfolioEditorComponentProps) {
   const [newSkill, setNewSkill] = useState("");
 
@@ -153,11 +174,31 @@ export default function PortfolioEditorComponent({
         </button>
 
         <div className="flex items-center gap-2">
+          {importSuccess && (
+            <span className="inline-flex items-center gap-1 text-xs text-violet-600 bg-violet-50 px-3 py-1.5 rounded-lg font-semibold animate-fade-in border border-violet-100">
+              <CheckCircle2 className="w-3.5 h-3.5 animate-bounce" />
+              Imported Profile Data!
+            </span>
+          )}
           {success && (
             <span className="inline-flex items-center gap-1 text-xs text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg font-semibold animate-fade-in border border-emerald-100">
               <CheckCircle2 className="w-3.5 h-3.5" />
               Saved Successfully!
             </span>
+          )}
+          {onImportFromProfile && (
+            <button
+              onClick={onImportFromProfile}
+              disabled={importing}
+              className="inline-flex items-center gap-1.5 px-4.5 py-2.5 rounded-xl border border-violet-200 bg-white hover:bg-violet-50 text-violet-600 font-bold text-xs transition shadow-sm hover:shadow cursor-pointer disabled:opacity-50"
+            >
+              {importing ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-600" />
+              ) : (
+                <Sparkles className="w-3.5 h-3.5 text-violet-500" />
+              )}
+              Import from Profile
+            </button>
           )}
           <button
             onClick={onSave}
@@ -238,7 +279,75 @@ export default function PortfolioEditorComponent({
           <Sparkles className="w-4 h-4 text-violet-500" />
           Contact & Profiles
         </h2>
+
+        {/* Profile Image Upload */}
+        <div>
+          <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">
+            Upload Profile Image
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                try {
+                  const result = await uploadToCloudinary(file);
+                  setProfileImageUrl(result.url);
+                } catch (err) {
+                  console.error('Profile image upload failed', err);
+                }
+              }
+            }}
+            className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+          />
+          {profileImageUrl && (
+            <div className="mt-2 flex items-center gap-2">
+              <img src={profileImageUrl} alt="Profile" className="w-10 h-10 rounded-full object-cover border border-gray-200" />
+              <p className="text-xs text-gray-600">Uploaded Profile Image</p>
+            </div>
+          )}
+        </div>
+
+        {/* CV Upload */}
+        <div>
+          <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">
+            Upload CV (PDF)
+          </label>
+          <input
+            type="file"
+            accept="application/pdf"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                try {
+                  const result = await uploadPdfToCloudinary(file);
+                  setCvUrl(result.url);
+                } catch (err) {
+                  console.error('CV upload failed', err);
+                }
+              }
+            }}
+            className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+          />
+          {cvUrl && (
+            <p className="mt-2 text-xs text-gray-600">Uploaded CV: <a href={cvUrl} target="_blank" rel="noopener noreferrer" className="underline text-violet-600 font-medium">View CV</a></p>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-[10px] font-bold text-gray-400 flex items-center gap-1.5 mb-1.5 uppercase tracking-wider">
+              <Mail className="w-3.5 h-3.5 text-rose-500" /> Email Address
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="hello@example.com"
+              className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-500 bg-white"
+            />
+          </div>
           <div>
             <label className="text-[10px] font-bold text-gray-400 flex items-center gap-1.5 mb-1.5 uppercase tracking-wider">
               <Github className="w-3.5 h-3.5 text-gray-600" /> GitHub URL
@@ -247,6 +356,11 @@ export default function PortfolioEditorComponent({
               type="url"
               value={githubUrl}
               onChange={(e) => setGithubUrl(e.target.value)}
+              onBlur={() => {
+                if (githubUrl.trim() && !/^https?:\/\//i.test(githubUrl.trim())) {
+                  setGithubUrl(`https://${githubUrl.trim()}`);
+                }
+              }}
               placeholder="https://github.com/..."
               className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-500 bg-white"
             />
@@ -259,6 +373,11 @@ export default function PortfolioEditorComponent({
               type="url"
               value={linkedinUrl}
               onChange={(e) => setLinkedinUrl(e.target.value)}
+              onBlur={() => {
+                if (linkedinUrl.trim() && !/^https?:\/\//i.test(linkedinUrl.trim())) {
+                  setLinkedinUrl(`https://${linkedinUrl.trim()}`);
+                }
+              }}
               placeholder="https://linkedin.com/in/..."
               className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-500 bg-white"
             />
@@ -271,6 +390,11 @@ export default function PortfolioEditorComponent({
               type="url"
               value={twitterUrl}
               onChange={(e) => setTwitterUrl(e.target.value)}
+              onBlur={() => {
+                if (twitterUrl.trim() && !/^https?:\/\//i.test(twitterUrl.trim())) {
+                  setTwitterUrl(`https://${twitterUrl.trim()}`);
+                }
+              }}
               placeholder="https://twitter.com/..."
               className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-500 bg-white"
             />
@@ -283,6 +407,11 @@ export default function PortfolioEditorComponent({
               type="url"
               value={customUrl}
               onChange={(e) => setCustomUrl(e.target.value)}
+              onBlur={() => {
+                if (customUrl.trim() && !/^https?:\/\//i.test(customUrl.trim())) {
+                  setCustomUrl(`https://${customUrl.trim()}`);
+                }
+              }}
               placeholder="https://mywebsite.com"
               className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-500 bg-white"
             />

@@ -25,7 +25,16 @@ export default function PortfolioPreviewComponent({
 
 
         {/* Scrollable Mock Browser Viewport */}
-        <div className="flex-1 overflow-y-auto bg-slate-950">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-950 hide-scrollbar">
+          <style>{`
+            .hide-scrollbar::-webkit-scrollbar {
+              display: none;
+            }
+            .hide-scrollbar {
+              -ms-overflow-style: none;
+              scrollbar-width: none;
+            }
+          `}</style>
           {portfolioType === "developer" ? (
             <DeveloperTemplate data={data} />
           ) : (

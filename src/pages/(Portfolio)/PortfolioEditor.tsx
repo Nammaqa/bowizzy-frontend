@@ -32,6 +32,9 @@ export default function PortfolioEditor() {
   const [linkedinUrl, setLinkedinUrl] = useState("");
   const [twitterUrl, setTwitterUrl] = useState("");
   const [customUrl, setCustomUrl] = useState("");
+  const [cvUrl, setCvUrl] = useState("");
+  const [profileImageUrl, setProfileImageUrl] = useState("");
+  const [email, setEmail] = useState("");
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [experiences, setExperiences] = useState<Experience[]>([]);
@@ -42,6 +45,37 @@ export default function PortfolioEditor() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importSuccess, setImportSuccess] = useState(false);
+
+  // Resizable split state
+  const [leftWidth, setLeftWidth] = useState(50);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Drag logic for slider
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      // Calculate width as percentage
+      const newWidth = (e.clientX / window.innerWidth) * 100;
+      // Clamp between 25% and 75%
+      if (newWidth >= 25 && newWidth <= 75) {
+        setLeftWidth(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging]);
 
   // Fetch portfolio data
   useEffect(() => {
@@ -68,17 +102,30 @@ export default function PortfolioEditor() {
           setPortfolioDescription(found.description || "");
           setPortfolioType(found.portfolio_type || "developer");
 
-          // Load custom configuration if present, otherwise set default structure
-          if (found.config) {
+          // Load custom configuration or portfolio_json if present, otherwise set default structure
+          const configSource = found.portfolio_json || found.config;
+          if (configSource) {
             try {
-              const cfg = typeof found.config === "string" ? JSON.parse(found.config) : found.config;
-              setGithubUrl(cfg.github || "");
-              setLinkedinUrl(cfg.linkedin || "");
-              setTwitterUrl(cfg.twitter || "");
-              setCustomUrl(cfg.customUrl || "");
-              setProjects(Array.isArray(cfg.projects) ? cfg.projects : []);
-              setExperiences(Array.isArray(cfg.experiences) ? cfg.experiences : []);
-              setSkills(Array.isArray(cfg.skills) ? cfg.skills : []);
+              let cfg = typeof configSource === "string" ? JSON.parse(configSource) : configSource;
+              if (typeof cfg === "string") {
+                cfg = JSON.parse(cfg);
+              }
+              if (cfg) {
+                if (cfg.name) setPortfolioName(cfg.name);
+                if (cfg.description) setPortfolioDescription(cfg.description);
+                if (cfg.portfolio_type) setPortfolioType(cfg.portfolio_type);
+
+                setGithubUrl(cfg.github || "");
+                setLinkedinUrl(cfg.linkedin || "");
+                setTwitterUrl(cfg.twitter || "");
+                setCustomUrl(cfg.customUrl || "");
+                setCvUrl(cfg.cvUrl || "");
+                setProfileImageUrl(cfg.profileImageUrl || "");
+                setEmail(cfg.email || "");
+                setProjects(Array.isArray(cfg.projects) ? cfg.projects : []);
+                setExperiences(Array.isArray(cfg.experiences) ? cfg.experiences : []);
+                setSkills(Array.isArray(cfg.skills) ? cfg.skills : []);
+              }
             } catch (e) {
               console.warn("Failed to parse portfolio config: ", e);
             }
@@ -116,6 +163,137 @@ export default function PortfolioEditor() {
     fetchPortfolioData();
   }, [id]);
 
+  // Helper to format dates from API (e.g. YYYY-MM-DD or YYYY-MM) to "Jan 2021"
+  const formatApiDate = (dateStr: string) => {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return `${months[d.getMonth()]} ${d.getFullYear()}`;
+  };
+
+  // Import Details from Profile APIs
+  const handleImportFromProfile = async () => {
+    try {
+      setImporting(true);
+      setError(null);
+
+      const userData = JSON.parse(localStorage.getItem("user") || "null");
+      if (!userData || !userData.token || !userData.user_id) {
+        setError("User not authenticated or user ID missing.");
+        return;
+      }
+
+      const userId = userData.user_id;
+      const token = userData.token;
+
+      // Fetch all endpoints concurrently
+      const [expRes, projRes, skillsRes, linksRes, profileRes] = await Promise.all([
+        api.get(`/users/${userId}/work-experience`, { headers: { Authorization: `Bearer ${token}` } }),
+        api.get(`/users/${userId}/projects`, { headers: { Authorization: `Bearer ${token}` } }),
+        api.get(`/users/${userId}/skills`, { headers: { Authorization: `Bearer ${token}` } }),
+        api.get(`/users/${userId}/links`, { headers: { Authorization: `Bearer ${token}` } }),
+        api.get(`/users/${userId}/personal-details`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: null })),
+      ]);
+
+      // 1. Process Experiences
+      if (expRes.data && Array.isArray(expRes.data.experiences)) {
+        const mappedExps = expRes.data.experiences.map((exp: any) => {
+          const start = formatApiDate(exp.start_date);
+          const end = exp.currently_working_here ? "Present" : formatApiDate(exp.end_date);
+          return {
+            role: exp.job_title || "",
+            company: exp.company_name || "",
+            duration: start && end ? `${start} - ${end}` : start || end || "",
+            details: exp.description || "",
+          };
+        });
+        if (mappedExps.length > 0) {
+          setExperiences(mappedExps);
+        }
+      }
+
+      // 2. Process Projects
+      if (Array.isArray(projRes.data)) {
+        const mappedProjs = projRes.data.map((proj: any) => {
+          return {
+            title: proj.project_title || "",
+            description: proj.description || proj.roles_responsibilities || "",
+            link: "",
+            tech: "",
+          };
+        });
+        if (mappedProjs.length > 0) {
+          setProjects(mappedProjs);
+        }
+      }
+
+      // 3. Process Skills
+      if (Array.isArray(skillsRes.data)) {
+        const mappedSkills = skillsRes.data
+          .map((s: any) => s.skill_name)
+          .filter(Boolean);
+        if (mappedSkills.length > 0) {
+          setSkills(mappedSkills);
+        }
+      }
+
+      // 4. Process Links
+      if (Array.isArray(linksRes.data)) {
+        linksRes.data.forEach((l: any) => {
+          if (l.link_type === "github" && l.url) {
+            setGithubUrl(l.url);
+          } else if (l.link_type === "linkedin" && l.url) {
+            setLinkedinUrl(l.url);
+          } else if (l.link_type === "twitter" && l.url) {
+            setTwitterUrl(l.url);
+          } else if (l.link_type === "portfolio" && l.url) {
+            setCustomUrl(l.url);
+          }
+        });
+      }
+
+      // 5. Process Profile Image and CV (if any)
+      if (profileRes.data) {
+        // Handle both object and array responses from personal-details API
+        const pd = Array.isArray(profileRes.data) ? profileRes.data[0] : profileRes.data;
+        if (pd?.profile_photo_url) setProfileImageUrl(pd.profile_photo_url);
+        if (pd?.cv_url) setCvUrl(pd.cv_url); // Optional: if CV is there
+        if (pd?.email) setEmail(pd.email);
+      }
+
+      setImportSuccess(true);
+      setTimeout(() => setImportSuccess(false), 3000);
+    } catch (err: any) {
+      console.error("Failed to import profile details:", err);
+      setError("Failed to import profile details. Make sure your profile has data filled in.");
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  // Helper to ensure URL starts with https:// or http://
+  const ensureHttps = (url: string): string => {
+    const trimmed = url.trim();
+    if (!trimmed) return "";
+    if (/^https?:\/\//i.test(trimmed)) {
+      return trimmed;
+    }
+    return `https://${trimmed}`;
+  };
+
+  // Helper to check if a URL is valid (hostname must have a dot, e.g. github.com)
+  const isValidUrl = (url: string): boolean => {
+    if (!url.trim()) return true;
+    try {
+      const cleaned = ensureHttps(url);
+      const urlObj = new URL(cleaned);
+      return urlObj.hostname.includes(".") && !urlObj.hostname.endsWith(".");
+    } catch {
+      return false;
+    }
+  };
+
   // Submit and Save Portfolio
   const handleSave = async () => {
     if (!portfolioName.trim()) {
@@ -123,16 +301,53 @@ export default function PortfolioEditor() {
       return;
     }
 
+    // Clean and prepend https:// if missing
+    const cleanGithub = githubUrl.trim() ? ensureHttps(githubUrl) : "";
+    const cleanLinkedin = linkedinUrl.trim() ? ensureHttps(linkedinUrl) : "";
+    const cleanTwitter = twitterUrl.trim() ? ensureHttps(twitterUrl) : "";
+    const cleanCustom = customUrl.trim() ? ensureHttps(customUrl) : "";
+
+    // Validate URLs
+    if (cleanGithub && !isValidUrl(cleanGithub)) {
+      alert("Please enter a valid GitHub URL.");
+      return;
+    }
+    if (cleanLinkedin && !isValidUrl(cleanLinkedin)) {
+      alert("Please enter a valid LinkedIn URL.");
+      return;
+    }
+    if (cleanTwitter && !isValidUrl(cleanTwitter)) {
+      alert("Please enter a valid Twitter URL.");
+      return;
+    }
+    if (cleanCustom && !isValidUrl(cleanCustom)) {
+      alert("Please enter a valid Custom Domain URL.");
+      return;
+    }
+
+    // Update state variables to match formatted links
+    setGithubUrl(cleanGithub);
+    setLinkedinUrl(cleanLinkedin);
+    setTwitterUrl(cleanTwitter);
+    setCustomUrl(cleanCustom);
+
     try {
       setSaving(true);
       setError(null);
       const userData = JSON.parse(localStorage.getItem("user") || "null");
 
-      const configPayload = {
-        github: githubUrl,
-        linkedin: linkedinUrl,
-        twitter: twitterUrl,
-        customUrl: customUrl,
+      // Entire portfolio data payload to be saved under portfolio_json
+      const portfolioPayload = {
+        name: portfolioName,
+        description: portfolioDescription,
+        portfolio_type: portfolioType,
+        github: cleanGithub,
+        linkedin: cleanLinkedin,
+        twitter: cleanTwitter,
+        customUrl: cleanCustom,
+        cvUrl: cvUrl,
+        profileImageUrl: profileImageUrl,
+        email: email,
         projects: projects,
         experiences: experiences,
         skills: skills,
@@ -140,12 +355,9 @@ export default function PortfolioEditor() {
 
       // Call API to save/edit portfolio details
       await api.put(
-        `/portfolio/update/${id}`,
+        `/portfolio/${id}`,
         {
-          name: portfolioName,
-          description: portfolioDescription,
-          portfolio_type: portfolioType,
-          config: JSON.stringify(configPayload),
+          portfolio_json: portfolioPayload,
         },
         { headers: { Authorization: `Bearer ${userData.token}` } }
       );
@@ -188,6 +400,10 @@ export default function PortfolioEditor() {
     linkedinUrl,
     twitterUrl,
     customUrl,
+    cvUrl,
+    profileImageUrl,
+    avatarUrl: profileImageUrl,
+    email,
     projects,
     experiences,
     skills,
@@ -198,9 +414,14 @@ export default function PortfolioEditor() {
       <DashNav heading="Edit Portfolio" />
 
       {/* Editor Main Section */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+      <div 
+        className="flex-1 flex flex-col lg:flex-row overflow-hidden relative"
+        style={{ '--left-width': `${leftWidth}%`, '--right-width': `calc(100% - ${leftWidth}%)` } as React.CSSProperties}
+      >
+        {isDragging && <div className="fixed inset-0 z-50 cursor-col-resize select-none" />}
+
         {/* Left Side: Form Controls */}
-        <div className="w-full lg:w-1/2 p-6 overflow-y-auto border-r border-gray-200">
+        <div className="w-full lg:w-[var(--left-width)] p-6 overflow-y-auto border-r border-gray-200">
           <PortfolioEditorComponent
             portfolioName={portfolioName}
             setPortfolioName={setPortfolioName}
@@ -216,6 +437,12 @@ export default function PortfolioEditor() {
             setTwitterUrl={setTwitterUrl}
             customUrl={customUrl}
             setCustomUrl={setCustomUrl}
+            cvUrl={cvUrl}
+            setCvUrl={setCvUrl}
+            profileImageUrl={profileImageUrl}
+            setProfileImageUrl={setProfileImageUrl}
+            email={email}
+            setEmail={setEmail}
             projects={projects}
             setProjects={setProjects}
             experiences={experiences}
@@ -226,12 +453,26 @@ export default function PortfolioEditor() {
             saving={saving}
             success={success}
             error={error}
+            onImportFromProfile={handleImportFromProfile}
+            importing={importing}
+            importSuccess={importSuccess}
             onBack={() => navigate("/portfolio/list")}
           />
         </div>
 
+        {/* Resizer */}
+        <div 
+          className="hidden lg:flex w-2 cursor-col-resize hover:bg-violet-400 active:bg-violet-500 bg-gray-200 z-10 transition-colors items-center justify-center shrink-0 border-x border-gray-300"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+        >
+          <div className="w-0.5 h-8 bg-gray-400 rounded-full" />
+        </div>
+
         {/* Right Side: Interactive Mock Browser Preview Panel */}
-        <div className="hidden lg:block w-1/2 p-6 bg-slate-900 relative flex flex-col overflow-hidden">
+        <div className="hidden lg:flex flex-col w-[var(--right-width)] p-6 bg-slate-900 relative overflow-hidden">
           <PortfolioPreviewComponent
             portfolioId={id || ""}
             portfolioType={portfolioType}

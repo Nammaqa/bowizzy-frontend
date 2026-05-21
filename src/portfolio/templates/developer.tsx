@@ -12,6 +12,7 @@ export interface PortfolioData {
   twitterUrl: string;
   customUrl: string;
   avatarUrl?: string; // Optional image URL — drives layout switch
+  cvUrl?: string;
   email?: string;
   tagline?: string;
   projects: Array<{ title: string; description: string; link: string; tech: string }>;
@@ -104,7 +105,7 @@ function StatCard({
       className="stat-card flex-1 py-6 text-center"
       style={{ borderRight: "0.5px solid rgba(99,102,241,0.15)" }}
     >
-      <div className="text-2xl sm:text-3xl font-semibold text-white" style={{ letterSpacing: "-1px" }}>
+      <div className="text-2xl @sm:text-3xl font-semibold text-white" style={{ letterSpacing: "-1px" }}>
         {count}{suffix}
       </div>
       <div className="text-xs mt-1 tracking-widest uppercase" style={{ color: "#475569" }}>{label}</div>
@@ -114,7 +115,7 @@ function StatCard({
 
 function SkillChip({ skill }: { skill: string }) {
   return (
-    <div className="skill-chip px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 cursor-default flex items-center gap-2"
+    <div className="skill-chip px-3 @sm:px-4 py-2 rounded-lg text-xs @sm:text-sm font-medium transition-all duration-200 cursor-default flex items-center gap-2"
       style={{
         background: "rgba(15,20,40,0.7)",
         border: "0.5px solid rgba(99,102,241,0.2)",
@@ -132,11 +133,11 @@ function ExpCard({ exp, index }: { exp: PortfolioData["experiences"][0]; index: 
   const Icon = icons[index % icons.length];
   return (
     <div
-      className="exp-card py-6 flex gap-4 sm:gap-5 transition-all duration-200"
+      className="exp-card py-6 flex gap-4 @sm:gap-5 transition-all duration-200"
       style={{ borderBottom: "0.5px solid rgba(99,102,241,0.1)" }}
     >
       <div
-        className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+        className="w-10 h-10 @sm:w-11 @sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
         style={{
           background: "rgba(99,102,241,0.12)",
           border: "0.5px solid rgba(99,102,241,0.25)",
@@ -160,7 +161,11 @@ function ExpCard({ exp, index }: { exp: PortfolioData["experiences"][0]; index: 
             </span>
           )}
         </div>
-        <p className="text-xs leading-relaxed mt-2" style={{ color: "#64748b" }}>{exp.details}</p>
+        <div
+          className="text-xs leading-relaxed mt-2 rich-html-content"
+          style={{ color: "#64748b" }}
+          dangerouslySetInnerHTML={{ __html: exp.details || "" }}
+        />
       </div>
     </div>
   );
@@ -173,7 +178,7 @@ function ProjectCard({ proj, index }: { proj: PortfolioData["projects"][0]; inde
 
   return (
     <div
-      className="project-card rounded-2xl p-5 sm:p-6 flex flex-col transition-all duration-250 cursor-default relative overflow-hidden"
+      className="project-card rounded-2xl p-5 @sm:p-6 flex flex-col transition-all duration-250 cursor-default relative overflow-hidden"
       style={{
         background: "rgba(15,20,40,0.7)",
         border: "0.5px solid rgba(99,102,241,0.2)",
@@ -199,9 +204,11 @@ function ProjectCard({ proj, index }: { proj: PortfolioData["projects"][0]; inde
       <h3 className="text-sm font-semibold mb-2 transition-colors duration-200" style={{ color: "#e2e8f0" }}>
         {proj.title || "Project Title"}
       </h3>
-      <p className="text-xs leading-relaxed flex-1 mb-4" style={{ color: "#64748b" }}>
-        {proj.description || "Project description goes here..."}
-      </p>
+      <div
+        className="text-xs leading-relaxed flex-1 mb-4 rich-html-content"
+        style={{ color: "#64748b" }}
+        dangerouslySetInnerHTML={{ __html: proj.description || "<p>Project description goes here...</p>" }}
+      />
       {techs.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {techs.map((t, i) => (
@@ -220,15 +227,15 @@ function ProjectCard({ proj, index }: { proj: PortfolioData["projects"][0]; inde
 
 function HeroWithImage({ data, scrollTo }: { data: PortfolioData; scrollTo: (id: string) => void }) {
   return (
-    <div className="hero-with-image px-5 sm:px-8 md:px-10 pt-12 sm:pt-16 pb-12 max-w-4xl mx-auto">
+    <div className="hero-with-image px-5 @sm:px-8 @md:px-10 pt-12 @sm:pt-16 pb-12 max-w-4xl mx-auto">
       {/* Two-column layout: text left, image right */}
-      <div className="flex flex-col-reverse md:flex-row items-center gap-8 md:gap-12">
+      <div className="flex flex-col-reverse @md:flex-row items-center gap-8 @md:gap-12">
         {/* Left: text content */}
-        <div className="flex-1 text-center md:text-left">
-          <div className="anim-1 mb-5 flex justify-center md:justify-start">
+        <div className="flex-1 text-center @md:text-left">
+          <div className="anim-1 mb-5 flex justify-center @md:justify-start">
             <StatusBadge />
           </div>
-          <h1 className="anim-2 text-4xl sm:text-5xl font-semibold text-white mb-4"
+          <h1 className="anim-2 text-4xl @sm:text-5xl font-semibold text-white mb-4"
             style={{ letterSpacing: "-1.5px", lineHeight: 1.1 }}>
             {data.portfolioName || "Anonymous Developer"}
             <span className="cursor-blink inline-block w-0.5 h-9 ml-1 rounded align-middle" style={{ background: "#818cf8" }} />
@@ -239,18 +246,20 @@ function HeroWithImage({ data, scrollTo }: { data: PortfolioData; scrollTo: (id:
           <p className="anim-3 text-sm leading-relaxed mb-8" style={{ color: "#94a3b8" }}>
             {data.portfolioDescription || "Passionate about building scalable software and creating elegant solutions to complex problems."}
           </p>
-          <div className="anim-3 flex flex-wrap gap-3 mb-8 justify-center md:justify-start">
-            <button onClick={() => scrollTo("projects")}
-              className="cta-primary flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white transition-all duration-200">
-              <Download className="w-4 h-4" /> Download CV
-            </button>
+          <div className="anim-3 flex flex-wrap gap-3 mb-8 justify-center @md:justify-start">
+            {data.cvUrl && (
+              <a href={data.cvUrl} target="_blank" rel="noreferrer"
+                className="cta-primary flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white transition-all duration-200 no-underline">
+                <Download className="w-4 h-4" /> Download CV
+              </a>
+            )}
             <button onClick={() => scrollTo("contact")}
               className="cta-secondary flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
               style={{ background: "transparent", border: "0.5px solid rgba(148,163,184,0.3)", color: "#94a3b8" }}>
               <Mail className="w-4 h-4" /> Get in touch
             </button>
           </div>
-          <div className="anim-4 flex gap-3 justify-center md:justify-start">
+          <div className="anim-4 flex gap-3 justify-center @md:justify-start">
             <SocialLink href={data.githubUrl} icon={Github} label="GitHub" />
             <SocialLink href={data.linkedinUrl} icon={Linkedin} label="LinkedIn" />
             <SocialLink href={data.twitterUrl} icon={Twitter} label="Twitter" />
@@ -259,7 +268,7 @@ function HeroWithImage({ data, scrollTo }: { data: PortfolioData; scrollTo: (id:
         </div>
 
         {/* Right: image with decorative ring */}
-        <div className="anim-2 flex-shrink-0 flex justify-center md:justify-end">
+        <div className="anim-2 flex-shrink-0 flex justify-center @md:justify-end">
           <div className="relative">
             {/* Outer decorative ring */}
             <div className="absolute inset-0 rounded-full"
@@ -301,7 +310,7 @@ function HeroWithImage({ data, scrollTo }: { data: PortfolioData; scrollTo: (id:
 
 function HeroWithoutImage({ data, scrollTo }: { data: PortfolioData; scrollTo: (id: string) => void }) {
   return (
-    <div className="hero-no-image px-5 sm:px-8 md:px-10 pt-16 sm:pt-20 pb-14 max-w-4xl mx-auto text-center">
+    <div className="hero-no-image px-5 @sm:px-8 @md:px-10 pt-16 @sm:pt-20 pb-14 max-w-4xl mx-auto text-center">
       {/* Initials avatar */}
       <div className="anim-1 flex justify-center mb-6">
         <div className="relative">
@@ -337,7 +346,7 @@ function HeroWithoutImage({ data, scrollTo }: { data: PortfolioData; scrollTo: (
         <p className="anim-2 text-base font-medium mb-4" style={{ color: "#818cf8" }}>{data.tagline}</p>
       )}
 
-      <p className="anim-3 text-sm sm:text-base leading-relaxed max-w-xl mx-auto mb-10" style={{ color: "#94a3b8" }}>
+      <p className="anim-3 text-sm @sm:text-base leading-relaxed max-w-xl mx-auto mb-10" style={{ color: "#94a3b8" }}>
         {data.portfolioDescription || "Passionate about building scalable software and creating elegant solutions to complex problems."}
       </p>
 
@@ -360,10 +369,12 @@ function HeroWithoutImage({ data, scrollTo }: { data: PortfolioData; scrollTo: (
       )} */}
 
       <div className="anim-3 flex flex-wrap gap-3 mb-8 justify-center">
-        <button onClick={() => scrollTo("projects")}
-          className="cta-primary flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white transition-all duration-200">
-          <Download className="w-4 h-4" /> Download CV
-        </button>
+        {data.cvUrl && (
+          <a href={data.cvUrl} target="_blank" rel="noreferrer"
+            className="cta-primary flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white transition-all duration-200 no-underline">
+            <Download className="w-4 h-4" /> Download CV
+          </a>
+        )}
         <button onClick={() => scrollTo("contact")}
           className="cta-secondary flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
           style={{ background: "transparent", border: "0.5px solid rgba(148,163,184,0.3)", color: "#94a3b8" }}>
@@ -424,7 +435,7 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
   return (
     <div
       ref={containerRef}
-      className="w-full relative min-h-screen"
+      className="@container w-full relative min-h-screen"
       style={{ background: "#0a0f1e", color: "#c8d3f5", fontFamily: "'DM Sans', sans-serif" }}
     >
       <style>{`
@@ -492,11 +503,23 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
         @media (max-width: 640px) {
           .stat-label { display: none; }
         }
+
+        /* Rich HTML content from RichTextEditor */
+        .rich-html-content p { margin: 0 0 0.3em; }
+        .rich-html-content p:last-child { margin-bottom: 0; }
+        .rich-html-content ul, .rich-html-content ol { padding-left: 1.2em; margin: 0.2em 0; }
+        .rich-html-content ul { list-style-type: disc; }
+        .rich-html-content ol { list-style-type: decimal; }
+        .rich-html-content li { margin: 0.15em 0; }
+        .rich-html-content strong, .rich-html-content b { font-weight: 600; color: #94a3b8; }
+        .rich-html-content em, .rich-html-content i { font-style: italic; }
+        .rich-html-content a { color: #818cf8; text-decoration: underline; }
+        .rich-html-content div { margin: 0; }
       `}</style>
 
       {/* NAV */}
       <nav
-        className="flex items-center justify-between px-5 sm:px-8 md:px-10 py-4 sticky top-0 z-50 transition-all duration-300"
+        className="flex items-center justify-between px-5 @sm:px-8 @md:px-10 py-4 sticky top-0 z-50 transition-all duration-300"
         style={{
           background: navScrolled ? "rgba(10,15,30,0.92)" : "transparent",
           backdropFilter: navScrolled ? "blur(12px)" : "none",
@@ -509,7 +532,7 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
         </div>
 
         {/* Desktop nav */}
-        <div className="hidden md:flex items-center gap-7">
+        <div className="hidden @md:flex items-center gap-7">
           {navItems.map(({ id, label }) => (
             <button key={id} onClick={() => scrollTo(id)}
               className="nav-btn text-xs tracking-wide transition-colors duration-200 capitalize"
@@ -524,7 +547,7 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
         <div className="flex items-center gap-3">
           {/* Hire me */}
           <button onClick={() => scrollTo("contact")}
-            className="hidden sm:block text-xs px-4 py-2 rounded-lg text-white transition-all duration-200 hover:scale-105"
+            className="hidden @sm:block text-xs px-4 py-2 rounded-lg text-white transition-all duration-200 hover:scale-105"
             style={{ background: "#4f46e5", border: "none", cursor: "pointer", fontFamily: "inherit" }}
             onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "#4338ca")}
             onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "#4f46e5")}>
@@ -533,7 +556,7 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
 
           {/* Mobile hamburger */}
           <button
-            className="md:hidden flex flex-col gap-1.5 p-2 rounded-lg transition-colors"
+            className="@md:hidden flex flex-col gap-1.5 p-2 rounded-lg transition-colors"
             style={{ background: "rgba(99,102,241,0.08)", border: "0.5px solid rgba(99,102,241,0.2)" }}
             onClick={() => setMobileMenuOpen((v) => !v)}
             aria-label="Toggle menu"
@@ -552,28 +575,28 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
             ))}
           </button>
         </div>
-      </nav>
 
-      {/* Mobile menu */}
-      {mobileMenuOpen && (
-        <div
-          className="mobile-menu md:hidden fixed top-[57px] left-0 right-0 z-40 py-4 px-5"
-          style={{ background: "rgba(10,15,30,0.97)", backdropFilter: "blur(16px)", borderBottom: "0.5px solid rgba(99,102,241,0.2)" }}
-        >
-          {navItems.map(({ id, label }) => (
-            <button key={id} onClick={() => scrollTo(id)}
-              className="block w-full text-left py-3 text-sm border-b transition-colors duration-200"
-              style={{ color: "#94a3b8", background: "none", border: "none", borderBottom: "0.5px solid rgba(99,102,241,0.1)", cursor: "pointer", fontFamily: "inherit" }}>
-              {label}
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div
+            className="mobile-menu @md:hidden absolute top-[100%] left-0 right-0 z-40 py-4 px-5 shadow-2xl"
+            style={{ background: "rgba(10,15,30,0.97)", backdropFilter: "blur(16px)", borderBottom: "0.5px solid rgba(99,102,241,0.2)" }}
+          >
+            {navItems.map(({ id, label }) => (
+              <button key={id} onClick={() => scrollTo(id)}
+                className="block w-full text-left py-3 text-sm border-b transition-colors duration-200"
+                style={{ color: "#94a3b8", background: "none", border: "none", borderBottom: "0.5px solid rgba(99,102,241,0.1)", cursor: "pointer", fontFamily: "inherit" }}>
+                {label}
+              </button>
+            ))}
+            <button onClick={() => scrollTo("contact")}
+              className="mt-4 w-full text-sm py-2.5 rounded-xl text-white font-medium"
+              style={{ background: "#4f46e5", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
+              Hire me
             </button>
-          ))}
-          <button onClick={() => scrollTo("contact")}
-            className="mt-4 w-full text-sm py-2.5 rounded-xl text-white font-medium"
-            style={{ background: "#4f46e5", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
-            Hire me
-          </button>
-        </div>
-      )}
+          </div>
+        )}
+      </nav>
 
       {/* HERO — conditional layout */}
       {hasImage
@@ -593,12 +616,12 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
       </div> */}
 
       {/* SKILLS */}
-      <div id="skills" className="px-5 sm:px-8 md:px-10 py-12 sm:py-16 max-w-4xl mx-auto"
+      <div id="skills" className="px-5 @sm:px-8 @md:px-10 py-12 @sm:py-16 max-w-4xl mx-auto"
         style={{ borderBottom: "0.5px solid rgba(99,102,241,0.1)" }}>
         <p className="text-xs tracking-widest uppercase mb-2" style={{ color: "#818cf8" }}>What I work with</p>
-        <h2 className="text-xl sm:text-2xl font-semibold text-white mb-1" style={{ letterSpacing: "-0.6px" }}>Technical skills</h2>
+        <h2 className="text-xl @sm:text-2xl font-semibold text-white mb-1" style={{ letterSpacing: "-0.6px" }}>Technical skills</h2>
         <p className="text-sm mb-8" style={{ color: "#475569" }}>Technologies and tools in my daily stack</p>
-        <div className="flex flex-wrap gap-2 sm:gap-2.5">
+        <div className="flex flex-wrap gap-2 @sm:gap-2.5">
           {data.skills.length === 0
             ? <p className="text-sm" style={{ color: "#475569" }}>No skills added yet.</p>
             : data.skills.map((skill, i) => <SkillChip key={i} skill={skill} />)
@@ -607,10 +630,10 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
       </div>
 
       {/* EXPERIENCE */}
-      <div id="exp" className="px-5 sm:px-8 md:px-10 py-12 sm:py-16 max-w-4xl mx-auto"
+      <div id="exp" className="px-5 @sm:px-8 @md:px-10 py-12 @sm:py-16 max-w-4xl mx-auto"
         style={{ borderBottom: "0.5px solid rgba(99,102,241,0.1)" }}>
         <p className="text-xs tracking-widest uppercase mb-2" style={{ color: "#818cf8" }}>Where I've worked</p>
-        <h2 className="text-xl sm:text-2xl font-semibold text-white mb-1" style={{ letterSpacing: "-0.6px" }}>Experience</h2>
+        <h2 className="text-xl @sm:text-2xl font-semibold text-white mb-1" style={{ letterSpacing: "-0.6px" }}>Experience</h2>
         <p className="text-sm mb-8" style={{ color: "#475569" }}>My professional journey so far</p>
         <div>
           {data.experiences.length === 0
@@ -621,10 +644,10 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
       </div>
 
       {/* PROJECTS */}
-      <div id="projects" className="px-5 sm:px-8 md:px-10 py-12 sm:py-16 max-w-4xl mx-auto"
+      <div id="projects" className="px-5 @sm:px-8 @md:px-10 py-12 @sm:py-16 max-w-4xl mx-auto"
         style={{ borderBottom: "0.5px solid rgba(99,102,241,0.1)" }}>
         <p className="text-xs tracking-widest uppercase mb-2" style={{ color: "#818cf8" }}>What I've built</p>
-        <h2 className="text-xl sm:text-2xl font-semibold text-white mb-1" style={{ letterSpacing: "-0.6px" }}>Featured projects</h2>
+        <h2 className="text-xl @sm:text-2xl font-semibold text-white mb-1" style={{ letterSpacing: "-0.6px" }}>Featured projects</h2>
         <p className="text-sm mb-8" style={{ color: "#475569" }}>A selection of work I'm proud of</p>
         <div className="projects-grid">
           {data.projects.length === 0
@@ -635,10 +658,10 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
       </div>
 
       {/* CONTACT */}
-      <div id="contact" className="px-5 sm:px-8 md:px-10 py-12 sm:py-16 max-w-4xl mx-auto">
-        <div className="rounded-2xl p-8 sm:p-12 text-center"
+      <div id="contact" className="px-5 @sm:px-8 @md:px-10 py-12 @sm:py-16 max-w-4xl mx-auto">
+        <div className="rounded-2xl p-8 @sm:p-12 text-center"
           style={{ background: "rgba(99,102,241,0.07)", border: "0.5px solid rgba(99,102,241,0.25)" }}>
-          <h2 className="text-2xl sm:text-3xl font-semibold text-white mb-3" style={{ letterSpacing: "-1px" }}>Let's work together</h2>
+          <h2 className="text-2xl @sm:text-3xl font-semibold text-white mb-3" style={{ letterSpacing: "-1px" }}>Let's work together</h2>
           <p className="text-sm mb-8" style={{ color: "#64748b" }}>
             Have a project in mind? I'm always open to discussing new opportunities.
           </p>
@@ -672,7 +695,7 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
       </div>
 
       {/* FOOTER */}
-      <div className="flex items-center justify-between px-5 sm:px-10 py-6 flex-wrap gap-3"
+      <div className="flex items-center justify-between px-5 @sm:px-10 py-6 flex-wrap gap-3"
         style={{ borderTop: "0.5px solid rgba(99,102,241,0.12)" }}>
         <p className="text-xs" style={{ color: "#475569" }}>
           All rights reserved © {new Date().getFullYear()} bowizzy.com
