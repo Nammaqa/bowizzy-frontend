@@ -3,6 +3,7 @@ export const deleteFromCloudinary = async (deleteToken?: string) => {
 
   const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "drwntqk7r";
 
+
   try {
     const url = `https://api.cloudinary.com/v1_1/${cloudName}/delete_by_token`;
 
