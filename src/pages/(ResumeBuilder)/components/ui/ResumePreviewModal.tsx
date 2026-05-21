@@ -899,7 +899,7 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
             </button>
 
             <button
-              onClick={() => {setShowNameDialog(true); window.location.reload();}}
+              onClick={() => { setShowNameDialog(true); window.location.reload(); }}
               className="flex items-center bg-orange-500 text-left py-3 px-4 rounded-full border-0 hover:bg-orange-600 transition-colors shadow-md cursor-pointer"
             >
               <Download className="w-5 h-5 mr-2 text-white" />
@@ -1010,7 +1010,6 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                         a.remove();
                         URL.revokeObjectURL(url);
                         setShowNameDialog(false);
-                        window.location.reload();
                       }
                     } catch (err) {
                       console.error('Error:', err);
