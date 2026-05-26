@@ -1,133 +1,553 @@
 import React from "react";
-import { Twitter, Linkedin } from "lucide-react";
+import {
+  ArrowUpRight,
+  Briefcase,
+  Download,
+  Github,
+  Globe,
+  Image,
+  Linkedin,
+  Link2,
+  Mail,
+  PenTool,
+  Sparkles,
+  Twitter,
+} from "lucide-react";
 import type { PortfolioData } from "./developer";
 
-export default function DesignerTemplate({ data }: { data: PortfolioData }) {
+function hexToRgb(hex: string) {
+  const normalized = hex.replace("#", "").trim();
+  if (normalized.length !== 6) return null;
+  const int = parseInt(normalized, 16);
+  if (Number.isNaN(int)) return null;
+  return {
+    r: (int >> 16) & 255,
+    g: (int >> 8) & 255,
+    b: int & 255,
+  };
+}
+
+function isDark(hex: string) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return false;
+  const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+  return luminance < 0.55;
+}
+
+function getInitials(name: string) {
+  if (!name) return "DS";
+  return name
+    .split(" ")
+    .map((token) => token[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
+
+function RichText({
+  html,
+  fallback,
+  className = "",
+}: {
+  html?: string;
+  fallback: string;
+  className?: string;
+}) {
   return (
-    <div className="bg-white text-gray-800 p-8 space-y-8 min-h-[480px] font-sans">
+    <div
+      className={`designer-rich ${className}`}
+      dangerouslySetInnerHTML={{ __html: html || fallback }}
+    />
+  );
+}
+
+export default function DesignerTemplate({ data }: { data: PortfolioData }) {
+  const accent = data.themeColor || "#d84f2a";
+  const bg = data.backgroundColor || "#f6f2ea";
+  const dark = isDark(bg);
+  const ink = dark ? "#f8f4ec" : "#151515";
+  const muted = dark ? "#c8c0b4" : "#625d55";
+  const panel = dark ? "rgba(255,255,255,0.075)" : "rgba(255,255,255,0.62)";
+  const panelStrong = dark ? "rgba(255,255,255,0.12)" : "#fffaf0";
+  const line = dark ? "rgba(255,255,255,0.18)" : "rgba(21,21,21,0.14)";
+  const accentTwo = dark ? "#69e3d2" : "#0f766e";
+  const socialLinks = [
+    { href: data.githubUrl, label: "GitHub", icon: Github },
+    { href: data.linkedinUrl, label: "LinkedIn", icon: Linkedin },
+    { href: data.twitterUrl, label: "Twitter", icon: Twitter },
+    { href: data.customUrl, label: "Website", icon: Globe },
+    { href: data.behanceUrl, label: "Behance", icon: Link2 },
+    { href: data.dribbbleUrl, label: "Dribbble", icon: Sparkles },
+  ].filter((item) => Boolean(item.href));
+  const processSteps = data.designProcess?.length
+    ? data.designProcess
+    : [
+        {
+          title: "Understand",
+          description: "Map goals, audience, constraints, and the visual tone before designing the surface.",
+        },
+        {
+          title: "Shape",
+          description: "Turn ideas into strong layout systems, interaction states, and reusable patterns.",
+        },
+        {
+          title: "Refine",
+          description: "Polish the visual rhythm, prepare handoff, and tighten the details that users feel.",
+        },
+      ];
+  const caseStudies = data.caseStudies || [];
+
+  return (
+    <main
+      className="@container min-h-screen overflow-hidden"
+      style={
+        {
+          background: bg,
+          color: ink,
+          fontFamily: "'Manrope', 'Space Grotesk', sans-serif",
+          "--designer-bg": bg,
+          "--designer-ink": ink,
+          "--designer-muted": muted,
+          "--designer-panel": panel,
+          "--designer-panel-strong": panelStrong,
+          "--designer-line": line,
+          "--designer-accent": accent,
+          "--designer-accent-two": accentTwo,
+        } as React.CSSProperties
+      }
+    >
       <style>{`
-        .rich-text-preview ul {
-          list-style-type: disc !important;
-          padding-left: 1rem !important;
-          margin-top: 0.25rem !important;
-          margin-bottom: 0.25rem !important;
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap');
+
+        .designer-page {
+          max-width: 1180px;
+          margin: 0 auto;
         }
-        .rich-text-preview ol {
-          list-style-type: decimal !important;
-          padding-left: 1rem !important;
-          margin-top: 0.25rem !important;
-          margin-bottom: 0.25rem !important;
+        .designer-rich p { margin: 0 0 0.45rem; }
+        .designer-rich p:last-child { margin-bottom: 0; }
+        .designer-rich ul, .designer-rich ol { margin: 0.35rem 0; padding-left: 1.15rem; }
+        .designer-rich ul { list-style: disc; }
+        .designer-rich ol { list-style: decimal; }
+        .designer-rich li { margin: 0.2rem 0; }
+        .designer-rich a { color: var(--designer-accent); text-decoration: underline; }
+        .designer-rich strong, .designer-rich b { color: var(--designer-ink); font-weight: 800; }
+        .designer-hover {
+          transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
         }
-        .rich-text-preview a {
-          color: #7c3aed !important;
-          text-decoration: underline !important;
+        .designer-hover:hover {
+          transform: translateY(-3px);
+          border-color: var(--designer-accent) !important;
+        }
+        .designer-cover-grid {
+          background-image:
+            linear-gradient(to right, rgba(255,255,255,0.28) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255,255,255,0.28) 1px, transparent 1px);
+          background-size: 34px 34px;
         }
       `}</style>
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 pb-6 border-b border-gray-100">
-        <div>
-          <span className="text-[9px] font-bold text-violet-600 bg-violet-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-            Designer Portfolio
-          </span>
-          <h1 className="text-2xl font-black text-gray-900 mt-2 tracking-tight">
-            {data.portfolioName || "Creative Mind"}
-          </h1>
-          <p className="text-xs text-gray-500 mt-1 leading-relaxed max-w-sm">
-            {data.portfolioDescription || "Passionate UI/UX designer blending aesthetics and user flows."}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          {data.twitterUrl && (
-            <a
-              href={data.twitterUrl}
-              className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition text-sky-500"
-            >
-              <Twitter className="w-3.5 h-3.5" />
-            </a>
-          )}
-          {data.linkedinUrl && (
-            <a
-              href={data.linkedinUrl}
-              className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition text-blue-600"
-            >
-              <Linkedin className="w-3.5 h-3.5" />
-            </a>
-          )}
-        </div>
-      </div>
 
-      {/* Skill chips */}
-      <div className="space-y-2">
-        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">My Toolkit</span>
-        <div className="flex flex-wrap gap-1.5">
-          {data.skills.length === 0 ? (
-            <span className="text-xs text-gray-400">Toolkit empty.</span>
-          ) : (
-            data.skills.map((s, idx) => (
-              <span
-                key={idx}
-                className="px-2.5 py-1 bg-violet-50 text-violet-700 text-[10px] font-bold rounded-lg uppercase tracking-wider"
-              >
-                {s}
-              </span>
-            ))
-          )}
-        </div>
-      </div>
+      <section className="designer-page px-5 @md:px-8">
+        <nav
+          className="flex items-center justify-between gap-4 py-5 border-b"
+          style={{ borderColor: line }}
+        >
+          <a href="#top" className="flex items-center gap-3 min-w-0 no-underline" style={{ color: ink }}>
+            <span
+              className="h-10 w-10 grid place-items-center text-sm font-extrabold shrink-0"
+              style={{ background: ink, color: bg, borderRadius: 8 }}
+            >
+              {getInitials(data.portfolioName)}
+            </span>
+            <span className="text-sm font-extrabold truncate">
+              {data.portfolioName || "Creative Designer"}
+            </span>
+          </a>
 
-      {/* Projects grid */}
-      <div className="space-y-4">
-        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Visual Gallery</span>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {data.projects.length === 0 ? (
-            <div className="col-span-2 text-center py-6 border border-dashed border-gray-200 rounded-xl text-xs text-gray-400">
-              No showcase item built.
+          <div className="hidden @md:flex items-center gap-7 text-xs font-extrabold uppercase">
+            {["work", "experience", "process", "contact"].map((item) => (
+              <a key={item} href={`#${item}`} className="no-underline" style={{ color: muted }}>
+                {item}
+              </a>
+            ))}
+          </div>
+        </nav>
+
+        <header id="top" className="min-h-[660px] grid grid-cols-1 @lg:grid-cols-[1.08fr_0.92fr] gap-9 py-12 @lg:py-16 items-center border-b" style={{ borderColor: line }}>
+          <div>
+            <div className="inline-flex items-center gap-2 text-xs font-extrabold uppercase mb-6" style={{ color: accent }}>
+              <Sparkles className="w-4 h-4" />
+              Designer Portfolio
             </div>
-          ) : (
-            data.projects.map((p, idx) => (
-              <div
-                key={idx}
-                className="bg-gradient-to-br from-violet-50/50 to-orange-50/30 border border-gray-100 rounded-2xl p-5 hover:shadow-sm transition"
-              >
-                <h4 className="text-xs font-bold text-gray-900">{p.title || "Project Name"}</h4>
-                <div className="text-[10px] text-gray-500 mt-1 leading-relaxed line-clamp-2 rich-text-preview" dangerouslySetInnerHTML={{ __html: p.description || "Project summary description." }} />
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-150/40">
-                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide">
-                    {p.tech || "Figma"}
-                  </span>
-                  {p.link && (
-                    <span className="text-[9px] text-violet-600 font-bold hover:underline">Link →</span>
-                  )}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
+            <h1 className="text-5xl @md:text-6xl @lg:text-7xl leading-none font-extrabold max-w-3xl">
+              {data.portfolioName || "Creative Mind"}
+            </h1>
+            <p className="mt-7 max-w-2xl text-base @md:text-lg leading-8 font-medium" style={{ color: muted }}>
+              {data.tagline ||
+                data.portfolioDescription ||
+                "I design sharp, human digital products with expressive visuals, clean systems, and careful interaction craft."}
+            </p>
 
-      {/* Experience */}
-      <div className="space-y-4">
-        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Journey</span>
-        <div className="space-y-4">
-          {data.experiences.length === 0 ? (
-            <p className="text-xs text-gray-400">No career cards configured.</p>
-          ) : (
-            data.experiences.map((exp, idx) => (
-              <div key={idx} className="flex gap-4">
-                <div className="w-1.5 h-1.5 rounded-full bg-violet-600 mt-1.5 shrink-0" />
-                <div className="flex-1">
-                  <div className="flex justify-between items-start">
-                    <h4 className="text-xs font-bold text-gray-900">{exp.role || "Lead Designer"}</h4>
-                    <span className="text-[9px] text-gray-400 font-semibold">{exp.duration}</span>
+            <div className="mt-9 flex flex-wrap items-center gap-3">
+              {data.cvUrl && (
+                <a
+                  href={data.cvUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="designer-hover inline-flex items-center gap-2 px-5 py-3 text-sm font-extrabold no-underline"
+                  style={{ background: ink, color: bg, borderRadius: 8 }}
+                >
+                  <Download className="w-4 h-4" />
+                  Resume
+                </a>
+              )}
+              <a
+                href={`mailto:${data.email || "hello@example.com"}`}
+                className="designer-hover inline-flex items-center gap-2 px-5 py-3 text-sm font-extrabold no-underline border"
+                style={{ color: ink, borderColor: line, background: panelStrong, borderRadius: 8 }}
+              >
+                <Mail className="w-4 h-4" />
+                Email
+              </a>
+              {socialLinks.map(({ href, label, icon: Icon }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={label}
+                  className="designer-hover h-11 w-11 border inline-flex items-center justify-center no-underline"
+                  style={{ color: ink, borderColor: line, background: panel, borderRadius: 8 }}
+                >
+                  <Icon className="w-4 h-4" />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative">
+            <div
+              className="aspect-[4/5] overflow-hidden border relative"
+              style={{ borderColor: line, background: panelStrong, borderRadius: 8 }}
+            >
+              {data.avatarUrl ? (
+                <img
+                  src={data.avatarUrl}
+                  alt={data.portfolioName || "Designer"}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              ) : (
+                <div
+                  className="absolute inset-0 designer-cover-grid"
+                  style={{ backgroundColor: accent }}
+                >
+                  <div className="absolute inset-0 grid place-items-center">
+                    <span className="text-8xl @md:text-9xl font-extrabold" style={{ color: "#ffffff" }}>
+                      {getInitials(data.portfolioName)}
+                    </span>
                   </div>
-                  <p className="text-[9px] font-semibold text-violet-600">{exp.company || "Bowizzy Studio"}</p>
-                  <div className="text-[10px] text-gray-500 mt-1 leading-relaxed rich-text-preview" dangerouslySetInnerHTML={{ __html: exp.details || "Experience details..." }} />
                 </div>
+              )}
+            </div>
+
+            <div
+              className="absolute -left-3 @md:-left-8 bottom-8 border p-4 max-w-[240px]"
+              style={{ borderColor: line, background: panelStrong, backdropFilter: "blur(16px)", borderRadius: 8 }}
+            >
+              <p className="text-xs font-extrabold uppercase mb-2" style={{ color: accentTwo }}>
+                Now crafting
+              </p>
+              <p className="text-sm leading-6 font-bold">
+                Interfaces, brand systems, product stories, and handoff-ready design.
+              </p>
+            </div>
+          </div>
+        </header>
+
+        <section className="grid grid-cols-2 @md:grid-cols-4 border-b" style={{ borderColor: line }}>
+          {[
+            { value: data.projects.length || 0, label: "Projects" },
+            { value: caseStudies.length || 0, label: "Cases" },
+            { value: data.experiences.length || 0, label: "Roles" },
+            { value: data.skills.length || 0, label: "Skills" },
+          ].map((stat) => (
+            <div key={stat.label} className="py-6 border-r last:border-r-0" style={{ borderColor: line }}>
+              <p className="text-4xl font-extrabold">{stat.value}</p>
+              <p className="text-xs font-extrabold uppercase mt-1" style={{ color: muted }}>
+                {stat.label}
+              </p>
+            </div>
+          ))}
+        </section>
+
+        <section className="grid grid-cols-1 @lg:grid-cols-[0.38fr_0.62fr] gap-8 py-12 @lg:py-16 border-b" style={{ borderColor: line }}>
+          <div>
+            <p className="text-xs font-extrabold uppercase mb-3" style={{ color: accent }}>
+              About
+            </p>
+            <h2 className="text-3xl @md:text-4xl font-extrabold leading-tight">
+              Design with a product brain and a visual point of view.
+            </h2>
+          </div>
+          <div>
+            <p className="text-xl @md:text-2xl leading-10 font-bold">
+              {data.portfolioDescription ||
+                "I help teams turn rough ideas into clear, polished digital experiences that feel considered from the first impression to the final interaction."}
+            </p>
+            <div className="flex flex-wrap gap-2 mt-8">
+              {data.skills.length ? (
+                data.skills.map((skill) => (
+                  <span
+                    key={skill}
+                    className="px-3 py-2 border text-xs font-extrabold uppercase"
+                    style={{ borderColor: line, background: panel, color: ink, borderRadius: 8 }}
+                  >
+                    {skill}
+                  </span>
+                ))
+              ) : (
+                <span className="text-sm" style={{ color: muted }}>
+                  Add skills in the editor to show the toolkit here.
+                </span>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {caseStudies.length > 0 && (
+          <section id="case-studies" className="py-12 @lg:py-16 border-b" style={{ borderColor: line }}>
+            <div className="flex items-end justify-between gap-5 mb-8">
+              <div>
+                <p className="text-xs font-extrabold uppercase mb-3" style={{ color: accent }}>
+                  UX Case Studies
+                </p>
+                <h2 className="text-4xl @md:text-5xl font-extrabold">Design stories</h2>
               </div>
-            ))
-          )}
-        </div>
-      </div>
-    </div>
+              <Image className="hidden @md:block w-8 h-8" style={{ color: accentTwo }} />
+            </div>
+
+            <div className="grid grid-cols-1 @lg:grid-cols-2 gap-5">
+              {caseStudies.map((study, index) => (
+                <article
+                  key={`${study.title}-${index}`}
+                  className="designer-hover border overflow-hidden"
+                  style={{ borderColor: line, background: panelStrong, borderRadius: 8 }}
+                >
+                  <div
+                    className="h-64 relative overflow-hidden border-b designer-cover-grid"
+                    style={{ borderColor: line, backgroundColor: index % 2 ? ink : accent }}
+                  >
+                    {study.imageUrl ? (
+                      <img
+                        src={study.imageUrl}
+                        alt={study.title || "Case study cover"}
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-5 grid grid-cols-5 grid-rows-4 gap-3">
+                        <span className="col-span-3 row-span-4" style={{ background: "rgba(255,255,255,0.72)", borderRadius: 8 }} />
+                        <span className="col-span-2 row-span-2" style={{ background: accentTwo, borderRadius: 8 }} />
+                        <span className="col-span-2 row-span-2" style={{ background: "rgba(255,255,255,0.26)", borderRadius: 8 }} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-5 @md:p-6">
+                    <div className="flex items-start justify-between gap-4 mb-3">
+                      <div>
+                        <p className="text-xs font-extrabold uppercase mb-2" style={{ color: accent }}>
+                          {study.role || "UI/UX Design"}
+                        </p>
+                        <h3 className="text-2xl font-extrabold">{study.title || "Case Study"}</h3>
+                      </div>
+                      {study.link && (
+                        <a
+                          href={study.link}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={`${study.title || "Case study"} link`}
+                          className="h-10 w-10 shrink-0 border inline-flex items-center justify-center no-underline"
+                          style={{ color: ink, borderColor: line, borderRadius: 8 }}
+                        >
+                          <ArrowUpRight className="w-5 h-5" />
+                        </a>
+                      )}
+                    </div>
+                    {study.subtitle && (
+                      <p className="text-sm font-extrabold mb-4" style={{ color: muted }}>
+                        {study.subtitle}
+                      </p>
+                    )}
+                    <RichText
+                      html={study.description}
+                      fallback="Problem, process, solution, and outcome."
+                      className="text-sm leading-7"
+                    />
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section id="work" className="py-12 @lg:py-16 border-b" style={{ borderColor: line }}>
+          <div className="flex items-end justify-between gap-5 mb-8">
+            <div>
+              <p className="text-xs font-extrabold uppercase mb-3" style={{ color: accent }}>
+                Selected Work
+              </p>
+              <h2 className="text-4xl @md:text-5xl font-extrabold">Recent projects</h2>
+            </div>
+            <PenTool className="hidden @md:block w-8 h-8" style={{ color: accentTwo }} />
+          </div>
+
+          <div className="grid grid-cols-1 @lg:grid-cols-2 gap-5">
+            {data.projects.length ? (
+              data.projects.map((project, index) => (
+                <article
+                  key={`${project.title}-${index}`}
+                  className="designer-hover border overflow-hidden"
+                  style={{ borderColor: line, background: panelStrong, borderRadius: 8 }}
+                >
+                  <div
+                    className="h-56 relative designer-cover-grid border-b"
+                    style={{
+                      borderColor: line,
+                      backgroundColor: index % 2 ? ink : accent,
+                    }}
+                  >
+                    <div className="absolute inset-5 grid grid-cols-6 grid-rows-4 gap-3">
+                      <span className="col-span-4 row-span-2" style={{ background: "rgba(255,255,255,0.72)", borderRadius: 8 }} />
+                      <span className="col-span-2 row-span-2" style={{ background: accentTwo, borderRadius: 8 }} />
+                      <span className="col-span-2 row-span-2" style={{ background: "rgba(255,255,255,0.32)", borderRadius: 8 }} />
+                      <span className="col-span-4 row-span-2" style={{ background: "rgba(255,255,255,0.18)", borderRadius: 8 }} />
+                    </div>
+                  </div>
+                  <div className="p-5 @md:p-6">
+                    <div className="flex items-start justify-between gap-4 mb-4">
+                      <h3 className="text-2xl font-extrabold">{project.title || "Project Name"}</h3>
+                      {project.link && (
+                        <a
+                          href={project.link}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={`${project.title || "Project"} link`}
+                          className="h-10 w-10 shrink-0 border inline-flex items-center justify-center no-underline"
+                          style={{ color: ink, borderColor: line, borderRadius: 8 }}
+                        >
+                          <ArrowUpRight className="w-5 h-5" />
+                        </a>
+                      )}
+                    </div>
+                    <RichText
+                      html={project.description}
+                      fallback="Project summary description."
+                      className="text-sm leading-7"
+                    />
+                    <p className="text-xs font-extrabold uppercase mt-6" style={{ color: accent }}>
+                      {project.tech || "Design System"}
+                    </p>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <div className="border p-8 text-sm" style={{ borderColor: line, color: muted, borderRadius: 8 }}>
+                Add projects in the editor to build the showcase grid.
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section id="experience" className="grid grid-cols-1 @lg:grid-cols-[0.35fr_0.65fr] gap-8 py-12 @lg:py-16 border-b" style={{ borderColor: line }}>
+          <div>
+            <p className="text-xs font-extrabold uppercase mb-3" style={{ color: accent }}>
+              Experience
+            </p>
+            <h2 className="text-4xl font-extrabold leading-tight">Career so far</h2>
+          </div>
+
+          <div className="space-y-4">
+            {data.experiences.length ? (
+              data.experiences.map((exp, index) => (
+                <article
+                  key={`${exp.role}-${index}`}
+                  className="grid grid-cols-[2.75rem_1fr] gap-4 border-b pb-6"
+                  style={{ borderColor: line }}
+                >
+                  <span
+                    className="h-11 w-11 grid place-items-center border"
+                    style={{ borderColor: line, background: panel, borderRadius: 8 }}
+                  >
+                    <Briefcase className="w-4 h-4" style={{ color: accent }} />
+                  </span>
+                  <div>
+                    <div className="flex flex-wrap justify-between gap-3 mb-1">
+                      <h3 className="text-lg font-extrabold">{exp.role || "Lead Designer"}</h3>
+                      <span className="text-xs font-extrabold uppercase" style={{ color: muted }}>
+                        {exp.duration}
+                      </span>
+                    </div>
+                    <p className="text-sm font-extrabold mb-3" style={{ color: accent }}>
+                      {exp.company || "Creative Studio"}
+                    </p>
+                    <RichText
+                      html={exp.details}
+                      fallback="Experience details..."
+                      className="text-sm leading-7"
+                    />
+                  </div>
+                </article>
+              ))
+            ) : (
+              <p className="text-sm" style={{ color: muted }}>
+                Add experience in the editor to show the career timeline.
+              </p>
+            )}
+          </div>
+        </section>
+
+        <section id="process" className="py-12 @lg:py-16 border-b" style={{ borderColor: line }}>
+          <p className="text-xs font-extrabold uppercase mb-7" style={{ color: accent }}>
+            Process
+          </p>
+          <div className="grid grid-cols-1 @md:grid-cols-3 gap-4">
+            {processSteps.map((step, index) => (
+              <article
+                key={`${step.title}-${index}`}
+                className="border p-5"
+                style={{ borderColor: line, background: panel, borderRadius: 8 }}
+              >
+                <p className="text-xs font-extrabold mb-10" style={{ color: accentTwo }}>
+                  {String(index + 1).padStart(2, "0")}
+                </p>
+                <h3 className="text-xl font-extrabold mb-3">{step.title || "Process Step"}</h3>
+                <p className="text-sm leading-7" style={{ color: muted }}>
+                  {step.description || "Describe this phase of your design process."}
+                </p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section id="contact" className="py-12 @lg:py-16">
+          <div className="grid grid-cols-1 @lg:grid-cols-[1fr_auto] gap-7 items-center">
+            <div>
+              <p className="text-xs font-extrabold uppercase mb-4" style={{ color: accent }}>
+                Contact
+              </p>
+              <h2 className="text-4xl @md:text-6xl font-extrabold leading-none">
+                Let's build something with taste.
+              </h2>
+            </div>
+            <a
+              href={`mailto:${data.email || "hello@example.com"}`}
+              className="designer-hover inline-flex items-center justify-center gap-2 px-6 py-4 text-sm font-extrabold no-underline"
+              style={{ background: accent, color: "#ffffff", borderRadius: 8 }}
+            >
+              <Mail className="w-4 h-4" />
+              Get in touch
+            </a>
+          </div>
+        </section>
+      </section>
+    </main>
   );
 }
