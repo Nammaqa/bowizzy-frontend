@@ -198,6 +198,9 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
                       </Text>
                     </View>
                     <Text style={{ fontSize: 11, color: '#000', marginTop: 6 }}>{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</Text>
+                    {edu.universityBoard ? (
+                      <Text style={{ fontSize: 11, color: '#555', marginTop: 4 }}>{edu.universityBoard}</Text>
+                    ) : null}
                     {edu.resultFormat && edu.result ? (
                       <Text style={{ fontSize: 11, color: '#000', marginTop: 6 }}>{edu.resultFormat}: {edu.result}</Text>
                     ) : null}
@@ -212,7 +215,7 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
                       <Text>{education.preUniversity.instituteName || 'Pre University'}</Text>
                       <Text style={{ fontSize: 11, color: '#000' }}>{education.preUniversity.yearOfPassing ? formatYear(education.preUniversity.yearOfPassing) : ''}</Text>
                     </View>
-                    <Text style={{ fontSize: 11, color: '#000', marginTop: 6 }}>Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}</Text>
+                    <Text style={{ fontSize: 11, color: '#000', marginTop: 6 }}>Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}{education.preUniversity.boardType ? ` — ${education.preUniversity.boardType}` : ''}</Text>
                     {education.preUniversity.resultFormat && education.preUniversity.result && (
                       <Text style={{ fontSize: 11, color: '#000', marginTop: 6 }}>{education.preUniversity.resultFormat}: {education.preUniversity.result}</Text>
                     )}
@@ -237,12 +240,27 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
           </>
         )}
 
+        {/* SKILLS row */}
+        {(skillsLinks?.skills || []).some((s: any) => s.enabled && s.skillName) && (
+          <>
+            <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 12, marginBottom: 12 }} />
+            <View style={{ flexDirection: 'row' }}>
+              <View style={{ width: 150 }}><Text style={styles.sectionHeading}>SKILLS</Text></View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 11, color: '#000', lineHeight: 1.6 }}>
+                  {(skillsLinks?.skills || []).filter((s: any) => s.enabled && s.skillName).map((s: any) => s.skillName).join(', ')}
+                </Text>
+              </View>
+            </View>
+          </>
+        )}
+
         {/* CERTIFICATES row */}
         {(certifications || []).filter((c: any) => c.enabled && c.certificateTitle).length > 0 && (
           <>
             <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 12, marginBottom: 12 }} />
             <View style={{ flexDirection: 'row' }}>
-              <View style={{ width: 140 }}><Text style={styles.sectionHeading}>CERTIFICATES</Text></View>
+              <View style={{ width: 150 }}><Text style={styles.sectionHeading}>CERTIFICATES</Text></View>
               <View style={{ flex: 1 }}>
                 <View style={{ marginTop: 6, flexDirection: 'row', flexWrap: 'wrap' }}>
                   {(certifications || []).filter((c: any) => c.enabled && c.certificateTitle).map((c: any, i: number) => (

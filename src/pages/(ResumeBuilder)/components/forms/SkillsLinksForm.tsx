@@ -149,8 +149,8 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
     if (/^\d+$/.test(value.trim())) {
       return "Skill cannot be only numbers";
     }
-    if (value.replace(/\s/g, "").length > 12) {
-      return "Max 12 characters (excluding spaces)";
+    if (value.length > 13) {
+      return "Max 13 characters allowed";
     }
 
     return "";
@@ -520,7 +520,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
   const updateSkill = (id: string, field: string, value: string | boolean) => {
     if (field === "skillName") {
       const strValue = value as string;
-      if (strValue.replace(/\s/g, "").length > 12) return;
+      if (strValue.length > 13) return;
       const error = validateSkillName(strValue);
       setErrors((prev) => ({ ...prev, [`skill-${id}-skillName`]: error }));
     }
@@ -860,7 +860,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
             </div>
           </div>
 
-          <div className="flex flex-col gap-1 mt-4">
+          {/* <div className="flex flex-col gap-1 mt-4">
             <label className="font-medium">Portfolio Description</label>
             <RichTextEditor
               placeholder="Provide Portfolio Description..."
@@ -868,10 +868,10 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
               onChange={(v) => updateLink("portfolioDescription", v)}
               rows={3}
             />
-          </div>
+          </div> */}
 
           {/* Publication */}
-          <div className="flex items-center gap-3">
+          {/* <div className="flex items-center gap-3">
             <div className="flex-1">
               <FormInput
                 label="Publication URL"
@@ -897,7 +897,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
               onChange={(v) => updateLink("publicationDescription", v)}
               rows={3}
             />
-          </div>
+          </div> */}
         </div>
 
         <div className="flex items-center justify-end gap-2 mt-8 pt-4 border-t border-gray-200">

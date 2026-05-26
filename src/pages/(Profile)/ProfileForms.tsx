@@ -518,17 +518,6 @@ export default function ProfileForm() {
         if (!data.jobRole) {
           return false;
         }
-        // If fresher, work experiences are not required
-        if (data.experienceLevel === "fresher") {
-          return true;
-        }
-        // For intern and experienced, at least one work experience is required
-        const hasValidExperience = data.workExperiences.some(
-          (exp) => exp.companyName && exp.jobTitle
-        );
-        if (!hasValidExperience) {
-          return false;
-        }
         break;
 
       case 3: // Projects

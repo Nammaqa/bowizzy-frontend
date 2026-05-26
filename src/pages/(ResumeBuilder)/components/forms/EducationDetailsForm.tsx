@@ -33,7 +33,6 @@ interface EducationDetailsFormProps {
   setDeleteEducationIds: React.Dispatch<React.SetStateAction<number[]>>;
 }
 
-
 const boardTypes = [
   { value: "CBSE", label: "CBSE" },
   { value: "ICSE", label: "ICSE" },
@@ -97,7 +96,6 @@ export const branchesByDegree: Record<string, string[]> = {
     "IT",
     "Automobile",
   ],
-
   "B.Tech": [
     "Computer Science",
     "Information Technology",
@@ -108,7 +106,6 @@ export const branchesByDegree: Record<string, string[]> = {
     "Civil",
     "Cyber Security",
   ],
-
   "B.E": [
     "Computer Science",
     "Information Technology",
@@ -117,7 +114,6 @@ export const branchesByDegree: Record<string, string[]> = {
     "Mechanical",
     "Civil",
   ],
-
   "B.Sc": [
     "Computer Science",
     "IT",
@@ -127,7 +123,6 @@ export const branchesByDegree: Record<string, string[]> = {
     "Statistics",
     "Biotechnology",
   ],
-
   "B.A": [
     "English",
     "History",
@@ -136,15 +131,7 @@ export const branchesByDegree: Record<string, string[]> = {
     "Psychology",
     "Sociology",
   ],
-
-  "B.Com": [
-    "General",
-    "Accounting",
-    "Finance",
-    "Banking",
-    "Taxation",
-  ],
-
+  "B.Com": ["General", "Accounting", "Finance", "Banking", "Taxation"],
   "M.Tech": [
     "CSE",
     "Data Science",
@@ -153,7 +140,6 @@ export const branchesByDegree: Record<string, string[]> = {
     "Power Systems",
     "Thermal Engineering",
   ],
-
   "M.Sc": [
     "Computer Science",
     "Mathematics",
@@ -161,7 +147,6 @@ export const branchesByDegree: Record<string, string[]> = {
     "Chemistry",
     "Data Science",
   ],
-
   MBA: [
     "Finance",
     "Marketing",
@@ -170,7 +155,6 @@ export const branchesByDegree: Record<string, string[]> = {
     "Business Analytics",
     "International Business",
   ],
-
   PhD: [
     "Computer Science",
     "Engineering",
@@ -179,7 +163,6 @@ export const branchesByDegree: Record<string, string[]> = {
     "Arts",
     "Commerce",
   ],
-
   BBA: [
     "General Management",
     "Finance",
@@ -188,21 +171,18 @@ export const branchesByDegree: Record<string, string[]> = {
     "International Business",
     "Entrepreneurship",
   ],
-
   BCA: [
     "Computer Applications",
     "Data Science",
     "Cloud Computing",
     "Cybersecurity",
   ],
-
   "B.Arch": [
     "Architecture",
     "Urban Planning",
     "Interior Design",
     "Landscape Architecture",
   ],
-
   "B.Des": [
     "Fashion Design",
     "Graphic Design",
@@ -210,21 +190,18 @@ export const branchesByDegree: Record<string, string[]> = {
     "Interior Design",
     "UI/UX Design",
   ],
-
   "B.Pharm": [
     "Pharmaceutics",
     "Pharmacology",
     "Pharmaceutical Chemistry",
     "Clinical Pharmacy",
   ],
-
   "B.Ed": [
     "Primary Education",
     "Secondary Education",
     "Special Education",
     "Physical Education",
   ],
-
   MBBS: [
     "General Medicine",
     "Surgery",
@@ -232,14 +209,7 @@ export const branchesByDegree: Record<string, string[]> = {
     "Obstetrics & Gynecology",
     "Orthopedics",
   ],
-
-  BDS: [
-    "Oral Medicine",
-    "Orthodontics",
-    "Prosthodontics",
-    "Oral Surgery",
-  ],
-
+  BDS: ["Oral Medicine", "Orthodontics", "Prosthodontics", "Oral Surgery"],
   LLB: [
     "Corporate Law",
     "Criminal Law",
@@ -247,14 +217,7 @@ export const branchesByDegree: Record<string, string[]> = {
     "Intellectual Property Law",
     "International Law",
   ],
-
-  BHM: [
-    "Hotel Management",
-    "Hospitality",
-    "Food & Beverage",
-    "Travel & Tourism",
-  ],
-
+  BHM: ["Hotel Management", "Hospitality", "Food & Beverage", "Travel & Tourism"],
   "M.A": [
     "English",
     "History",
@@ -264,15 +227,7 @@ export const branchesByDegree: Record<string, string[]> = {
     "Sociology",
     "Journalism",
   ],
-
-  "M.Com": [
-    "Accounting",
-    "Finance",
-    "Taxation",
-    "Banking",
-    "Business Management",
-  ],
-
+  "M.Com": ["Accounting", "Finance", "Taxation", "Banking", "Business Management"],
   MCA: [
     "Computer Applications",
     "Data Science",
@@ -280,35 +235,30 @@ export const branchesByDegree: Record<string, string[]> = {
     "Cybersecurity",
     "Software Engineering",
   ],
-
   "M.Arch": [
     "Architecture",
     "Urban Design",
     "Sustainable Architecture",
     "Interior Architecture",
   ],
-
   "M.Des": [
     "Industrial Design",
     "Communication Design",
     "Fashion Design",
     "UI/UX Design",
   ],
-
   "M.Pharm": [
     "Pharmaceutics",
     "Pharmacology",
     "Pharmaceutical Chemistry",
     "Clinical Pharmacy",
   ],
-
   "M.Ed": [
     "Educational Administration",
     "Curriculum & Instruction",
     "Special Education",
     "Educational Psychology",
   ],
-
   LLM: [
     "Corporate Law",
     "Criminal Law",
@@ -316,7 +266,6 @@ export const branchesByDegree: Record<string, string[]> = {
     "International Law",
     "Intellectual Property Law",
   ],
-
   "PG Diploma": [
     "Data Science",
     "Business Analytics",
@@ -366,7 +315,6 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
   const [higherEduFeedback, setHigherEduFeedback] = useState<Record<string, string>>({});
   const [hiddenSaveIds, setHiddenSaveIds] = useState<Set<string>>(new Set());
 
-
   const initialDataRef = useRef(data);
 
   const hasSslcChanged = useCallback(() => {
@@ -388,8 +336,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     const initial = initialDataRef.current.preUniversity;
 
     return (
-      data.preUniversityEnabled !==
-      initialDataRef.current.preUniversityEnabled ||
+      data.preUniversityEnabled !== initialDataRef.current.preUniversityEnabled ||
       current.instituteName !== initial.instituteName ||
       current.boardType !== initial.boardType ||
       current.subjectStream !== initial.subjectStream ||
@@ -406,12 +353,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       );
 
       if (!initial) {
-        return !!(
-          edu.degree ||
-          edu.instituteName ||
-          edu.fieldOfStudy ||
-          edu.result
-        );
+        return !!(edu.degree || edu.instituteName || edu.fieldOfStudy || edu.result);
       }
 
       return (
@@ -467,7 +409,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     resultFormat?: string
   ) => {
     if (typeof value !== "string") return "";
-    // Reuse helper validators (institution name, result format, month format)
+
     const validateResult = (val: string, format?: string) => {
       if (!val || !format) return "";
 
@@ -478,27 +420,30 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       if (format === "Percentage") {
         const num = parseFloat(val);
         if (isNaN(num)) return "Enter valid percentage";
-        if (!/^\d+(\.\d{1,2})?$/.test(val)) return "Enter valid percentage (e.g., 85 or 85.5)";
+        if (!/^\d+(\.\d{1,2})?$/.test(val))
+          return "Enter valid percentage (e.g., 85 or 85.5)";
         if (num < 0 || num > 100) return "Percentage must be between 0 and 100";
       }
 
       if (format === "CGPA") {
         const num = parseFloat(val);
         if (isNaN(num)) return "Enter valid CGPA";
-        if (!/^\d+(\.\d{1,2})?$/.test(val)) return "Enter valid CGPA (e.g., 8.5)";
+        if (!/^\d+(\.\d{1,2})?$/.test(val))
+          return "Enter valid CGPA (e.g., 8.5)";
         if (num < 0 || num > 10) return "CGPA must be between 0 and 10";
       }
 
       if (format === "GPA") {
         const num = parseFloat(val);
         if (isNaN(num)) return "Enter valid GPA";
-        if (!/^\d+(\.\d{1,2})?$/.test(val)) return "Enter valid GPA (e.g., 3.5)";
+        if (!/^\d+(\.\d{1,2})?$/.test(val))
+          return "Enter valid GPA (e.g., 3.5)";
         if (num < 0 || num > 4) return "GPA must be between 0 and 4";
       }
 
       if (format === "Grade") {
-        // Allow only uppercase letter grades optionally with +; allow 'Pass' or 'Fail' (uppercase only)
-        if (!/^(?:[A-F]\+?|Pass|Fail)$/.test(val)) return "Enter valid grade (A, B+, Pass, Fail). Use uppercase letters.";
+        if (!/^(?:[A-F]\+?|Pass|Fail)$/.test(val))
+          return "Enter valid grade (A, B+, Pass, Fail). Use uppercase letters.";
       }
 
       return "";
@@ -509,34 +454,36 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       const regex = /^[a-zA-Z0-9\s.,&'\-()]+$/;
       if (!regex.test(val)) return "Invalid institution name";
       if (!/[a-zA-Z]/.test(val)) return "Institution name must include a letter";
+      if (val.length > 50) return "Max 50 characters allowed";
+      if (val.split(/\s+/).some((word) => word.length > 15))
+        return "Each word must be 15 chars or less";
       return "";
     };
 
     const validateMonthFormat = (val: string) => {
       if (!val || val === "") return "";
-      if (!/^\d{4}-\d{2}$/.test(val)) return "Please select a valid month (YYYY-MM)";
+      if (!/^\d{4}-\d{2}$/.test(val))
+        return "Please select a valid month (YYYY-MM)";
       const [y, m] = val.split("-");
       if (y.length !== 4) return "Year must be 4 digits";
       const monthNum = parseInt(m, 10);
-      if (isNaN(monthNum) || monthNum < 1 || monthNum > 12) return "Invalid month";
+      if (isNaN(monthNum) || monthNum < 1 || monthNum > 12)
+        return "Invalid month";
       return "";
     };
 
     const validateYearOrMonth = (val: string) => {
       if (!val || val === "") return "";
-      // Allow either YYYY or YYYY-MM
       if (/^\d{4}$/.test(val)) return "";
       if (/^\d{4}-\d{2}$/.test(val)) {
         const [y, m] = val.split("-");
         if (y.length !== 4) return "Year must be 4 digits";
         const monthNum = parseInt(m, 10);
-        if (isNaN(monthNum) || monthNum < 1 || monthNum > 12) return "Invalid month";
+        if (isNaN(monthNum) || monthNum < 1 || monthNum > 12)
+          return "Invalid month";
         return "";
       }
-
-      // If user typed digits without hyphen but length is not 4, give a specific message
       if (/^\d{1,3}$/.test(val)) return "Enter 4-digit year (YYYY)";
-
       return "Enter year as YYYY or month as YYYY-MM";
     };
 
@@ -555,7 +502,6 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       error = validateResult(value, resultFormat);
     }
 
-    // For SSLC / Pre-University yearOfPassing (they use month picker) - disallow future
     if (name.includes("yearOfPassing") && value) {
       const monthError = validateMonthFormat(value);
       if (monthError) {
@@ -568,7 +514,6 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       }
     }
 
-    // For Higher Education startYear/endYear: allow YYYY or YYYY-MM (permit future years)
     if ((name.endsWith(".startYear") || name.endsWith(".endYear")) && value) {
       error = validateYearOrMonth(value);
     }
@@ -591,7 +536,6 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     return "";
   };
 
-  // NEW: Reset SSLC to initial values
   const handleResetSslc = () => {
     const initial = initialDataRef.current.sslc;
     onChange({
@@ -608,7 +552,6 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     setSslcFeedback("");
   };
 
-  // NEW: Reset Pre-University to initial values
   const handleResetPu = () => {
     const initial = initialDataRef.current.preUniversity;
     onChange({
@@ -625,7 +568,6 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     setPuFeedback("");
   };
 
-  // NEW: Reset Higher Education to initial values
   const handleResetHigherEducation = (id: string) => {
     const initial = initialDataRef.current.higherEducation.find(
       (e) => e.id === id
@@ -674,11 +616,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
           result: "",
           education_id: null,
         };
-        onChange({
-          ...data,
-          sslc: clearedData,
-          sslcEnabled: false,
-        });
+        onChange({ ...data, sslc: clearedData, sslcEnabled: false });
         initialDataRef.current = {
           ...initialDataRef.current,
           sslc: clearedData,
@@ -716,9 +654,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
         if (currentData.yearOfPassing !== initialData.yearOfPassing)
           updatePayload.end_year = buildYear(currentData.yearOfPassing);
         if (currentData.resultFormat !== initialData.resultFormat)
-          updatePayload.result_format = (
-            currentData.resultFormat || ""
-          ).toLowerCase();
+          updatePayload.result_format = (currentData.resultFormat || "").toLowerCase();
         if (currentData.result !== initialData.result)
           updatePayload.result = currentData.result;
 
@@ -751,11 +687,11 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
         sslcEnabled: data.sslcEnabled,
       };
       setSslcFeedback(feedbackMessage);
-      setHiddenSaveIds(prev => new Set([...prev, "sslc"]));
+      setHiddenSaveIds((prev) => new Set([...prev, "sslc"]));
 
       setTimeout(() => {
         setSslcFeedback("");
-        setHiddenSaveIds(prev => {
+        setHiddenSaveIds((prev) => {
           const updated = new Set(prev);
           updated.delete("sslc");
           return updated;
@@ -774,7 +710,10 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     const education_id = initialDataRef.current.preUniversity.education_id;
     const isEnabled = data.preUniversityEnabled;
 
-    if (errors["preUniversity.result"] || errors["preUniversity.instituteName"])
+    if (
+      errors["preUniversity.result"] ||
+      errors["preUniversity.instituteName"]
+    )
       return;
 
     try {
@@ -872,11 +811,11 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
         preUniversityEnabled: data.preUniversityEnabled,
       };
       setPuFeedback(feedbackMessage);
-      setHiddenSaveIds(prev => new Set([...prev, "preUniversity"]));
+      setHiddenSaveIds((prev) => new Set([...prev, "preUniversity"]));
 
       setTimeout(() => {
         setPuFeedback("");
-        setHiddenSaveIds(prev => {
+        setHiddenSaveIds((prev) => {
           const updated = new Set(prev);
           updated.delete("preUniversity");
           return updated;
@@ -960,21 +899,55 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
         currently_pursuing: !!edu.currentlyPursuing,
       };
 
+      const clearOtherCurrentlyPursuingRecords = async () => {
+        if (!edu.currentlyPursuing) return;
+
+        const otherCurrentRecords = data.higherEducation.filter((item) => {
+          const initial =
+            initialDataRef.current.higherEducation.find(
+              (initialItem) => initialItem.id === item.id
+            ) || ({} as HigherEducation);
+
+          return (
+            item.id !== edu.id &&
+            item.education_id &&
+            (item.currentlyPursuing || initial.currentlyPursuing)
+          );
+        });
+
+        await Promise.all(
+          otherCurrentRecords.map((item) =>
+            updateEducationDetails(userId, token, item.education_id as number, {
+              currently_pursuing: false,
+            })
+          )
+        );
+      };
+
       if (isNew) {
         response = await saveEducationDetails(userId, token, [{ ...payload }]);
 
         if (response && response.length > 0 && response[0].education_id) {
           const newId = response[0].education_id;
+          await clearOtherCurrentlyPursuingRecords();
 
           const updatedEducation = data.higherEducation.map((e) =>
-            e.id === edu.id ? { ...e, education_id: newId } : e
+            e.id === edu.id
+              ? { ...e, education_id: newId }
+              : edu.currentlyPursuing
+                ? { ...e, currentlyPursuing: false }
+                : e
           );
           onChange({ ...data, higherEducation: updatedEducation });
           setEducationDataIdMap((prev) => ({ ...prev, [edu.id]: newId }));
 
           const updatedRefEducation =
             initialDataRef.current.higherEducation.map((e) =>
-              e.id === edu.id ? { ...e, education_id: newId } : e
+              e.id === edu.id
+                ? { ...e, education_id: newId }
+                : edu.currentlyPursuing
+                  ? { ...e, currentlyPursuing: false }
+                  : e
             );
           initialDataRef.current = {
             ...initialDataRef.current,
@@ -985,8 +958,9 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
         feedbackMessage = "Saved successfully!";
       } else {
         const initial =
-          initialDataRef.current.higherEducation.find((i) => i.id === edu.id) ||
-          ({} as HigherEducation);
+          initialDataRef.current.higherEducation.find(
+            (i) => i.id === edu.id
+          ) || ({} as HigherEducation);
         const updatePayload: Record<string, any> = {};
 
         if (edu.degree !== initial.degree) updatePayload.degree = edu.degree;
@@ -1014,21 +988,36 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
             updatePayload
           );
 
+          await clearOtherCurrentlyPursuingRecords();
+
+          const updatedEducation = data.higherEducation.map((e) =>
+            e.id === edu.id
+              ? { ...edu }
+              : edu.currentlyPursuing
+                ? { ...e, currentlyPursuing: false }
+                : e
+          );
+          onChange({ ...data, higherEducation: updatedEducation });
+
           const updatedRefEducation =
             initialDataRef.current.higherEducation.map((e) =>
-              e.id === edu.id ? { ...edu } : e
+              e.id === edu.id
+                ? { ...edu }
+                : edu.currentlyPursuing
+                  ? { ...e, currentlyPursuing: false }
+                  : e
             );
           initialDataRef.current = {
             ...initialDataRef.current,
             higherEducation: updatedRefEducation,
           };
-
-          feedbackMessage = "Updated successfully!";
         }
+
+        feedbackMessage = "Updated successfully!";
       }
 
       setHigherEduFeedback((prev) => ({ ...prev, [edu.id]: feedbackMessage }));
-      setHiddenSaveIds(prev => new Set([...prev, edu.id]));
+      setHiddenSaveIds((prev) => new Set([...prev, edu.id]));
 
       setTimeout(() => {
         setHigherEduFeedback((prev) => {
@@ -1036,17 +1025,17 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
           delete updated[edu.id];
           return updated;
         });
-        setHiddenSaveIds(prev => {
+        setHiddenSaveIds((prev) => {
           const updated = new Set(prev);
           updated.delete(edu.id);
           return updated;
         });
       }, 3000);
     } catch (error) {
-      console.error(`Error saving higher education ${edu.id}:`, error);
+      console.error("Error saving higher education:", error);
       setHigherEduFeedback((prev) => ({
         ...prev,
-        [edu.id]: `Failed to ${isNew ? "save" : "update"}`,
+        [edu.id]: "Failed to save",
       }));
       setTimeout(
         () =>
@@ -1060,45 +1049,36 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     }
   };
 
-  const updateSSLC = (field: string, value: string) => {
-    // sanitize month input for yearOfPassing to avoid invalid manual typing
-    const sanitizeMonthInput = (val: string) => {
-      if (!val) return "";
-      const cleaned = val.replace(/[^0-9-]/g, "");
-      // If user typed hyphen-month form, keep up to YYYY-MM
-      if (cleaned.includes("-")) return cleaned.slice(0, 7);
-      // No hyphen -> user is typing a year manually; allow up to 4 digits only
-      return cleaned.slice(0, 4);
-    };
-
-    const newData = {
+  const updateSSLC = (
+    field: string,
+    value: string
+  ) => {
+    onChange({
       ...data,
-      sslc: { ...data.sslc, [field]: field === "yearOfPassing" ? sanitizeMonthInput(value) : value },
-    };
-    onChange(newData);
-
-    const error = validateField(`sslc.${field}`, newData.sslc[field as keyof typeof newData.sslc] as string, newData.sslc.resultFormat);
-    setErrors((prev) => ({ ...prev, [`sslc.${field}`]: error }));
+      sslc: { ...data.sslc, [field]: value },
+    });
     setSslcFeedback("");
+
+    const fieldError = validateField(`sslc.${field}`, value, data.sslc.resultFormat);
+    setErrors((prev) => ({ ...prev, [`sslc.${field}`]: fieldError }));
   };
 
-  const updatePreUniversity = (field: string, value: string) => {
-    const sanitizeMonthInput = (val: string) => {
-      if (!val) return "";
-      const cleaned = val.replace(/[^0-9-]/g, "");
-      if (cleaned.includes("-")) return cleaned.slice(0, 7);
-      return cleaned.slice(0, 4);
-    };
-
-    const newData = {
+  const updatePreUniversity = (
+    field: string,
+    value: string
+  ) => {
+    onChange({
       ...data,
-      preUniversity: { ...data.preUniversity, [field]: field === "yearOfPassing" ? sanitizeMonthInput(value) : value },
-    };
-    onChange(newData);
-
-    const error = validateField(`preUniversity.${field}`, newData.preUniversity[field as keyof typeof newData.preUniversity] as string, newData.preUniversity.resultFormat);
-    setErrors((prev) => ({ ...prev, [`preUniversity.${field}`]: error }));
+      preUniversity: { ...data.preUniversity, [field]: value },
+    });
     setPuFeedback("");
+
+    const fieldError = validateField(
+      `preUniversity.${field}`,
+      value,
+      data.preUniversity.resultFormat
+    );
+    setErrors((prev) => ({ ...prev, [`preUniversity.${field}`]: fieldError }));
   };
 
   const updateHigherEducation = (
@@ -1106,31 +1086,33 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     field: string,
     value: string | boolean
   ) => {
-    const sanitizeYearOrMonthInput = (val: string) => {
-      if (!val) return "";
-      // allow YYYY or YYYY-MM; limit lengths without silently changing to other formats
-      const cleaned = val.replace(/[^0-9-]/g, "");
+    const sanitizeYearOrMonthInput = (raw: string): string => {
+      const cleaned = raw.replace(/[^\d-]/g, "");
       if (cleaned.includes("-")) {
         // keep at most YYYY-MM (7 chars)
         return cleaned.slice(0, 7);
       }
-      // no hyphen -> year typed manually, allow up to 4 digits (do not auto-expand)
+      // no hyphen -> year typed manually, allow up to 4 digits
       return cleaned.slice(0, 4);
     };
 
     const normalizedValue =
       field === "startYear" || field === "endYear"
-        ? (typeof value === "string" ? sanitizeYearOrMonthInput(value) : value)
+        ? typeof value === "string"
+          ? sanitizeYearOrMonthInput(value)
+          : value
         : value;
 
-    const updatedEducation = data.higherEducation.map((edu) =>
-      edu.id === id ? { ...edu, [field]: normalizedValue } : edu
-    );
-
-    onChange({
-      ...data,
-      higherEducation: updatedEducation,
+    const updatedEducation = data.higherEducation.map((edu) => {
+      if (field === "currentlyPursuing" && normalizedValue === true) {
+        return edu.id === id
+          ? { ...edu, currentlyPursuing: true, endYear: "" }
+          : { ...edu, currentlyPursuing: false };
+      }
+      return edu.id === id ? { ...edu, [field]: normalizedValue } : edu;
     });
+
+    onChange({ ...data, higherEducation: updatedEducation });
 
     setHigherEduFeedback((prev) => {
       const updated = { ...prev };
@@ -1265,7 +1247,8 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     const feedback = higherEduFeedback[id];
     const isNewCard = !education.education_id;
     const isExpanded = expandedEducationIds.has(id);
-    const isEnabled = education.enabled !== undefined ? education.enabled : true;
+    const isEnabled =
+      education.enabled !== undefined ? education.enabled : true;
 
     const title = education.degree
       ? education.fieldOfStudy
@@ -1277,7 +1260,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       <FormSection
         key={id}
         title={title}
-        required={index === 0}
+        required={false}
         showToggle={true}
         enabled={isEnabled}
         onToggle={(enabled) => toggleHigherEducation(id, enabled)}
@@ -1364,8 +1347,8 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
                 }
                 disabled={education.currentlyPursuing}
                 className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-sm disabled:bg-gray-100 ${errors[`higherEducation.${id}.endYear`]
-                  ? "border-red-500 focus:ring-red-400"
-                  : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                    ? "border-red-500 focus:ring-red-400"
+                    : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
                   }`}
               />
               {errors[`higherEducation.${id}.endYear`] && (
@@ -1415,8 +1398,8 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
             {feedback && (
               <span
                 className={`text-xs px-2 py-1 rounded-full ${feedback.includes("successfully")
-                  ? "bg-green-100 text-green-700"
-                  : "bg-red-100 text-red-700"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
                   }`}
               >
                 {feedback}
@@ -1455,7 +1438,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     <div className="flex flex-col gap-5">
       <FormSection
         title={"SSLC (10th Standard)"}
-        required={true}
+        required={false}
         enabled={data.sslcEnabled}
         onToggle={(enabled) => onChange({ ...data, sslcEnabled: enabled })}
         showActions={true}
@@ -1513,8 +1496,8 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
           {sslcFeedback && (
             <span
               className={`text-xs px-2 py-1 rounded-full ${sslcFeedback.includes("successfully")
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
                 }`}
             >
               {sslcFeedback}
@@ -1619,8 +1602,8 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
           {puFeedback && (
             <span
               className={`text-xs px-2 py-1 rounded-full ${puFeedback.includes("successfully")
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
                 }`}
             >
               {puFeedback}
@@ -1632,7 +1615,11 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
               onClick={handleSavePu}
               className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-md text-sm font-medium shadow-sm hover:from-orange-500 hover:to-orange-600 transition cursor-pointer"
               aria-pressed="false"
-              aria-label={data.preUniversity.education_id ? "Update Pre University" : "Save Pre University"}
+              aria-label={
+                data.preUniversity.education_id
+                  ? "Update Pre University"
+                  : "Save Pre University"
+              }
             >
               <Save className="w-4 h-4" strokeWidth={2} />
               Save

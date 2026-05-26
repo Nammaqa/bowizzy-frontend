@@ -1,6 +1,6 @@
 import React from 'react';
 import DOMPurify from 'dompurify';
-import { Document, Page, View, Text, StyleSheet, Svg, Path } from '@react-pdf/renderer';
+import { Document, Page, View, Text, StyleSheet, Svg, Path, Link } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
 
 const styles = StyleSheet.create({
@@ -86,6 +86,20 @@ const IconGithub = () => (
   </Svg>
 );
 
+const IconGlobe = () => (
+  <Svg width="12" height="12" viewBox="0 0 24 24" style={{ marginRight: 6 }}>
+    <Path d="M12 2a10 10 0 100 20 10 10 0 000-20z" fill="none" stroke="#374151" strokeWidth="1.5" />
+    <Path d="M2 12h20M12 2c2.5 2.7 4 6 4 10s-1.5 7.3-4 10c-2.5-2.7-4-6-4-10s1.5-7.3 4-10z" fill="none" stroke="#374151" strokeWidth="1.5" />
+  </Svg>
+);
+
+const IconExternalLink = () => (
+  <Svg width="12" height="12" viewBox="0 0 24 24" style={{ marginRight: 6 }}>
+    <Path d="M14 3h7v7M10 14L21 3" fill="none" stroke="#374151" strokeWidth="1.5" />
+    <Path d="M21 14v5a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h5" fill="none" stroke="#374151" strokeWidth="1.5" />
+  </Svg>
+);
+
 const getSkillStars = (level?: string) => {
   const normalizedLevel = String(level || '').toLowerCase().trim();
   switch (normalizedLevel) {
@@ -126,6 +140,13 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
   const pdfFontFamily = getPdfFontFamily(fontFamily);
   const pdfFontFamilyBold = getPdfFontFamilyBold(fontFamily);
   const role = (experience && (experience as any).jobRole) || (experience.workExperiences && experience.workExperiences.find((w: any) => w.enabled && w.jobTitle) && experience.workExperiences.find((w: any) => w.enabled && w.jobTitle).jobTitle) || '';
+  const linksEnabled = skillsLinks?.linksEnabled ?? true;
+  const links = skillsLinks?.links || {};
+  const linkedinUrl = linksEnabled && (links.linkedinEnabled ?? true) ? links.linkedinProfile : '';
+  const githubUrl = linksEnabled && (links.githubEnabled ?? true) ? links.githubProfile : '';
+  const portfolioUrl = linksEnabled && (links.portfolioEnabled ?? true) ? links.portfolioUrl : '';
+  const publicationUrl = linksEnabled && (links.publicationEnabled ?? true) ? links.publicationUrl : '';
+  const linkTextStyle = { fontSize: 9, color: '#000', textDecoration: 'none' as const };
 
   return (
     <Document>
@@ -140,8 +161,10 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
             {personal.email && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconEmail /><Text style={{ fontSize: 9, color: '#000' }}>{personal.email}</Text></View>}
             {personal.mobileNumber && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconPhone /><Text style={{ fontSize: 9, color: '#000' }}>{personal.mobileNumber}</Text></View>}
             {(personal.address || personal.city || personal.state) && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconLocation /><Text style={{ fontSize: 9, color: '#000' }}>{[personal.address, personal.city, personal.state, personal.pincode].filter(Boolean).join(', ')}</Text></View>}
-            {skillsLinks.links.linkedinProfile && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconLinkedin /><Text style={{ fontSize: 9, color: '#000' }}>{skillsLinks.links.linkedinProfile}</Text></View>}
-            {skillsLinks.links.githubProfile && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconGithub /><Text style={{ fontSize: 9, color: '#000' }}>{skillsLinks.links.githubProfile}</Text></View>}
+            {linkedinUrl && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconLinkedin /><Link src={linkedinUrl} style={linkTextStyle}>{linkedinUrl}</Link></View>}
+            {githubUrl && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconGithub /><Link src={githubUrl} style={linkTextStyle}>{githubUrl}</Link></View>}
+            {portfolioUrl && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconGlobe /><Link src={portfolioUrl} style={linkTextStyle}>{portfolioUrl}</Link></View>}
+            {publicationUrl && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconExternalLink /><Link src={publicationUrl} style={linkTextStyle}>{publicationUrl}</Link></View>}
           </View>
 
           {(skillsLinks.skills || []).some((s: any) => s.enabled && s.skillName) && (

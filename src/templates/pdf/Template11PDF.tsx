@@ -515,6 +515,21 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
             </View>
           )}
 
+          {/* Languages */}
+          {personal.languagesKnown && personal.languagesKnown.length > 0 && (
+            <View style={{ marginBottom: 12 }}>
+              <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>LANGUAGES</Text>
+              <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                {personal.languagesKnown.map((lang: string, idx: number) => (
+                  <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16, marginBottom: 4 }}>
+                    <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000' }}>{lang}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
           {/* Links */}
           {skillsLinks.linksEnabled && (() => {
             const links = skillsLinks.links || {} as any;

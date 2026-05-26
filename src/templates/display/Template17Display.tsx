@@ -1,6 +1,6 @@
 import React from 'react';
 import DOMPurify from 'dompurify';
-import { FiPhone, FiMail, FiMapPin, FiGithub, FiLinkedin } from 'react-icons/fi';
+import { FiPhone, FiMail, FiMapPin, FiGithub, FiLinkedin, FiGlobe, FiExternalLink } from 'react-icons/fi';
 import type { ResumeData } from '@/types/resume';
 
 interface Template17DisplayProps {
@@ -53,6 +53,12 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
 }) => {
   const { personal, experience, education, projects, skillsLinks, certifications } = data;
   const role = (experience && (experience as any).jobRole) || (experience.workExperiences && experience.workExperiences.find((w: any) => w.enabled && w.jobTitle) && experience.workExperiences.find((w: any) => w.enabled && w.jobTitle).jobTitle) || '';
+  const linksEnabled = skillsLinks?.linksEnabled ?? true;
+  const links = skillsLinks?.links || {};
+  const linkedinUrl = linksEnabled && (links.linkedinEnabled ?? true) ? links.linkedinProfile : '';
+  const githubUrl = linksEnabled && (links.githubEnabled ?? true) ? links.githubProfile : '';
+  const portfolioUrl = linksEnabled && (links.portfolioEnabled ?? true) ? links.portfolioUrl : '';
+  const publicationUrl = linksEnabled && (links.publicationEnabled ?? true) ? links.publicationUrl : '';
 
   return (
     <div style={{ width: '210mm', minHeight: '297mm', fontFamily, background: '#fff', paddingTop: 24 }}>      <div style={{ display: 'flex' }}>
@@ -68,8 +74,10 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
             {personal.email && <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}><FiMail style={{ color: '#000' }} /><a href={`mailto:${personal.email}`} style={{ color: '#000', textDecoration: 'none' }}>{personal.email}</a></div>}
             {personal.mobileNumber && <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}><FiPhone style={{ color: '#000' }} /><a href={`tel:${personal.mobileNumber}`} style={{ color: '#000', textDecoration: 'none' }}>{personal.mobileNumber}</a></div>}
             {(personal.address || personal.city || personal.state) && <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}><FiMapPin style={{ color: '#000', scale: 2 }} /><div>{[personal.address, personal.city, personal.state, personal.pincode].filter(Boolean).join(', ')}</div></div>}
-            {skillsLinks.links.linkedinProfile && <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}><FiLinkedin style={{ marginTop: -4, color: '#000', scale: 1 }} /><a href={skillsLinks.links.linkedinProfile} target="_blank" rel="noreferrer" style={{ color: '#000', textDecoration: 'none' }}>{skillsLinks.links.linkedinProfile}</a></div>}
-            {skillsLinks.links.githubProfile && <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}><FiGithub style={{ color: '#000' }} /><a href={skillsLinks.links.githubProfile} target="_blank" rel="noreferrer" style={{ color: '#000', textDecoration: 'none' }}>{skillsLinks.links.githubProfile}</a></div>}
+            {linkedinUrl && <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}><FiLinkedin style={{ marginTop: -4, color: '#000', scale: 1 }} /><a href={linkedinUrl} target="_blank" rel="noreferrer" style={{ color: '#000', textDecoration: 'none' }}>{linkedinUrl}</a></div>}
+            {githubUrl && <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}><FiGithub style={{ color: '#000' }} /><a href={githubUrl} target="_blank" rel="noreferrer" style={{ color: '#000', textDecoration: 'none' }}>{githubUrl}</a></div>}
+            {portfolioUrl && <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}><FiGlobe style={{ color: '#000' }} /><a href={portfolioUrl} target="_blank" rel="noreferrer" style={{ color: '#000', textDecoration: 'none' }}>{portfolioUrl}</a></div>}
+            {publicationUrl && <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}><FiExternalLink style={{ color: '#000' }} /><a href={publicationUrl} target="_blank" rel="noreferrer" style={{ color: '#000', textDecoration: 'none' }}>{publicationUrl}</a></div>}
           </div>
         </div>
 
