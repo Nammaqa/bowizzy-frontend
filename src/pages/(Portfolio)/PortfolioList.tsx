@@ -12,6 +12,7 @@ import {
   LayoutTemplate,
   Clock,
   X,
+  AlertCircle,
 } from "lucide-react";
 
 import api from "@/api";
@@ -110,9 +111,14 @@ function PortfolioCard({
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onPreview(portfolio); }}
-          className="flex-1 py-2 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-semibold border border-violet-100 transition flex items-center justify-center gap-1.5"
+          className="flex-1 py-2 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-semibold border border-violet-100 transition flex items-center justify-center gap-1.5 relative"
         >
           <ExternalLink className="w-3.5 h-3.5" /> Preview
+          {!portfolio.domain && (
+            <div className="absolute -top-1.5 -right-1.5" title="Custom domain needs to be added for live preview">
+              <AlertCircle className="w-4 h-4 text-orange-500 bg-white rounded-full border border-white" />
+            </div>
+          )}
         </button>
       </div>
     </div>
@@ -175,7 +181,7 @@ export default function PortfolioList() {
     if (p.domain) {
       window.open(`https://${p.domain}.bowizzy.com`, "_blank");
     } else {
-      alert("Please click 'Manage' to set a subdomain for your portfolio first!");
+      window.open(`/portfolio-preview/${p.portfolio_id}`, "_blank");
     }
   };
 

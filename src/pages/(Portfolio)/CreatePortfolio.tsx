@@ -162,6 +162,7 @@ export default function CreatePortfolio() {
     const userData = JSON.parse(localStorage.getItem("user") || "null");
     await api.post('/portfolio/create-portfolio', {
       name: portfolioName,
+      portfolio_name: portfolioName,
       description: portfolioDescription,
       portfolio_type: portfolioType,
       order_id: orderId,

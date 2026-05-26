@@ -20,6 +20,9 @@ import {
   Wand2,
   X,
   Mail,
+  Image,
+  PenTool,
+  Link2,
 } from "lucide-react";
 import RichTextEditor from "./RichTextEditor";
 
@@ -35,6 +38,20 @@ interface Experience {
   company: string;
   duration: string;
   details: string;
+}
+
+interface DesignProcessStep {
+  title: string;
+  description: string;
+}
+
+interface CaseStudy {
+  title: string;
+  subtitle: string;
+  description: string;
+  imageUrl: string;
+  link: string;
+  role: string;
 }
 
 export interface PortfolioEditorComponentProps {
@@ -58,6 +75,18 @@ export interface PortfolioEditorComponentProps {
   setProfileImageUrl: (val: string) => void;
   email: string;
   setEmail: (val: string) => void;
+  themeColor: string;
+  setThemeColor: (val: string) => void;
+  backgroundColor: string;
+  setBackgroundColor: (val: string) => void;
+  behanceUrl: string;
+  setBehanceUrl: (val: string) => void;
+  dribbbleUrl: string;
+  setDribbbleUrl: (val: string) => void;
+  designProcess: DesignProcessStep[];
+  setDesignProcess: React.Dispatch<React.SetStateAction<DesignProcessStep[]>>;
+  caseStudies: CaseStudy[];
+  setCaseStudies: React.Dispatch<React.SetStateAction<CaseStudy[]>>;
 
   projects: Project[];
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
@@ -97,6 +126,18 @@ export default function PortfolioEditorComponent({
   setProfileImageUrl,
   email,
   setEmail,
+  themeColor,
+  setThemeColor,
+  backgroundColor,
+  setBackgroundColor,
+  behanceUrl,
+  setBehanceUrl,
+  dribbbleUrl,
+  setDribbbleUrl,
+  designProcess,
+  setDesignProcess,
+  caseStudies,
+  setCaseStudies,
   projects,
   setProjects,
   experiences,
@@ -113,6 +154,70 @@ export default function PortfolioEditorComponent({
   importSuccess = false,
 }: PortfolioEditorComponentProps) {
   const [newSkill, setNewSkill] = useState("");
+  const palettePresets: Array<{
+    id: string;
+    name: string;
+    themeColor: string;
+    backgroundColor: string;
+    accent2: string;
+  }> = [
+    {
+      id: "studio-ink",
+      name: "Studio Ink",
+      themeColor: "#d84f2a",
+      backgroundColor: "#f6f2ea",
+      accent2: "#0f766e",
+    },
+    {
+      id: "editorial-mono",
+      name: "Editorial Mono",
+      themeColor: "#111111",
+      backgroundColor: "#f4f4f1",
+      accent2: "#a3e635",
+    },
+    {
+      id: "folio-green",
+      name: "Folio Green",
+      themeColor: "#0f766e",
+      backgroundColor: "#eef6f1",
+      accent2: "#f59e0b",
+    },
+    {
+      id: "gallery-blue",
+      name: "Gallery Blue",
+      themeColor: "#2563eb",
+      backgroundColor: "#f5f7fb",
+      accent2: "#ef4444",
+    },
+    {
+      id: "carbon-lime",
+      name: "Carbon Lime",
+      themeColor: "#a3e635",
+      backgroundColor: "#10110e",
+      accent2: "#f4f4f1",
+    },
+    {
+      id: "navy-coral",
+      name: "Navy Coral",
+      themeColor: "#ff6b4a",
+      backgroundColor: "#101827",
+      accent2: "#69e3d2",
+    },
+    {
+      id: "paper-ruby",
+      name: "Paper Ruby",
+      themeColor: "#be123c",
+      backgroundColor: "#fff7f2",
+      accent2: "#0f766e",
+    },
+    {
+      id: "warm-slate",
+      name: "Warm Slate",
+      themeColor: "#475569",
+      backgroundColor: "#faf7ef",
+      accent2: "#d97706",
+    },
+  ];
 
   const nameMax = 50;
   const descMax = 300;
@@ -159,6 +264,37 @@ export default function PortfolioEditorComponent({
 
   const handleRemoveSkill = (skillName: string) => {
     setSkills(skills.filter((s) => s !== skillName));
+  };
+
+  const handleAddProcessStep = () => {
+    setDesignProcess([...designProcess, { title: "", description: "" }]);
+  };
+
+  const handleUpdateProcessStep = (index: number, field: keyof DesignProcessStep, val: string) => {
+    const updated = [...designProcess];
+    updated[index] = { ...updated[index], [field]: val };
+    setDesignProcess(updated);
+  };
+
+  const handleRemoveProcessStep = (index: number) => {
+    setDesignProcess(designProcess.filter((_, i) => i !== index));
+  };
+
+  const handleAddCaseStudy = () => {
+    setCaseStudies([
+      ...caseStudies,
+      { title: "", subtitle: "", description: "", imageUrl: "", link: "", role: "" },
+    ]);
+  };
+
+  const handleUpdateCaseStudy = (index: number, field: keyof CaseStudy, val: string) => {
+    const updated = [...caseStudies];
+    updated[index] = { ...updated[index], [field]: val };
+    setCaseStudies(updated);
+  };
+
+  const handleRemoveCaseStudy = (index: number) => {
+    setCaseStudies(caseStudies.filter((_, i) => i !== index));
   };
 
   return (
@@ -272,6 +408,113 @@ export default function PortfolioEditorComponent({
           </div>
         </div>
       </div>
+
+      {/* Section 2: Appearance */}
+      {["developer", "designer"].includes(portfolioType) && (
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+          <h2 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+            <Layers className="w-4 h-4 text-violet-500" />
+            Portfolio Theme
+          </h2>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+              Curated Color Palettes
+            </label>
+            <p className="text-[11px] text-gray-400 mb-3">
+              Saved with this portfolio and used by the live preview and public portfolio page.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+              {palettePresets.map((palette) => {
+                const isActive =
+                  themeColor.toLowerCase() === palette.themeColor.toLowerCase() &&
+                  backgroundColor.toLowerCase() === palette.backgroundColor.toLowerCase();
+
+                return (
+                  <button
+                    key={palette.id}
+                    type="button"
+                    onClick={() => {
+                      setThemeColor(palette.themeColor);
+                      setBackgroundColor(palette.backgroundColor);
+                    }}
+                    className={`w-full text-left rounded-xl border px-3 py-2.5 transition cursor-pointer ${
+                      isActive
+                        ? "border-violet-400 bg-violet-50"
+                        : "border-gray-200 bg-white hover:border-violet-200 hover:bg-violet-50/40"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3 mb-1.5">
+                      <span className="text-xs font-bold text-gray-700">{palette.name}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className="w-5 h-5 rounded-md border border-gray-200"
+                        style={{ backgroundColor: palette.backgroundColor }}
+                        title="Background"
+                      />
+                      <span
+                        className="w-5 h-5 rounded-md border border-gray-200"
+                        style={{ backgroundColor: palette.themeColor }}
+                        title="Theme"
+                      />
+                      <span
+                        className="w-5 h-5 rounded-md border border-gray-200"
+                        style={{ backgroundColor: palette.accent2 }}
+                        title="Accent"
+                      />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+                Theme Color
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={themeColor}
+                  onChange={(e) => setThemeColor(e.target.value)}
+                  className="h-10 w-12 rounded-lg border border-gray-200 bg-white cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={themeColor}
+                  onChange={(e) => setThemeColor(e.target.value)}
+                  placeholder="#4f46e5"
+                  className="flex-1 text-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+                Background Color
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={backgroundColor}
+                  onChange={(e) => setBackgroundColor(e.target.value)}
+                  className="h-10 w-12 rounded-lg border border-gray-200 bg-white cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={backgroundColor}
+                  onChange={(e) => setBackgroundColor(e.target.value)}
+                  placeholder="#0a0f1e"
+                  className="flex-1 text-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Section 2: Social Links */}
       <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
@@ -416,6 +659,44 @@ export default function PortfolioEditorComponent({
               className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-500 bg-white"
             />
           </div>
+          {portfolioType === "designer" && (
+            <>
+              <div>
+                <label className="text-[10px] font-bold text-gray-400 flex items-center gap-1.5 mb-1.5 uppercase tracking-wider">
+                  <Link2 className="w-3.5 h-3.5 text-blue-700" /> Behance URL
+                </label>
+                <input
+                  type="url"
+                  value={behanceUrl}
+                  onChange={(e) => setBehanceUrl(e.target.value)}
+                  onBlur={() => {
+                    if (behanceUrl.trim() && !/^https?:\/\//i.test(behanceUrl.trim())) {
+                      setBehanceUrl(`https://${behanceUrl.trim()}`);
+                    }
+                  }}
+                  placeholder="https://behance.net/..."
+                  className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-500 bg-white"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-gray-400 flex items-center gap-1.5 mb-1.5 uppercase tracking-wider">
+                  <Sparkles className="w-3.5 h-3.5 text-pink-500" /> Dribbble URL
+                </label>
+                <input
+                  type="url"
+                  value={dribbbleUrl}
+                  onChange={(e) => setDribbbleUrl(e.target.value)}
+                  onBlur={() => {
+                    if (dribbbleUrl.trim() && !/^https?:\/\//i.test(dribbbleUrl.trim())) {
+                      setDribbbleUrl(`https://${dribbbleUrl.trim()}`);
+                    }
+                  }}
+                  placeholder="https://dribbble.com/..."
+                  className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-500 bg-white"
+                />
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -458,6 +739,198 @@ export default function PortfolioEditorComponent({
           )}
         </div>
       </div>
+
+      {portfolioType === "designer" && (
+        <>
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                <PenTool className="w-4 h-4 text-violet-500" />
+                UX Design Process
+              </h2>
+              <button
+                onClick={handleAddProcessStep}
+                className="inline-flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 font-bold transition cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" /> Add Step
+              </button>
+            </div>
+
+            {designProcess.length === 0 ? (
+              <div className="text-center py-6 border border-dashed border-gray-200 rounded-xl">
+                <p className="text-xs text-gray-400 font-medium">No process steps added yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {designProcess.map((step, idx) => (
+                  <div key={idx} className="p-4 border border-gray-150 rounded-xl space-y-3 relative">
+                    <button
+                      onClick={() => handleRemoveProcessStep(idx)}
+                      className="absolute top-4 right-4 p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition cursor-pointer"
+                      title="Remove process step"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                    <div className="pr-8">
+                      <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
+                        Step Title
+                      </label>
+                      <input
+                        type="text"
+                        value={step.title}
+                        onChange={(e) => handleUpdateProcessStep(idx, "title", e.target.value)}
+                        placeholder="e.g. Research, Wireframe, Prototype"
+                        className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
+                        Step Description
+                      </label>
+                      <textarea
+                        value={step.description}
+                        onChange={(e) => handleUpdateProcessStep(idx, "description", e.target.value)}
+                        placeholder="Describe what happens in this phase of your design process..."
+                        rows={3}
+                        className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 resize-y"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                <Image className="w-4 h-4 text-violet-500" />
+                Case Studies
+              </h2>
+              <button
+                onClick={handleAddCaseStudy}
+                className="inline-flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 font-bold transition cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" /> Add Case Study
+              </button>
+            </div>
+
+            {caseStudies.length === 0 ? (
+              <div className="text-center py-6 border border-dashed border-gray-200 rounded-xl">
+                <p className="text-xs text-gray-400 font-medium">No case studies added yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {caseStudies.map((study, idx) => (
+                  <div key={idx} className="p-4 border border-gray-150 rounded-xl space-y-3 relative">
+                    <button
+                      onClick={() => handleRemoveCaseStudy(idx)}
+                      className="absolute top-4 right-4 p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition cursor-pointer"
+                      title="Remove case study"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pr-8">
+                      <div>
+                        <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
+                          Case Study Title
+                        </label>
+                        <input
+                          type="text"
+                          value={study.title}
+                          onChange={(e) => handleUpdateCaseStudy(idx, "title", e.target.value)}
+                          placeholder="e.g. Mobile Banking Redesign"
+                          className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
+                          Role
+                        </label>
+                        <input
+                          type="text"
+                          value={study.role}
+                          onChange={(e) => handleUpdateCaseStudy(idx, "role", e.target.value)}
+                          placeholder="e.g. UX Research, UI Design"
+                          className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
+                        Short Subtitle
+                      </label>
+                      <input
+                        type="text"
+                        value={study.subtitle}
+                        onChange={(e) => handleUpdateCaseStudy(idx, "subtitle", e.target.value)}
+                        placeholder="e.g. Improving onboarding conversion for first-time users"
+                        className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
+                        Description
+                      </label>
+                      <RichTextEditor
+                        value={study.description}
+                        onChange={(val) => handleUpdateCaseStudy(idx, "description", val)}
+                        placeholder="Problem, process, solution, and outcome..."
+                        minHeight="90px"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
+                          Cover Image
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            try {
+                              const result = await uploadToCloudinary(file);
+                              handleUpdateCaseStudy(idx, "imageUrl", result.url);
+                            } catch (err) {
+                              console.error("Case study image upload failed", err);
+                            }
+                          }}
+                          className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+                        />
+                        {study.imageUrl && (
+                          <img
+                            src={study.imageUrl}
+                            alt={study.title || "Case study cover"}
+                            className="mt-2 w-full h-24 object-cover rounded-lg border border-gray-200"
+                          />
+                        )}
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
+                          Case Study URL
+                        </label>
+                        <input
+                          type="url"
+                          value={study.link}
+                          onChange={(e) => handleUpdateCaseStudy(idx, "link", e.target.value)}
+                          placeholder="https://..."
+                          className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
 
       {/* Section 4: Projects */}
       <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">

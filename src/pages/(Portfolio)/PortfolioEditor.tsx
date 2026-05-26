@@ -20,6 +20,25 @@ interface Experience {
   details: string;
 }
 
+interface DesignProcessStep {
+  title: string;
+  description: string;
+}
+
+interface CaseStudy {
+  title: string;
+  subtitle: string;
+  description: string;
+  imageUrl: string;
+  link: string;
+  role: string;
+}
+
+const getDefaultTheme = (type: string) =>
+  type === "designer"
+    ? { themeColor: "#d84f2a", backgroundColor: "#f6f2ea" }
+    : { themeColor: "#4f46e5", backgroundColor: "#0a0f1e" };
+
 export default function PortfolioEditor() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -35,10 +54,33 @@ export default function PortfolioEditor() {
   const [cvUrl, setCvUrl] = useState("");
   const [profileImageUrl, setProfileImageUrl] = useState("");
   const [email, setEmail] = useState("");
+  const [themeColor, setThemeColor] = useState("#4f46e5");
+  const [backgroundColor, setBackgroundColor] = useState("#0a0f1e");
+  const [behanceUrl, setBehanceUrl] = useState("");
+  const [dribbbleUrl, setDribbbleUrl] = useState("");
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [skills, setSkills] = useState<string[]>([]);
+  const [designProcess, setDesignProcess] = useState<DesignProcessStep[]>([
+    {
+      title: "Discover",
+      description: "Understand business goals, user needs, constraints, and success metrics.",
+    },
+    {
+      title: "Define",
+      description: "Map flows, information architecture, user journeys, and product requirements.",
+    },
+    {
+      title: "Design",
+      description: "Create wireframes, high-fidelity screens, prototypes, and visual systems.",
+    },
+    {
+      title: "Validate",
+      description: "Test usability, refine interactions, and prepare design handoff.",
+    },
+  ]);
+  const [caseStudies, setCaseStudies] = useState<CaseStudy[]>([]);
 
   // UI state
   const [loading, setLoading] = useState(true);
@@ -98,9 +140,14 @@ export default function PortfolioEditor() {
         const found = list.find((p: any) => String(p.portfolio_id) === String(id));
 
         if (found) {
+          const foundType = found.portfolio_type || "developer";
+          const defaultTheme = getDefaultTheme(foundType);
+
           setPortfolioName(found.portfolio_name || "");
           setPortfolioDescription(found.description || "");
-          setPortfolioType(found.portfolio_type || "developer");
+          setPortfolioType(foundType);
+          setThemeColor(defaultTheme.themeColor);
+          setBackgroundColor(defaultTheme.backgroundColor);
 
           // Load custom configuration or portfolio_json if present, otherwise set default structure
           const configSource = found.portfolio_json || found.config;
@@ -114,6 +161,7 @@ export default function PortfolioEditor() {
                 if (cfg.name) setPortfolioName(cfg.name);
                 if (cfg.description) setPortfolioDescription(cfg.description);
                 if (cfg.portfolio_type) setPortfolioType(cfg.portfolio_type);
+                const cfgTheme = getDefaultTheme(cfg.portfolio_type || foundType);
 
                 setGithubUrl(cfg.github || "");
                 setLinkedinUrl(cfg.linkedin || "");
@@ -122,9 +170,15 @@ export default function PortfolioEditor() {
                 setCvUrl(cfg.cvUrl || "");
                 setProfileImageUrl(cfg.profileImageUrl || "");
                 setEmail(cfg.email || "");
+                setThemeColor(cfg.themeColor || cfgTheme.themeColor);
+                setBackgroundColor(cfg.backgroundColor || cfgTheme.backgroundColor);
+                setBehanceUrl(cfg.behanceUrl || "");
+                setDribbbleUrl(cfg.dribbbleUrl || "");
                 setProjects(Array.isArray(cfg.projects) ? cfg.projects : []);
                 setExperiences(Array.isArray(cfg.experiences) ? cfg.experiences : []);
                 setSkills(Array.isArray(cfg.skills) ? cfg.skills : []);
+                if (Array.isArray(cfg.designProcess)) setDesignProcess(cfg.designProcess);
+                setCaseStudies(Array.isArray(cfg.caseStudies) ? cfg.caseStudies : []);
               }
             } catch (e) {
               console.warn("Failed to parse portfolio config: ", e);
@@ -306,6 +360,8 @@ export default function PortfolioEditor() {
     const cleanLinkedin = linkedinUrl.trim() ? ensureHttps(linkedinUrl) : "";
     const cleanTwitter = twitterUrl.trim() ? ensureHttps(twitterUrl) : "";
     const cleanCustom = customUrl.trim() ? ensureHttps(customUrl) : "";
+    const cleanBehance = behanceUrl.trim() ? ensureHttps(behanceUrl) : "";
+    const cleanDribbble = dribbbleUrl.trim() ? ensureHttps(dribbbleUrl) : "";
 
     // Validate URLs
     if (cleanGithub && !isValidUrl(cleanGithub)) {
@@ -324,12 +380,22 @@ export default function PortfolioEditor() {
       alert("Please enter a valid Custom Domain URL.");
       return;
     }
+    if (cleanBehance && !isValidUrl(cleanBehance)) {
+      alert("Please enter a valid Behance URL.");
+      return;
+    }
+    if (cleanDribbble && !isValidUrl(cleanDribbble)) {
+      alert("Please enter a valid Dribbble URL.");
+      return;
+    }
 
     // Update state variables to match formatted links
     setGithubUrl(cleanGithub);
     setLinkedinUrl(cleanLinkedin);
     setTwitterUrl(cleanTwitter);
     setCustomUrl(cleanCustom);
+    setBehanceUrl(cleanBehance);
+    setDribbbleUrl(cleanDribbble);
 
     try {
       setSaving(true);
@@ -348,6 +414,12 @@ export default function PortfolioEditor() {
         cvUrl: cvUrl,
         profileImageUrl: profileImageUrl,
         email: email,
+        themeColor: themeColor,
+        backgroundColor: backgroundColor,
+        behanceUrl: cleanBehance,
+        dribbbleUrl: cleanDribbble,
+        designProcess: portfolioType === "designer" ? designProcess : [],
+        caseStudies: portfolioType === "designer" ? caseStudies : [],
         projects: projects,
         experiences: experiences,
         skills: skills,
@@ -357,6 +429,8 @@ export default function PortfolioEditor() {
       await api.put(
         `/portfolio/${id}`,
         {
+          portfolio_name: portfolioName,
+          description: portfolioDescription,
           portfolio_json: portfolioPayload,
         },
         { headers: { Authorization: `Bearer ${userData.token}` } }
@@ -404,6 +478,12 @@ export default function PortfolioEditor() {
     profileImageUrl,
     avatarUrl: profileImageUrl,
     email,
+    themeColor,
+    backgroundColor,
+    behanceUrl,
+    dribbbleUrl,
+    designProcess,
+    caseStudies,
     projects,
     experiences,
     skills,
@@ -443,6 +523,18 @@ export default function PortfolioEditor() {
             setProfileImageUrl={setProfileImageUrl}
             email={email}
             setEmail={setEmail}
+            themeColor={themeColor}
+            setThemeColor={setThemeColor}
+            backgroundColor={backgroundColor}
+            setBackgroundColor={setBackgroundColor}
+            behanceUrl={behanceUrl}
+            setBehanceUrl={setBehanceUrl}
+            dribbbleUrl={dribbbleUrl}
+            setDribbbleUrl={setDribbbleUrl}
+            designProcess={designProcess}
+            setDesignProcess={setDesignProcess}
+            caseStudies={caseStudies}
+            setCaseStudies={setCaseStudies}
             projects={projects}
             setProjects={setProjects}
             experiences={experiences}

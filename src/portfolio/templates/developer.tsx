@@ -15,6 +15,19 @@ export interface PortfolioData {
   cvUrl?: string;
   email?: string;
   tagline?: string;
+  themeColor?: string;
+  backgroundColor?: string;
+  behanceUrl?: string;
+  dribbbleUrl?: string;
+  designProcess?: Array<{ title: string; description: string }>;
+  caseStudies?: Array<{
+    title: string;
+    subtitle: string;
+    description: string;
+    imageUrl: string;
+    link: string;
+    role: string;
+  }>;
   projects: Array<{ title: string; description: string; link: string; tech: string }>;
   experiences: Array<{ role: string; company: string; duration: string; details: string }>;
   skills: string[];
@@ -25,6 +38,25 @@ export interface PortfolioData {
 function getInitials(name: string) {
   if (!name) return "DEV";
   return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
+}
+
+function hexToRgb(hex: string) {
+  const normalized = hex.replace("#", "").trim();
+  if (normalized.length !== 6) return null;
+  const int = parseInt(normalized, 16);
+  if (Number.isNaN(int)) return null;
+  return {
+    r: (int >> 16) & 255,
+    g: (int >> 8) & 255,
+    b: int & 255,
+  };
+}
+
+function isDarkBackground(hex: string) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return true;
+  const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+  return luminance < 0.62;
 }
 
 function useCountUp(target: number, duration = 1200, delay = 0) {
@@ -60,9 +92,9 @@ function StatusBadge() {
     <div
       className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-medium"
       style={{
-        background: "rgba(99,102,241,0.1)",
-        borderColor: "rgba(99,102,241,0.3)",
-        color: "#a5b4fc",
+        background: "var(--accent-soft)",
+        borderColor: "var(--border-soft)",
+        color: "var(--text-secondary)",
       }}
     >
       <span className="relative flex h-2 w-2">
@@ -84,9 +116,9 @@ function SocialLink({ href, icon: Icon, label }: { href: string; icon: React.Ele
       aria-label={label}
       className="social-link w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200"
       style={{
-        background: "rgba(99,102,241,0.08)",
-        border: "0.5px solid rgba(99,102,241,0.25)",
-        color: "#94a3b8",
+        background: "var(--accent-soft)",
+        border: "0.5px solid var(--border-soft)",
+        color: "var(--text-secondary)",
       }}
     >
       <Icon className="w-4 h-4" />
@@ -103,12 +135,12 @@ function StatCard({
   return (
     <div
       className="stat-card flex-1 py-6 text-center"
-      style={{ borderRight: "0.5px solid rgba(99,102,241,0.15)" }}
+      style={{ borderRight: "0.5px solid var(--border-soft)" }}
     >
-      <div className="text-2xl @sm:text-3xl font-semibold text-white" style={{ letterSpacing: "-1px" }}>
+      <div className="text-2xl @sm:text-3xl font-semibold" style={{ letterSpacing: "-1px", color: "var(--text-primary)" }}>
         {count}{suffix}
       </div>
-      <div className="text-xs mt-1 tracking-widest uppercase" style={{ color: "#475569" }}>{label}</div>
+      <div className="text-xs mt-1 tracking-widest uppercase" style={{ color: "var(--text-muted)" }}>{label}</div>
     </div>
   );
 }
@@ -117,12 +149,12 @@ function SkillChip({ skill }: { skill: string }) {
   return (
     <div className="skill-chip px-3 @sm:px-4 py-2 rounded-lg text-xs @sm:text-sm font-medium transition-all duration-200 cursor-default flex items-center gap-2"
       style={{
-        background: "rgba(15,20,40,0.7)",
-        border: "0.5px solid rgba(99,102,241,0.2)",
-        color: "#94a3b8",
+        background: "var(--card-bg)",
+        border: "0.5px solid var(--card-border)",
+        color: "var(--card-text)",
       }}
     >
-      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "#818cf8" }} />
+      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "var(--accent-2)" }} />
       {skill}
     </div>
   );
@@ -134,14 +166,14 @@ function ExpCard({ exp, index }: { exp: PortfolioData["experiences"][0]; index: 
   return (
     <div
       className="exp-card py-6 flex gap-4 @sm:gap-5 transition-all duration-200"
-      style={{ borderBottom: "0.5px solid rgba(99,102,241,0.1)" }}
+      style={{ borderBottom: "0.5px solid var(--card-border)" }}
     >
       <div
         className="w-10 h-10 @sm:w-11 @sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
         style={{
-          background: "rgba(99,102,241,0.12)",
-          border: "0.5px solid rgba(99,102,241,0.25)",
-          color: "#818cf8",
+          background: "var(--accent-soft)",
+          border: "0.5px solid var(--border-soft)",
+          color: "var(--accent-2)",
         }}
       >
         {React.cloneElement(Icon as React.ReactElement, { className: "w-4 h-4" } as any)}
@@ -149,13 +181,13 @@ function ExpCard({ exp, index }: { exp: PortfolioData["experiences"][0]; index: 
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-3 flex-wrap mb-1">
           <div>
-            <p className="text-sm font-semibold" style={{ color: "#e2e8f0" }}>{exp.role || "Role"}</p>
-            <p className="text-xs font-medium mt-0.5" style={{ color: "#818cf8" }}>{exp.company || "Company"}</p>
+            <p className="text-sm font-semibold" style={{ color: "var(--exp-title)" }}>{exp.role || "Role"}</p>
+            <p className="text-xs font-medium mt-0.5" style={{ color: "var(--exp-subtitle)" }}>{exp.company || "Company"}</p>
           </div>
           {exp.duration && (
             <span
               className="text-xs whitespace-nowrap px-2.5 py-1 rounded-full flex-shrink-0"
-              style={{ color: "#475569", background: "rgba(71,85,105,0.2)", border: "0.5px solid rgba(71,85,105,0.3)" }}
+              style={{ color: "var(--exp-meta-text)", background: "var(--exp-meta-bg)", border: "0.5px solid var(--exp-meta-border)" }}
             >
               {exp.duration}
             </span>
@@ -163,7 +195,7 @@ function ExpCard({ exp, index }: { exp: PortfolioData["experiences"][0]; index: 
         </div>
         <div
           className="text-xs leading-relaxed mt-2 rich-html-content"
-          style={{ color: "#64748b" }}
+          style={{ color: "var(--exp-body)" }}
           dangerouslySetInnerHTML={{ __html: exp.details || "" }}
         />
       </div>
@@ -180,40 +212,40 @@ function ProjectCard({ proj, index }: { proj: PortfolioData["projects"][0]; inde
     <div
       className="project-card rounded-2xl p-5 @sm:p-6 flex flex-col transition-all duration-250 cursor-default relative overflow-hidden"
       style={{
-        background: "rgba(15,20,40,0.7)",
-        border: "0.5px solid rgba(99,102,241,0.2)",
+        background: "var(--card-bg)",
+        border: "0.5px solid var(--card-border)",
       }}
     >
       <div className="project-accent absolute top-0 left-0 right-0 h-0.5 transition-all duration-300"
-        style={{ background: "linear-gradient(90deg, #4f46e5, #7c3aed)", transform: "scaleX(0)", transformOrigin: "left" }}
+        style={{ background: "linear-gradient(90deg, var(--accent), var(--accent-2))", transform: "scaleX(0)", transformOrigin: "left" }}
       />
       <div className="flex items-start justify-between mb-3">
         <div
           className="w-9 h-9 rounded-lg flex items-center justify-center"
-          style={{ background: "rgba(99,102,241,0.15)", color: "#818cf8" }}
+          style={{ background: "var(--accent-soft)", color: "var(--accent-2)" }}
         >
           {React.cloneElement(Icon as React.ReactElement, { className: "w-4 h-4" } as any)}
         </div>
         {proj.link && (
           <a href={proj.link} target="_blank" rel="noreferrer"
-            className="transition-colors duration-200" style={{ color: "#475569" }}>
+            className="transition-colors duration-200" style={{ color: "var(--text-muted)" }}>
             <ArrowUpRight className="w-4 h-4" />
           </a>
         )}
       </div>
-      <h3 className="text-sm font-semibold mb-2 transition-colors duration-200" style={{ color: "#e2e8f0" }}>
+      <h3 className="text-sm font-semibold mb-2 transition-colors duration-200" style={{ color: "var(--card-text)" }}>
         {proj.title || "Project Title"}
       </h3>
       <div
         className="text-xs leading-relaxed flex-1 mb-4 rich-html-content"
-        style={{ color: "#64748b" }}
+        style={{ color: "var(--card-subtext)" }}
         dangerouslySetInnerHTML={{ __html: proj.description || "<p>Project description goes here...</p>" }}
       />
       {techs.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {techs.map((t, i) => (
             <span key={i} className="text-xs px-2 py-0.5 rounded-md font-mono"
-              style={{ color: "#818cf8", background: "rgba(99,102,241,0.1)", border: "0.5px solid rgba(99,102,241,0.2)" }}>
+              style={{ color: "var(--card-text)", background: "color-mix(in srgb, var(--card-bg) 76%, black)", border: "0.5px solid var(--card-border)" }}>
               {t}
             </span>
           ))}
@@ -235,15 +267,15 @@ function HeroWithImage({ data, scrollTo }: { data: PortfolioData; scrollTo: (id:
           <div className="anim-1 mb-5 flex justify-center @md:justify-start">
             <StatusBadge />
           </div>
-          <h1 className="anim-2 text-4xl @sm:text-5xl font-semibold text-white mb-4"
-            style={{ letterSpacing: "-1.5px", lineHeight: 1.1 }}>
+          <h1 className="anim-2 text-4xl @sm:text-5xl font-semibold mb-4"
+            style={{ letterSpacing: "-1.5px", lineHeight: 1.1, color: "var(--text-primary)" }}>
             {data.portfolioName || "Anonymous Developer"}
-            <span className="cursor-blink inline-block w-0.5 h-9 ml-1 rounded align-middle" style={{ background: "#818cf8" }} />
+            <span className="cursor-blink inline-block w-0.5 h-9 ml-1 rounded align-middle" style={{ background: "var(--accent-2)" }} />
           </h1>
           {data.tagline && (
-            <p className="anim-2 text-sm font-medium mb-3" style={{ color: "#818cf8" }}>{data.tagline}</p>
+            <p className="anim-2 text-sm font-medium mb-3" style={{ color: "var(--accent-2)" }}>{data.tagline}</p>
           )}
-          <p className="anim-3 text-sm leading-relaxed mb-8" style={{ color: "#94a3b8" }}>
+          <p className="anim-3 text-sm leading-relaxed mb-8" style={{ color: "var(--text-secondary)" }}>
             {data.portfolioDescription || "Passionate about building scalable software and creating elegant solutions to complex problems."}
           </p>
           <div className="anim-3 flex flex-wrap gap-3 mb-8 justify-center @md:justify-start">
@@ -255,7 +287,7 @@ function HeroWithImage({ data, scrollTo }: { data: PortfolioData; scrollTo: (id:
             )}
             <button onClick={() => scrollTo("contact")}
               className="cta-secondary flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
-              style={{ background: "transparent", border: "0.5px solid rgba(148,163,184,0.3)", color: "#94a3b8" }}>
+              style={{ background: "transparent", border: "0.5px solid var(--border-soft)", color: "var(--text-secondary)" }}>
               <Mail className="w-4 h-4" /> Get in touch
             </button>
           </div>
@@ -336,17 +368,17 @@ function HeroWithoutImage({ data, scrollTo }: { data: PortfolioData; scrollTo: (
       </div>
 
       {/* Name — large editorial */}
-      <h1 className="anim-2 font-semibold text-white mb-3"
-        style={{ fontSize: "clamp(2.4rem, 7vw, 4.5rem)", letterSpacing: "-2px", lineHeight: 1.05 }}>
+      <h1 className="anim-2 font-semibold mb-3"
+        style={{ fontSize: "clamp(2.4rem, 7vw, 4.5rem)", letterSpacing: "-2px", lineHeight: 1.05, color: "var(--text-primary)" }}>
         {data.portfolioName || "Anonymous Developer"}
-        <span className="cursor-blink inline-block w-0.5 h-10 ml-1 rounded align-middle" style={{ background: "#818cf8" }} />
+        <span className="cursor-blink inline-block w-0.5 h-10 ml-1 rounded align-middle" style={{ background: "var(--accent-2)" }} />
       </h1>
 
       {data.tagline && (
-        <p className="anim-2 text-base font-medium mb-4" style={{ color: "#818cf8" }}>{data.tagline}</p>
+        <p className="anim-2 text-base font-medium mb-4" style={{ color: "var(--accent-2)" }}>{data.tagline}</p>
       )}
 
-      <p className="anim-3 text-sm @sm:text-base leading-relaxed max-w-xl mx-auto mb-10" style={{ color: "#94a3b8" }}>
+      <p className="anim-3 text-sm @sm:text-base leading-relaxed max-w-xl mx-auto mb-10" style={{ color: "var(--text-secondary)" }}>
         {data.portfolioDescription || "Passionate about building scalable software and creating elegant solutions to complex problems."}
       </p>
 
@@ -377,7 +409,7 @@ function HeroWithoutImage({ data, scrollTo }: { data: PortfolioData; scrollTo: (
         )}
         <button onClick={() => scrollTo("contact")}
           className="cta-secondary flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
-          style={{ background: "transparent", border: "0.5px solid rgba(148,163,184,0.3)", color: "#94a3b8" }}>
+          style={{ background: "transparent", border: "0.5px solid var(--border-soft)", color: "var(--text-secondary)" }}>
           <Mail className="w-4 h-4" /> Get in touch
         </button>
       </div>
@@ -399,6 +431,9 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const hasImage = Boolean(data.avatarUrl);
+  const accent = data.themeColor || "#4f46e5";
+  const background = data.backgroundColor || "#0a0f1e";
+  const isDark = isDarkBackground(background);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -435,8 +470,39 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
   return (
     <div
       ref={containerRef}
-      className="@container w-full relative min-h-screen"
-      style={{ background: "#0a0f1e", color: "#c8d3f5", fontFamily: "'DM Sans', sans-serif" }}
+      className={`@container w-full relative min-h-screen portfolio-root`}
+      style={
+        {
+          background: "var(--bg)",
+          color: "var(--text-primary)",
+          fontFamily: "'DM Sans', sans-serif",
+          "--bg": background,
+          "--surface": isDark ? "#0f172a" : "#ffffff",
+          "--surface-soft": isDark ? "rgba(15,20,40,0.7)" : "#f1f5f9",
+          "--text-primary": isDark ? "#e2e8f0" : "#0f172a",
+          "--text-secondary": isDark ? "#94a3b8" : "#334155",
+          "--text-muted": isDark ? "#64748b" : "#475569",
+          "--border-soft": isDark ? "rgba(99,102,241,0.2)" : "rgba(15,23,42,0.12)",
+          "--accent": accent,
+          "--accent-2": accent,
+          "--accent-soft": isDark ? "color-mix(in srgb, var(--accent) 18%, transparent)" : "color-mix(in srgb, var(--accent) 16%, white)",
+          "--nav-bg": isDark ? "rgba(10,15,30,0.92)" : "rgba(248,250,252,0.95)",
+          "--card-bg": isDark
+            ? "color-mix(in srgb, var(--accent) 22%, #0b1220)"
+            : "color-mix(in srgb, var(--accent) 42%, #0f172a)",
+          "--card-border": isDark
+            ? "color-mix(in srgb, var(--accent) 45%, rgba(255,255,255,0.18))"
+            : "color-mix(in srgb, var(--accent) 45%, rgba(255,255,255,0.28))",
+          "--card-text": "#f8fafc",
+          "--card-subtext": "#e2e8f0",
+          "--exp-title": isDark ? "var(--card-text)" : "#0f172a",
+          "--exp-subtitle": isDark ? "var(--card-subtext)" : "#1e293b",
+          "--exp-meta-text": isDark ? "var(--card-subtext)" : "#1e293b",
+          "--exp-meta-bg": isDark ? "color-mix(in srgb, var(--card-bg) 78%, black)" : "rgba(255,255,255,0.55)",
+          "--exp-meta-border": isDark ? "var(--card-border)" : "rgba(15,23,42,0.18)",
+          "--exp-body": isDark ? "var(--card-subtext)" : "#334155",
+        } as React.CSSProperties
+      }
     >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
@@ -472,14 +538,14 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
         .cursor-blink { animation: blink 1s step-end infinite; }
         .mobile-menu { animation: slideDown 0.2s ease both; }
 
-        .social-link:hover { color: #818cf8 !important; border-color: #818cf8 !important; transform: translateY(-3px); }
-        .cta-primary { background: #4f46e5; border: none; cursor: pointer; font-family: inherit; }
-        .cta-primary:hover { background: #4338ca; transform: translateY(-2px); }
+        .social-link:hover { color: var(--accent-2) !important; border-color: var(--accent-2) !important; transform: translateY(-3px); }
+        .cta-primary { background: var(--accent); border: none; cursor: pointer; font-family: inherit; }
+        .cta-primary:hover { filter: brightness(0.92); transform: translateY(-2px); }
         .cta-secondary:hover { color: #fff !important; border-color: rgba(148,163,184,0.6) !important; transform: translateY(-2px); }
 
         .skill-chip:hover {
           background: rgba(99,102,241,0.12) !important;
-          border-color: #818cf8 !important;
+          border-color: var(--accent-2) !important;
           color: #c7d2fe !important;
           transform: translateY(-2px);
         }
@@ -511,9 +577,9 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
         .rich-html-content ul { list-style-type: disc; }
         .rich-html-content ol { list-style-type: decimal; }
         .rich-html-content li { margin: 0.15em 0; }
-        .rich-html-content strong, .rich-html-content b { font-weight: 600; color: #94a3b8; }
+        .rich-html-content strong, .rich-html-content b { font-weight: 600; color: var(--text-secondary); }
         .rich-html-content em, .rich-html-content i { font-style: italic; }
-        .rich-html-content a { color: #818cf8; text-decoration: underline; }
+        .rich-html-content a { color: var(--accent-2); text-decoration: underline; }
         .rich-html-content div { margin: 0; }
       `}</style>
 
@@ -521,13 +587,13 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
       <nav
         className="flex items-center justify-between px-5 @sm:px-8 @md:px-10 py-4 sticky top-0 z-50 transition-all duration-300"
         style={{
-          background: navScrolled ? "rgba(10,15,30,0.92)" : "transparent",
+          background: navScrolled ? "var(--nav-bg)" : "transparent",
           backdropFilter: navScrolled ? "blur(12px)" : "none",
-          borderBottom: navScrolled ? "0.5px solid rgba(99,102,241,0.2)" : "0.5px solid transparent",
+          borderBottom: navScrolled ? "0.5px solid var(--border-soft)" : "0.5px solid transparent",
         }}
       >
         {/* Logo */}
-        <div className="text-base font-semibold text-white tracking-tight flex-shrink-0">
+        <div className="text-base font-semibold tracking-tight flex-shrink-0" style={{ color: "var(--text-primary)" }}>
           {data.portfolioName}
         </div>
 
@@ -536,9 +602,9 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
           {navItems.map(({ id, label }) => (
             <button key={id} onClick={() => scrollTo(id)}
               className="nav-btn text-xs tracking-wide transition-colors duration-200 capitalize"
-              style={{ color: "#64748b", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#818cf8")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#64748b")}>
+              style={{ color: "var(--text-muted)", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "var(--accent-2)")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "var(--text-muted)")}>
               {label}
             </button>
           ))}
@@ -548,23 +614,23 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
           {/* Hire me */}
           <button onClick={() => scrollTo("contact")}
             className="hidden @sm:block text-xs px-4 py-2 rounded-lg text-white transition-all duration-200 hover:scale-105"
-            style={{ background: "#4f46e5", border: "none", cursor: "pointer", fontFamily: "inherit" }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "#4338ca")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "#4f46e5")}>
+            style={{ background: "var(--accent)", border: "none", cursor: "pointer", fontFamily: "inherit" }}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.filter = "brightness(0.92)")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.filter = "none")}>
             Hire me
           </button>
 
           {/* Mobile hamburger */}
           <button
             className="@md:hidden flex flex-col gap-1.5 p-2 rounded-lg transition-colors"
-            style={{ background: "rgba(99,102,241,0.08)", border: "0.5px solid rgba(99,102,241,0.2)" }}
+            style={{ background: "var(--accent-soft)", border: "0.5px solid var(--border-soft)" }}
             onClick={() => setMobileMenuOpen((v) => !v)}
             aria-label="Toggle menu"
           >
             {[0, 1, 2].map((i) => (
               <span key={i} className="block w-4 h-0.5 transition-all duration-200"
                 style={{
-                  background: "#818cf8",
+                  background: "var(--accent-2)",
                   transform: mobileMenuOpen
                     ? i === 0 ? "rotate(45deg) translate(4px, 4px)"
                       : i === 1 ? "opacity(0) scaleX(0)"
@@ -580,18 +646,18 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
         {mobileMenuOpen && (
           <div
             className="mobile-menu @md:hidden absolute top-[100%] left-0 right-0 z-40 py-4 px-5 shadow-2xl"
-            style={{ background: "rgba(10,15,30,0.97)", backdropFilter: "blur(16px)", borderBottom: "0.5px solid rgba(99,102,241,0.2)" }}
+            style={{ background: "var(--nav-bg)", backdropFilter: "blur(16px)", borderBottom: "0.5px solid var(--border-soft)" }}
           >
             {navItems.map(({ id, label }) => (
               <button key={id} onClick={() => scrollTo(id)}
                 className="block w-full text-left py-3 text-sm border-b transition-colors duration-200"
-                style={{ color: "#94a3b8", background: "none", border: "none", borderBottom: "0.5px solid rgba(99,102,241,0.1)", cursor: "pointer", fontFamily: "inherit" }}>
+                style={{ color: "var(--text-secondary)", background: "none", border: "none", borderBottom: "0.5px solid var(--border-soft)", cursor: "pointer", fontFamily: "inherit" }}>
                 {label}
               </button>
             ))}
             <button onClick={() => scrollTo("contact")}
               className="mt-4 w-full text-sm py-2.5 rounded-xl text-white font-medium"
-              style={{ background: "#4f46e5", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
+              style={{ background: "var(--accent)", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
               Hire me
             </button>
           </div>
@@ -617,13 +683,13 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
 
       {/* SKILLS */}
       <div id="skills" className="px-5 @sm:px-8 @md:px-10 py-12 @sm:py-16 max-w-4xl mx-auto"
-        style={{ borderBottom: "0.5px solid rgba(99,102,241,0.1)" }}>
-        <p className="text-xs tracking-widest uppercase mb-2" style={{ color: "#818cf8" }}>What I work with</p>
-        <h2 className="text-xl @sm:text-2xl font-semibold text-white mb-1" style={{ letterSpacing: "-0.6px" }}>Technical skills</h2>
-        <p className="text-sm mb-8" style={{ color: "#475569" }}>Technologies and tools in my daily stack</p>
+        style={{ borderBottom: "0.5px solid var(--border-soft)" }}>
+        <p className="text-xs tracking-widest uppercase mb-2" style={{ color: "var(--accent-2)" }}>What I work with</p>
+        <h2 className="text-xl @sm:text-2xl font-semibold mb-1" style={{ letterSpacing: "-0.6px", color: "var(--text-primary)" }}>Technical skills</h2>
+        <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>Technologies and tools in my daily stack</p>
         <div className="flex flex-wrap gap-2 @sm:gap-2.5">
           {data.skills.length === 0
-            ? <p className="text-sm" style={{ color: "#475569" }}>No skills added yet.</p>
+            ? <p className="text-sm" style={{ color: "var(--text-muted)" }}>No skills added yet.</p>
             : data.skills.map((skill, i) => <SkillChip key={i} skill={skill} />)
           }
         </div>
@@ -631,13 +697,13 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
 
       {/* EXPERIENCE */}
       <div id="exp" className="px-5 @sm:px-8 @md:px-10 py-12 @sm:py-16 max-w-4xl mx-auto"
-        style={{ borderBottom: "0.5px solid rgba(99,102,241,0.1)" }}>
-        <p className="text-xs tracking-widest uppercase mb-2" style={{ color: "#818cf8" }}>Where I've worked</p>
-        <h2 className="text-xl @sm:text-2xl font-semibold text-white mb-1" style={{ letterSpacing: "-0.6px" }}>Experience</h2>
-        <p className="text-sm mb-8" style={{ color: "#475569" }}>My professional journey so far</p>
+        style={{ borderBottom: "0.5px solid var(--border-soft)" }}>
+        <p className="text-xs tracking-widest uppercase mb-2" style={{ color: "var(--accent-2)" }}>Where I've worked</p>
+        <h2 className="text-xl @sm:text-2xl font-semibold mb-1" style={{ letterSpacing: "-0.6px", color: "var(--text-primary)" }}>Experience</h2>
+        <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>My professional journey so far</p>
         <div>
           {data.experiences.length === 0
-            ? <p className="text-sm" style={{ color: "#475569" }}>No experience added yet.</p>
+            ? <p className="text-sm" style={{ color: "var(--text-muted)" }}>No experience added yet.</p>
             : data.experiences.map((exp, i) => <ExpCard key={i} exp={exp} index={i} />)
           }
         </div>
@@ -645,13 +711,13 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
 
       {/* PROJECTS */}
       <div id="projects" className="px-5 @sm:px-8 @md:px-10 py-12 @sm:py-16 max-w-4xl mx-auto"
-        style={{ borderBottom: "0.5px solid rgba(99,102,241,0.1)" }}>
-        <p className="text-xs tracking-widest uppercase mb-2" style={{ color: "#818cf8" }}>What I've built</p>
-        <h2 className="text-xl @sm:text-2xl font-semibold text-white mb-1" style={{ letterSpacing: "-0.6px" }}>Featured projects</h2>
-        <p className="text-sm mb-8" style={{ color: "#475569" }}>A selection of work I'm proud of</p>
+        style={{ borderBottom: "0.5px solid var(--border-soft)" }}>
+        <p className="text-xs tracking-widest uppercase mb-2" style={{ color: "var(--accent-2)" }}>What I've built</p>
+        <h2 className="text-xl @sm:text-2xl font-semibold mb-1" style={{ letterSpacing: "-0.6px", color: "var(--text-primary)" }}>Featured projects</h2>
+        <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>A selection of work I'm proud of</p>
         <div className="projects-grid">
           {data.projects.length === 0
-            ? <p className="text-sm col-span-2" style={{ color: "#475569" }}>No projects added yet.</p>
+            ? <p className="text-sm col-span-2" style={{ color: "var(--text-muted)" }}>No projects added yet.</p>
             : data.projects.map((proj, i) => <ProjectCard key={i} proj={proj} index={i} />)
           }
         </div>
@@ -660,9 +726,9 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
       {/* CONTACT */}
       <div id="contact" className="px-5 @sm:px-8 @md:px-10 py-12 @sm:py-16 max-w-4xl mx-auto">
         <div className="rounded-2xl p-8 @sm:p-12 text-center"
-          style={{ background: "rgba(99,102,241,0.07)", border: "0.5px solid rgba(99,102,241,0.25)" }}>
-          <h2 className="text-2xl @sm:text-3xl font-semibold text-white mb-3" style={{ letterSpacing: "-1px" }}>Let's work together</h2>
-          <p className="text-sm mb-8" style={{ color: "#64748b" }}>
+          style={{ background: "var(--accent-soft)", border: "0.5px solid var(--border-soft)" }}>
+          <h2 className="text-2xl @sm:text-3xl font-semibold mb-3" style={{ letterSpacing: "-1px", color: "var(--text-primary)" }}>Let's work together</h2>
+          <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
             Have a project in mind? I'm always open to discussing new opportunities.
           </p>
           <div className="flex justify-center flex-wrap gap-3">
@@ -675,20 +741,20 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
                 {data.linkedinUrl && (
                   <a href={data.linkedinUrl} target="_blank" rel="noreferrer"
                     className="cta-secondary flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium no-underline transition-all duration-200"
-                    style={{ background: "transparent", border: "0.5px solid rgba(148,163,184,0.3)", color: "#94a3b8" }}>
+                    style={{ background: "transparent", border: "0.5px solid var(--border-soft)", color: "var(--text-secondary)" }}>
                     <Linkedin className="w-4 h-4" /> LinkedIn
                   </a>
                 )}
                 {data.githubUrl && (
                   <a href={data.githubUrl} target="_blank" rel="noreferrer"
                     className="cta-secondary flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium no-underline transition-all duration-200"
-                    style={{ background: "transparent", border: "0.5px solid rgba(148,163,184,0.3)", color: "#94a3b8" }}>
+                    style={{ background: "transparent", border: "0.5px solid var(--border-soft)", color: "var(--text-secondary)" }}>
                     <Github className="w-4 h-4" /> GitHub
                   </a>
                 )}
               </>
             ) : (
-              <p className="text-sm" style={{ color: "#475569" }}>No contact info provided.</p>
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>No contact info provided.</p>
             )}
           </div>
         </div>
@@ -696,12 +762,12 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
 
       {/* FOOTER */}
       <div className="flex items-center justify-between px-5 @sm:px-10 py-6 flex-wrap gap-3"
-        style={{ borderTop: "0.5px solid rgba(99,102,241,0.12)" }}>
-        <p className="text-xs" style={{ color: "#475569" }}>
+        style={{ borderTop: "0.5px solid var(--border-soft)" }}>
+        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
           All rights reserved © {new Date().getFullYear()} bowizzy.com
         </p>
         <div className="flex items-center gap-1.5 opacity-60 hover:opacity-100 transition-opacity">
-          <span className="text-xs font-medium" style={{ color: "#64748b" }}>Made with Bowizzy</span>
+          <span className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>Made with Bowizzy</span>
         </div>
       </div>
     </div>

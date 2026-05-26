@@ -72,6 +72,7 @@ import CreatePortfolio from "./pages/(Portfolio)/CreatePortfolio";
 import PortfolioList from "./pages/(Portfolio)/PortfolioList";
 import PortfolioLanding from "./pages/PortfolioLanding";
 import PortfolioEditor from "./pages/(Portfolio)/PortfolioEditor";
+import PublicPortfolioPreview from "./pages/(Portfolio)/PublicPortfolioPreview";
 
 
 const isAuthenticated = () => {
@@ -637,6 +638,14 @@ function App() {
           </LayoutWrapper>
         </ProtectedRoute>
       ),
+    },
+    {
+      path: "portfolio-preview/:porfolioid",
+      Component: () => <PublicPortfolioPreview />,
+    },
+    {
+      path: "portfolio-preview/:portfolioid",
+      Component: () => <PublicPortfolioPreview />,
     },
   ]);
 
