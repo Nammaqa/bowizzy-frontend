@@ -414,64 +414,13 @@ export const ResumeEditor: React.FC = () => {
     if (imported) applyImported(imported);
   }, [location]);
 
-  // If navigated here from 'Edit' with a resumeTemplate in state, or with resumeTemplateId in query, auto-import and apply it
+  // If navigated here from 'Edit', the data is already stored in the user profile database.
+  // We do not need to re-extract the PDF, just set importReady so fetchAllData can load the profile.
   useEffect(() => {
-    const resumeTemplate = (location && (location as any).state && (location as any).state.resumeTemplate) || null;
-    const resumeTemplateId = searchParams.get("resumeTemplateId");
-    const importKey = resumeTemplateId ? `imported_template_${resumeTemplateId}` : null;
     if (templateImportDoneRef.current) return;
-    if (importKey && sessionStorage.getItem(importKey)) return;
-
-    const doImport = async (tmpl: any) => {
-      if (!tmpl || !tmpl.pdfUrl) return;
-      if (!userId || !token) return;
-      try {
-        setLoading(true);
-        const resp = await fetch(tmpl.pdfUrl);
-        if (!resp.ok) throw new Error("Failed to download template PDF");
-        const blob = await resp.blob();
-        const file = new File([blob], `${tmpl.name || 'imported'}.pdf`, { type: 'application/pdf' });
-        const uploadRes = await uploadResume(userId, file, token);
-        if (uploadRes && (uploadRes.status === 200 || uploadRes.status === 201)) {
-          const imported = uploadRes.data;
-          applyImported(imported);
-        }
-        // Signal that import is done so fetchAllData can run via its useEffect
-        setImportReady(true);
-      } catch (err) {
-        console.error("Failed to import template for editing:", err);
-        setImportReady(true); // allow fetchAllData even on error
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (resumeTemplate && resumeTemplate.pdfUrl && userId && token) {
-      templateImportDoneRef.current = true;
-      setImportReady(false);
-      doImport(resumeTemplate);
-    } else if (resumeTemplateId && userId && token) {
-      templateImportDoneRef.current = true;
-      if (importKey) sessionStorage.setItem(importKey, "true");
-      (async () => {
-        try {
-          setLoading(true);
-          const userStr = localStorage.getItem("user");
-          if (!userStr) return;
-          const user = JSON.parse(userStr);
-          const res = await getResumeTemplateById(user.user_id, user.token, resumeTemplateId);
-          const tmpl = res?.data || null;
-          if (tmpl && tmpl.template_file_url) {
-            await doImport({ pdfUrl: tmpl.template_file_url, name: tmpl.template_name });
-          }
-        } catch (err) {
-          console.error("Failed to fetch template for import:", err);
-        } finally {
-          setLoading(false);
-        }
-      })();
-    }
-  }, [location, searchParams, userId, token]);
+    templateImportDoneRef.current = true;
+    setImportReady(true);
+  }, []);
 
   // User and token check
   useEffect(() => {
@@ -864,7 +813,6 @@ export const ResumeEditor: React.FC = () => {
             <ProfileStepper
               steps={steps}
               currentStep={currentStep}
-              onStepClick={handleStepClick}
               validationErrors={validationErrors}
             />
           </div>

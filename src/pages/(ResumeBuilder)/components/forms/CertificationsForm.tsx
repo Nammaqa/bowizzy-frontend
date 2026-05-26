@@ -703,7 +703,7 @@ export const CertificationsForm: React.FC<CertificationsFormProps> = ({
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <FormSelect
+              {/* <FormSelect
                 label="Certificate Type"
                 placeholder="Select Certificate Type"
                 value={cert.certificateType}
@@ -711,7 +711,7 @@ export const CertificationsForm: React.FC<CertificationsFormProps> = ({
                   updateCertificate(cert.id, "certificateType", v)
                 }
                 options={certificateTypes}
-              />
+              /> */}
               <FormInput
                 label="Date"
                 placeholder="Select Date"
@@ -723,7 +723,7 @@ export const CertificationsForm: React.FC<CertificationsFormProps> = ({
               />
             </div>
 
-            <div className="mt-4">
+            {/* <div className="mt-4">
               <FormInput
                 label="Domain"
                 placeholder="Enter Domain"
@@ -731,7 +731,7 @@ export const CertificationsForm: React.FC<CertificationsFormProps> = ({
                 onChange={(v) => updateCertificate(cert.id, "domain", v)}
                 error={errors[`cert-${cert.id}-domain`]}
               />
-            </div>
+            </div> */}
 
             <div className="mt-4">
               <FormInput
@@ -755,7 +755,7 @@ export const CertificationsForm: React.FC<CertificationsFormProps> = ({
               </div>
             </div>
 
-            <div className="mt-4">
+            <div className="mt-4 hidden">
               <label className="text-xs text-gray-600 font-medium mb-2 block">
                 Upload Certificate Image
               </label>

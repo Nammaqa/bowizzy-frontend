@@ -158,6 +158,9 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
                     </div>
                   </div>
                   <div style={{ color: '#000', marginTop: 6 }}>{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</div>
+                  {edu.universityBoard ? (
+                    <div style={{ color: '#555', marginTop: 4, fontSize: 12 }}>{edu.universityBoard}</div>
+                  ) : null}
                   {edu.resultFormat && edu.result ? (
                     <div style={{ marginTop: 6, color: '#000' }}>{edu.resultFormat}: {edu.result}</div>
                   ) : null}
@@ -175,7 +178,7 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
                     <div style={{ fontWeight: 800, color: '#000' }}>{education.preUniversity.instituteName || 'Pre University'}</div>
                     <div style={{ color: '#000', fontWeight: 800 }}>{education.preUniversity.yearOfPassing ? formatYear(education.preUniversity.yearOfPassing) : ''}</div>
                   </div>
-                  <div style={{ color: '#000', marginTop: 6 }}>Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}</div>
+                  <div style={{ color: '#000', marginTop: 6 }}>Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}{education.preUniversity.boardType ? ` — ${education.preUniversity.boardType}` : ''}</div>
                   {education.preUniversity.resultFormat && education.preUniversity.result && (
                     <div style={{ marginTop: 6, color: '#000' }}>{education.preUniversity.resultFormat}: {education.preUniversity.result}</div>
                   )}
@@ -198,6 +201,34 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
           </div>
         )}
 
+        {(skillsLinks?.skills || []).some((s: any) => s.enabled && s.skillName) && (
+          <div style={{ height: 1, background: '#ddd', margin: '12px 0' }} />
+        )}
+
+        {/* SKILLS row */}
+        {(skillsLinks?.skills || []).some((s: any) => s.enabled && s.skillName) && (
+          <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+            <div
+              style={{
+                width: 170,
+                paddingRight: 12,
+                fontSize: 11,
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                letterSpacing: 1.2,
+                color: primaryColor,
+              }}
+            >
+              Skills
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ color: '#000', fontSize: 12, lineHeight: 1.6 }}>
+                {(skillsLinks?.skills || []).filter((s: any) => s.enabled && s.skillName).map((s: any) => s.skillName).join(', ')}
+              </div>
+            </div>
+          </div>
+        )}
+
         {(certifications || []).filter((c: any) => c.enabled && c.certificateTitle).length > 0 && (
           <div style={{ height: 1, background: '#ddd', margin: '12px 0' }} />
         )}
@@ -207,7 +238,7 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
           <div style={{ display: 'flex', alignItems: 'flex-start' }}>
             <div
               style={{
-                width: 140,
+                width: 170,
                 paddingRight: 12,
                 fontSize: 11,
                 fontWeight: 800,

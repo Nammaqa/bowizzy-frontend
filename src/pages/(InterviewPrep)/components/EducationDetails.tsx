@@ -77,11 +77,11 @@ const EducationDetails = ({
 
   const getEducationTitle = (index: number) => {
     const titles = [
-      "SSC/10th Standard*",
-      "PUC/Diploma / (10th+2)*",
-      "Higher Education*",
+      "SSC/10th Standard",
+      "PUC/Diploma / (10th+2)",
+      "Higher Education",
     ];
-    return titles[index] || "Degree*";
+    return titles[index] || "Degree";
   };
 
   return (

@@ -4,7 +4,7 @@ import { Check, AlertCircle } from "lucide-react";
 interface ProfileStepperProps {
   steps: string[];
   currentStep: number;
-  onStepClick: (stepIndex: number) => void;
+  onStepClick?: (stepIndex: number) => void;
   validationErrors?: { [key: string]: boolean };
 }
 
@@ -66,8 +66,9 @@ export default function ProfileStepper({
             <React.Fragment key={index}>
               {/* Circle */}
               <button
-                onClick={() => onStepClick(index)}
-                className="flex-shrink-0 cursor-pointer transition-all group relative z-10"
+                onClick={() => onStepClick && onStepClick(index)}
+                disabled={!onStepClick}
+                className={`flex-shrink-0 transition-all group relative z-10 ${onStepClick ? 'cursor-pointer' : 'cursor-default'}`}
                 aria-label={`Go to step ${index + 1}`}
               >
                 <div
@@ -150,7 +151,8 @@ export default function ProfileStepper({
           {steps.map((_, index) => (
             <button
               key={index}
-              onClick={() => onStepClick(index)}
+              onClick={() => onStepClick && onStepClick(index)}
+              disabled={!onStepClick}
               className={`h-1.5 rounded-full transition-all ${
                 hasError(index) && index < currentStep
                   ? "bg-red-400 w-1.5"

@@ -161,6 +161,9 @@ export default function SkillsLinksDetailsForm({
     if (value && !/[A-Za-z]/.test(value)) {
       return "Skill must contain at least one letter";
     }
+    if (value && value.length > 13) {
+      return "Max 13 characters allowed";
+    }
     return "";
   };
 
@@ -189,6 +192,8 @@ export default function SkillsLinksDetailsForm({
   // --- SKILLS HANDLERS ---
 
   const handleSkillChange = (index: number, field: string, value: string) => {
+    if (field === "skillName" && value.length > 13) return;
+
     const updated = [...skills];
     updated[index] = { ...updated[index], [field]: value };
     setSkills(updated);

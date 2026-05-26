@@ -446,6 +446,23 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
               </div>
             </section>
           )}
+
+          {/* Languages Section */}
+          {personal.languagesKnown && personal.languagesKnown.length > 0 && (
+            <section style={{ marginBottom: 22 }}>
+              <h2 style={{ fontSize: 13, fontWeight: 700, color: primaryColor, letterSpacing: 1.2, marginBottom: 8 }}>
+                LANGUAGES
+              </h2>
+              <div style={{ height: 1, background: '#333', width: '100%', marginBottom: 12 }} />
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 0' }}>
+                {personal.languagesKnown.map((lang, idx) => (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', marginRight: 16, marginBottom: 4 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#000000' }}>{lang}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
           {/* Links Section */}
           {skillsLinks.linksEnabled && (
             () => {
