@@ -170,8 +170,8 @@ export default function ResumeBuilder() {
               Your Resume(s)
             </span>
 
-            <div className="flex flex-col md:flex-row items-center md:items-start gap-6 bg-white">
-
+            <div className="flex flex-wrap gap-6 bg-white">
+              {/* New Resume Button */}
               <button
                 className="flex flex-col items-center w-[150px] py-4 px-5 rounded-lg border-0 gap-2 cursor-pointer"
                 style={{
@@ -186,6 +186,7 @@ export default function ResumeBuilder() {
                 <span className="text-[#3A3A3A] text-sm">New Resume</span>
               </button>
 
+              {/* Saved Resumes */}
               {userResumes.map((resume) => (
                 <div key={resume.id} className="relative ">
                   <button
@@ -265,14 +266,11 @@ export default function ResumeBuilder() {
               ))}
 
               {userResumes.length === 0 && (
-                <>
-                  <div className="hidden md:block bg-[#7F7F7F] w-[1px] h-[200px]" />
-                  <div className="flex flex-col items-center md:items-start md:w-[877px] md:px-[111px] text-center md:text-left">
-                    <span className="text-[#3A3A3A] text-lg md:text-xl">
-                      You don't have any resume(s) created. Create one now by selecting a template!!
-                    </span>
-                  </div>
-                </>
+                <div className="w-full flex flex-col items-center justify-center py-12 text-center">
+                  <span className="text-[#3A3A3A] text-lg">
+                    You don't have any resume(s) created. Create one now by selecting a template!!
+                  </span>
+                </div>
               )}
             </div>
           </div>
