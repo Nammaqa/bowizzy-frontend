@@ -1101,11 +1101,20 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                         </div>
                       </div>
                     )}
-                    <iframe
-                      src={pdfUrl ? (pdfUrl.includes('docs.google.com') ? pdfUrl : `${pdfUrl}#toolbar=0`) : ''}
-                      className="w-full h-full border-none"
-                      title="Resume PDF Preview"
-                    />
+                    <div className="relative w-full h-full">
+                      <iframe
+                        src={pdfUrl ? (pdfUrl.includes('docs.google.com') ? pdfUrl : `${pdfUrl}#toolbar=0`) : ''}
+                        className="w-full h-full border-none"
+                        title="Resume PDF Preview"
+                      />
+                      {/* Overlay to hide Google Docs Viewer "open in new tab" toolbar on mobile */}
+                      {pdfUrl && pdfUrl.includes('docs.google.com') && (
+                        <div
+                          className="absolute top-0 right-0 pointer-events-none"
+                          style={{ width: '60px', height: '50px', background: '#f3f4f6', zIndex: 10 }}
+                        />
+                      )}
+                    </div>
                   </div>
 
                   {/* Locked template: Pay to unlock section */}

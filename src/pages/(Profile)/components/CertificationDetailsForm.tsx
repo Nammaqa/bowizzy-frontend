@@ -774,7 +774,7 @@ export default function CertificationDetailsForm({
               </div>
 
               {/* Upload Certificate */}
-              <div>
+              <div className="hidden">
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
                   Upload Certificate
                 </label>
