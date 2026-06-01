@@ -631,6 +631,12 @@ export default function ProfileForm() {
           <PersonalDetailsForm
             onNext={handleNext}
             onBack={handleBack}
+            onUpdate={(data: any) => {
+              setFormData((prev) => ({
+                ...prev,
+                personal: data,
+              }));
+            }}
             initialData={formData.personal}
             userId={userId}
             token={token}

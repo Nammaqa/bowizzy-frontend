@@ -433,14 +433,16 @@ export default function Dashboard() {
                       "Complete your profile to improve score"
                   }
                 </p>
-                <button
-                  type="button"
-                  onClick={() => navigate("/profile")}
-                  className="mt-3 px-4 py-1.5 rounded-lg text-white text-sm font-medium shadow-sm cursor-pointer"
-                  style={{ background: gradientColor }}
-                >
-                  Complete Profile
-                </button>
+                {profileProgress.percentage < 100 && (
+                  <button
+                    type="button"
+                    onClick={() => navigate("/profile/form")}
+                    className="mt-3 px-4 py-1.5 rounded-lg text-white text-sm font-medium shadow-sm cursor-pointer"
+                    style={{ background: gradientColor }}
+                  >
+                    Complete Profile
+                  </button>
+                )}
               </div>
             </div>
 

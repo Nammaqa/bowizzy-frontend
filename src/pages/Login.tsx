@@ -69,6 +69,11 @@ export default function Login() {
       {/* RIGHT LOGIN FORM */}
       <div className="flex items-center justify-center bg-white px-6 py-10">
         <div className="w-full max-w-md">
+          {/* Mobile Logo */}
+          <div className="md:hidden flex justify-center mb-8">
+            <img src={Bowizzy} alt="Logo" className="w-32" />
+          </div>
+
           <h2 className="text-3xl font-semibold text-gray-900 text-center mb-8">
             Sign In
           </h2>

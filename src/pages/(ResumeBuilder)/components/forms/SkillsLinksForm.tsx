@@ -149,8 +149,8 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
     if (/^\d+$/.test(value.trim())) {
       return "Skill cannot be only numbers";
     }
-    if (value.length > 13) {
-      return "Max 13 characters allowed";
+    if (value.length > 20) {
+      return "Max 20 characters allowed";
     }
 
     return "";
@@ -166,6 +166,10 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
       return `Invalid ${type} URL format`;
     }
 
+    if (type === "Portfolio" && value.length > 100) {
+      return "Max 100 characters allowed";
+    }
+
     if (
       type === "LinkedIn" &&
       value &&
@@ -179,12 +183,6 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
       !value.toLowerCase().includes("github.com")
     )
       return "Please enter a valid GitHub URL";
-
-    if (
-      type === "Portfolio" &&
-      value
-    )
-      return "Please enter a valid Portfolio URL";
 
     return "";
   };
@@ -520,7 +518,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
   const updateSkill = (id: string, field: string, value: string | boolean) => {
     if (field === "skillName") {
       const strValue = value as string;
-      if (strValue.length > 13) return;
+      if (strValue.length > 20) return;
       const error = validateSkillName(strValue);
       setErrors((prev) => ({ ...prev, [`skill-${id}-skillName`]: error }));
     }

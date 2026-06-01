@@ -154,6 +154,11 @@ const Template16Display: React.FC<Template16DisplayProps> = ({
                       <div style={{ fontWeight: 700 }}>{p.projectTitle}</div>
                       <div style={{ color: '#000' }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</div>
                     </div>
+                    {p.rolesResponsibilities && (
+                      <div style={{ marginTop: 2, color: '#444', paddingLeft: 10 }}
+                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(p.rolesResponsibilities || '') }}
+                      />
+                    )}
                     {p.description && (
                       <div style={{ marginTop: 4, color: '#444', paddingLeft: 10 }}
                         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(p.description || '') }}

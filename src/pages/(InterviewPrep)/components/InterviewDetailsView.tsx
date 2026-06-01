@@ -908,7 +908,7 @@ const InterviewDetailsView: React.FC<InterviewDetailsViewProps> = ({
             }}
             disabled={bookingLoading}
           >
-            {bookingLoading ? 'Booking...' : 'Book Mock Interview'}
+            {bookingLoading ? 'Confirming...' : 'Confirm Mock Interview'}
           </button>
         </div>
       </div>

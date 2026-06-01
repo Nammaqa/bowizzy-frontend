@@ -115,6 +115,12 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
     if (value && !/[a-zA-Z]/.test(value)) {
       return "Project title must include at least one letter";
     }
+    if (value && value.length < 5) {
+      return "Project title must be at least 5 characters";
+    }
+    if (value && value.length > 50) {
+      return "Project title must not exceed 50 characters";
+    }
     return "";
   };
 
@@ -378,15 +384,15 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
     const updatedProjects = data.map((proj) =>
       proj.id === id
         ? {
-            ...proj,
-            projectTitle: initial.projectTitle || "",
-            projectType: initial.projectType || "",
-            startDate: initial.startDate || "",
-            endDate: initial.endDate || "",
-            currentlyWorking: initial.currentlyWorking || false,
-            description: initial.description || "",
-            rolesResponsibilities: initial.rolesResponsibilities || "",
-          }
+          ...proj,
+          projectTitle: initial.projectTitle || "",
+          projectType: initial.projectType || "",
+          startDate: initial.startDate || "",
+          endDate: initial.endDate || "",
+          currentlyWorking: initial.currentlyWorking || false,
+          description: initial.description || "",
+          rolesResponsibilities: initial.rolesResponsibilities || "",
+        }
         : proj
     );
 
@@ -559,6 +565,8 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
               value={project.projectTitle}
               onChange={(v) => updateProject(project.id, "projectTitle", v)}
               error={errors[`project-${project.id}-projectTitle`]}
+              max="50"
+              min="5"
             />
 
             <div className="mt-4">
@@ -731,11 +739,10 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
             <div className="flex items-center justify-end gap-2 mt-8 pt-4 border-t border-gray-200">
               {feedback && (
                 <span
-                  className={`text-xs px-2 py-1 rounded-full ${
-                    feedback.includes("successfully")
-                      ? "bg-green-100 text-green-700"
-                      : "bg-red-100 text-red-700"
-                  }`}
+                  className={`text-xs px-2 py-1 rounded-full ${feedback.includes("successfully")
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
+                    }`}
                 >
                   {feedback}
                 </span>

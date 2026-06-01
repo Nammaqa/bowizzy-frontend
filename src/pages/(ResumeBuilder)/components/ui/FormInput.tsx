@@ -9,6 +9,7 @@ interface FormInputProps {
   disabled?: boolean;
   error?: string;
   max?: string;
+  min?: string;
 }
 
 export const FormInput: React.FC<FormInputProps> = ({
@@ -22,6 +23,7 @@ export const FormInput: React.FC<FormInputProps> = ({
   disabled = false,
   error,
   max,
+  min,
 }) => {
   const sanitizeMonthValue = (val: string) => {
     if (!val) return "";
@@ -68,6 +70,7 @@ export const FormInput: React.FC<FormInputProps> = ({
         }}
         disabled={disabled}
         max={max}
+        min={min}
         className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none 
           ${error ? "border-red-500" : "border-gray-200 focus:border-orange-400"}
           disabled:bg-gray-50 disabled:text-gray-400`}
