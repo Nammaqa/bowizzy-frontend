@@ -139,6 +139,11 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
                     <View key={i} style={{ marginBottom: 8 }}>
                       <Text style={{ fontSize: 10, fontFamily: 'Times-Bold' }}>{edu.instituteName}</Text>
                       <Text style={{ color: '#151616', marginTop: 4 }}>{edu.degree}{edu.fieldOfStudy ? ` (${edu.fieldOfStudy}) — ${edu.universityBoard}` : ''}</Text>
+                      {(edu.startDate || edu.endDate) && (
+                        <Text style={{ color: '#6b7280', marginTop: 4, fontSize: 9 }}>
+                          {formatMonthYear(edu.startDate)}{edu.startDate && edu.endDate ? ' — ' : ''}{formatMonthYear(edu.endDate)}
+                        </Text>
+                      )}
                       {(edu.resultFormat && edu.result) && <Text style={{ color: '#151616', marginTop: 4 }}>{edu.resultFormat}: {edu.result}</Text>}
                     </View>
                   ))}
@@ -146,7 +151,12 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
                     {education.preUniversityEnabled && (
                       <View style={{ marginBottom: 8 }}>
                         <Text style={{ fontSize: 10, fontFamily: 'Times-Bold' }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
-                        <Text style={{ color: '#151616', marginTop: 4 }}>Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}</Text>
+                        <Text style={{ color: '#151616', marginTop: 4 }}>Pre University (12th Standard){education.preUniversity.boardType ? ` — ${education.preUniversity.boardType}` : ''}{education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}</Text>
+                        {(education.preUniversity.yearOfPassing) && (
+                          <Text style={{ color: '#6b7280', marginTop: 4, fontSize: 9 }}>
+                            {formatMonthYear(education.preUniversity.yearOfPassing)}
+                          </Text>
+                        )}
                         {education.preUniversity.resultFormat && education.preUniversity.result && <Text style={{ color: '#151616', marginTop: 4 }}>{education.preUniversity.resultFormat}: {education.preUniversity.result}</Text>}
                       </View>
                     )}
@@ -155,6 +165,11 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
                       <View style={{ marginBottom: 8 }}>
                         <Text style={{ fontSize: 10, fontFamily: 'Times-Bold' }}>{education.sslc.instituteName || 'SSLC'}</Text>
                         <Text style={{ color: '#151616', marginTop: 4 }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</Text>
+                        {(education.sslc.yearOfPassing) && (
+                          <Text style={{ color: '#6b7280', marginTop: 4, fontSize: 9 }}>
+                            {formatMonthYear(education.sslc.yearOfPassing)}
+                          </Text>
+                        )}
                         {education.sslc.resultFormat && education.sslc.result && <Text style={{ color: '#151616', marginTop: 4 }}>{education.sslc.resultFormat}: {education.sslc.result}</Text>}
                       </View>
                     )}</View>

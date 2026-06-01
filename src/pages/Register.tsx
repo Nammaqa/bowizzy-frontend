@@ -238,6 +238,11 @@ export default function Register() {
       {/* RIGHT SIDE */}
       <div className="h-screen overflow-y-auto bg-white">
         <div className="max-w-3xl mx-auto px-6 py-10">
+          {/* Mobile Logo */}
+          <div className="md:hidden flex justify-center mb-8">
+            <img src={Bowizzy} alt="Logo" className="w-32" />
+          </div>
+
           <h2 className="text-2xl font-semibold mb-10">Create Account</h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">

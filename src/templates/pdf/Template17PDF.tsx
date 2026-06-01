@@ -141,7 +141,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
   const pdfFontFamilyBold = getPdfFontFamilyBold(fontFamily);
   const role = (experience && (experience as any).jobRole) || (experience.workExperiences && experience.workExperiences.find((w: any) => w.enabled && w.jobTitle) && experience.workExperiences.find((w: any) => w.enabled && w.jobTitle).jobTitle) || '';
   const linksEnabled = skillsLinks?.linksEnabled ?? true;
-  const links = skillsLinks?.links || {};
+  const links: any = skillsLinks?.links || {};
   const linkedinUrl = linksEnabled && (links.linkedinEnabled ?? true) ? links.linkedinProfile : '';
   const githubUrl = linksEnabled && (links.githubEnabled ?? true) ? links.githubProfile : '';
   const portfolioUrl = linksEnabled && (links.portfolioEnabled ?? true) ? links.portfolioUrl : '';

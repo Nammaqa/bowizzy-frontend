@@ -37,7 +37,7 @@ export default function ProfileStepper({
             <div className="flex flex-col items-center flex-1 relative">
               {/* Step Label with Error Indicator */}
               <div
-                className={`flex items-center gap-1 text-xs md:text-[13px] font-medium leading-tight mb-2 px-1 absolute -top-6 ${
+                className={`flex items-center gap-1 text-xs md:text-[13px] font-medium leading-tight mb-2 px-1 absolute -top-6 whitespace-nowrap ${
                   index === 0
                     ? "left-0 text-left"
                     : index === steps.length - 1
@@ -84,10 +84,9 @@ export default function ProfileStepper({
                 )}
 
                 {/* Circle */}
-                <button
-                  onClick={() => onStepClick(index)}
-                  className="flex-shrink-0 cursor-pointer transition-all group relative"
-                  aria-label={`Go to ${step}`}
+                <div
+                  className="flex-shrink-0 transition-all group relative"
+                  aria-label={`${step}`}
                 >
                   <div
                     className={`w-3 h-3 rounded-full flex items-center justify-center transition-all border-2 ${
@@ -108,7 +107,7 @@ export default function ProfileStepper({
                       )
                     )}
                   </div>
-                </button>
+                </div>
 
                 {/* Right Line Half */}
                 {index < steps.length - 1 && (
@@ -168,9 +167,8 @@ export default function ProfileStepper({
         {/* Step Dots */}
         <div className="flex items-center justify-center gap-1.5 mt-3">
           {steps.map((_, index) => (
-            <button
+            <div
               key={index}
-              onClick={() => onStepClick(index)}
               className={`h-1.5 rounded-full transition-all ${
                 hasError(index) && index < currentStep
                   ? "bg-red-400 w-1.5"
@@ -182,7 +180,7 @@ export default function ProfileStepper({
                   ? "bg-orange-200 w-1.5"
                   : "bg-orange-300 w-1.5"
               }`}
-              aria-label={`Go to step ${index + 1}`}
+              aria-label={`Step ${index + 1}`}
             />
           ))}
         </div>

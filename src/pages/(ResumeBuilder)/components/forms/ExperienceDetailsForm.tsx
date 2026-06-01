@@ -170,6 +170,20 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
   };
 
   const validateDateRange = (startDate: string, endDate: string) => {
+    if (startDate) {
+      const startParts = startDate.split("-");
+      const startYearNum = parseInt(startParts[0], 10);
+      if (startYearNum < 1960) {
+        return "Start date must be 1960 or later";
+      }
+    }
+    if (endDate) {
+      const endParts = endDate.split("-");
+      const endYearNum = parseInt(endParts[0], 10);
+      if (endYearNum < 1960) {
+        return "End date must be 1960 or later";
+      }
+    }
     if (startDate && endDate) {
       if (endDate < startDate) {
         return "End date cannot be before start date";
@@ -326,17 +340,32 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
         if (newExperienceId) {
           const updatedExp = { ...exp, experience_id: newExperienceId };
           setWorkExperiences(workExperiences.map((e) => (e.id === exp.id ? updatedExp : e)));
+          
+          const exists = initialDataRef.current.workExperiences.some(e => e.id === exp.id);
+          const nextWorkExperiences = exists 
+            ? initialDataRef.current.workExperiences.map(e => e.id === exp.id ? updatedExp : e)
+            : [...initialDataRef.current.workExperiences, updatedExp];
+
           initialDataRef.current = { 
             ...initialDataRef.current, 
-            workExperiences: initialDataRef.current.workExperiences.map(e => e.id === exp.id ? updatedExp : e)
+            workExperiences: nextWorkExperiences
           };
           feedbackMessage = "Saved successfully!";
         } else {
           feedbackMessage = "Saved successfully, sync needed.";
         }
       } else {
-        
-        const initial = initialDataRef.current.workExperiences.find(i => i.id === exp.id) as WET;
+        const initial = (initialDataRef.current.workExperiences.find(i => i.id === exp.id) || {
+          companyName: "",
+          jobTitle: "",
+          employmentType: "",
+          location: "",
+          workMode: "",
+          startDate: "",
+          endDate: "",
+          currentlyWorking: false,
+          description: "",
+        }) as WET;
         const minimalPayload: Record<string, any> = {};
 
         Object.keys(experiencePayload).forEach(key => {
@@ -351,9 +380,14 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
         if (Object.keys(minimalPayload).length > 0) {
           await updateExperienceDetails(userId, token, exp.experience_id as number, minimalPayload);
 
+          const exists = initialDataRef.current.workExperiences.some(e => e.id === exp.id);
+          const nextWorkExperiences = exists 
+            ? initialDataRef.current.workExperiences.map(e => e.id === exp.id ? exp : e)
+            : [...initialDataRef.current.workExperiences, exp];
+
           initialDataRef.current = { 
             ...initialDataRef.current, 
-            workExperiences: initialDataRef.current.workExperiences.map(e => e.id === exp.id ? exp : e)
+            workExperiences: nextWorkExperiences
           };
           feedbackMessage = "Updated successfully!";
         }
@@ -564,6 +598,8 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
               value={experience.startDate}
               onChange={(v) => updateWorkExperience(experience.id, "startDate", v)}
               type="month"
+              min="1960-01"
+              error={errors[`exp-${experience.id}-startDate`]}
             />
           </div>
           <div className="relative">
@@ -574,6 +610,7 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
               onChange={(v) => updateWorkExperience(experience.id, "endDate", v)}
               type="month"
               disabled={experience.currentlyWorking}
+              min="1960-01"
               error={errors[`exp-${experience.id}-endDate`]}
             />
           </div>

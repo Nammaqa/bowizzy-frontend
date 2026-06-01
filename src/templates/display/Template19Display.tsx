@@ -88,13 +88,23 @@ const Template19Display: React.FC<Template19DisplayProps> = ({
                     <div key={i} style={{ marginBottom: 12 }}>
                       <div style={{ fontWeight: 700 }}>{edu.instituteName}</div>
                       <div style={{ color: '#151616', marginTop: 4 }}>{edu.degree}{edu.fieldOfStudy ? ` (${edu.fieldOfStudy}) — ${edu.universityBoard}` : ''}</div>
+                      {(edu.startDate || edu.endDate) && (
+                        <div style={{ color: '#6b7280', marginTop: 4, fontSize: 11 }}>
+                          {formatMonthYear(edu.startDate)}{edu.startDate && edu.endDate ? ' — ' : ''}{formatMonthYear(edu.endDate)}
+                        </div>
+                      )}
                       {(edu.resultFormat && edu.result) && <div style={{ color: '#151616', marginTop: 4 }}>{edu.resultFormat}: {edu.result}</div>}
                     </div>
                   ))}
                   {education.preUniversityEnabled && (
                     <div style={{ marginBottom: 12 }}>
                       <div style={{ fontWeight: 700 }}>{education.preUniversity.instituteName || 'Pre University'}</div>
-                      <div style={{ color: '#151616', marginTop: 4 }}>Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}</div>
+                      <div style={{ color: '#151616', marginTop: 4 }}>Pre University (12th Standard){education.preUniversity.boardType ? ` — ${education.preUniversity.boardType}` : ''}{education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}</div>
+                      {(education.preUniversity.yearOfPassing) && (
+                        <div style={{ color: '#6b7280', marginTop: 4, fontSize: 11 }}>
+                          {formatMonthYear(education.preUniversity.yearOfPassing)}
+                        </div>
+                      )}
                       {education.preUniversity.resultFormat && education.preUniversity.result && <div style={{ color: '#151616', marginTop: 4 }}>{education.preUniversity.resultFormat}: {education.preUniversity.result}</div>}
                     </div>
                   )}
@@ -103,6 +113,11 @@ const Template19Display: React.FC<Template19DisplayProps> = ({
                     <div style={{ marginBottom: 12 }}>
                       <div style={{ fontWeight: 700 }}>{education.sslc.instituteName || 'SSLC'}</div>
                       <div style={{ color: '#151616', marginTop: 4 }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</div>
+                      {(education.sslc.yearOfPassing) && (
+                        <div style={{ color: '#6b7280', marginTop: 4, fontSize: 11 }}>
+                          {formatMonthYear(education.sslc.yearOfPassing)}
+                        </div>
+                      )}
                       {education.sslc.resultFormat && education.sslc.result && <div style={{ color: '#151616', marginTop: 4 }}>{education.sslc.resultFormat}: {education.sslc.result}</div>}
                     </div>
                   )}              </div>

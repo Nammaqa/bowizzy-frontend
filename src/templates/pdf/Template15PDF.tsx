@@ -1,6 +1,6 @@
 import React from 'react';
 import DOMPurify from 'dompurify';
-import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, View, Text, StyleSheet, Link } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
 
 const styles = StyleSheet.create({
@@ -161,7 +161,6 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
   const linkedinLabel = linkedinPresent ? extractHandle(linkedinPresent) : null;
   const githubLabel = githubPresent ? extractHandle(githubPresent) : null;
   const portfolioLabel = portfolioPresent ? extractHandle(portfolioPresent) : null;
-  const pdfContactLine = [mobile, email, linkedinLabel, githubLabel, portfolioLabel].filter(Boolean).join(' | ');
 
   return (
     <Document>
@@ -169,7 +168,29 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
         <View style={styles.header}>
           <Text style={{ ...styles.name, fontFamily: pdfFontFamilyBold, color: primaryColor }}>{personal.firstName} {(personal.middleName || '')} {personal.lastName}</Text>
           {role && <Text style={{ ...styles.role, fontFamily: pdfFontFamily, color: primaryColor }}>{role}</Text>}
-          <Text style={styles.contact}>{pdfContactLine}</Text>
+          <View style={{ marginTop: 4, flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {mobile && <Text style={styles.contact}>{mobile}</Text>}
+            {mobile && email && <Text style={styles.contact}> | </Text>}
+            {email && <Text style={styles.contact}>{email}</Text>}
+            {(mobile || email) && linkedinPresent && <Text style={styles.contact}> | </Text>}
+            {linkedinPresent && (
+              <Link src={linkedinPresent} style={{ ...styles.contact, color: '#0a66c2' }}>
+                {linkedinLabel}
+              </Link>
+            )}
+            {linkedinPresent && githubPresent && <Text style={styles.contact}> | </Text>}
+            {githubPresent && (
+              <Link src={githubPresent} style={{ ...styles.contact, color: '#111' }}>
+                {githubLabel}
+              </Link>
+            )}
+            {githubPresent && portfolioPresent && <Text style={styles.contact}> | </Text>}
+            {portfolioPresent && (
+              <Link src={portfolioPresent} style={{ ...styles.contact, color: '#000' }}>
+                {portfolioLabel}
+              </Link>
+            )}
+          </View>
         </View>
 
         <View style={{ marginTop: 12 }}>

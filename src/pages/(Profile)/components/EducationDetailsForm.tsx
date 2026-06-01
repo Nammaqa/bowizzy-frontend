@@ -392,15 +392,24 @@ export default function EducationDetailsForm({
   // Helper function to validate institution/board names
   const validateInstitutionName = (value: string) => {
     if (!value || !value.trim()) return "Institution name is required";
+    if (value.trim().length <= 5) {
+      return "Institution name must be more than 5 characters";
+    }
 
-    // allow letters, numbers, spaces, dot, comma, &, apostrophe, hyphen
-    const regex = /^[a-zA-Z0-9\s.,&'-]+$/;
+    // allow letters, numbers, spaces, dot, comma, &, apostrophe, hyphen, parentheses
+    const regex = /^[a-zA-Z0-9\s.,&'\-()]+$/;
 
     if (!regex.test(value)) {
       return "Invalid institution name";
     }
     if (!/[a-zA-Z]/.test(value)) {
       return "Institution name must include a letter";
+    }
+    if (value.length > 50) {
+      return "Max 50 characters allowed";
+    }
+    if (value.split(/\s+/).some((word) => word.length > 15)) {
+      return "Each word must be 15 characters or less";
     }
 
     return "";
@@ -452,10 +461,67 @@ export default function EducationDetailsForm({
     }
     const [y, m] = value.split("-");
     if (y.length !== 4) return "Year must be 4 digits";
+    const yearNum = parseInt(y, 10);
+    if (yearNum < 1960) return "Year must be 1960 or later";
     const monthNum = parseInt(m, 10);
     if (isNaN(monthNum) || monthNum < 1 || monthNum > 12)
       return "Invalid month";
     return "";
+  };
+
+  // Helper function to check if education card has any data filled
+  const isEducationCardFilled = (edu: HigherEducation): boolean => {
+    return !!(
+      edu.degree ||
+      edu.institutionName ||
+      edu.universityBoard ||
+      edu.fieldOfStudy ||
+      edu.startYear ||
+      edu.endYear ||
+      edu.result
+    );
+  };
+
+  // Helper function to validate mandatory Result Format and Result if card is filled
+  const validateResultMandatory = (
+    edu: HigherEducation,
+    prefix: string
+  ): void => {
+    if (isEducationCardFilled(edu)) {
+      if (!edu.resultFormat) {
+        setErrors((prev) => ({
+          ...prev,
+          [`${prefix}-resultFormat`]: "Result Format is required if data is entered",
+        }));
+      } else {
+        setErrors((prev) => {
+          const updated = { ...prev };
+          delete updated[`${prefix}-resultFormat`];
+          return updated;
+        });
+      }
+
+      if (!edu.result) {
+        setErrors((prev) => ({
+          ...prev,
+          [`${prefix}-result`]: "Result is required if data is entered",
+        }));
+      } else {
+        setErrors((prev) => {
+          const updated = { ...prev };
+          delete updated[`${prefix}-result`];
+          return updated;
+        });
+      }
+    } else {
+      // If card is empty, clear the mandatory errors
+      setErrors((prev) => {
+        const updated = { ...prev };
+        delete updated[`${prefix}-resultFormat`];
+        delete updated[`${prefix}-result`];
+        return updated;
+      });
+    }
   };
 
   // Handler for SSLC data changes
@@ -463,16 +529,27 @@ export default function EducationDetailsForm({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setSslcData((prev) => ({ ...prev, [name]: value }));
+    let finalValue = value;
+    if (name === "result" && sslcData.resultFormat === "Grade") {
+      finalValue = value.toUpperCase();
+    }
+    setSslcData((prev) => {
+      const nextData = { ...prev, [name]: finalValue };
+      if (name === "resultFormat" && value === "Grade") {
+        nextData.result = nextData.result.toUpperCase();
+      }
+      return nextData;
+    });
 
     if (name === "result") {
-      const error = validateResult(value, sslcData.resultFormat);
+      const error = validateResult(finalValue, sslcData.resultFormat);
       setErrors((prev) => ({ ...prev, [`sslc-result`]: error }));
     } else if (name === "resultFormat") {
-      const error = validateResult(sslcData.result, value);
+      const updatedResult = value === "Grade" ? sslcData.result.toUpperCase() : sslcData.result;
+      const error = validateResult(updatedResult, value);
       setErrors((prev) => ({ ...prev, [`sslc-result`]: error }));
     } else if (name === "institutionName") {
-      const error = validateInstitutionName(value);
+      const error = validateInstitutionName(finalValue);
       setErrors((prev) => ({ ...prev, [`sslc-institutionName`]: error }));
     }
   };
@@ -482,16 +559,27 @@ export default function EducationDetailsForm({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setPuData((prev) => ({ ...prev, [name]: value }));
+    let finalValue = value;
+    if (name === "result" && puData.resultFormat === "Grade") {
+      finalValue = value.toUpperCase();
+    }
+    setPuData((prev) => {
+      const nextData = { ...prev, [name]: finalValue };
+      if (name === "resultFormat" && value === "Grade") {
+        nextData.result = nextData.result.toUpperCase();
+      }
+      return nextData;
+    });
 
     if (name === "result") {
-      const error = validateResult(value, puData.resultFormat);
+      const error = validateResult(finalValue, puData.resultFormat);
       setErrors((prev) => ({ ...prev, [`pu-result`]: error }));
     } else if (name === "resultFormat") {
-      const error = validateResult(puData.result, value);
+      const updatedResult = value === "Grade" ? puData.result.toUpperCase() : puData.result;
+      const error = validateResult(updatedResult, value);
       setErrors((prev) => ({ ...prev, [`pu-result`]: error }));
     } else if (name === "institutionName") {
-      const error = validateInstitutionName(value);
+      const error = validateInstitutionName(finalValue);
       setErrors((prev) => ({ ...prev, [`pu-institutionName`]: error }));
     }
   };
@@ -508,18 +596,27 @@ export default function EducationDetailsForm({
     const index = currentList.findIndex((e) => e.id === id);
     const prefix = isExtra ? `extra-${index}` : `higher-${index}`;
 
+    let finalValue = value;
+    if (field === "result" && typeof value === "string" && currentList[index]?.resultFormat === "Grade") {
+      finalValue = value.toUpperCase();
+    }
+
     setter((prev) => {
       const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
+      updated[index] = { ...updated[index], [field]: finalValue };
 
-      if (field === "currentlyPursuing" && value === true) {
+      if (field === "resultFormat" && value === "Grade") {
+        updated[index].result = updated[index].result.toUpperCase();
+      }
+
+      if (field === "currentlyPursuing" && finalValue === true) {
         updated[index].endYear = "";
         setErrors((prevErrors) => {
           const newErrors = { ...prevErrors };
           delete newErrors[`${prefix}-endYear`];
           return newErrors;
         });
-      } else if (field === "currentlyPursuing" && value === false) {
+      } else if (field === "currentlyPursuing" && finalValue === false) {
         setErrors((prevErrors) => {
           const newErrors = { ...prevErrors };
           delete newErrors[`${prefix}-endYear`];
@@ -531,22 +628,25 @@ export default function EducationDetailsForm({
     });
 
     // Validation logic
-    const updatedEdu = { ...currentList[index], [field]: value };
+    const updatedEdu = { ...currentList[index], [field]: finalValue };
+    if (field === "resultFormat" && value === "Grade") {
+      updatedEdu.result = updatedEdu.result.toUpperCase();
+    }
 
-    if (field === "result" && typeof value === "string") {
-      const error = validateResult(value, updatedEdu.resultFormat);
+    if (field === "result" && typeof finalValue === "string") {
+      const error = validateResult(finalValue, updatedEdu.resultFormat);
       setErrors((prev) => ({ ...prev, [`${prefix}-result`]: error }));
-    } else if (field === "resultFormat" && typeof value === "string") {
-      const error = validateResult(updatedEdu.result, value);
+    } else if (field === "resultFormat" && typeof finalValue === "string") {
+      const error = validateResult(updatedEdu.result, finalValue);
       setErrors((prev) => ({ ...prev, [`${prefix}-result`]: error }));
-    } else if (field === "institutionName" && typeof value === "string") {
-      const error = validateInstitutionName(value);
+    } else if (field === "institutionName" && typeof finalValue === "string") {
+      const error = validateInstitutionName(finalValue);
       setErrors((prev) => ({ ...prev, [`${prefix}-institutionName`]: error }));
-    } else if (field === "universityBoard" && typeof value === "string") {
-      const error = validateInstitutionName(value);
+    } else if (field === "universityBoard" && typeof finalValue === "string") {
+      const error = validateInstitutionName(finalValue);
       setErrors((prev) => ({ ...prev, [`${prefix}-universityBoard`]: error }));
-    } else if (field === "startYear" && typeof value === "string") {
-      const fmtError = validateMonthFormat(value);
+    } else if (field === "startYear" && typeof finalValue === "string") {
+      const fmtError = validateMonthFormat(finalValue);
       if (fmtError) {
         setErrors((prev) => ({ ...prev, [`${prefix}-startYear`]: fmtError }));
       } else {
@@ -557,10 +657,10 @@ export default function EducationDetailsForm({
         });
       }
 
-      const rangeError = validateDateRange(value, updatedEdu.endYear);
+      const rangeError = validateDateRange(finalValue, updatedEdu.endYear);
       setErrors((prev) => ({ ...prev, [`${prefix}-endYear`]: rangeError }));
-    } else if (field === "endYear" && typeof value === "string") {
-      const fmtError = validateMonthFormat(value);
+    } else if (field === "endYear" && typeof finalValue === "string") {
+      const fmtError = validateMonthFormat(finalValue);
       if (fmtError) {
         setErrors((prev) => ({ ...prev, [`${prefix}-endYear`]: fmtError }));
       } else {
@@ -569,10 +669,19 @@ export default function EducationDetailsForm({
           delete updated[`${prefix}-endYear`];
           return updated;
         });
-        const rangeError = validateDateRange(updatedEdu.startYear, value);
+        const rangeError = validateDateRange(updatedEdu.startYear, finalValue);
         setErrors((prev) => ({ ...prev, [`${prefix}-endYear`]: rangeError }));
       }
     }
+
+    // After all validations, check if result format and result are mandatory
+    setTimeout(() => {
+      const currentList = isExtra ? extraEducations : higherEducations;
+      const currentEdu = currentList[index];
+      if (currentEdu) {
+        validateResultMandatory(currentEdu, prefix);
+      }
+    }, 0);
   };
 
   // Handler for saving SSLC details (PUT/POST call)
@@ -765,6 +874,7 @@ export default function EducationDetailsForm({
     // Check for validation errors in current card
     if (
       errors[`${prefix}-result`] ||
+      errors[`${prefix}-resultFormat`] ||
       errors[`${prefix}-institutionName`] ||
       errors[`${prefix}-universityBoard`] ||
       errors[`${prefix}-startYear`] ||
@@ -1379,6 +1489,7 @@ export default function EducationDetailsForm({
                     value={education.startYear}
                     onChange={(e) => handleChange("startYear", e.target.value)}
                     max={getCurrentMonth()}
+                    min="1960-01"
                     className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm"
                   />
                 </div>
@@ -1400,6 +1511,7 @@ export default function EducationDetailsForm({
                     value={education.endYear}
                     onChange={(e) => handleChange("endYear", e.target.value)}
                     max={getCurrentMonth()}
+                    min="1960-01"
                     disabled={education.currentlyPursuing}
                     className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm disabled:bg-gray-100 ${errors[`${prefix}-endYear`]
                       ? "border-red-500 focus:ring-red-400"
@@ -1442,7 +1554,11 @@ export default function EducationDetailsForm({
                     onChange={(e) =>
                       handleChange("resultFormat", e.target.value)
                     }
-                    className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
+                    className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm appearance-none bg-white pr-8 ${
+                      errors[`${prefix}-resultFormat`]
+                        ? "border-red-500 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                    }`}
                   >
                     <option value="">Select Result Format</option>
                     <option value="Percentage">Percentage</option>
@@ -1451,6 +1567,11 @@ export default function EducationDetailsForm({
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 </div>
+                {errors[`${prefix}-resultFormat`] && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors[`${prefix}-resultFormat`]}
+                  </p>
+                )}
               </div>
 
               {/* Result */}
@@ -1637,6 +1758,7 @@ export default function EducationDetailsForm({
                     value={sslcData.yearOfPassing}
                     onChange={handleSslcChange}
                     max={getCurrentMonth()}
+                    min="1960-01"
                     className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm"
                   />
                 </div>
@@ -1802,6 +1924,7 @@ export default function EducationDetailsForm({
                     value={puData.yearOfPassing}
                     onChange={handlePuChange}
                     max={getCurrentMonth()}
+                    min="1960-01"
                     className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm"
                   />
                 </div>

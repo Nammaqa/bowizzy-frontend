@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { fetchCountries, fetchStates, fetchCities } from "@/services/locationService";
-import { ChevronDown, RotateCcw, X, Save } from "lucide-react";
+import { ChevronDown, X, Save } from "lucide-react";
 import { uploadToCloudinary } from "@/utils/uploadToCloudinary";
 import { deleteFromCloudinary } from "@/utils/deleteFromCloudinary";
 import { updatePersonalDetails, sendOtpPersonalChange, updatePersonalDetailsWithOTP } from "@/services/personalService";
@@ -50,6 +50,7 @@ const ALL_LANGUAGES = [
 interface PersonalDetailsFormProps {
   onNext: (data: any) => void;
   onBack?: () => void;
+  onUpdate?: (data: any) => void;
   initialData?: any;
   userId: string;
   token: string;
@@ -59,6 +60,7 @@ interface PersonalDetailsFormProps {
 export default function PersonalDetailsForm({
   onNext,
   onBack,
+  onUpdate,
   initialData = {},
   userId,
   token,
@@ -383,15 +385,8 @@ export default function PersonalDetailsForm({
         break;
 
       case "passportNumber":
-        // Error check for partial input (user can't type special chars, but must be alphanumeric and length is 8)
-        if (value && !/^[A-Z0-9]*$/.test(value)) {
-          error = "Only uppercase letters and numbers allowed";
-        } else if (value && !/(?=.*[A-Z])(?=.*\d)/.test(value)) {
-          error = "Must contain at least one letter and one number";
-        } else if (value && value.length > 0 && value.length < 8) {
-          error = "Must be 8 characters";
-        } else if (value && value.length > 8) {
-          error = "Only 8 characters allowed";
+        if (value && !/^[A-Z][0-9]{7}$/.test(value)) {
+          error = "Invalid Passport Number: Must contain 1 uppercase letter followed by 7 digits";
         }
         break;
     }
@@ -408,8 +403,16 @@ export default function PersonalDetailsForm({
     let newValue = value;
     let error = "";
 
-    // 1. Pincode: Allow only digits, max 6
-    if (name === "pincode") {
+    // 1. First Name, Middle Name, Last Name: Filter to allow only letters and spaces
+    if (name === "firstName" || name === "middleName" || name === "lastName") {
+      // Remove any non-letter and non-space characters
+      newValue = value.replace(/[^a-zA-Z\s]/g, "");
+      if (newValue !== value) {
+        error = "Only letters and spaces allowed";
+      }
+    }
+    // 2. Pincode: Allow only digits, max 6
+    else if (name === "pincode") {
       if (!/^\d*$/.test(value)) {
         // Block non-digit input
         error = "Only digits allowed";
@@ -417,16 +420,16 @@ export default function PersonalDetailsForm({
         return;
       }
       if (value.length > 6) return;
-
-      // 2. Mobile Number: Allow only digits, max 10 (keeping existing logic)
-    } else if (name === "mobileNumber") {
+    } 
+    // 3. Mobile Number: Allow only digits, max 10
+    else if (name === "mobileNumber") {
       if (!/^\d*$/.test(value)) {
         return;
       }
       if (value.length > 10) return;
-
-      // 3. Passport Number: Convert to uppercase, allow only A-Z and 0-9, max 8
-    } else if (name === "passportNumber") {
+    } 
+    // 4. Passport Number: Convert to uppercase, allow only A-Z and 0-9, max 8
+    else if (name === "passportNumber") {
       const upperValue = value.toUpperCase();
       if (!/^[A-Z0-9]*$/.test(upperValue)) {
         // Block special characters / non-alphanumeric input
@@ -441,8 +444,10 @@ export default function PersonalDetailsForm({
     // Update formData only if input was valid or non-restricted
     setFormData((prev) => ({ ...prev, [name]: newValue }));
 
-    // Run full validation and update error state
-    error = validateField(name, newValue);
+    // Run full validation and update error state (only if error wasn't already set during filtering)
+    if (!error) {
+      error = validateField(name, newValue);
+    }
     setErrors((prev) => ({ ...prev, [name]: error }));
   };
 
@@ -460,14 +465,20 @@ export default function PersonalDetailsForm({
     try {
       const cloudinaryRes = await uploadToCloudinary(file);
 
-      setFormData((prev) => ({
-        ...prev,
+      const nextData = {
+        ...formData,
         profilePhoto: file,
         profilePhotoPreview: cloudinaryRes.url,
         uploadedPhotoURL: cloudinaryRes.url,
         uploadedPublicId: cloudinaryRes.publicId,
         uploadedDeleteToken: cloudinaryRes.deleteToken || "",
-      }));
+      };
+
+      setFormData(nextData);
+
+      if (onUpdate) {
+        onUpdate(nextData);
+      }
 
       if (personalDetailsId) {
         const payload = {
@@ -582,6 +593,11 @@ export default function PersonalDetailsForm({
       initialLanguages.current = [...formData.languages];
       setLanguagesChanged(false);
       setChangedLanguages(false);
+      if (onUpdate) {
+        onUpdate({
+          ...formData,
+        });
+      }
       setLanguagesFeedback("Languages updated successfully!");
       setTimeout(() => setLanguagesFeedback(""), 3000);
     } catch (error) {
@@ -644,6 +660,11 @@ export default function PersonalDetailsForm({
 
       setLocationChanged(false);
       setChangedLocationFields([]);
+      if (onUpdate) {
+        onUpdate({
+          ...formData,
+        });
+      }
       setLocationFeedback("Location updated successfully!");
       setTimeout(() => setLocationFeedback(""), 3000);
     } catch (error) {
@@ -711,6 +732,26 @@ export default function PersonalDetailsForm({
         dateOfBirth: formData.dateOfBirth,
         gender: formData.gender,
       };
+
+      // If email has changed, update local storage "user" object's email
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        try {
+          const parsedUser = JSON.parse(userStr);
+          if (parsedUser) {
+            parsedUser.email = formData.email;
+            localStorage.setItem("user", JSON.stringify(parsedUser));
+          }
+        } catch (e) {
+          console.error("Failed to update user in localStorage:", e);
+        }
+      }
+
+      if (onUpdate) {
+        onUpdate({
+          ...formData,
+        });
+      }
 
       setPersonalDetailsChanged(false);
       setOtpValue("");
@@ -933,7 +974,7 @@ export default function PersonalDetailsForm({
 
                                 if (personalDetailsId) {
                                   const payload = {
-                                    uploadedPhotoURL: "",
+                                    profile_photo_url: "",
                                   };
                                   console.log(
                                     "Updating profile photo to empty:",
@@ -950,14 +991,20 @@ export default function PersonalDetailsForm({
                                 console.error("Error deleting photo:", error);
                               }
 
-                              setFormData((prev) => ({
-                                ...prev,
-                                profilePhoto: null,
-                                profilePhotoPreview: "",
-                                uploadedPhotoURL: "",
-                                uploadedPublicId: "",
-                                uploadedDeleteToken: "",
-                              }));
+                              setFormData((prev) => {
+                                const nextData = {
+                                  ...prev,
+                                  profilePhoto: null,
+                                  profilePhotoPreview: "",
+                                  uploadedPhotoURL: "",
+                                  uploadedPublicId: "",
+                                  uploadedDeleteToken: "",
+                                };
+                                if (onUpdate) {
+                                  onUpdate(nextData);
+                                }
+                                return nextData;
+                              });
 
                               if (fileInputRef.current)
                                 fileInputRef.current.value = "";
@@ -1182,17 +1229,7 @@ export default function PersonalDetailsForm({
                   strokeWidth={2.5}
                 />
               </button>
-              <button
-                type="button"
-                onClick={handleClearLanguages}
-                className="w-5 h-5 flex items-center justify-center rounded-full border-2 border-gray-600 hover:bg-gray-100 transition-colors"
-                title="Reset changes"
-              >
-                <RotateCcw
-                  className="w-3 h-3 text-gray-600 cursor-pointer"
-                  strokeWidth={2.5}
-                />
-              </button>
+
             </div>
           </div>
 
@@ -1297,17 +1334,7 @@ export default function PersonalDetailsForm({
                   strokeWidth={2.5}
                 />
               </button>
-              <button
-                type="button"
-                onClick={handleClearCurrentLocation}
-                className="w-5 h-5 flex items-center justify-center rounded-full border-2 border-gray-600 hover:bg-gray-100 transition-colors"
-                title="Reset changes"
-              >
-                <RotateCcw
-                  className="w-3 h-3 text-gray-600 cursor-pointer"
-                  strokeWidth={2.5}
-                />
-              </button>
+
             </div>
           </div>
 
