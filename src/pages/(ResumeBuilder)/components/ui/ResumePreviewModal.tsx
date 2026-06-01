@@ -620,6 +620,29 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
     return num && num >= 12 && num <= 20;
   })();
 
+  const uploadPdfToCloudinary = async (blob: Blob): Promise<string | null> => {
+    try {
+      const finalName = resumeName.trim() || generateDefaultResumeName() || 'resume';
+      const file = new File([blob], `${finalName}.pdf`, { type: 'application/pdf' });
+      const result = await uploadToCloudinary(file);
+      return result?.url || null;
+    } catch (error) {
+      console.error('Cloudinary PDF upload error:', error);
+      return null;
+    }
+  };
+
+  const handleSetPdfUrl = async (blob: Blob) => {
+    if (window.innerWidth < 768) {
+      const cUrl = await uploadPdfToCloudinary(blob);
+      if (cUrl) {
+        setPdfUrl(`https://docs.google.com/viewer?url=${encodeURIComponent(cUrl)}&embedded=true`);
+        return;
+      }
+    }
+    setPdfUrl(URL.createObjectURL(blob));
+  };
+
   useEffect(() => {
     if (!isOpen || !autoGeneratePreview || !PDFComponent) return;
 
@@ -663,8 +686,7 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
         if (generatedBlob) {
           cachedBlobRef.current = generatedBlob;
           setPdfBlob(generatedBlob);
-          const url = URL.createObjectURL(generatedBlob);
-          setPdfUrl(url);
+          await handleSetPdfUrl(generatedBlob);
           if (autoShowPdfPreview) {
             setShowDownloadDialog(true);
             onPreviewComplete?.();
@@ -678,9 +700,8 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
     };
 
     if (cachedBlobRef.current) {
-      const url = URL.createObjectURL(cachedBlobRef.current);
       setPdfBlob(cachedBlobRef.current);
-      setPdfUrl(url);
+      void handleSetPdfUrl(cachedBlobRef.current);
       if (autoShowPdfPreview) {
         setShowDownloadDialog(true);
         onPreviewComplete?.();
@@ -694,16 +715,7 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
 
   if (!isOpen) return null;
 
-  const uploadPdfToCloudinary = async (blob: Blob): Promise<string | null> => {
-    try {
-      const file = new File([blob], `${resumeName.trim()}.pdf`, { type: 'application/pdf' });
-      const result = await uploadToCloudinary(file);
-      return result?.url || null;
-    } catch (error) {
-      console.error('Cloudinary PDF upload error:', error);
-      return null;
-    }
-  };
+
 
   const saveResumeTemplate = async (templateFileUrl: string) => {
     if (!userId || !token) return;
@@ -732,7 +744,7 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
   const handleSaveAndExitClick = () => {
     setSaveMode('template');
     setShowDownloadDialog(false);
-    if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+    if (pdfUrl && !pdfUrl.includes('docs.google.com')) URL.revokeObjectURL(pdfUrl);
     setPdfUrl(null);
     setResumeName(generateDefaultResumeName());
     setShowNameDialog(true);
@@ -914,8 +926,7 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                     const generatedBlob = await generatePdfBlob();
                     if (generatedBlob) {
                       setPdfBlob(generatedBlob);
-                      const url = URL.createObjectURL(generatedBlob);
-                      setPdfUrl(url);
+                      await handleSetPdfUrl(generatedBlob);
                       setShowDownloadDialog(true);
                     }
                   } catch (_err) {
@@ -1058,8 +1069,7 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                           const generatedBlob = await generatePdfBlob();
                           if (generatedBlob) {
                             setPdfBlob(generatedBlob);
-                            const url = URL.createObjectURL(generatedBlob);
-                            setPdfUrl(url);
+                            await handleSetPdfUrl(generatedBlob);
                           }
                         } catch (err) {
                           console.error('PDF generation error:', err);
@@ -1092,7 +1102,7 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                       </div>
                     )}
                     <iframe
-                      src={pdfUrl ? `${pdfUrl}#toolbar=0` : ''}
+                      src={pdfUrl ? (pdfUrl.includes('docs.google.com') ? pdfUrl : `${pdfUrl}#toolbar=0`) : ''}
                       className="w-full h-full border-none"
                       title="Resume PDF Preview"
                     />
@@ -1145,7 +1155,7 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                         onClick={() => {
                           onClose();
                           setShowDownloadDialog(false);
-                          if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+                          if (pdfUrl && !pdfUrl.includes('docs.google.com')) URL.revokeObjectURL(pdfUrl);
                           setPdfUrl(null);
                           setPdfBlob(null);
                         }}
@@ -1169,7 +1179,7 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                           return;
                         }
                         setShowDownloadDialog(false);
-                        if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+                        if (pdfUrl && !pdfUrl.includes('docs.google.com')) URL.revokeObjectURL(pdfUrl);
                         setPdfUrl(null);
                         setPdfBlob(null);
                         setResumeName(generateDefaultResumeName());
