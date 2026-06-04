@@ -23,6 +23,22 @@ const MAX_CREDITS = 10;
 const CREDIT_TO_INR = 0.5; // 1 credit = ₹0.5
 const BASE_PRICE_INR = 5; // Base portfolio creation price in INR
 
+const parseAvailableCredits = (payload: any): number => {
+  const rawCredits =
+    payload?.credits ??
+    payload?.credit ??
+    payload?.data?.credits ??
+    payload?.data?.credit ??
+    0;
+
+  const numericCredits = Number(rawCredits);
+  if (!Number.isFinite(numericCredits) || numericCredits <= 0) {
+    return 0;
+  }
+
+  return Math.floor(numericCredits);
+};
+
 function loadRazorpayScript(): Promise<boolean> {
   return new Promise((resolve) => {
     if (document.getElementById("razorpay-sdk")) {
@@ -105,7 +121,7 @@ export default function CreatePortfolio() {
   const creditDiscount = useCredits ? selectedCredits * CREDIT_TO_INR : 0;
   const finalPriceINR = Math.max(0, BASE_PRICE_INR - creditDiscount);
   const finalPricePaise = finalPriceINR * 100;
-  const actualMaxCredits = Math.max(MIN_CREDITS, Math.min(userCredits, MAX_CREDITS));
+  const actualMaxCredits = Math.min(userCredits, MAX_CREDITS);
   const sliderPercent = actualMaxCredits > MIN_CREDITS
     ? ((selectedCredits - MIN_CREDITS) / (actualMaxCredits - MIN_CREDITS)) * 100
     : 0;
@@ -117,12 +133,15 @@ export default function CreatePortfolio() {
       try {
         const userData = JSON.parse(localStorage.getItem("user") || "null");
         const token = userData?.token;
-        if (!token) return;
+        if (!token) {
+          setUserCredits(0);
+          return;
+        }
 
-        // TODO: Replace with real API call
-        // const resp = await api.get('/personal-details/profile-data', { headers: { Authorization: `Bearer ${token}` } });
-        // setUserCredits(resp.data?.credits ?? 0);
-        setUserCredits(5); // Simulated — replace with API
+        const resp = await api.get("/personal-details/profile-data", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUserCredits(parseAvailableCredits(resp?.data));
       } catch {
         setUserCredits(0);
       } finally {
@@ -132,10 +151,60 @@ export default function CreatePortfolio() {
     load();
   }, []);
 
+  useEffect(() => {
+    const refreshCredits = async () => {
+      try {
+        const userData = JSON.parse(localStorage.getItem("user") || "null");
+        const token = userData?.token;
+        if (!token) return;
+
+        const resp = await api.get("/personal-details/profile-data", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUserCredits(parseAvailableCredits(resp?.data));
+      } catch {
+        setUserCredits(0);
+      }
+    };
+
+    const handleCreditsRefresh = () => {
+      refreshCredits();
+    };
+
+    window.addEventListener("credits:refresh", handleCreditsRefresh);
+    return () =>
+      window.removeEventListener("credits:refresh", handleCreditsRefresh);
+  }, []);
+
+  useEffect(() => {
+    if (actualMaxCredits === 0) {
+      if (useCredits) {
+        setUseCredits(false);
+      }
+      setSelectedCredits(MIN_CREDITS);
+      return;
+    }
+
+    if (selectedCredits > actualMaxCredits) {
+      setSelectedCredits(actualMaxCredits);
+    }
+  }, [actualMaxCredits, selectedCredits, useCredits]);
+
   // Reset slider when credits toggled off
   const handleToggleCredits = (val: boolean) => {
+    if (val && userCredits === 0) {
+      setUseCredits(false);
+      setError("You do not have any credits available right now.");
+      return;
+    }
+
     setUseCredits(val);
     if (!val) setSelectedCredits(MIN_CREDITS);
+    if (val) {
+      setSelectedCredits((prev) =>
+        Math.min(Math.max(prev, MIN_CREDITS), Math.min(userCredits, MAX_CREDITS))
+      );
+    }
     setError(null);
   };
 
@@ -228,6 +297,7 @@ export default function CreatePortfolio() {
             console.log('response from razorpay ', response)
             await createPortfolioProject(order_id, response.razorpay_payment_id, response.razorpay_signature
             );
+            window.dispatchEvent(new CustomEvent("credits:refresh"));
             setSuccess(true);
           } catch {
             setError(
@@ -452,6 +522,7 @@ export default function CreatePortfolio() {
                   checked={useCredits}
                   onChange={(e) => handleToggleCredits(e.target.checked)}
                   className="sr-only"
+                  disabled={creditsLoading || userCredits === 0}
                 />
                 <div
                   className={`absolute inset-0 rounded-full transition-colors duration-200 ${useCredits ? "bg-orange-400" : "bg-gray-200"
@@ -481,7 +552,9 @@ export default function CreatePortfolio() {
                 <p className="text-xs text-gray-400 mt-0.5 ml-6">
                   {creditsLoading
                     ? "Loading credits…"
-                    : `You have ${userCredits} credit${userCredits !== 1 ? "s" : ""} · 1 credit = ₹${CREDIT_TO_INR}`}
+                    : userCredits > 0
+                    ? `You have ${userCredits} credit${userCredits !== 1 ? "s" : ""} · Use 1-${Math.min(userCredits, MAX_CREDITS)} credits · 1 credit = ₹${CREDIT_TO_INR}`
+                    : `You have 0 credits · 1 credit = ₹${CREDIT_TO_INR}`}
                 </p>
               </div>
             </label>
@@ -557,17 +630,17 @@ export default function CreatePortfolio() {
                     id="credit-slider"
                     type="range"
                     min={MIN_CREDITS}
-                    max={Math.min(userCredits, MAX_CREDITS)}
+                    max={actualMaxCredits}
                     step={1}
                     value={selectedCredits}
-                    disabled={userCredits === 0}
+                    disabled={actualMaxCredits === 0}
                     onChange={(e) => setSelectedCredits(Number(e.target.value))}
                   />
 
                   {/* Clickable tick labels */}
                   <div className="flex justify-between mt-2 px-0.5">
                     {Array.from(
-                      { length: Math.min(userCredits, MAX_CREDITS) },
+                      { length: actualMaxCredits },
                       (_, i) => i + 1
                     ).map((n) => (
                       <button

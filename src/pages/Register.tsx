@@ -248,7 +248,7 @@ export default function Register() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-12 gap-4">
               {/* FIRST NAME */}
-              <div className="col-span-12 md:col-span-6">
+              <div className="col-span-12 lg:col-span-6">
                 <label>First Name*</label>
                 <input
                   value={firstName}
@@ -274,7 +274,7 @@ export default function Register() {
               </div>
 
               {/* MIDDLE NAME */}
-              <div className="col-span-12 md:col-span-6">
+              <div className="col-span-12 lg:col-span-6">
                 <label>Middle Name</label>
                 <input
                   value={middleName}
@@ -396,8 +396,8 @@ export default function Register() {
               {/* LINKEDIN */}
               <div className="col-span-12">
                 <label>LinkedIn URL*</label>
-                <div className="flex mt-2">
-                  <span className="px-3 rounded-l-lg border bg-gray-100 flex items-center">
+                <div className="mt-2 flex flex-col lg:flex-row">
+                  <span className="px-3 py-3 border rounded-t-lg lg:rounded-t-none lg:rounded-l-lg bg-gray-100 flex items-center break-all lg:break-normal">
                     https://www.linkedin.com/in/
                   </span>
                   <input
@@ -418,7 +418,7 @@ export default function Register() {
                       const extracted = extractLinkedinUsername(val);
                       setLinkedinUsername(extracted);
                     }}
-                    className="w-full px-4 py-3 border rounded-r-lg"
+                    className="w-full px-4 py-3 border border-t-0 lg:border-t lg:border-l-0 rounded-b-lg lg:rounded-b-none lg:rounded-r-lg"
                   />
                 </div>
                 {errors.linkedin && (

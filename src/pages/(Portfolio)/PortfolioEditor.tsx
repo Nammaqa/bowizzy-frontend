@@ -16,6 +16,8 @@ interface Project {
 interface Experience {
   role: string;
   company: string;
+  startDate?: string;
+  endDate?: string;
   duration: string;
   details: string;
 }
@@ -197,7 +199,9 @@ export default function PortfolioEditor() {
               {
                 role: "Software Developer",
                 company: "Bowizzy Tech Solutions",
-                duration: "2024 - Present",
+                startDate: "01-2024",
+                endDate: "",
+                duration: "01-2024",
                 details: "Built interactive web applications using React and custom frameworks.",
               },
             ]);
@@ -217,13 +221,32 @@ export default function PortfolioEditor() {
     fetchPortfolioData();
   }, [id]);
 
-  // Helper to format dates from API (e.g. YYYY-MM-DD or YYYY-MM) to "Jan 2021"
+  const mmYYYYRegex = /^(0[1-9]|1[0-2])-\d{4}$/;
+
+  const formatDuration = (startDate?: string, endDate?: string) => {
+    const start = (startDate || "").trim();
+    const end = (endDate || "").trim();
+    if (start && end) return `${start} - ${end}`;
+    return start || end || "";
+  };
+
+  const normalizeExperience = (exp: Experience): Experience => {
+    const startDate = (exp.startDate || "").trim();
+    const endDate = (exp.endDate || "").trim();
+    return {
+      ...exp,
+      startDate,
+      endDate,
+      duration: formatDuration(startDate, endDate) || exp.duration,
+    };
+  };
+
+  // Helper to format dates from API (e.g. YYYY-MM-DD or YYYY-MM) to "MM-YYYY"
   const formatApiDate = (dateStr: string) => {
     if (!dateStr) return "";
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    return `${months[d.getMonth()]} ${d.getFullYear()}`;
+    return `${String(d.getMonth() + 1).padStart(2, "0")}-${d.getFullYear()}`;
   };
 
   // Import Details from Profile APIs
@@ -254,10 +277,12 @@ export default function PortfolioEditor() {
       if (expRes.data && Array.isArray(expRes.data.experiences)) {
         const mappedExps = expRes.data.experiences.map((exp: any) => {
           const start = formatApiDate(exp.start_date);
-          const end = exp.currently_working_here ? "Present" : formatApiDate(exp.end_date);
+          const end = exp.currently_working_here ? "" : formatApiDate(exp.end_date);
           return {
             role: exp.job_title || "",
             company: exp.company_name || "",
+            startDate: start,
+            endDate: end,
             duration: start && end ? `${start} - ${end}` : start || end || "",
             details: exp.description || "",
           };
@@ -348,6 +373,39 @@ export default function PortfolioEditor() {
     }
   };
 
+  const hasAllowedUrlCharacters = (url: string): boolean => /^[A-Za-z0-9:/?#[\]@!$&'()*+,;=._~%-]+$/.test(url);
+
+  const validateProfileUrl = (
+    url: string,
+    expectedHosts: string[],
+    pathPattern?: RegExp
+  ): boolean => {
+    if (!url.trim()) return true;
+    if (url.length > 100 || !hasAllowedUrlCharacters(url)) return false;
+    try {
+      const urlObj = new URL(ensureHttps(url));
+      const hostname = urlObj.hostname.replace(/^www\./i, "").toLowerCase();
+      if (!expectedHosts.includes(hostname)) return false;
+      if (pathPattern && !pathPattern.test(urlObj.pathname.replace(/\/+$/g, ""))) return false;
+      return !urlObj.search && !urlObj.hash;
+    } catch {
+      return false;
+    }
+  };
+
+  const validateCustomUrl = (url: string): boolean => {
+    if (!url.trim()) return true;
+    if (url.length > 100 || !hasAllowedUrlCharacters(url)) return false;
+    try {
+      const urlObj = new URL(ensureHttps(url));
+      const hostname = urlObj.hostname.replace(/^www\./i, "").toLowerCase();
+      const validDomain = /^([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i.test(hostname);
+      return validDomain && urlObj.pathname === "/" && !urlObj.search && !urlObj.hash;
+    } catch {
+      return false;
+    }
+  };
+
   // Submit and Save Portfolio
   const handleSave = async () => {
     if (!portfolioName.trim()) {
@@ -364,20 +422,20 @@ export default function PortfolioEditor() {
     const cleanDribbble = dribbbleUrl.trim() ? ensureHttps(dribbbleUrl) : "";
 
     // Validate URLs
-    if (cleanGithub && !isValidUrl(cleanGithub)) {
-      alert("Please enter a valid GitHub URL.");
+    if (cleanGithub && !validateProfileUrl(cleanGithub, ["github.com"], /^\/[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/)) {
+      alert("Please enter a valid GitHub profile URL under 100 characters.");
       return;
     }
-    if (cleanLinkedin && !isValidUrl(cleanLinkedin)) {
-      alert("Please enter a valid LinkedIn URL.");
+    if (cleanLinkedin && !validateProfileUrl(cleanLinkedin, ["linkedin.com"], /^\/in\/[A-Za-z0-9-]{3,100}$/)) {
+      alert("Please enter a valid LinkedIn profile URL under 100 characters.");
       return;
     }
-    if (cleanTwitter && !isValidUrl(cleanTwitter)) {
-      alert("Please enter a valid Twitter URL.");
+    if (cleanTwitter && !validateProfileUrl(cleanTwitter, ["twitter.com", "x.com"], /^\/[A-Za-z0-9_]{1,15}$/)) {
+      alert("Please enter a valid Twitter/X profile URL under 100 characters.");
       return;
     }
-    if (cleanCustom && !isValidUrl(cleanCustom)) {
-      alert("Please enter a valid Custom Domain URL.");
+    if (cleanCustom && !validateCustomUrl(cleanCustom)) {
+      alert("Please enter a valid Custom Domain URL under 100 characters.");
       return;
     }
     if (cleanBehance && !isValidUrl(cleanBehance)) {
@@ -386,6 +444,18 @@ export default function PortfolioEditor() {
     }
     if (cleanDribbble && !isValidUrl(cleanDribbble)) {
       alert("Please enter a valid Dribbble URL.");
+      return;
+    }
+
+    const normalizedExperiences = experiences.map(normalizeExperience);
+    const invalidExperience = normalizedExperiences.find((exp) => {
+      const hasStart = Boolean(exp.startDate);
+      const hasEnd = Boolean(exp.endDate);
+      return (hasStart && !mmYYYYRegex.test(exp.startDate || "")) || (hasEnd && !mmYYYYRegex.test(exp.endDate || ""));
+    });
+
+    if (invalidExperience) {
+      alert("Please enter timeline dates in MM-YYYY format.");
       return;
     }
 
@@ -421,7 +491,7 @@ export default function PortfolioEditor() {
         designProcess: portfolioType === "designer" ? designProcess : [],
         caseStudies: portfolioType === "designer" ? caseStudies : [],
         projects: projects,
-        experiences: experiences,
+        experiences: normalizedExperiences,
         skills: skills,
       };
 
