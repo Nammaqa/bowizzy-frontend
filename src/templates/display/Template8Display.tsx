@@ -150,9 +150,7 @@ const Template8Display: React.FC<Template8DisplayProps> = ({ data }) => {
                     <div style={{ fontSize: 9, color: '#666' }}>{edu.startYear} - {edu.currentlyPursuing ? 'Present' : edu.endYear}</div>
                   </div>
                   <div style={{ fontSize: 10, color: '#444' }}>{edu.instituteName}</div>
-                  {edu.fieldOfStudy && (
-                    <div style={{ fontSize: 9, color: '#666', marginTop: 2 }}>• {edu.fieldOfStudy}</div>
-                  )}
+                  
                 </div>
               ))}
               {/* Pre University */}

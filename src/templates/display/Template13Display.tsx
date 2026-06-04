@@ -203,7 +203,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
                     <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{edu.currentlyPursuing ? 'Present' : formatYear(edu.endYear)}</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>
-                    {edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}{edu.universityBoard ? ` — ${edu.universityBoard}` : ''}
+                    {edu.degree}{edu.universityBoard ? ` — ${edu.universityBoard}` : ''}
                   </div>
                   {edu.resultFormat && edu.result && (<div style={{ marginTop: 6, color: '#2b2a2a' }}>{edu.resultFormat}: {edu.result}</div>)}
                 </div>

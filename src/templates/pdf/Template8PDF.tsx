@@ -176,7 +176,6 @@ const Template8PDF: React.FC<Template8PDFProps> = ({ data }) => {
                     <Text style={styles.itemDate}>{edu.startYear} - {edu.currentlyPursuing ? 'Present' : edu.endYear}</Text>
                   </View>
                   <Text style={styles.itemSubtitle}>{edu.instituteName}</Text>
-                  {edu.fieldOfStudy && <Text style={styles.listItem}>• {edu.fieldOfStudy}</Text>}
                 </View>
               ))}
               {/* Pre University */}
