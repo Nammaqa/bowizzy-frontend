@@ -36,6 +36,8 @@ interface Project {
 interface Experience {
   role: string;
   company: string;
+  startDate?: string;
+  endDate?: string;
   duration: string;
   details: string;
 }
@@ -221,6 +223,58 @@ export default function PortfolioEditorComponent({
 
   const nameMax = 50;
   const descMax = 300;
+  const linkMax = 100;
+  const maxImageSizeBytes = 5 * 1024 * 1024;
+  const allowedImageTypes = ["image/png", "image/jpeg"];
+  const mmYYYYRegex = /^(0[1-9]|1[0-2])-\d{4}$/;
+
+  const isValidImageFile = (file: File) => {
+    if (!allowedImageTypes.includes(file.type)) {
+      alert("Only PNG and JPG images are allowed.");
+      return false;
+    }
+
+    if (file.size > maxImageSizeBytes) {
+      alert("Image size must be 5 MB or less.");
+      return false;
+    }
+
+    return true;
+  };
+
+  const formatDuration = (startDate?: string, endDate?: string) => {
+    const start = (startDate || "").trim();
+    const end = (endDate || "").trim();
+    if (start && end) return `${start} - ${end}`;
+    return start || end || "";
+  };
+
+  const splitDuration = (duration: string) => {
+    const [start = "", end = ""] = duration.split(/\s+-\s+/);
+    return {
+      startDate: mmYYYYRegex.test(start.trim()) ? start.trim() : "",
+      endDate: mmYYYYRegex.test(end.trim()) ? end.trim() : "",
+    };
+  };
+
+  const getExperienceDate = (exp: Experience, field: "startDate" | "endDate") =>
+    exp[field] || splitDuration(exp.duration)[field];
+
+  const handleUpdateExperienceDate = (index: number, field: "startDate" | "endDate", val: string) => {
+    const updated = [...experiences];
+    const current = updated[index];
+    const dates = {
+      startDate: getExperienceDate(current, "startDate"),
+      endDate: getExperienceDate(current, "endDate"),
+      [field]: val,
+    };
+    updated[index] = {
+      ...current,
+      ...dates,
+      duration: formatDuration(dates.startDate, dates.endDate),
+    };
+    setExperiences(updated);
+  };
 
   // Projects helpers
   const handleAddProject = () => {
@@ -239,7 +293,7 @@ export default function PortfolioEditorComponent({
 
   // Experience helpers
   const handleAddExperience = () => {
-    setExperiences([...experiences, { role: "", company: "", duration: "", details: "" }]);
+    setExperiences([...experiences, { role: "", company: "", startDate: "", endDate: "", duration: "", details: "" }]);
   };
 
   const handleUpdateExperience = (index: number, field: keyof Experience, val: string) => {
@@ -530,10 +584,14 @@ export default function PortfolioEditorComponent({
           </label>
           <input
             type="file"
-            accept="image/*"
+            accept="image/png,image/jpeg"
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (file) {
+                if (!isValidImageFile(file)) {
+                  e.target.value = "";
+                  return;
+                }
                 try {
                   const result = await uploadToCloudinary(file);
                   setProfileImageUrl(result.url);
@@ -599,6 +657,7 @@ export default function PortfolioEditorComponent({
               type="url"
               value={githubUrl}
               onChange={(e) => setGithubUrl(e.target.value)}
+              maxLength={linkMax}
               onBlur={() => {
                 if (githubUrl.trim() && !/^https?:\/\//i.test(githubUrl.trim())) {
                   setGithubUrl(`https://${githubUrl.trim()}`);
@@ -616,6 +675,7 @@ export default function PortfolioEditorComponent({
               type="url"
               value={linkedinUrl}
               onChange={(e) => setLinkedinUrl(e.target.value)}
+              maxLength={linkMax}
               onBlur={() => {
                 if (linkedinUrl.trim() && !/^https?:\/\//i.test(linkedinUrl.trim())) {
                   setLinkedinUrl(`https://${linkedinUrl.trim()}`);
@@ -633,6 +693,7 @@ export default function PortfolioEditorComponent({
               type="url"
               value={twitterUrl}
               onChange={(e) => setTwitterUrl(e.target.value)}
+              maxLength={linkMax}
               onBlur={() => {
                 if (twitterUrl.trim() && !/^https?:\/\//i.test(twitterUrl.trim())) {
                   setTwitterUrl(`https://${twitterUrl.trim()}`);
@@ -650,6 +711,7 @@ export default function PortfolioEditorComponent({
               type="url"
               value={customUrl}
               onChange={(e) => setCustomUrl(e.target.value)}
+              maxLength={linkMax}
               onBlur={() => {
                 if (customUrl.trim() && !/^https?:\/\//i.test(customUrl.trim())) {
                   setCustomUrl(`https://${customUrl.trim()}`);
@@ -890,10 +952,14 @@ export default function PortfolioEditorComponent({
                         </label>
                         <input
                           type="file"
-                          accept="image/*"
+                          accept="image/png,image/jpeg"
                           onChange={async (e) => {
                             const file = e.target.files?.[0];
                             if (!file) return;
+                            if (!isValidImageFile(file)) {
+                              e.target.value = "";
+                              return;
+                            }
                             try {
                               const result = await uploadToCloudinary(file);
                               handleUpdateCaseStudy(idx, "imageUrl", result.url);
@@ -1057,7 +1123,7 @@ export default function PortfolioEditorComponent({
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pr-8">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 pr-8">
                   <div className="md:col-span-1">
                     <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
                       Role / Job Title
@@ -1084,13 +1150,31 @@ export default function PortfolioEditorComponent({
                   </div>
                   <div>
                     <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
-                      Timeline / Years
+                      Start Date
                     </label>
                     <input
                       type="text"
-                      value={exp.duration}
-                      onChange={(e) => handleUpdateExperience(idx, "duration", e.target.value)}
-                      placeholder="e.g. 2022 - Present"
+                      value={getExperienceDate(exp, "startDate")}
+                      onChange={(e) => handleUpdateExperienceDate(idx, "startDate", e.target.value)}
+                      placeholder="MM-YYYY"
+                      maxLength={7}
+                      pattern="(0[1-9]|1[0-2])-[0-9]{4}"
+                      title="Use MM-YYYY format, e.g. 04-2024"
+                      className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
+                      End Date
+                    </label>
+                    <input
+                      type="text"
+                      value={getExperienceDate(exp, "endDate")}
+                      onChange={(e) => handleUpdateExperienceDate(idx, "endDate", e.target.value)}
+                      placeholder="MM-YYYY"
+                      maxLength={7}
+                      pattern="(0[1-9]|1[0-2])-[0-9]{4}"
+                      title="Use MM-YYYY format, e.g. 05-2026"
                       className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                     />
                   </div>
