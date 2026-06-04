@@ -199,6 +199,16 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
         </View>
         {personal.aboutCareerObjective ? <Text style={{ fontSize: 10, color: '#444', marginTop: 6 }}>{htmlToPlainText(personal.aboutCareerObjective)}</Text> : null}
 
+        {(skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled) && (<>
+          <View style={{ marginTop: 12 }}>
+            <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>SUMMARY</Text>
+            <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginTop: 4, marginBottom: 0 }} />
+          </View>
+          <View style={{ marginTop: 6 }}>
+            {skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled && (<Text style={{ fontSize: 10, color: '#444' }}>{htmlToPlainText(skillsLinks.technicalSummary)}</Text>)}
+          </View>
+        </>)}
+
         {(education.higherEducation.some(edu => edu.enabled) || education.preUniversityEnabled || education.sslcEnabled) && (<>
           <View style={{ marginTop: 12 }}>
             <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>EDUCATION</Text>
@@ -215,7 +225,7 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
                   <Text style={{ fontSize: 11, color: '#6b7280' }}>{edu.degree}{edu.fieldOfStudy ? ` — ${edu.fieldOfStudy}` : ''}</Text>
                   {edu.resultFormat && edu.result ? (
-                    <Text style={{ fontSize: 11, color: '#6b7280' }}>{edu.resultFormat}: {edu.result}</Text>
+                    <Text style={{ fontSize: 11, color: '#6b7280', fontFamily: pdfFontFamilyBold }}>{edu.resultFormat}: {edu.result}</Text>
                   ) : null}
                 </View>
                 {edu.universityBoard ? <Text style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>{edu.universityBoard}</Text> : null}
@@ -232,7 +242,7 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
                   <Text style={{ fontSize: 11, color: '#6b7280' }}>Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}</Text>
                   {education.preUniversity.resultFormat && education.preUniversity.result ? (
-                    <Text style={{ fontSize: 11, color: '#6b7280' }}>{education.preUniversity.resultFormat}: {education.preUniversity.result}</Text>
+                    <Text style={{ fontSize: 11, color: '#6b7280', fontFamily: pdfFontFamilyBold }}>{education.preUniversity.resultFormat}: {education.preUniversity.result}</Text>
                   ) : null}
                 </View>
               </View>
@@ -248,7 +258,7 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
                   <Text style={{ fontSize: 11, color: '#6b7280' }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</Text>
                   {education.sslc.resultFormat && education.sslc.result ? (
-                    <Text style={{ fontSize: 11, color: '#6b7280' }}>{education.sslc.resultFormat}: {education.sslc.result}</Text>
+                    <Text style={{ fontSize: 11, color: '#6b7280', fontFamily: pdfFontFamilyBold }}>{education.sslc.resultFormat}: {education.sslc.result}</Text>
                   ) : null}
                 </View>
               </View>

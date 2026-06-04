@@ -115,7 +115,6 @@ interface HigherEducation {
   degree: string;
   institutionName: string;
   universityBoard: string;
-  fieldOfStudy: string;
   startYear: string;
   endYear: string;
   resultFormat: string;
@@ -199,7 +198,6 @@ export default function EducationDetailsForm({
         degree: "",
         institutionName: "",
         universityBoard: "",
-        fieldOfStudy: "",
         startYear: "",
         endYear: "",
         resultFormat: "",
@@ -344,8 +342,6 @@ export default function EducationDetailsForm({
       changedFields.push("institutionName");
     if (current.universityBoard !== (initial.universityBoard || ""))
       changedFields.push("universityBoard");
-    if (current.fieldOfStudy !== (initial.fieldOfStudy || ""))
-      changedFields.push("fieldOfStudy");
     if (current.startYear !== (initial.startYear || ""))
       changedFields.push("startYear");
     if (current.endYear !== (initial.endYear || ""))
@@ -475,7 +471,6 @@ export default function EducationDetailsForm({
       edu.degree ||
       edu.institutionName ||
       edu.universityBoard ||
-      edu.fieldOfStudy ||
       edu.startYear ||
       edu.endYear ||
       edu.result
@@ -891,7 +886,6 @@ export default function EducationDetailsForm({
         payload = {
           education_type: "higher",
           degree: edu.degree || "",
-          field_of_study: edu.fieldOfStudy || "",
           institution_name: edu.institutionName || "",
           university_name: edu.universityBoard || "",
           start_year: buildYear(edu.startYear),
@@ -958,9 +952,6 @@ export default function EducationDetailsForm({
           switch (field) {
             case "degree":
               payload.degree = edu.degree;
-              break;
-            case "fieldOfStudy":
-              payload.field_of_study = edu.fieldOfStudy;
               break;
             case "institutionName":
               payload.institution_name = edu.institutionName;
@@ -1039,7 +1030,6 @@ export default function EducationDetailsForm({
       degree: "",
       institutionName: "",
       universityBoard: "",
-      fieldOfStudy: "",
       startYear: "",
       endYear: "",
       resultFormat: "",
@@ -1181,7 +1171,6 @@ export default function EducationDetailsForm({
               degree: "",
               institutionName: "",
               universityBoard: "",
-              fieldOfStudy: "",
               startYear: "",
               endYear: "",
               resultFormat: "",
@@ -1389,45 +1378,6 @@ export default function EducationDetailsForm({
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 </div>
-              </div>
-
-              {/* Field of Study */}
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                  Field Of Study
-                </label>
-                {branchesByDegree[education.degree] ? (
-                  <div className="relative">
-                    <select
-                      value={education.fieldOfStudy}
-                      onChange={(e) =>
-                        handleChange("fieldOfStudy", e.target.value)
-                      }
-                      className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
-                    >
-                      <option value="">Select Branch</option>
-                      {branchesByDegree[education.degree].map((b) => (
-                        <option key={b} value={b}>
-                          {b}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                  </div>
-                ) : (
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={education.fieldOfStudy}
-                      onChange={(e) => handleChange("fieldOfStudy", e.target.value)}
-                      placeholder="Enter Field Of Study"
-                      className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${errors[`${prefix}-fieldOfStudy`]
-                        ? "border-red-500 focus:ring-red-400"
-                        : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
-                        }`}
-                    />
-                  </div>
-                )}
               </div>
 
               {/* Institution Name */}

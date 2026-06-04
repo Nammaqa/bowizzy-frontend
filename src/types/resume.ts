@@ -46,7 +46,6 @@ export interface HigherEducation {
   education_id?: number | null;
   id: string; 
   degree: string;
-  fieldOfStudy: string;
   instituteName: string;
   universityBoard: string;
   startYear: string;

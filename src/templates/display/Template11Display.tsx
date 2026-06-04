@@ -251,7 +251,7 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                         <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{formatMonthYear(edu.startYear)} - {edu.currentlyPursuing ? 'Present' : formatMonthYear(edu.endYear)}</div>
                       </div>
                       <div style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', marginTop: 4 }}>
-                        {getFullDegreeName(edu.degree)}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}
+                        {getFullDegreeName(edu.degree)}
                       </div>
                       {edu.resultFormat && edu.result && (
                         <div style={{ marginTop: 6, color: '#000000', fontSize: 11 }}>{edu.resultFormat}: {edu.result}</div>
@@ -269,7 +269,7 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                     <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{formatMonthYear(education.preUniversity.yearOfPassing) || ''}</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', marginTop: 4 }}>
-                    Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}
+                    Pre University (12th Standard){education.preUniversity.boardType ? ` — ${education.preUniversity.boardType}` : ''} {education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}
                   </div>
                   {education.preUniversity.resultFormat && education.preUniversity.result && (
                     <div style={{ marginTop: 6, color: '#000000', fontSize: 11 }}>{education.preUniversity.resultFormat}: {education.preUniversity.result}</div>
@@ -282,7 +282,7 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                 <div style={{ marginBottom: 10 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#000000', flex: 1, marginRight: 8 }}>{education.sslc.instituteName || 'SSLC'}</div>
-                    <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{education.sslc.yearOfPassing || ''}</div>
+                    <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{formatMonthYear(education.sslc.yearOfPassing) || ''}</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', marginTop: 4 }}>
                     SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}
