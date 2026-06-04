@@ -97,7 +97,7 @@ export default function DashNav({ heading }: { heading: string }) {
 
     return (
         <>
-            <nav className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200">
+            <nav className="relative z-[100] flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200">
                 <div className="text-lg font-medium text-gray-700">{heading}</div>
 
                 <div className="flex items-center gap-2">
@@ -147,7 +147,7 @@ export default function DashNav({ heading }: { heading: string }) {
                         </button>
 
                         {showProfileDropdown && (
-                            <div className="absolute right-0 mt-2 w-56 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                            <div className="absolute right-0 mt-2 w-56 z-[110] animate-in fade-in slide-in-from-top-1 duration-150">
                                 <div className="absolute right-5 -top-1.5 w-3 h-3 bg-white border-l border-t border-gray-200 transform rotate-45 z-10" />
 
                                 <div className="relative rounded-xl shadow-lg border border-gray-100 bg-white overflow-hidden">
