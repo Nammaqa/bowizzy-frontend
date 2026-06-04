@@ -222,6 +222,7 @@ export default function PortfolioEditor() {
   }, [id]);
 
   const mmYYYYRegex = /^(0[1-9]|1[0-2])-\d{4}$/;
+  const plainTextRegex = /^[A-Za-z0-9 ]*$/;
 
   const formatDuration = (startDate?: string, endDate?: string) => {
     const start = (startDate || "").trim();
@@ -448,6 +449,33 @@ export default function PortfolioEditor() {
     }
 
     const normalizedExperiences = experiences.map(normalizeExperience);
+    const invalidProjectText = projects.find((project) => {
+      return (
+        !plainTextRegex.test(project.title || "") ||
+        !plainTextRegex.test(project.tech || "") ||
+        (project.tech || "").length > 30
+      );
+    });
+
+    if (invalidProjectText) {
+      alert("Project title and tech stack can only contain letters, numbers, and spaces. Tech stack must be 30 characters or less.");
+      return;
+    }
+
+    const invalidExperienceText = normalizedExperiences.find((exp) => {
+      return (
+        !plainTextRegex.test(exp.role || "") ||
+        !plainTextRegex.test(exp.company || "") ||
+        (exp.role || "").length > 80 ||
+        (exp.company || "").length > 80
+      );
+    });
+
+    if (invalidExperienceText) {
+      alert("Job role/title and company can only contain letters, numbers, and spaces, with a maximum length of 80 characters.");
+      return;
+    }
+
     const invalidExperience = normalizedExperiences.find((exp) => {
       const hasStart = Boolean(exp.startDate);
       const hasEnd = Boolean(exp.endDate);

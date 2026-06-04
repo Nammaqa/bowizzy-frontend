@@ -163,12 +163,26 @@ export default function PortfolioList() {
 
   const handleDelete = async (id: number | string) => {
     if (!window.confirm("Are you sure you want to delete this portfolio?")) return;
-    setDeleting(String(id));
-    // TODO: call DELETE API
-    setTimeout(() => {
+    const userData = JSON.parse(localStorage.getItem("user") || "null");
+
+    if (!userData || !userData.token) {
+      alert("User not authenticated.");
+      return;
+    }
+
+    try {
+      setDeleting(String(id));
+      await api.delete(`/portfolio/${id}`, {
+        headers: { Authorization: `Bearer ${userData.token}` },
+      });
+
       setPortfolios((prev) => prev.filter((p) => String(p.portfolio_id) !== String(id)));
+    } catch (err: any) {
+      console.error("Failed to delete portfolio:", err);
+      alert(err.response?.data?.message || "Failed to delete portfolio. Please try again.");
+    } finally {
       setDeleting(null);
-    }, 600);
+    }
   };
 
   const handleManage = (p: Portfolio) => {

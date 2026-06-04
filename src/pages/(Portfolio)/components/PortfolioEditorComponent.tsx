@@ -224,9 +224,13 @@ export default function PortfolioEditorComponent({
   const nameMax = 50;
   const descMax = 300;
   const linkMax = 100;
+  const experienceTextMax = 80;
+  const techStackMax = 30;
   const maxImageSizeBytes = 5 * 1024 * 1024;
   const allowedImageTypes = ["image/png", "image/jpeg"];
   const mmYYYYRegex = /^(0[1-9]|1[0-2])-\d{4}$/;
+
+  const sanitizePlainText = (val: string) => val.replace(/[^A-Za-z0-9 ]/g, "");
 
   const isValidImageFile = (file: File) => {
     if (!allowedImageTypes.includes(file.type)) {
@@ -1040,7 +1044,7 @@ export default function PortfolioEditorComponent({
                     <input
                       type="text"
                       value={p.title}
-                      onChange={(e) => handleUpdateProject(idx, "title", e.target.value)}
+                      onChange={(e) => handleUpdateProject(idx, "title", sanitizePlainText(e.target.value))}
                       placeholder="e.g. Crypto Tracker"
                       className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                     />
@@ -1052,8 +1056,9 @@ export default function PortfolioEditorComponent({
                     <input
                       type="text"
                       value={p.tech}
-                      onChange={(e) => handleUpdateProject(idx, "tech", e.target.value)}
-                      placeholder="e.g. Next.js, GraphQL"
+                      onChange={(e) => handleUpdateProject(idx, "tech", sanitizePlainText(e.target.value).slice(0, techStackMax))}
+                      maxLength={techStackMax}
+                      placeholder="e.g. React Node AWS"
                       className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                     />
                   </div>
@@ -1131,7 +1136,8 @@ export default function PortfolioEditorComponent({
                     <input
                       type="text"
                       value={exp.role}
-                      onChange={(e) => handleUpdateExperience(idx, "role", e.target.value)}
+                      onChange={(e) => handleUpdateExperience(idx, "role", sanitizePlainText(e.target.value).slice(0, experienceTextMax))}
+                      maxLength={experienceTextMax}
                       placeholder="e.g. Lead Engineer"
                       className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                     />
@@ -1143,7 +1149,8 @@ export default function PortfolioEditorComponent({
                     <input
                       type="text"
                       value={exp.company}
-                      onChange={(e) => handleUpdateExperience(idx, "company", e.target.value)}
+                      onChange={(e) => handleUpdateExperience(idx, "company", sanitizePlainText(e.target.value).slice(0, experienceTextMax))}
+                      maxLength={experienceTextMax}
                       placeholder="e.g. Bowizzy Inc"
                       className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                     />
