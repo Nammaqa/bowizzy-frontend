@@ -499,6 +499,16 @@ export default function ProfileForm() {
         if (!Array.isArray(data.languages) || data.languages.length === 0) {
           return false;
         }
+        if (
+          !data.address ||
+          !data.country ||
+          !data.state ||
+          !data.city ||
+          !data.pincode ||
+          !data.nationality
+        ) {
+          return false;
+        }
         if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
           return false;
         }

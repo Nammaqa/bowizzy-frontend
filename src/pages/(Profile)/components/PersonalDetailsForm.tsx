@@ -786,11 +786,7 @@ export default function PersonalDetailsForm({
     }
 
     // 🔹 Validation errors check
-    if (
-      Object.keys(errors).some(
-        (key) => key !== "pincode" && key !== "passportNumber" && errors[key]
-      )
-    ) {
+    if (Object.keys(errors).some((key) => key !== "passportNumber" && errors[key])) {
       setSubmitError("Please fix validation errors before proceeding.");
       return;
     }
@@ -798,6 +794,23 @@ export default function PersonalDetailsForm({
     if (!formData.languages || formData.languages.length === 0) {
       setLanguagesExpanded(true);
       languageInputRef.current?.focus();
+      return;
+    }
+
+    const missingLocationFields: string[] = [];
+
+    if (!formData.address?.trim()) missingLocationFields.push("Address");
+    if (!formData.country?.trim()) missingLocationFields.push("Country");
+    if (!formData.state?.trim()) missingLocationFields.push("State");
+    if (!formData.city?.trim()) missingLocationFields.push("City");
+    if (!formData.pincode?.trim()) missingLocationFields.push("Pincode");
+    if (!formData.nationality?.trim()) missingLocationFields.push("Nationality");
+
+    if (missingLocationFields.length > 0) {
+      setCurrentLocationExpanded(true);
+      setSubmitError(
+        `Please fill in all required Current Location fields before proceeding:\n\n• ${missingLocationFields.join("\n• ")}`
+      );
       return;
     }
 

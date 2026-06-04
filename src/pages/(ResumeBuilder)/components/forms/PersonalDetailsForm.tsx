@@ -516,6 +516,35 @@ const handleDismissEnhanced = () => {
     }
   };
 
+  const handleLocationSelectionChange = (
+    field: "country" | "state" | "city",
+    value: string
+  ) => {
+    const nextData: PersonalDetails = {
+      ...data,
+      [field]: value,
+      address: "",
+      nationality: "",
+      passportNumber: "",
+    };
+
+    if (field === "country") {
+      nextData.state = "";
+      nextData.city = "";
+    }
+
+    if (field === "state") {
+      nextData.city = "";
+    }
+
+    onChange(nextData);
+    setErrors((prev) => ({
+      ...prev,
+      address: "",
+      passportNumber: "",
+    }));
+  };
+
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1083,14 +1112,14 @@ const handleDismissEnhanced = () => {
                 label="Country"
                 placeholder={loadingCountries ? "Loading..." : "Select Country"}
                 value={data.country}
-                onChange={(v) => onChange({ ...data, country: v, state: "", city: "" })}
+                onChange={(v) => handleLocationSelectionChange("country", v)}
                 options={countryOptions}
               />
               <FormSelect
                 label="State"
                 placeholder={loadingStates ? "Loading..." : "Select State"}
                 value={data.state}
-                onChange={(v) => onChange({ ...data, state: v, city: "" })}
+                onChange={(v) => handleLocationSelectionChange("state", v)}
                 options={stateOptions}
               />
             </div>
@@ -1100,7 +1129,7 @@ const handleDismissEnhanced = () => {
                 label="City"
                 placeholder={loadingCities ? "Loading..." : "Select City"}
                 value={data.city}
-                onChange={(v) => onChange({ ...data, city: v })}
+                onChange={(v) => handleLocationSelectionChange("city", v)}
                 options={cityOptions}
               />
               <FormInput
@@ -1179,8 +1208,7 @@ const handleDismissEnhanced = () => {
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
   <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-100">
     <span className="text-sm font-semibold text-gray-800">
-      About / Career Objective{" "}
-      <span className="text-red-500 ml-1">*</span>
+      About / Career Objective
     </span>
     <CollapseButton
       isCollapsed={careerObjectiveCollapsed}
