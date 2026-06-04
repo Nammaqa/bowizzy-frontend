@@ -496,6 +496,9 @@ export default function ProfileForm() {
         if (!data.firstName || !data.lastName) {
           return false;
         }
+        if (!Array.isArray(data.languages) || data.languages.length === 0) {
+          return false;
+        }
         if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
           return false;
         }
@@ -541,10 +544,11 @@ export default function ProfileForm() {
           return false;
         }
         
-        // Check if at least one link field is filled in the first link object
-        const linkData = linksArray[0];
-        if (!linkData || (!linkData.linkedinProfile && !linkData.githubProfile && !linkData.portfolioUrl && !linkData.publicationUrl)) {
-           return false;
+        const hasLinkedIn = linksArray.some(
+          (link: any) => link.linkedinProfile && link.linkedinProfile.trim()
+        );
+        if (!hasLinkedIn) {
+          return false;
         }
         break;
 

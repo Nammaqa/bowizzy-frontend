@@ -80,7 +80,7 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
               fontWeight: 800,
               textTransform: 'uppercase',
               letterSpacing: 1.2,
-              color: primaryColor, // ✅ headline accent
+              color: primaryColor,
             }}
           >
             Contact
@@ -90,6 +90,40 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
             </div>
           </div>
         </div>
+
+        {(personal.aboutCareerObjective || (skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled)) && (
+          <div style={{ height: 1, background: '#ddd', margin: '12px 0' }} />
+        )}
+
+        {/* SUMMARY row */}
+        {(personal.aboutCareerObjective || (skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled)) && (
+          <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+            <div
+              style={{
+                width: 170,
+                paddingRight: 12,
+                fontSize: 11,
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                letterSpacing: 1.2,
+                color: primaryColor,
+              }}
+            >
+              Summary
+            </div>          <div style={{ flex: 1, fontSize: 12, color: '#333', lineHeight: 1.6 }}>
+              {personal.aboutCareerObjective && (
+                <div style={{ marginBottom: (skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled) ? 8 : 0 }}>
+                  {DOMPurify.sanitize(personal.aboutCareerObjective).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s{2,}/g, ' ').trim()}
+                </div>
+              )}
+              {skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled && (
+                <div>
+                  {DOMPurify.sanitize(skillsLinks.technicalSummary).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s{2,}/g, ' ').trim()}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {experience.workExperiences.filter((w: any) => w.enabled).length > 0 && (
           <div style={{ height: 1, background: '#ddd', margin: '12px 0' }} />

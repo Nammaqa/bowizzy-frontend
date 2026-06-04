@@ -161,10 +161,10 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
             {personal.email && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconEmail /><Text style={{ fontSize: 9, color: '#000' }}>{personal.email}</Text></View>}
             {personal.mobileNumber && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconPhone /><Text style={{ fontSize: 9, color: '#000' }}>{personal.mobileNumber}</Text></View>}
             {(personal.address || personal.city || personal.state) && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconLocation /><Text style={{ fontSize: 9, color: '#000' }}>{[personal.address, personal.city, personal.state, personal.pincode].filter(Boolean).join(', ')}</Text></View>}
-            {linkedinUrl && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconLinkedin /><Link src={linkedinUrl} style={linkTextStyle}>{linkedinUrl}</Link></View>}
-            {githubUrl && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconGithub /><Link src={githubUrl} style={linkTextStyle}>{githubUrl}</Link></View>}
-            {portfolioUrl && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconGlobe /><Link src={portfolioUrl} style={linkTextStyle}>{portfolioUrl}</Link></View>}
-            {publicationUrl && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconExternalLink /><Link src={publicationUrl} style={linkTextStyle}>{publicationUrl}</Link></View>}
+            {linkedinUrl && <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6, width: '100%' }}><IconLinkedin /><Text style={{ ...linkTextStyle, fontSize: 7, flex: 1, flexWrap: 'wrap' }}>{linkedinUrl}</Text></View>}
+            {githubUrl && <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6, width: '100%' }}><IconGithub /><Text style={{ ...linkTextStyle, fontSize: 7, flex: 1, flexWrap: 'wrap' }}>{githubUrl}</Text></View>}
+            {portfolioUrl && <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6, width: '100%' }}><IconGlobe /><Text style={{ ...linkTextStyle, fontSize: 7, flex: 1, flexWrap: 'wrap' }}>{portfolioUrl}</Text></View>}
+            {publicationUrl && <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6, width: '100%' }}><IconExternalLink /><Text style={{ ...linkTextStyle, fontSize: 7, flex: 1, flexWrap: 'wrap' }}>{publicationUrl}</Text></View>}
           </View>
 
           {(skillsLinks.skills || []).some((s: any) => s.enabled && s.skillName) && (

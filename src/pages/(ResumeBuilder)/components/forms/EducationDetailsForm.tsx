@@ -354,12 +354,11 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       );
 
       if (!initial) {
-        return !!(edu.degree || edu.instituteName || edu.fieldOfStudy || edu.result);
+        return !!(edu.degree || edu.instituteName || edu.result);
       }
 
       return (
         edu.degree !== initial.degree ||
-        edu.fieldOfStudy !== initial.fieldOfStudy ||
         edu.instituteName !== initial.instituteName ||
         edu.universityBoard !== initial.universityBoard ||
         edu.startYear !== initial.startYear ||
@@ -526,10 +525,6 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       error = validateUniversityBoard(value);
     }
 
-    if (name.includes("fieldOfStudy")) {
-      error = validateInstitutionName(value);
-    }
-
     if (name.endsWith(".result") && value) {
       error = validateResult(value, resultFormat);
     }
@@ -634,7 +629,6 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       delete updated[`higherEducation.${id}.instituteName`];
       delete updated[`higherEducation.${id}.universityBoard`];
       delete updated[`higherEducation.${id}.endYear`];
-      delete updated[`higherEducation.${id}.fieldOfStudy`];
       return updated;
     });
     setHigherEduFeedback((prev) => {
@@ -894,7 +888,6 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       if (
         !edu.degree &&
         !edu.instituteName &&
-        !edu.fieldOfStudy &&
         !edu.education_id
       ) {
         setHigherEduFeedback((prev) => ({
@@ -936,7 +929,6 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       const payload = {
         education_type: "higher",
         degree: edu.degree || "",
-        field_of_study: edu.fieldOfStudy || "",
         institution_name: edu.instituteName || "",
         university_name: edu.universityBoard || "",
         start_year: buildYear(edu.startYear),
@@ -1011,8 +1003,6 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
         const updatePayload: Record<string, any> = {};
 
         if (edu.degree !== initial.degree) updatePayload.degree = edu.degree;
-        if (edu.fieldOfStudy !== initial.fieldOfStudy)
-          updatePayload.field_of_study = edu.fieldOfStudy;
         if (edu.instituteName !== initial.instituteName)
           updatePayload.institution_name = edu.instituteName;
         if (edu.universityBoard !== initial.universityBoard)
@@ -1232,7 +1222,6 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     const newEdu: HigherEducation = {
       id: newId,
       degree: "",
-      fieldOfStudy: "",
       instituteName: "",
       universityBoard: "",
       startYear: "",
@@ -1328,9 +1317,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       education.enabled !== undefined ? education.enabled : true;
 
     const title = education.degree
-      ? education.fieldOfStudy
-        ? `${education.degree} - ${education.fieldOfStudy}`
-        : education.degree
+      ? education.degree
       : `Education ${index + 1}`;
 
     return (
@@ -1359,26 +1346,6 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
               onChange={(v) => updateHigherEducation(id, "degree", v)}
               options={degrees}
             />
-            {branchesByDegree[education.degree] ? (
-              <FormSelect
-                label="Field of Study"
-                placeholder="Select Branch"
-                value={education.fieldOfStudy}
-                onChange={(v) => updateHigherEducation(id, "fieldOfStudy", v)}
-                options={branchesByDegree[education.degree].map((b) => ({
-                  value: b,
-                  label: b,
-                }))}
-              />
-            ) : (
-              <FormInput
-                label="Field of Study"
-                placeholder="Enter Field of Study"
-                value={education.fieldOfStudy}
-                onChange={(v) => updateHigherEducation(id, "fieldOfStudy", v)}
-                error={errors[`higherEducation.${id}.fieldOfStudy`]}
-              />
-            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

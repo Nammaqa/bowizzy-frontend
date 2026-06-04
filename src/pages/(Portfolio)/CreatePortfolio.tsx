@@ -325,6 +325,8 @@ export default function CreatePortfolio() {
                   href="https://google.com"
                   target="_blank"
                   rel="noopener noreferrer"
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
                   onClick={(e) => e.stopPropagation()}
                   className="mt-4 px-3 py-1.5 rounded-lg text-xs font-semibold text-violet-600 bg-violet-50 hover:bg-violet-100 transition-colors flex items-center gap-1.5 cursor-pointer border border-violet-100"
                 >
@@ -357,6 +359,8 @@ export default function CreatePortfolio() {
                   href="https://google.com"
                   target="_blank"
                   rel="noopener noreferrer"
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
                   onClick={(e) => e.stopPropagation()}
                   className="mt-4 px-3 py-1.5 rounded-lg text-xs font-semibold text-violet-600 bg-violet-50 hover:bg-violet-100 transition-colors flex items-center gap-1.5 cursor-pointer border border-violet-100"
                 >
@@ -387,7 +391,8 @@ export default function CreatePortfolio() {
                   type="text"
                   value={portfolioName}
                   onChange={(e) => {
-                    setPortfolioName(e.target.value);
+                    const sanitized = e.target.value.replace(/[^a-zA-Z0-9\s-]/g, "");
+                    setPortfolioName(sanitized);
                     setNameError("");
                   }}
                   placeholder="e.g. John Doe — UX Designer"
@@ -417,7 +422,10 @@ export default function CreatePortfolio() {
                 <textarea
                   id="portfolio-description"
                   value={portfolioDescription}
-                  onChange={(e) => setPortfolioDescription(e.target.value)}
+                  onChange={(e) => {
+                    const sanitized = e.target.value.replace(/[^a-zA-Z0-9\s.,!?'"-]/g, "");
+                    setPortfolioDescription(sanitized);
+                  }}
                   placeholder="A brief intro about yourself or what this portfolio showcases…"
                   rows={3}
                   maxLength={100}
@@ -476,12 +484,6 @@ export default function CreatePortfolio() {
                     : `You have ${userCredits} credit${userCredits !== 1 ? "s" : ""} · 1 credit = ₹${CREDIT_TO_INR}`}
                 </p>
               </div>
-
-              {useCredits ? (
-                <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
-              )}
             </label>
 
             {/* Expandable slider content */}

@@ -102,6 +102,7 @@ export default function PersonalDetailsForm({
   const [loadingStates, setLoadingStates] = useState(false);
   const [loadingCities, setLoadingCities] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [hasAttemptedProceed, setHasAttemptedProceed] = useState(false);
 
   // Fetch countries on mount
   useEffect(() => {
@@ -766,6 +767,7 @@ export default function PersonalDetailsForm({
   };
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setHasAttemptedProceed(true);
 
     // 🔹 Unsaved changes check with section names
     if (languagesChanged || locationChanged) {
@@ -790,6 +792,12 @@ export default function PersonalDetailsForm({
       )
     ) {
       setSubmitError("Please fix validation errors before proceeding.");
+      return;
+    }
+
+    if (!formData.languages || formData.languages.length === 0) {
+      setLanguagesExpanded(true);
+      languageInputRef.current?.focus();
       return;
     }
 
@@ -1503,7 +1511,8 @@ export default function PersonalDetailsForm({
         </div>
 
         <div className="flex flex-col gap-4">
-          {!formData.languages || formData.languages.length === 0 ? (
+          {hasAttemptedProceed &&
+          (!formData.languages || formData.languages.length === 0) ? (
             <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm font-medium text-red-800">Missing mandatory field:</p>
               <ul className="text-xs text-red-700 space-y-1 ml-4 mt-1">

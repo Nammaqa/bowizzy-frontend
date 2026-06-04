@@ -166,8 +166,8 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
       return `Invalid ${type} URL format`;
     }
 
-    if (type === "Portfolio" && value.length > 100) {
-      return "Max 100 characters allowed";
+    if (value.length > 120) {
+      return "Max 120 characters allowed";
     }
 
     if (
@@ -810,6 +810,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
                 value={data.links.linkedinProfile}
                 onChange={(v) => updateLink("linkedinProfile", v)}
                 error={errors[`link-linkedinProfile`]}
+                max="120"
               />
             </div>
             <div className="mt-5">

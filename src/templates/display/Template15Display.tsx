@@ -119,6 +119,16 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
             {personal.aboutCareerObjective && (<div style={{ color: '#444', lineHeight: 1.4 }}>{DOMPurify.sanitize(personal.aboutCareerObjective).replace(/<[^>]+>/g, '')}</div>)}
           </div>
 
+          {(skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled) && (<>
+            <div style={{ marginTop: 12 }}>
+              <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>SUMMARY</div>
+              <div style={{ height: 1, background: '#ddd', marginTop: 4, width: '100%' }} />
+            </div>
+            <div style={{ marginTop: 6 }}>
+              {skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled && (<div style={{ color: '#444', lineHeight: 1.4 }}>{DOMPurify.sanitize(skillsLinks.technicalSummary).replace(/<[^>]+>/g, '')}</div>)}
+            </div>
+          </>)}
+
           {(education.higherEducation.some(edu => edu.enabled) || education.preUniversityEnabled || education.sslcEnabled) && (<>
             <div style={{ marginTop: 12 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Education</div>
@@ -134,7 +144,7 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
 
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-                    <div style={{ fontSize: 11, color: '#6b7280' }}>{edu.degree}{edu.fieldOfStudy ? ` — ${edu.fieldOfStudy}` : ''}</div>
+                    <div style={{ fontSize: 11, color: '#6b7280' }}>{edu.degree}</div>
                     {edu.resultFormat && edu.result ? (
                       <div style={{ fontWeight: 700, fontSize: 11, color: '#6b7280' }}>{edu.resultFormat}: {edu.result}</div>
                     ) : null}

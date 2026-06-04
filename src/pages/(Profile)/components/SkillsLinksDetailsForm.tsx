@@ -78,6 +78,7 @@ export default function SkillsLinksDetailsForm({
       ];
 
   const [links, setLinks] = useState<Link[]>(initialLinks);
+  const [hasAttemptedProceed, setHasAttemptedProceed] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [skillsExpanded, setSkillsExpanded] = useState(true);
   const [linksExpanded, setLinksExpanded] = useState(true);
@@ -553,6 +554,7 @@ export default function SkillsLinksDetailsForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setHasAttemptedProceed(true);
 
     const hasSkill = skills.some((s) => s.skillName && s.skillName.trim());
     if (!hasSkill) {
@@ -944,11 +946,12 @@ export default function SkillsLinksDetailsForm({
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-4">
-          {skills && skills.length < 2 ? (
+          {hasAttemptedProceed &&
+          !skills.some((s) => s.skillName && s.skillName.trim()) ? (
             <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm font-medium text-red-800">Missing mandatory field:</p>
               <ul className="text-xs text-red-700 space-y-1 ml-4 mt-1">
-                <li>• Skills (at least 2 skills are required)</li>
+                <li>• Skills (at least 1 skill is required)</li>
               </ul>
             </div>
           ) : null}
