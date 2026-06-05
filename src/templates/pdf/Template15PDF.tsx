@@ -17,19 +17,73 @@ const styles = StyleSheet.create({
   bullet: { fontSize: 10, color: '#444', marginTop: 4 },
 });
 
-const htmlToPlainText = (html?: string) => {
-  if (!html) return '';
-  const sanitized = DOMPurify.sanitize(html || '');
-  const withBreaks = sanitized.replace(/<br\s*\/?/gi, '\n').replace(/<\/p>|<\/li>/gi, '\n');
-  const decoded = withBreaks.replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-  try {
-    if (typeof document !== 'undefined') {
-      const tmp = document.createElement('div');
-      tmp.innerHTML = decoded;
-      return (tmp.textContent || tmp.innerText || '').trim();
+type RichTextSegment = {
+  text: string;
+  bold: boolean;
+};
+
+const decodeHtmlEntities = (text: string) =>
+  text
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
+
+const htmlToRichTextLines = (html?: string): RichTextSegment[][] => {
+  if (!html) return [];
+
+  const sanitized = DOMPurify.sanitize(html || '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<li[^>]*>/gi, '• ')
+    .replace(/<p[^>]*>/gi, '');
+
+  const lines: RichTextSegment[][] = [];
+  let currentLine: RichTextSegment[] = [];
+  let boldDepth = 0;
+
+  const addText = (rawText: string) => {
+    const decoded = decodeHtmlEntities(rawText);
+    const parts = decoded.split(/\r?\n/);
+
+    parts.forEach((part, index) => {
+      if (part) {
+        currentLine.push({ text: part, bold: boldDepth > 0 });
+      }
+
+      if (index < parts.length - 1) {
+        if (currentLine.some((segment) => segment.text.trim())) {
+          lines.push(currentLine);
+        }
+        currentLine = [];
+      }
+    });
+  };
+
+  sanitized.split(/(<\/?(?:strong|b)\b[^>]*>|<[^>]+>)/gi).forEach((part) => {
+    if (!part) return;
+
+    if (/^<\s*(strong|b)\b/i.test(part)) {
+      boldDepth += 1;
+      return;
     }
-  } catch (e) { /* ignore */ }
-  return decoded.replace(/<[^>]+>/g, '').trim();
+
+    if (/^<\s*\/\s*(strong|b)\s*>/i.test(part)) {
+      boldDepth = Math.max(0, boldDepth - 1);
+      return;
+    }
+
+    if (/^<[^>]+>$/.test(part)) return;
+
+    addText(part);
+  });
+
+  if (currentLine.some((segment) => segment.text.trim())) {
+    lines.push(currentLine);
+  }
+
+  return lines;
 };
 
 const renderBulletedParagraph = (html?: string) => {
@@ -143,6 +197,24 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
   const pdfFontFamily = getPdfFontFamily(fontFamily);
   const pdfFontFamilyBold = getPdfFontFamilyBold(fontFamily);
 
+  const renderRichText = (html?: string, style: Record<string, string | number> = {}) => {
+    const lines = htmlToRichTextLines(html);
+    if (lines.length === 0) return null;
+
+    return lines.map((line, lineIndex) => (
+      <Text key={lineIndex} style={{ ...style, marginTop: lineIndex === 0 ? 0 : 2 }}>
+        {line.map((segment, segmentIndex) => (
+          <Text
+            key={segmentIndex}
+            style={segment.bold ? { fontFamily: pdfFontFamilyBold } : undefined}
+          >
+            {segment.text}
+          </Text>
+        ))}
+      </Text>
+    ));
+  };
+
   const role = (experience && (experience as any).jobRole) || (experience.workExperiences && experience.workExperiences.find((w: any) => w.enabled && w.jobTitle) && experience.workExperiences.find((w: any) => w.enabled && w.jobTitle).jobTitle) || '';
 
   const mobile = personal.mobileNumber;
@@ -211,7 +283,11 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
           <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>OBJECTIVE</Text>
           <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginTop: 4, marginBottom: 0 }} />
         </View>
-        {personal.aboutCareerObjective ? <Text style={{ fontSize: 10, color: '#444', marginTop: 6 }}>{htmlToPlainText(personal.aboutCareerObjective)}</Text> : null}
+        {personal.aboutCareerObjective ? (
+          <View style={{ marginTop: 6 }}>
+            {renderRichText(personal.aboutCareerObjective, { fontSize: 10, color: '#444' })}
+          </View>
+        ) : null}
 
         {(skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled) && (<>
           <View style={{ marginTop: 12 }}>
@@ -219,7 +295,7 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
             <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginTop: 4, marginBottom: 0 }} />
           </View>
           <View style={{ marginTop: 6 }}>
-            {skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled && (<Text style={{ fontSize: 10, color: '#444' }}>{htmlToPlainText(skillsLinks.technicalSummary)}</Text>)}
+            {skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled && renderRichText(skillsLinks.technicalSummary, { fontSize: 10, color: '#444' })}
           </View>
         </>)}
 
