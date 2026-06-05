@@ -24,6 +24,11 @@ const htmlToLines = (s?: string) => {
   } catch (e) { return [String(s)]; }
 };
 
+const sanitizeRichText = (html?: string) => {
+  if (!html) return '';
+  return DOMPurify.sanitize(html);
+};
+
 const formatMonthYear = (s?: string) => {
   if (!s) return '';
   const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -124,7 +129,12 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
           </div>
 
           <div style={{ marginTop: 6 }}>
-            {personal.aboutCareerObjective && (<div style={{ color: '#444', lineHeight: 1.4 }}>{DOMPurify.sanitize(personal.aboutCareerObjective).replace(/<[^>]+>/g, '')}</div>)}
+            {personal.aboutCareerObjective && (
+              <div
+                style={{ color: '#444', lineHeight: 1.4 }}
+                dangerouslySetInnerHTML={{ __html: sanitizeRichText(personal.aboutCareerObjective) }}
+              />
+            )}
           </div>
 
           {(skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled) && (<>
@@ -133,7 +143,12 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
               <div style={{ height: 1, background: '#ddd', marginTop: 4, width: '100%' }} />
             </div>
             <div style={{ marginTop: 6 }}>
-              {skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled && (<div style={{ color: '#444', lineHeight: 1.4 }}>{DOMPurify.sanitize(skillsLinks.technicalSummary).replace(/<[^>]+>/g, '')}</div>)}
+              {skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled && (
+                <div
+                  style={{ color: '#444', lineHeight: 1.4 }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeRichText(skillsLinks.technicalSummary) }}
+                />
+              )}
             </div>
           </>)}
 

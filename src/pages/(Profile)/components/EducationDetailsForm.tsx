@@ -538,8 +538,8 @@ export default function EducationDetailsForm({
     }
     setSslcData((prev) => {
       const nextData = { ...prev, [name]: finalValue };
-      if (name === "resultFormat" && value === "Grade") {
-        nextData.result = nextData.result.toUpperCase();
+      if (name === "resultFormat") {
+        nextData.result = "";
       }
       return nextData;
     });
@@ -548,8 +548,7 @@ export default function EducationDetailsForm({
       const error = validateResult(finalValue, sslcData.resultFormat);
       setErrors((prev) => ({ ...prev, [`sslc-result`]: error }));
     } else if (name === "resultFormat") {
-      const updatedResult = value === "Grade" ? sslcData.result.toUpperCase() : sslcData.result;
-      const error = validateResult(updatedResult, value);
+      const error = validateResult("", value);
       setErrors((prev) => ({ ...prev, [`sslc-result`]: error }));
     } else if (name === "institutionName") {
       const error = validateInstitutionName(finalValue);
@@ -568,8 +567,8 @@ export default function EducationDetailsForm({
     }
     setPuData((prev) => {
       const nextData = { ...prev, [name]: finalValue };
-      if (name === "resultFormat" && value === "Grade") {
-        nextData.result = nextData.result.toUpperCase();
+      if (name === "resultFormat") {
+        nextData.result = "";
       }
       return nextData;
     });
@@ -578,8 +577,7 @@ export default function EducationDetailsForm({
       const error = validateResult(finalValue, puData.resultFormat);
       setErrors((prev) => ({ ...prev, [`pu-result`]: error }));
     } else if (name === "resultFormat") {
-      const updatedResult = value === "Grade" ? puData.result.toUpperCase() : puData.result;
-      const error = validateResult(updatedResult, value);
+      const error = validateResult("", value);
       setErrors((prev) => ({ ...prev, [`pu-result`]: error }));
     } else if (name === "institutionName") {
       const error = validateInstitutionName(finalValue);
@@ -608,8 +606,8 @@ export default function EducationDetailsForm({
       const updated = [...prev];
       updated[index] = { ...updated[index], [field]: finalValue };
 
-      if (field === "resultFormat" && value === "Grade") {
-        updated[index].result = updated[index].result.toUpperCase();
+      if (field === "resultFormat") {
+        updated[index].result = "";
       }
 
       if (field === "currentlyPursuing" && finalValue === true) {
@@ -632,8 +630,8 @@ export default function EducationDetailsForm({
 
     // Validation logic
     const updatedEdu = { ...currentList[index], [field]: finalValue };
-    if (field === "resultFormat" && value === "Grade") {
-      updatedEdu.result = updatedEdu.result.toUpperCase();
+    if (field === "resultFormat") {
+      updatedEdu.result = "";
     }
 
     if (field === "result" && typeof finalValue === "string") {

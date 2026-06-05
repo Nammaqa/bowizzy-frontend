@@ -1041,7 +1041,11 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     field: string,
     value: string
   ) => {
-    const updatedSslc = { ...data.sslc, [field]: value };
+    const updatedSslc = {
+      ...data.sslc,
+      [field]: value,
+      ...(field === "resultFormat" ? { result: "" } : {}),
+    };
     onChange({
       ...data,
       sslc: updatedSslc,
@@ -1052,7 +1056,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     setErrors((prev) => ({ ...prev, [`sslc.${field}`]: fieldError }));
 
     if (field === "resultFormat") {
-      const resultError = validateField(`sslc.result`, updatedSslc.result || "", value);
+      const resultError = validateField(`sslc.result`, "", value);
       setErrors((prev) => ({ ...prev, [`sslc.result`]: resultError }));
     }
   };
@@ -1061,7 +1065,11 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     field: string,
     value: string
   ) => {
-    const updatedPu = { ...data.preUniversity, [field]: value };
+    const updatedPu = {
+      ...data.preUniversity,
+      [field]: value,
+      ...(field === "resultFormat" ? { result: "" } : {}),
+    };
     onChange({
       ...data,
       preUniversity: updatedPu,
@@ -1076,7 +1084,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     setErrors((prev) => ({ ...prev, [`preUniversity.${field}`]: fieldError }));
 
     if (field === "resultFormat") {
-      const resultError = validateField(`preUniversity.result`, updatedPu.result || "", value);
+      const resultError = validateField(`preUniversity.result`, "", value);
       setErrors((prev) => ({ ...prev, [`preUniversity.result`]: resultError }));
     }
   };
@@ -1109,7 +1117,13 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
           ? { ...edu, currentlyPursuing: true, endYear: "" }
           : { ...edu, currentlyPursuing: false };
       }
-      return edu.id === id ? { ...edu, [field]: normalizedValue } : edu;
+      return edu.id === id
+        ? {
+            ...edu,
+            [field]: normalizedValue,
+            ...(field === "resultFormat" ? { result: "" } : {}),
+          }
+        : edu;
     });
 
     onChange({ ...data, higherEducation: updatedEducation });
@@ -1136,7 +1150,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     if (field === "resultFormat") {
       const resultError = validateField(
         `higherEducation.${id}.result`,
-        edu?.result || "",
+        "",
         edu?.resultFormat
       );
       setErrors((prev) => ({
