@@ -502,63 +502,6 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
         const yearNum = parseInt(val, 10);
         if (yearNum < 1960) return "Year must be 1960 or later";
         return "";
-      }
-      if (/^\d{4}-\d{2}$/.test(val)) {
-        const [y, m] = val.split("-");
-        if (y.length !== 4) return "Year must be 4 digits";
-        const yearNum = parseInt(y, 10);
-        if (yearNum < 1960) return "Year must be 1960 or later";
-        const monthNum = parseInt(m, 10);
-        if (isNaN(monthNum) || monthNum < 1 || monthNum > 12)
-          return "Invalid month";
-        return "";
-      }
-      if (/^\d{1,3}$/.test(val)) return "Enter 4-digit year (YYYY)";
-      return "Enter year as YYYY or month as YYYY-MM";
-    };
-
-    let error = "";
-
-    if (name.includes("instituteName") || name.includes("boardType")) {
-      error = validateInstitutionName(value);
-    }
-
-    if (name.includes("universityBoard")) {
-      error = validateUniversityBoard(value);
-    }
-
-    if (name.endsWith(".result") && value) {
-      error = validateResult(value, resultFormat);
-    }
-
-    if (name.includes("yearOfPassing") && value) {
-      const monthError = validateMonthFormat(value);
-      if (monthError) {
-        error = monthError;
-      } else {
-        const current = getCurrentMonth();
-        if (value > current) {
-          error = "Cannot be a future date";
-        }
-      }
-    }
-
-    if ((name.endsWith(".startYear") || name.endsWith(".endYear")) && value) {
-      error = validateYearOrMonth(value);
-    }
-
-    return error;
-  };
-
-  const validateDateRange = (
-    startYear: string,
-    endYear: string,
-    isCurrentlyPursuing: boolean
-  ) => {
-    if (startYear) {
-      const startParts = startYear.split("-");
-      const startYearNum = parseInt(startParts[0], 10);
-      if (startYearNum < 1960) {
         return "Start year must be 1960 or later";
       }
     }

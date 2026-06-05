@@ -360,7 +360,10 @@ export default function EducationDetailsForm({
 
   // Helper function to validate result format
   const validateResult = (value: string, format: string) => {
-    if (!value || !format) return "";
+    if (!format) return "";
+    if (!value || !value.trim()) {
+      return "Result is required when result format is selected";
+    }
 
     // Ensure no negative sign is allowed if format is numeric
     if (format === "Percentage" || format === "CGPA") {
@@ -477,6 +480,7 @@ export default function EducationDetailsForm({
       edu.universityBoard ||
       edu.startYear ||
       edu.endYear ||
+      edu.resultFormat ||
       edu.result
     );
   };
@@ -500,10 +504,10 @@ export default function EducationDetailsForm({
         });
       }
 
-      if (!edu.result) {
+      if (edu.resultFormat && !edu.result) {
         setErrors((prev) => ({
           ...prev,
-          [`${prefix}-result`]: "Result is required if data is entered",
+          [`${prefix}-result`]: "Result is required when result format is selected",
         }));
       } else {
         setErrors((prev) => {
@@ -674,19 +678,18 @@ export default function EducationDetailsForm({
     }
 
     // After all validations, check if result format and result are mandatory
-    setTimeout(() => {
-      const currentList = isExtra ? extraEducations : higherEducations;
-      const currentEdu = currentList[index];
-      if (currentEdu) {
-        validateResultMandatory(currentEdu, prefix);
-      }
-    }, 0);
+    validateResultMandatory(updatedEdu, prefix);
   };
 
   // Handler for saving SSLC details (PUT/POST call)
   const handleSaveSslc = async () => {
     const currentData = sslcData;
     const initial = initialSslc.current;
+    const resultError = validateResult(currentData.result, currentData.resultFormat);
+    if (resultError) {
+      setErrors((prev) => ({ ...prev, "sslc-result": resultError }));
+      return;
+    }
 
     // Check for validation errors
     if (errors["sslc-result"] || errors["sslc-institutionName"]) return;
@@ -773,6 +776,11 @@ export default function EducationDetailsForm({
   const handleSavePu = async () => {
     const currentData = puData;
     const initial = initialPu.current;
+    const resultError = validateResult(currentData.result, currentData.resultFormat);
+    if (resultError) {
+      setErrors((prev) => ({ ...prev, "pu-result": resultError }));
+      return;
+    }
 
     // Check for validation errors
     if (errors["pu-result"] || errors["pu-institutionName"]) return;
@@ -869,6 +877,11 @@ export default function EducationDetailsForm({
     const prefix = isExtra
       ? `extra-${extraEducations.findIndex((e) => e.id === edu.id)}`
       : `higher-${higherEducations.findIndex((e) => e.id === edu.id)}`;
+    const resultError = validateResult(edu.result, edu.resultFormat);
+    if (resultError) {
+      setErrors((prev) => ({ ...prev, [`${prefix}-result`]: resultError }));
+      return;
+    }
 
     // Check for validation errors in current card
     if (
@@ -1236,6 +1249,29 @@ export default function EducationDetailsForm({
   // Final submission handler
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const resultErrors: { [key: string]: string } = {};
+    const sslcResultError = validateResult(sslcData.result, sslcData.resultFormat);
+    const puResultError = validateResult(puData.result, puData.resultFormat);
+
+    if (sslcResultError) resultErrors["sslc-result"] = sslcResultError;
+    if (puResultError) resultErrors["pu-result"] = puResultError;
+
+    higherEducations.forEach((edu, index) => {
+      const resultError = validateResult(edu.result, edu.resultFormat);
+      if (resultError) resultErrors[`higher-${index}-result`] = resultError;
+    });
+
+    extraEducations.forEach((edu, index) => {
+      const resultError = validateResult(edu.result, edu.resultFormat);
+      if (resultError) resultErrors[`extra-${index}-result`] = resultError;
+    });
+
+    if (Object.keys(resultErrors).length > 0) {
+      setErrors((prev) => ({ ...prev, ...resultErrors }));
+      setSubmitError("Please enter the result for each selected result format.");
+      return;
+    }
 
     // 1️⃣ Validation errors
     if (Object.values(errors).some((err) => err.length > 0)) {
