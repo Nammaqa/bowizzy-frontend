@@ -196,6 +196,18 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
       return;
     }
 
+    // Validate that all skills have a name
+    const skillsWithoutName = data.skills.filter(
+      (skill) => !skill.skillName || !skill.skillName.trim()
+    );
+    if (skillsWithoutName.length > 0) {
+      setSkillFeedback({
+        ["all"]: `Skill name is mandatory. Please fill in ${skillsWithoutName.length} skill(s).`,
+      });
+      setTimeout(() => setSkillFeedback({}), 3000);
+      return;
+    }
+
     const updatePromises = [];
     const createPayloads = [];
     let successCount = 0;
