@@ -2,6 +2,7 @@ import React from "react";
 import DOMPurify from 'dompurify';
 import { Document, Page, Text, View, StyleSheet, Svg, Path, Image } from "@react-pdf/renderer";
 import type { ResumeData } from "@/types/resume";
+import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 import logo from '@/assets/bowizzy.png';
 
 const styles = StyleSheet.create({
@@ -271,6 +272,13 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
     }
   };
 
+  const formatEducationDateRange = (edu: any) => {
+    const start = formatMonthYear(edu?.startYear || edu?.startDate || '');
+    const end = formatMonthYear(edu?.endYear || edu?.yearOfPassing || '');
+    if (start && end) return `${start} - ${end}`;
+    return start || end || '';
+  };
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -369,7 +377,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{edu.instituteName}</Text>
                         <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>
-                          {formatMonthYear(edu.startYear)} - {edu.currentlyPursuing ? 'Present' : formatMonthYear(edu.endYear)}
+                              {edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}
                         </Text>
                       </View>
                       <Text style={{ fontSize: 11, color: '#000000', fontFamily: pdfFontFamily, marginTop: 3 }}>
@@ -390,7 +398,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
                 <View style={{ marginBottom: 8 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
-                    <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>{formatMonthYear(education.preUniversity.yearOfPassing) || ''}</Text>
+                      <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
                   </View>
                   <Text style={{ fontSize: 11, color: '#000000', fontFamily: pdfFontFamily, marginTop: 3 }}>
                     Pre University (12th Standard){education.preUniversity.boardType ? ` — ${education.preUniversity.boardType}` : ''} {education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}
@@ -408,7 +416,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
                 <View style={{ marginBottom: 8 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{education.sslc.instituteName || 'SSLC'}</Text>
-                    <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>{formatMonthYear(education.sslc.yearOfPassing) || ''}</Text>
+                      <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.sslc)}</Text>
                   </View>
                   <Text style={{ fontSize: 11, color: '#000000', fontFamily: pdfFontFamily, marginTop: 3 }}>
                     SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}
@@ -530,29 +538,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
             </View>
           )}
 
-          {/* Links */}
-          {skillsLinks.linksEnabled && (() => {
-            const links = skillsLinks.links || {} as any;
-            const activeLinks = [
-              links.linkedinEnabled && links.linkedinProfile ? { label: 'LinkedIn', url: links.linkedinProfile } : null,
-              links.githubEnabled && links.githubProfile ? { label: 'GitHub', url: links.githubProfile } : null,
-              links.portfolioEnabled && links.portfolioUrl ? { label: 'Portfolio', url: links.portfolioUrl } : null,
-              links.publicationEnabled && links.publicationUrl ? { label: 'Publication', url: links.publicationUrl } : null,
-            ].filter(Boolean) as { label: string; url: string }[];
 
-            return activeLinks.length > 0 ? (
-              <View style={{ marginBottom: 12 }}>
-                <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>LINKS</Text>
-                <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
-                {activeLinks.map((link, idx) => (
-                  <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 4 }}>
-                    <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', minWidth: 80 }}>{link.label}: </Text>
-                    <Text style={{ fontSize: 11, color: '#1a56db', fontFamily: pdfFontFamily, flex: 1 }}>{link.url}</Text>
-                  </View>
-                ))}
-              </View>
-            ) : null;
-          })()}
 
         </View>
 

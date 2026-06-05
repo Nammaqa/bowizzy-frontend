@@ -27,6 +27,8 @@ export interface SSLCEducation {
   education_id?: number | null;
   instituteName: string;
   boardType: string;
+  startYear?: string;
+  endYear?: string;
   yearOfPassing: string;
   resultFormat: string;
   result: string;
@@ -37,6 +39,8 @@ export interface PreUniversityEducation {
   instituteName: string;
   boardType: string;
   subjectStream: string;
+  startYear?: string;
+  endYear?: string;
   yearOfPassing: string;
   resultFormat: string;
   result: string;
@@ -46,6 +50,7 @@ export interface HigherEducation {
   education_id?: number | null;
   id: string; 
   degree: string;
+  fieldOfStudy?: string;
   instituteName: string;
   universityBoard: string;
   startYear: string;

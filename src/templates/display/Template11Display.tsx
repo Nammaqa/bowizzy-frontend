@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import DOMPurify from 'dompurify';
 import { FiPhone, FiMail, FiMapPin, FiLinkedin, FiGithub } from 'react-icons/fi';
 import type { ResumeData } from '@/types/resume';
+import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 import logo from '@/assets/bowizzy.png';
 
 interface Template11DisplayProps {
@@ -101,6 +102,13 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
     } catch (e) {
       return String(s);
     }
+  };
+
+  const formatEducationDateRange = (edu: any) => {
+    const start = formatMonthYear(edu?.startYear || edu?.startDate || '');
+    const end = formatMonthYear(edu?.endYear || edu?.yearOfPassing || '');
+    if (start && end) return `${start} - ${end}`;
+    return start || end || '';
   };
 
   const htmlToLines = (s?: string) => {
@@ -248,10 +256,10 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                     <div key={idx} style={{ marginBottom: 10 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
                         <div style={{ fontSize: 11, fontWeight: 700, color: '#000000', flex: 1, marginRight: 8 }}>{edu.instituteName}</div>
-                        <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{formatMonthYear(edu.startYear)} - {edu.currentlyPursuing ? 'Present' : formatMonthYear(edu.endYear)}</div>
+          <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear)} - Present` : formatResumeEducationDateRange(edu)}</div>
                       </div>
                       <div style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', marginTop: 4 }}>
-                        {getFullDegreeName(edu.degree)}
+                          {getFullDegreeName(edu.degree)}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}
                       </div>
                       {edu.resultFormat && edu.result && (
                         <div style={{ marginTop: 6, color: '#000000', fontSize: 11 }}>{edu.resultFormat}: {edu.result}</div>
@@ -266,7 +274,7 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                 <div style={{ marginBottom: 10 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#000000', flex: 1, marginRight: 8 }}>{education.preUniversity.instituteName || 'Pre University'}</div>
-                    <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{formatMonthYear(education.preUniversity.yearOfPassing) || ''}</div>
+                  <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', marginTop: 4 }}>
                     Pre University (12th Standard){education.preUniversity.boardType ? ` — ${education.preUniversity.boardType}` : ''} {education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}
@@ -282,7 +290,7 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                 <div style={{ marginBottom: 10 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#000000', flex: 1, marginRight: 8 }}>{education.sslc.instituteName || 'SSLC'}</div>
-                    <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{formatMonthYear(education.sslc.yearOfPassing) || ''}</div>
+                  <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{formatResumeEducationDateRange(education.sslc)}</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', marginTop: 4 }}>
                     SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}
@@ -463,40 +471,6 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
               </div>
             </section>
           )}
-          {/* Links Section */}
-          {skillsLinks.linksEnabled && (
-            () => {
-              const links = skillsLinks.links;
-              const activeLinks = [
-                links.linkedinEnabled && links.linkedinProfile ? { label: 'LinkedIn', url: links.linkedinProfile } : null,
-                links.githubEnabled && links.githubProfile ? { label: 'GitHub', url: links.githubProfile } : null,
-                links.portfolioEnabled && links.portfolioUrl ? { label: 'Portfolio', url: links.portfolioUrl } : null,
-                links.publicationEnabled && links.publicationUrl ? { label: 'Publication', url: links.publicationUrl } : null,
-              ].filter(Boolean) as { label: string; url: string }[];
-
-              return activeLinks.length > 0 ? (
-                <section style={{ marginBottom: 22 }}>
-                  <h2 style={{ fontSize: 13, fontWeight: 700, color: primaryColor, letterSpacing: 1.2, marginBottom: 8 }}>
-                    LINKS
-                  </h2>
-                  <div style={{ height: 1, background: '#333', width: '100%', marginBottom: 12 }} />
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {activeLinks.map((link, idx) => (
-                      <div key={idx} style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: '#000000', minWidth: 80 }}>
-                          {link.label}:
-                        </span>
-                        <span style={{ fontSize: 11, color: '#1a56db', fontWeight: 'normal', wordBreak: 'break-all' }}>
-                          {link.url}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              ) : null;
-            }
-          )()
-          }
         </div>
       </div>
     </div>

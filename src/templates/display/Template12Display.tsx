@@ -1,6 +1,7 @@
 import React from 'react';
 import DOMPurify from 'dompurify';
 import type { ResumeData } from '@/types/resume';
+import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 
 interface Template12DisplayProps {
   data: ResumeData;
@@ -133,8 +134,8 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
               {education.higherEducation.filter(edu => edu.enabled).reverse().map((edu, i) => (
                 <div key={i} style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ fontWeight: 700, color: '#111827' }}>{edu.degree}</div>
-                    <div style={{ color: '#111827', fontSize: 11, fontWeight: 700 }}>{edu.currentlyPursuing ? 'Present' : formatMonthYear(edu.endYear)}</div>
+                    <div style={{ fontWeight: 700, color: '#111827' }}>{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</div>
+                    <div style={{ color: '#111827', fontSize: 11, fontWeight: 700 }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear)} - Present` : formatResumeEducationDateRange(edu)}</div>
                   </div>
                   <div style={{ color: '#111827', fontSize: 11, marginTop: 4 }}>{edu.instituteName}</div>
                   {edu.resultFormat && edu.result && (
@@ -147,7 +148,7 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div style={{ fontWeight: 700, color: '#111827' }}>PUC</div>
-                    <div style={{ color: '#111827', fontSize: 11, fontWeight: 700 }}>{formatMonthYear(education.preUniversity.yearOfPassing) || ''}</div>
+                    <div style={{ color: '#111827', fontSize: 11, fontWeight: 700 }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
                   </div>
                   <div style={{ color: '#111827', fontSize: 11, marginTop: 4 }}>{education.preUniversity.instituteName}</div>
                   {education.preUniversity.resultFormat && education.preUniversity.result && (
@@ -160,7 +161,7 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div style={{ fontWeight: 700, color: '#111827' }}>SSLC</div>
-                    <div style={{ color: '#111827', fontSize: 11, fontWeight: 700 }}>{formatMonthYear(education.sslc.yearOfPassing) || ''}</div>
+                    <div style={{ color: '#111827', fontSize: 11, fontWeight: 700 }}>{formatResumeEducationDateRange(education.sslc)}</div>
                   </div>
                   <div style={{ color: '#111827', fontSize: 11, marginTop: 4 }}>{education.sslc.instituteName}</div>
                   {education.sslc.resultFormat && education.sslc.result && (

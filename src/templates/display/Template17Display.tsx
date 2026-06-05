@@ -2,6 +2,7 @@ import React from 'react';
 import DOMPurify from 'dompurify';
 import { FiPhone, FiMail, FiMapPin, FiGithub, FiLinkedin, FiGlobe, FiExternalLink } from 'react-icons/fi';
 import type { ResumeData } from '@/types/resume';
+import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 
 interface Template17DisplayProps {
   data: ResumeData
@@ -108,23 +109,31 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
 
       {/* Right content */}
       <main style={{ flex: 1, padding: '24px 36px', boxSizing: 'border-box' }}>
+        {personal.aboutCareerObjective && (
+          <section>
+            <div>
+              <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>About</div>
+              <div style={{ height: 1, background: '#ddd', marginTop: 6, width: '100%' }} />
+            </div>
+            <div style={{ marginTop: 8, color: '#444', fontSize: 11 }}>
+              {DOMPurify.sanitize(personal.aboutCareerObjective).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s{2,}/g, ' ').trim()}
+            </div>
+          </section>
+        )}
+
+        {skillsLinks.technicalSummaryEnabled && skillsLinks.technicalSummary && (
+          <section style={{ marginTop: personal.aboutCareerObjective ? 18 : 0 }}>
+            <div>
+              <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Technical Summary</div>
+              <div style={{ height: 1, background: '#ddd', marginTop: 6, width: '100%' }} />
+            </div>
+            <div style={{ marginTop: 8, color: '#444', fontSize: 11 }}>
+              {DOMPurify.sanitize(skillsLinks.technicalSummary).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s{2,}/g, ' ').trim()}
+            </div>
+          </section>
+        )}
+
         <section>
-          <div>
-            <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Technical Summary</div>
-            <div style={{ height: 1, background: '#ddd', marginTop: 6, width: '100%' }} />
-          </div>
-          <div style={{ marginTop: 8, color: '#444', fontSize: 11 }}>
-            {personal.aboutCareerObjective && (
-              <div style={{ marginBottom: (skillsLinks.technicalSummaryEnabled && skillsLinks.technicalSummary) ? 8 : 0 }}>
-                {DOMPurify.sanitize(personal.aboutCareerObjective).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s{2,}/g, ' ').trim()}
-              </div>
-            )}
-            {skillsLinks.technicalSummaryEnabled && skillsLinks.technicalSummary && (
-              <div>
-                {DOMPurify.sanitize(skillsLinks.technicalSummary).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s{2,}/g, ' ').trim()}
-              </div>
-            )}
-          </div>
 
           {experience.workExperiences.filter((w: any) => w.enabled).length > 0 && (
             <>
@@ -178,7 +187,7 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
                 <div key={i} style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 700, fontSize: 12 }}>{edu.instituteName}</div>
-                    <div style={{ color: '#000', fontSize: 11 }}>{(edu.endYear ? String(edu.endYear).match(/(\d{4})/)?.[1] : '')}</div>
+                    <div style={{ color: '#000', fontSize: 11 }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}</div>
                   </div>
                   <div style={{ color: '#000', marginTop: 4, fontSize: 11 }}>
                     {edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}
@@ -194,7 +203,7 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 700, fontSize: 12 }}>{education.preUniversity.instituteName || 'Pre University'}</div>
-                    <div style={{ color: '#000', fontSize: 11 }}>{education.preUniversity.yearOfPassing ? String(education.preUniversity.yearOfPassing).match(/(\d{4})/)?.[1] : ''}</div>
+                    <div style={{ color: '#000', fontSize: 11 }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
                   </div>
                   <div style={{ color: '#000', marginTop: 4, fontSize: 11 }}>
                     Pre University (12th Standard)
@@ -209,7 +218,7 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 700, fontSize: 12 }}>{education.sslc.instituteName || 'SSLC'}</div>
-                    <div style={{ color: '#000', fontSize: 11 }}>{education.sslc.yearOfPassing ? String(education.sslc.yearOfPassing).match(/(\d{4})/)?.[1] : ''}</div>
+                    <div style={{ color: '#000', fontSize: 11 }}>{formatResumeEducationDateRange(education.sslc)}</div>
                   </div>
                   <div style={{ color: '#000', marginTop: 4, fontSize: 11 }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</div>
                   {education.sslc.resultFormat && education.sslc.result && (<div style={{ marginTop: 6, color: '#444', fontWeight: 700, fontSize: 11 }}>{education.sslc.resultFormat}: {education.sslc.result}</div>)}

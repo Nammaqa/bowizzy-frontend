@@ -2,6 +2,7 @@ import React from 'react';
 import DOMPurify from 'dompurify';
 import { Document, Page, View, Text, StyleSheet, Svg, Path } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
+import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 
 const styles = StyleSheet.create({
   page: { paddingTop: 28, paddingBottom: 24, paddingLeft: 36, paddingRight: 36, fontSize: 10 },
@@ -268,7 +269,7 @@ const Template13PDF: React.FC<Template13PDFProps> = ({ data, primaryColor = '#11
               <View key={`he-${i}`} style={{ marginBottom: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>{edu.instituteName}</Text>
-                  <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>{edu.currentlyPursuing ? 'Present' : formatYear(edu.endYear)}</Text>
+                    <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}</Text>
                 </View>
                 <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>
                   {edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}{edu.universityBoard ? ` — ${edu.universityBoard}` : ''}
@@ -281,7 +282,7 @@ const Template13PDF: React.FC<Template13PDFProps> = ({ data, primaryColor = '#11
               <View style={{ marginBottom: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
-                  <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>{formatYear(education.preUniversity.yearOfPassing)}</Text>
+                    <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
                 </View>
                 <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>
                   Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}{education.preUniversity.boardType ? ` — ${education.preUniversity.boardType}` : ''}
@@ -294,7 +295,7 @@ const Template13PDF: React.FC<Template13PDFProps> = ({ data, primaryColor = '#11
               <View style={{ marginBottom: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>{education.sslc.instituteName || 'SSLC'}</Text>
-                  <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>{formatYear(education.sslc.yearOfPassing)}</Text>
+                    <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.sslc)}</Text>
                 </View>
                 <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>
                   SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}

@@ -78,13 +78,15 @@ const mapEducationApiToLocal = (apiData: any[]) => {
     };
 
     if (item.education_type === "sslc") {
-      educationData.sslc = { ...educationData.sslc, ...baseData, yearOfPassing: item.end_year || "" };
+      educationData.sslc = { ...educationData.sslc, ...baseData, startYear: item.start_year || "", endYear: item.end_year || "", yearOfPassing: item.end_year || "" };
       educationData.sslcEnabled = true;
     } else if (item.education_type === "puc") {
       educationData.preUniversity = {
         ...educationData.preUniversity,
         ...baseData,
         subjectStream: item.subject_stream || "",
+        startYear: item.start_year || "",
+        endYear: item.end_year || "",
         yearOfPassing: item.end_year || "",
       };
       educationData.preUniversityEnabled = true;
@@ -808,7 +810,7 @@ export const ResumeEditor: React.FC = () => {
       <DashNav heading="Resume Builder" />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 flex flex-col bg-white rounded-lg overflow-hidden m-4">
+        <div className="flex-1 flex flex-col bg-white rounded-lg overflow-hidden ">
           <div className="bg-white">
             <ProfileStepper
               steps={steps}
@@ -957,45 +959,34 @@ export const ResumeEditor: React.FC = () => {
 
 
             <div className="hidden lg:flex lg:w-[50%] bg-white overflow-auto scrollbar-hide p-4">
-              <div className="flex-1 overflow-auto scrollbar-hide border border-gray-300 rounded-lg">
-                <div className="relative w-full h-full flex items-start justify-center">
-                  {/* Page info */}
-                  {totalPages > 1 && (
-                    <>
-                      <div className="absolute top-2 right-4 bg-white px-3 py-1 rounded-full shadow-md text-sm font-medium z-10">
+              <div className="flex-1 flex flex-col border border-gray-300 rounded-lg overflow-hidden bg-white">
+                <div className="flex justify-between items-center px-4 py-3 bg-gray-50 border-b border-gray-200 shrink-0 min-h-[56px]">
+                  <div className="flex items-center">
+                          <div className="flex items-center gap-2">
+                            <Lock className="w-5 h-5 text-gray-900 z-50" />
+                          </div>
+                  </div>
+                  <div>
+                    {totalPages > 1 && (
+                      <div className="bg-white px-3 py-1 rounded-full shadow-sm text-sm font-medium text-gray-600 border border-gray-200">
                         {paginatePreview ? (
                           <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                            <button onClick={() => paginatedRef.current?.prev()} disabled={!paginatePreview} style={{ padding: '6px 8px', borderRadius: '6px' }}>‹</button>
+                            <button onClick={() => paginatedRef.current?.prev()} disabled={!paginatePreview} style={{ padding: '0 4px', borderRadius: '4px' }}>‹</button>
                             <span>{previewCurrentPage}/{previewPageCount} {previewPageCount === 1 ? 'Page' : 'Pages'}</span>
-                            <button onClick={() => paginatedRef.current?.next()} disabled={!paginatePreview} style={{ padding: '6px 8px', borderRadius: '6px' }}>›</button>
+                            <button onClick={() => paginatedRef.current?.next()} disabled={!paginatePreview} style={{ padding: '0 4px', borderRadius: '4px' }}>›</button>
                           </div>
                         ) : (
                           <>{totalPages} {totalPages === 1 ? 'Page' : 'Pages'}</>
                         )}
                       </div>
+                    )}
+                  </div>
+                </div>
 
-                      {/* Paginate toggle disabled while we stabilize pagination behavior.
-                          To re-enable, uncomment this block and set paginatePreview default to true. */}
-                    </>
-                  )}
-
-                  {/* Preview content with markers */}
-                  {/* Lock icon for template12 to template20 */}
-                  {(() => {
-                    const templateIdStr = selectedTemplate?.id || templateId;
-                    const match = templateIdStr && templateIdStr.match(/^template(\d+)$/);
-                    const num = match ? parseInt(match[1], 10) : null;
-                    if (num && num >= 12 && num <= 20) {
-                      return (
-                        <div className="absolute top-4 left-4 z-20 flex items-center">
-                          <Lock className="w-8 h-8 text-gray-500" />
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
+                <div className="flex-1 overflow-auto scrollbar-hide bg-gray-50/50">
+                  <div className="relative w-full min-h-full flex items-start justify-center p-4">
                   <div
-                    className="relative transform scale-75 origin-top -mt-4"
+                    className="relative transform scale-75 origin-top"
                     style={{ fontFamily: fontFamily }}
                   >
                     <div ref={previewContentRef} className="relative">
@@ -1017,6 +1008,7 @@ export const ResumeEditor: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
           </div>
         </div>
       </div>
