@@ -2,6 +2,7 @@ import React from 'react';
 import DOMPurify from 'dompurify';
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
+import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 
 const styles = StyleSheet.create({
   page: { padding: 24, fontSize: 10 },
@@ -127,6 +128,13 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
     return y ? y[1] : '';
   };
 
+  const formatEducationDateRange = (edu: any) => {
+    const start = formatYear(edu?.startYear || edu?.startDate || '');
+    const end = formatYear(edu?.endYear || edu?.yearOfPassing || '');
+    if (start && end) return `${start} - ${end}`;
+    return start || end || '';
+  };
+
   const contactItems = [personal.mobileNumber && `Phone: ${formatMobile(personal.mobileNumber)}`, personal.email && `Email: ${personal.email}`, personal.address && `Address: ${personal.address}`, skillsLinks && skillsLinks.links && skillsLinks.links.portfolioEnabled && skillsLinks.links.portfolioUrl && `Portfolio: ${skillsLinks.links.portfolioUrl}`].filter(Boolean);
 
   return (
@@ -215,7 +223,7 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                       <Text>{edu.instituteName}</Text>
                       <Text style={{ fontSize: 11, color: '#000' }}>
-                        {(edu.startYear || edu.endYear) ? `${edu.startYear ? formatYear(edu.startYear) : ''} - ${edu.currentlyPursuing ? 'Present' : (edu.endYear ? formatYear(edu.endYear) : '')}` : ''}
+                        {edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}
                       </Text>
                     </View>
                     <Text style={{ fontSize: 11, color: '#000', marginTop: 6 }}>{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</Text>
@@ -234,7 +242,7 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
                   <View style={{ marginBottom: 12 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                       <Text>{education.preUniversity.instituteName || 'Pre University'}</Text>
-                      <Text style={{ fontSize: 11, color: '#000' }}>{education.preUniversity.yearOfPassing ? formatYear(education.preUniversity.yearOfPassing) : ''}</Text>
+                      <Text style={{ fontSize: 11, color: '#000' }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
                     </View>
                     <Text style={{ fontSize: 11, color: '#000', marginTop: 6 }}>Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}{education.preUniversity.boardType ? ` — ${education.preUniversity.boardType}` : ''}</Text>
                     {education.preUniversity.resultFormat && education.preUniversity.result && (
@@ -248,7 +256,7 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
                   <View style={{ marginBottom: 12 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                       <Text>{education.sslc.instituteName || 'SSLC'}</Text>
-                      <Text style={{ fontSize: 11, color: '#000' }}>{education.sslc.yearOfPassing ? formatYear(education.sslc.yearOfPassing) : ''}</Text>
+                      <Text style={{ fontSize: 11, color: '#000' }}>{formatResumeEducationDateRange(education.sslc)}</Text>
                     </View>
                     <Text style={{ fontSize: 11, color: '#000', marginTop: 6 }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</Text>
                     {education.sslc.resultFormat && education.sslc.result && (

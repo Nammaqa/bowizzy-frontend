@@ -113,6 +113,7 @@ interface EducationDetailsFormProps {
 interface HigherEducation {
   id: string; // Client-side unique ID (timestamp or generated)
   degree: string;
+  fieldOfStudy?: string;
   institutionName: string;
   universityBoard: string;
   startYear: string;
@@ -196,6 +197,7 @@ export default function EducationDetailsForm({
       combined.push({
         id: Date.now().toString(),
         degree: "",
+        fieldOfStudy: "",
         institutionName: "",
         universityBoard: "",
         startYear: "",
@@ -338,6 +340,8 @@ export default function EducationDetailsForm({
   ): string[] => {
     const changedFields = [];
     if (current.degree !== (initial.degree || "")) changedFields.push("degree");
+    if ((current.fieldOfStudy || "") !== (initial.fieldOfStudy || ""))
+      changedFields.push("fieldOfStudy");
     if (current.institutionName !== (initial.institutionName || ""))
       changedFields.push("institutionName");
     if (current.universityBoard !== (initial.universityBoard || ""))
@@ -377,9 +381,8 @@ export default function EducationDetailsForm({
         if (cgpa < 0 || cgpa > 10) return "Must be between 0-10";
         break;
       case "Grade":
-        // Disallow negative grades like A- or B-; allow A, A+, B, B+, Pass, Fail
-        if (!/^[A-F]\+?$|^Pass$|^Fail$/i.test(value))
-          return "Enter valid grade (A, B+, Pass, Fail)";
+        if (!/^(?:A1|A2|B1|B2|C1|C2|D|E)$/i.test(value.trim()))
+          return "Enter valid grade (A1, A2, B1, B2, C1, C2, D, E)";
         break;
     }
     return "";
@@ -469,6 +472,7 @@ export default function EducationDetailsForm({
   const isEducationCardFilled = (edu: HigherEducation): boolean => {
     return !!(
       edu.degree ||
+      edu.fieldOfStudy ||
       edu.institutionName ||
       edu.universityBoard ||
       edu.startYear ||
@@ -886,6 +890,7 @@ export default function EducationDetailsForm({
         payload = {
           education_type: "higher",
           degree: edu.degree || "",
+          field_of_study: edu.fieldOfStudy || "",
           institution_name: edu.institutionName || "",
           university_name: edu.universityBoard || "",
           start_year: buildYear(edu.startYear),
@@ -952,6 +957,9 @@ export default function EducationDetailsForm({
           switch (field) {
             case "degree":
               payload.degree = edu.degree;
+              break;
+            case "fieldOfStudy":
+              payload.field_of_study = edu.fieldOfStudy || "";
               break;
             case "institutionName":
               payload.institution_name = edu.institutionName;
@@ -1028,6 +1036,7 @@ export default function EducationDetailsForm({
     const newEdu: HigherEducation = {
       id: Date.now().toString(),
       degree: "",
+      fieldOfStudy: "",
       institutionName: "",
       universityBoard: "",
       startYear: "",
@@ -1169,6 +1178,7 @@ export default function EducationDetailsForm({
             ? {
               ...edu,
               degree: "",
+              fieldOfStudy: "",
               institutionName: "",
               universityBoard: "",
               startYear: "",
@@ -1281,10 +1291,10 @@ export default function EducationDetailsForm({
       sslc: sslcData,
       pu: puData,
       higherEducations: higherEducations.filter(
-        (e) => e.degree || e.institutionName || e.education_id
+        (e) => e.degree || e.fieldOfStudy || e.institutionName || e.education_id
       ),
       extraEducations: extraEducations.filter(
-        (e) => e.degree || e.institutionName || e.education_id
+        (e) => e.degree || e.fieldOfStudy || e.institutionName || e.education_id
       ),
       deletedEducationIds: deletedEducationIds.current,
     });
@@ -1378,6 +1388,22 @@ export default function EducationDetailsForm({
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 </div>
+              </div>
+
+              {/* Field of Study */}
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
+                  Field of Study
+                </label>
+                <input
+                  type="text"
+                  value={education.fieldOfStudy || ""}
+                  onChange={(e) =>
+                    handleChange("fieldOfStudy", e.target.value)
+                  }
+                  placeholder="Enter Field of Study"
+                  className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm"
+                />
               </div>
 
               {/* Institution Name */}

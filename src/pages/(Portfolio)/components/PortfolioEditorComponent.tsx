@@ -223,7 +223,7 @@ export default function PortfolioEditorComponent({
 
   const nameMax = 50;
   const descMax = 300;
-  const linkMax = 100;
+  const linkMax = 250;
   const experienceTextMax = 80;
   const techStackMax = 30;
   const maxImageSizeBytes = 5 * 1024 * 1024;
@@ -735,6 +735,7 @@ export default function PortfolioEditorComponent({
                   type="url"
                   value={behanceUrl}
                   onChange={(e) => setBehanceUrl(e.target.value)}
+                  maxLength={linkMax}
                   onBlur={() => {
                     if (behanceUrl.trim() && !/^https?:\/\//i.test(behanceUrl.trim())) {
                       setBehanceUrl(`https://${behanceUrl.trim()}`);
@@ -752,6 +753,7 @@ export default function PortfolioEditorComponent({
                   type="url"
                   value={dribbbleUrl}
                   onChange={(e) => setDribbbleUrl(e.target.value)}
+                  maxLength={linkMax}
                   onBlur={() => {
                     if (dribbbleUrl.trim() && !/^https?:\/\//i.test(dribbbleUrl.trim())) {
                       setDribbbleUrl(`https://${dribbbleUrl.trim()}`);
@@ -989,6 +991,7 @@ export default function PortfolioEditorComponent({
                           type="url"
                           value={study.link}
                           onChange={(e) => handleUpdateCaseStudy(idx, "link", e.target.value)}
+                          maxLength={linkMax}
                           placeholder="https://..."
                           className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                         />
@@ -1084,6 +1087,7 @@ export default function PortfolioEditorComponent({
                     type="url"
                     value={p.link}
                     onChange={(e) => handleUpdateProject(idx, "link", e.target.value)}
+                    maxLength={linkMax}
                     placeholder="https://..."
                     className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                   />

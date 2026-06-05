@@ -8,7 +8,7 @@ import {
   AddButton,
 } from "@/pages/(ResumeBuilder)/components/ui";
 import RichTextEditor from "@/pages/(ResumeBuilder)/components/ui/RichTextEditor";
-import { Save, RotateCcw, Sparkles, Loader2, X } from "lucide-react";
+import { Save, Sparkles, Loader2, X } from "lucide-react";
 import {
   saveProjectsDetails,
   updateProjectDetails,
@@ -760,17 +760,6 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
                   Save
                 </button>
               )}
-              <button
-                type="button"
-                onClick={() => resetProject(project.id)}
-                className="w-6 h-6 flex items-center justify-center rounded-full border-2 border-gray-600 hover:bg-gray-100 transition-colors"
-                title="Reset to saved values"
-              >
-                <RotateCcw
-                  className="w-3 h-3 text-gray-600 cursor-pointer"
-                  strokeWidth={2.5}
-                />
-              </button>
             </div>
           </FormSection>
         );

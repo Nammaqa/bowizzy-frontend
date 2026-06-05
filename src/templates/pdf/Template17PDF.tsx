@@ -2,6 +2,7 @@ import React from 'react';
 import DOMPurify from 'dompurify';
 import { Document, Page, View, Text, StyleSheet, Svg, Path, Link } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
+import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 
 const styles = StyleSheet.create({
   page: { flexDirection: 'row', padding: 0, fontSize: 10, },
@@ -184,16 +185,23 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
         </View>
 
         <View style={styles.content}>
-          <View>
-            <Text style={styles.sectionHeading}>Technical Summary</Text>
-            <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
-            {personal.aboutCareerObjective ? <Text style={{ marginTop: 8, fontSize: 9, color: '#444' }}>{htmlToPlainText(personal.aboutCareerObjective).replace(/\s{2,}/g, ' ')}</Text> : null}
-            {skillsLinks.technicalSummaryEnabled && skillsLinks.technicalSummary ? (
-              <Text style={{ marginTop: personal.aboutCareerObjective ? 6 : 8, fontSize: 9, color: '#444' }}>
+          {personal.aboutCareerObjective ? (
+            <View>
+              <Text style={styles.sectionHeading}>About</Text>
+              <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
+              <Text style={{ marginTop: 8, fontSize: 9, color: '#444' }}>{htmlToPlainText(personal.aboutCareerObjective).replace(/\s{2,}/g, ' ')}</Text>
+            </View>
+          ) : null}
+
+          {skillsLinks.technicalSummaryEnabled && skillsLinks.technicalSummary ? (
+            <View style={{ marginTop: personal.aboutCareerObjective ? 18 : 0 }}>
+              <Text style={styles.sectionHeading}>Technical Summary</Text>
+              <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
+              <Text style={{ marginTop: 8, fontSize: 9, color: '#444' }}>
                 {htmlToPlainText(skillsLinks.technicalSummary).replace(/\s{2,}/g, ' ')}
               </Text>
-            ) : null}
-          </View>
+            </View>
+          ) : null}
 
           {experience.workExperiences.filter((w: any) => w.enabled).length > 0 && (
             <View style={{ marginTop: 18 }}>
@@ -242,7 +250,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
                   <View key={i} style={{ marginBottom: 10 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                       <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold }}>{edu.instituteName}</Text>
-                      <Text style={{ fontSize: 9, color: '#000' }}>{formatYear(edu.endYear)}</Text>
+                      <Text style={{ fontSize: 9, color: '#000' }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}</Text>
                     </View>
                     <Text style={{ marginTop: 4, fontSize: 9, color: '#000' }}>
                       {edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}
@@ -259,7 +267,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
                   <View style={{ marginBottom: 10 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                       <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
-                      <Text style={{ fontSize: 9, color: '#000' }}>{education.preUniversity.yearOfPassing ? String(education.preUniversity.yearOfPassing).match(/(\d{4})/)?.[1] : ''}</Text>
+                      <Text style={{ fontSize: 9, color: '#000' }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
                     </View>
                     <Text style={{ marginTop: 4, fontSize: 9, color: '#000' }}>
                       Pre University (12th Standard)
@@ -277,7 +285,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
                   <View style={{ marginBottom: 10 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                       <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold }}>{education.sslc.instituteName || 'SSLC'}</Text>
-                      <Text style={{ fontSize: 9, color: '#000' }}>{education.sslc.yearOfPassing ? String(education.sslc.yearOfPassing).match(/(\d{4})/)?.[1] : ''}</Text>
+                      <Text style={{ fontSize: 9, color: '#000' }}>{formatResumeEducationDateRange(education.sslc)}</Text>
                     </View>
                     <Text style={{ marginTop: 4, fontSize: 9, color: '#000' }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</Text>
                     {education.sslc.resultFormat && education.sslc.result && (

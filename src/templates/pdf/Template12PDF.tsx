@@ -2,6 +2,7 @@ import React from 'react';
 import DOMPurify from 'dompurify';
 import { Document, Page, View, Text, StyleSheet, Link } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
+import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 
 const styles = StyleSheet.create({
   page: {
@@ -217,8 +218,8 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
               {education.higherEducation.filter(edu => edu.enabled).reverse().map((edu: any, i: number) => (
                 <View key={i} style={{ marginBottom: 8 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>{edu.degree}</Text>
-                    <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>{edu.currentlyPursuing ? 'Present' : formatMonthYear(edu.endYear)}</Text>
+                    <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</Text>
+                    <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}</Text>
                   </View>
                   <Text style={{ fontSize: 10, color: '#2b2a2a', marginTop: 4 }}>{edu.instituteName}</Text>
                   {edu.resultFormat && edu.result && (
@@ -231,7 +232,7 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
                 <View style={{ marginBottom: 8 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                     <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>PUC</Text>
-                    <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>{formatMonthYear(education.preUniversity.yearOfPassing) || ''}</Text>
+                    <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
                   </View>
                   <Text style={{ fontSize: 10, color: '#2b2a2a', marginTop: 4 }}>{education.preUniversity.instituteName}</Text>
                   {education.preUniversity.resultFormat && education.preUniversity.result && (
@@ -244,7 +245,7 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
                 <View style={{ marginBottom: 8 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                     <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>SSLC</Text>
-                    <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>{formatMonthYear(education.sslc.yearOfPassing) || ''}</Text>
+                    <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.sslc)}</Text>
                   </View>
                   <Text style={{ fontSize: 10, color: '#2b2a2a', marginTop: 4 }}>{education.sslc.instituteName}</Text>
                   {education.sslc.resultFormat && education.sslc.result && (

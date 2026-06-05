@@ -3,6 +3,7 @@ import DOMPurify from 'dompurify';
 import { FiPhone, FiMail, FiMapPin, FiLinkedin, FiGithub, FiLink, FiFileText } from 'react-icons/fi';
 
 import type { ResumeData } from '@/types/resume';
+import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 
 interface Template13DisplayProps {
   data: ResumeData;
@@ -200,10 +201,10 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
                 <div key={`he-${i}`} style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 700 }}>{edu.instituteName}</div>
-                    <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{edu.currentlyPursuing ? 'Present' : formatYear(edu.endYear)}</div>
+                    <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear)} - Present` : formatResumeEducationDateRange(edu)}</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>
-                    {edu.degree}{edu.universityBoard ? ` — ${edu.universityBoard}` : ''}
+                    {edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}{edu.universityBoard ? ` — ${edu.universityBoard}` : ''}
                   </div>
                   {edu.resultFormat && edu.result && (<div style={{ marginTop: 6, color: '#2b2a2a' }}>{edu.resultFormat}: {edu.result}</div>)}
                 </div>
@@ -214,7 +215,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 700 }}>{education.preUniversity.instituteName || 'Pre University'}</div>
-                    <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{formatYear(education.preUniversity.yearOfPassing)}</div>
+                  <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>
                     Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}{education.preUniversity.boardType ? ` — ${education.preUniversity.boardType}` : ''}
@@ -228,7 +229,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 700 }}>{education.sslc.instituteName || 'SSLC'}</div>
-                    <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{formatYear(education.sslc.yearOfPassing)}</div>
+                  <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{formatResumeEducationDateRange(education.sslc)}</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>
                     SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}

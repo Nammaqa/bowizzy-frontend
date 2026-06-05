@@ -7,7 +7,7 @@ import {
   FormSection,
   ToggleSwitch,
 } from "@/pages/(ResumeBuilder)/components/ui";
-import { X, Save, RotateCcw, Sparkles, Loader2 } from "lucide-react";
+import { X, Save, Sparkles, Loader2 } from "lucide-react";
 import RichTextEditor from "@/pages/(ResumeBuilder)/components/ui/RichTextEditor";
 import {
   updateSkillDetails,
@@ -712,6 +712,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
                   value={skill.skillName}
                   onChange={(v) => updateSkill(skill.id, "skillName", v)}
                   error={errors[`skill-${skill.id}-skillName`]}
+                  maxLength={20}
                 />
               </div>
 
@@ -778,17 +779,6 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
               Save
             </button>
           )}
-          <button
-            type="button"
-            onClick={handleResetAllSkills}
-            className="w-6 h-6 flex items-center justify-center rounded-full border-2 border-gray-600 hover:bg-gray-100 transition-colors"
-            title="Reset to saved values"
-          >
-            <RotateCcw
-              className="w-3 h-3 text-gray-600 cursor-pointer"
-              strokeWidth={2.5}
-            />
-          </button>
         </div>
       </FormSection>
 
@@ -922,17 +912,6 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
               Save
             </button>
           )}
-          <button
-            type="button"
-            onClick={handleResetAllLinks}
-            className="w-6 h-6 flex items-center justify-center rounded-full border-2 border-gray-600 hover:bg-gray-100 transition-colors"
-            title="Reset to saved values"
-          >
-            <RotateCcw
-              className="w-3 h-3 text-gray-600 cursor-pointer"
-              strokeWidth={2.5}
-            />
-          </button>
         </div>
       </FormSection>
 
@@ -1126,17 +1105,6 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
               Save
             </button>
           )}
-          <button
-            type="button"
-            onClick={handleResetTechnicalSummary}
-            className="w-6 h-6 flex items-center justify-center rounded-full border-2 border-gray-600 hover:bg-gray-100 transition-colors"
-            title="Reset to saved value"
-          >
-            <RotateCcw
-              className="w-3 h-3 text-gray-600 cursor-pointer"
-              strokeWidth={2.5}
-            />
-          </button>
         </div>
       </FormSection>
     </div>

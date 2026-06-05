@@ -601,12 +601,12 @@ export default function TemplateSelection() {
             const pdfUrl = PREVIEW_IMAGES[templateNum];
 
             return (
-              <div className="fixed inset-0 z-50 flex items-center justify-center">
+              <div className="fixed inset-0 z-[10000] flex items-center justify-center">
                 <div
                   className="absolute inset-0 bg-black/60"
                   onClick={() => setShowPreviewModal(false)}
                 />
-                <div className="relative z-10 p-4 w-full max-w-2xl">
+                <div className="relative z-[10001] p-4 w-full max-w-2xl">
                   <div className="bg-white rounded-lg overflow-hidden shadow-2xl">
                     <div className="flex items-center justify-between p-4 border-b">
                       <h2 className="text-xl font-semibold text-gray-800">

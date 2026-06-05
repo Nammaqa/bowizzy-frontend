@@ -2,6 +2,7 @@ import React from 'react';
 import DOMPurify from 'dompurify';
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
+import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 
 const styles = StyleSheet.create({
   page: { paddingTop: 24, paddingBottom: 24, paddingLeft: 36, paddingRight: 36, fontSize: 10 },
@@ -91,6 +92,13 @@ const formatYear = (s?: string) => {
   const str = String(s).trim();
   const y = str.match(/(\d{4})/);
   return y ? y[1] : str;
+};
+
+const formatEducationDateRange = (edu: any) => {
+  const start = formatYear(edu?.startYear || edu?.startDate || '');
+  const end = formatYear(edu?.endYear || edu?.yearOfPassing || '');
+  if (start && end) return `${start} — ${end}`;
+  return start || end || '';
 };
 
 const getStarsByLevel = (skillLevel?: string): string => {
@@ -229,9 +237,9 @@ const Template16PDF: React.FC<Template16PDFProps> = ({ data, primaryColor = '#11
               <View key={`he-${i}`} style={{ marginBottom: 8 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={styles.itemTitle}>{edu.instituteName}</Text>
-                  <Text style={{ ...styles.itemSub, color: '#000' }}>{formatYear(edu.startYear)} — {edu.currentlyPursuing ? 'Present' : formatYear(edu.endYear)}</Text>
+                    <Text style={{ ...styles.itemSub, color: '#000' }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}</Text>
                 </View>
-                <Text style={{ fontSize: 10, color: '#000' }}>{edu.degree}</Text>
+                  <Text style={{ fontSize: 10, color: '#000' }}>{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</Text>
                 {edu.resultFormat && edu.result ? (
                   <Text style={{ fontSize: 10, color: '#000', fontFamily: 'Times-Bold', marginTop: 4 }}>{edu.resultFormat}: {edu.result}</Text>
                 ) : null}
@@ -243,7 +251,7 @@ const Template16PDF: React.FC<Template16PDFProps> = ({ data, primaryColor = '#11
               <View style={{ marginBottom: 8 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={styles.itemTitle}>{education.preUniversity.instituteName || 'Pre University'}</Text>
-                  <Text style={{ ...styles.itemSub, color: '#000' }}>{education.preUniversity.yearOfPassing ? String(education.preUniversity.yearOfPassing).match(/(\d{4})/)?.[1] : ''}</Text>
+                  <Text style={{ ...styles.itemSub, color: '#000' }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
                 </View>
                 <Text style={{ fontSize: 10, color: '#000', marginTop: 4 }}>Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}</Text>
                 {education.preUniversity.resultFormat && education.preUniversity.result && (
@@ -257,7 +265,7 @@ const Template16PDF: React.FC<Template16PDFProps> = ({ data, primaryColor = '#11
               <View style={{ marginBottom: 8 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={styles.itemTitle}>{education.sslc.instituteName || 'SSLC'}</Text>
-                  <Text style={{ ...styles.itemSub, color: '#000' }}>{education.sslc.yearOfPassing ? String(education.sslc.yearOfPassing).match(/(\d{4})/)?.[1] : ''}</Text>
+                  <Text style={{ ...styles.itemSub, color: '#000' }}>{formatResumeEducationDateRange(education.sslc)}</Text>
                 </View>
                 <Text style={{ fontSize: 10, color: '#000', marginTop: 4 }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</Text>
                 {education.sslc.resultFormat && education.sslc.result && (

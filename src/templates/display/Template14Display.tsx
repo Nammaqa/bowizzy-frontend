@@ -2,6 +2,7 @@ import React from 'react';
 import DOMPurify from 'dompurify';
 
 import type { ResumeData } from '@/types/resume';
+import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 
 interface Template14DisplayProps {
   data: ResumeData
@@ -159,9 +160,9 @@ const Template14Display: React.FC<Template14DisplayProps> = ({
                 <div key={`he-${i}`} style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ fontWeight: 700 }}>{edu.instituteName}</div>
-                    <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{edu.currentlyPursuing ? 'Present' : formatYear(edu.endYear)}</div>
+                    <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear)} - Present` : formatResumeEducationDateRange(edu)}</div>
                   </div>
-                  <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>{edu.degree}</div>
+                  <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</div>
                   {edu.resultFormat && edu.result && (<div style={{ marginTop: 6, color: '#2b2a2a' }}>{edu.resultFormat}: {edu.result}</div>)}
                 </div>
               ))}
@@ -170,7 +171,7 @@ const Template14Display: React.FC<Template14DisplayProps> = ({
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ fontWeight: 700 }}>{education.preUniversity.instituteName || 'Pre University'}</div>
-                    <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{education.preUniversity.yearOfPassing ? formatYear(education.preUniversity.yearOfPassing) : ''}</div>
+                  <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>Pre University (12th Standard)</div>
                   {education.preUniversity.resultFormat && education.preUniversity.result && (<div style={{ marginTop: 6, color: '#2b2a2a' }}>{education.preUniversity.resultFormat}: {education.preUniversity.result}</div>)}
@@ -181,7 +182,7 @@ const Template14Display: React.FC<Template14DisplayProps> = ({
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ fontWeight: 700 }}>{education.sslc.instituteName || 'SSLC'}</div>
-                    <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{education.sslc.yearOfPassing ? formatYear(education.sslc.yearOfPassing) : ''}</div>
+                  <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{formatResumeEducationDateRange(education.sslc)}</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>SSLC (10th Standard)</div>
                   {education.sslc.resultFormat && education.sslc.result && (<div style={{ marginTop: 6, color: '#2b2a2a' }}>{education.sslc.resultFormat}: {education.sslc.result}</div>)}

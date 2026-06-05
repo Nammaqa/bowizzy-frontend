@@ -8,7 +8,7 @@ import {
   ToggleSwitch,
 } from "@/pages/(ResumeBuilder)/components/ui";
 import RichTextEditor from "@/pages/(ResumeBuilder)/components/ui/RichTextEditor";
-import { ChevronDown, Trash2, Plus, Save, RotateCcw } from "lucide-react";
+import { ChevronDown, Trash2, Plus, Save } from "lucide-react";
 import {
   updateExperienceDetails,
   saveExperienceDetails,
@@ -670,14 +670,6 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
               Save
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => resetExperience(experience.id)}
-            className="w-6 h-6 flex items-center justify-center rounded-full border-2 border-gray-600 hover:bg-gray-100 transition-colors"
-            title="Reset to saved values"
-          >
-            <RotateCcw className="w-3 h-3 text-gray-600 cursor-pointer" strokeWidth={2.5} />
-          </button>
         </div>
       </FormSection>
     );

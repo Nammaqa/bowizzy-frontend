@@ -7,7 +7,7 @@ import {
   FormSection,
   AddButton,
 } from "@/pages/(ResumeBuilder)/components/ui";
-import { Upload, X, Save, RotateCcw } from "lucide-react";
+import { Upload, X, Save } from "lucide-react";
 import RichTextEditor from "@/pages/(ResumeBuilder)/components/ui/RichTextEditor";
 import {
   saveCertificateDetails,
@@ -855,17 +855,6 @@ export const CertificationsForm: React.FC<CertificationsFormProps> = ({
                   Save
                 </button>
               )}
-              <button
-                type="button"
-                onClick={() => resetCertificate(cert.id)}
-                className="w-6 h-6 flex items-center justify-center rounded-full border-2 border-gray-600 hover:bg-gray-100 transition-colors"
-                title="Reset to saved values"
-              >
-                <RotateCcw
-                  className="w-3 h-3 text-gray-600 cursor-pointer"
-                  strokeWidth={2.5}
-                />
-              </button>
             </div>
           </FormSection>
         );

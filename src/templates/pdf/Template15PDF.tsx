@@ -2,6 +2,7 @@ import React from 'react';
 import DOMPurify from 'dompurify';
 import { Document, Page, View, Text, StyleSheet, Link } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
+import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 
 const styles = StyleSheet.create({
   page: { paddingTop: 28, paddingBottom: 24, paddingLeft: 36, paddingRight: 36, fontSize: 10 },
@@ -94,6 +95,13 @@ const formatYear = (s?: string) => {
   return y ? y[1] : str;
 };
 
+const formatEducationDateRange = (edu: any) => {
+  const start = formatMonthYear(edu?.startYear || edu?.startDate || '');
+  const end = formatMonthYear(edu?.endYear || edu?.yearOfPassing || '');
+  if (start && end) return `${start} — ${end}`;
+  return start || end || '';
+};
+
 interface Template15PDFProps {
   data: ResumeData;
   primaryColor?: string;
@@ -143,6 +151,14 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
   const linkedinPresent = linksEnabled && (skillsLinks?.links?.linkedinEnabled ?? true) ? (skillsLinks?.links?.linkedinProfile || (personal as any).linkedinProfile) : null;
   const githubPresent = linksEnabled && (skillsLinks?.links?.githubEnabled ?? true) ? (skillsLinks?.links?.githubProfile || (personal as any).githubProfile) : null;
   const portfolioPresent = linksEnabled && (skillsLinks?.links?.portfolioEnabled ?? true) ? skillsLinks?.links?.portfolioUrl : null;
+  const publicationPresent = linksEnabled && (skillsLinks?.links?.publicationEnabled ?? true) ? skillsLinks?.links?.publicationUrl : null;
+
+  const normalizeLinkUrl = (url?: string | null) => {
+    if (!url) return '';
+    const trimmed = String(url).trim();
+    if (!trimmed) return '';
+    return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  };
 
   const extractHandle = (s?: string) => {
     if (!s) return '';
@@ -161,6 +177,13 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
   const linkedinLabel = linkedinPresent ? extractHandle(linkedinPresent) : null;
   const githubLabel = githubPresent ? extractHandle(githubPresent) : null;
   const portfolioLabel = portfolioPresent ? extractHandle(portfolioPresent) : null;
+  const publicationLabel = publicationPresent ? extractHandle(publicationPresent) : null;
+  const contactLinks = [
+    linkedinPresent && { href: normalizeLinkUrl(linkedinPresent), label: linkedinLabel, color: '#0a66c2' },
+    githubPresent && { href: normalizeLinkUrl(githubPresent), label: githubLabel, color: '#111' },
+    portfolioPresent && { href: normalizeLinkUrl(portfolioPresent), label: portfolioLabel, color: '#000' },
+    publicationPresent && { href: normalizeLinkUrl(publicationPresent), label: publicationLabel, color: '#000' },
+  ].filter(Boolean) as Array<{ href: string; label: string | null; color: string }>;
 
   return (
     <Document>
@@ -172,24 +195,15 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
             {mobile && <Text style={styles.contact}>{mobile}</Text>}
             {mobile && email && <Text style={styles.contact}> | </Text>}
             {email && <Text style={styles.contact}>{email}</Text>}
-            {(mobile || email) && linkedinPresent && <Text style={styles.contact}> | </Text>}
-            {linkedinPresent && (
-              <Link src={linkedinPresent} style={{ ...styles.contact, color: '#0a66c2' }}>
-                {linkedinLabel}
-              </Link>
-            )}
-            {linkedinPresent && githubPresent && <Text style={styles.contact}> | </Text>}
-            {githubPresent && (
-              <Link src={githubPresent} style={{ ...styles.contact, color: '#111' }}>
-                {githubLabel}
-              </Link>
-            )}
-            {githubPresent && portfolioPresent && <Text style={styles.contact}> | </Text>}
-            {portfolioPresent && (
-              <Link src={portfolioPresent} style={{ ...styles.contact, color: '#000' }}>
-                {portfolioLabel}
-              </Link>
-            )}
+            {(mobile || email) && contactLinks.length > 0 && <Text style={styles.contact}> | </Text>}
+            {contactLinks.map((link, index) => (
+              <React.Fragment key={`${link.href}-${index}`}>
+                {index > 0 && <Text style={styles.contact}> | </Text>}
+                <Link src={link.href} style={{ ...styles.contact, color: link.color }}>
+                  {link.label || link.href}
+                </Link>
+              </React.Fragment>
+            ))}
           </View>
         </View>
 
@@ -220,7 +234,7 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
               <View key={`he-${i}`} style={{ marginBottom: 8 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>{edu.instituteName}</Text>
-                  <Text style={{ fontSize: 11, color: '#101113ff', fontFamily: pdfFontFamilyBold }}>{formatMonthYear(edu.startYear)} — {edu.currentlyPursuing ? 'Present' : formatMonthYear(edu.endYear)}</Text>
+                    <Text style={{ fontSize: 11, color: '#101113ff', fontFamily: pdfFontFamilyBold }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}</Text>
                 </View>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
                   <Text style={{ fontSize: 11, color: '#6b7280' }}>{edu.degree}{edu.fieldOfStudy ? ` — ${edu.fieldOfStudy}` : ''}</Text>
@@ -237,7 +251,7 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
               <View style={{ marginBottom: 8 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
-                  <Text style={{ fontSize: 12, color: '#101113ff', fontFamily: pdfFontFamilyBold }}>{formatMonthYear(education.preUniversity.yearOfPassing) || ''}</Text>
+                  <Text style={{ fontSize: 12, color: '#101113ff', fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
                 </View>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
                   <Text style={{ fontSize: 11, color: '#6b7280' }}>Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}</Text>
@@ -253,7 +267,7 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
               <View style={{ marginBottom: 8 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>{education.sslc.instituteName || 'SSLC'}</Text>
-                  <Text style={{ fontSize: 11, color: '#101113ff', fontFamily: pdfFontFamilyBold }}>{education.sslc.yearOfPassing ? formatMonthYear(education.sslc.yearOfPassing) : ''}</Text>
+                  <Text style={{ fontSize: 11, color: '#101113ff', fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.sslc)}</Text>
                 </View>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
                   <Text style={{ fontSize: 11, color: '#6b7280' }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</Text>

@@ -223,6 +223,7 @@ export default function PortfolioEditor() {
 
   const mmYYYYRegex = /^(0[1-9]|1[0-2])-\d{4}$/;
   const plainTextRegex = /^[A-Za-z0-9 ]*$/;
+  const linkMaxLength = 250;
 
   const formatDuration = (startDate?: string, endDate?: string) => {
     const start = (startDate || "").trim();
@@ -382,7 +383,7 @@ export default function PortfolioEditor() {
     pathPattern?: RegExp
   ): boolean => {
     if (!url.trim()) return true;
-    if (url.length > 100 || !hasAllowedUrlCharacters(url)) return false;
+    if (url.length > linkMaxLength || !hasAllowedUrlCharacters(url)) return false;
     try {
       const urlObj = new URL(ensureHttps(url));
       const hostname = urlObj.hostname.replace(/^www\./i, "").toLowerCase();
@@ -396,7 +397,7 @@ export default function PortfolioEditor() {
 
   const validateCustomUrl = (url: string): boolean => {
     if (!url.trim()) return true;
-    if (url.length > 100 || !hasAllowedUrlCharacters(url)) return false;
+    if (url.length > linkMaxLength || !hasAllowedUrlCharacters(url)) return false;
     try {
       const urlObj = new URL(ensureHttps(url));
       const hostname = urlObj.hostname.replace(/^www\./i, "").toLowerCase();
@@ -424,19 +425,19 @@ export default function PortfolioEditor() {
 
     // Validate URLs
     if (cleanGithub && !validateProfileUrl(cleanGithub, ["github.com"], /^\/[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/)) {
-      alert("Please enter a valid GitHub profile URL under 100 characters.");
+      alert("Please enter a valid GitHub profile URL under 250 characters.");
       return;
     }
     if (cleanLinkedin && !validateProfileUrl(cleanLinkedin, ["linkedin.com"], /^\/in\/[A-Za-z0-9-]{3,100}$/)) {
-      alert("Please enter a valid LinkedIn profile URL under 100 characters.");
+      alert("Please enter a valid LinkedIn profile URL under 250 characters.");
       return;
     }
     if (cleanTwitter && !validateProfileUrl(cleanTwitter, ["twitter.com", "x.com"], /^\/[A-Za-z0-9_]{1,15}$/)) {
-      alert("Please enter a valid Twitter/X profile URL under 100 characters.");
+      alert("Please enter a valid Twitter/X profile URL under 250 characters.");
       return;
     }
     if (cleanCustom && !validateCustomUrl(cleanCustom)) {
-      alert("Please enter a valid Custom Domain URL under 100 characters.");
+      alert("Please enter a valid Custom Domain URL under 250 characters.");
       return;
     }
     if (cleanBehance && !isValidUrl(cleanBehance)) {
@@ -445,6 +446,24 @@ export default function PortfolioEditor() {
     }
     if (cleanDribbble && !isValidUrl(cleanDribbble)) {
       alert("Please enter a valid Dribbble URL.");
+      return;
+    }
+
+    const tooLongLink = [
+      cleanGithub,
+      cleanLinkedin,
+      cleanTwitter,
+      cleanCustom,
+      cleanBehance,
+      cleanDribbble,
+      cvUrl,
+      profileImageUrl,
+      ...projects.map((project) => project.link || ""),
+      ...caseStudies.map((study) => study.link || ""),
+    ].find((link) => link.length > linkMaxLength);
+
+    if (tooLongLink) {
+      alert("All portfolio links must be 250 characters or less.");
       return;
     }
 

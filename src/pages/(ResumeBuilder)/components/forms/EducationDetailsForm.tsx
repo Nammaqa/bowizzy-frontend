@@ -9,7 +9,7 @@ import {
   FormSection,
   AddButton,
 } from "@/pages/(ResumeBuilder)/components/ui";
-import { Save, ChevronDown, Trash2, RotateCcw } from "lucide-react";
+import { Save, ChevronDown, Trash2 } from "lucide-react";
 import {
   updateEducationDetails,
   saveEducationDetails,
@@ -354,11 +354,12 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       );
 
       if (!initial) {
-        return !!(edu.degree || edu.instituteName || edu.result);
+        return !!(edu.degree || edu.fieldOfStudy || edu.instituteName || edu.result);
       }
 
       return (
         edu.degree !== initial.degree ||
+        (edu.fieldOfStudy || "") !== (initial.fieldOfStudy || "") ||
         edu.instituteName !== initial.instituteName ||
         edu.universityBoard !== initial.universityBoard ||
         edu.startYear !== initial.startYear ||
@@ -451,8 +452,9 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       }
 
       if (lowerFormat === "grade") {
-        if (!/^(?:[A-F]\+?|Pass|Fail)$/i.test(val))
-          return "Enter valid grade (A, B+, Pass, Fail)";
+        const grade = val.trim();
+        if (!/^(?:A1|A2|B1|B2|C1|C2|D|E)$/i.test(grade))
+          return "Enter valid grade (A1, A2, B1, B2, C1, C2, D, E)";
       }
 
       return "";
@@ -466,7 +468,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       const regex = /^[a-zA-Z0-9\s.,&'\-()]+$/;
       if (!regex.test(val)) return "Invalid institution name";
       if (!/[a-zA-Z]/.test(val)) return "Institution name must include a letter";
-      if (val.length > 50) return "Max 50 characters allowed";
+      if (val.length > 100) return "Max 100 characters allowed";
       if (val.split(/\s+/).some((word) => word.length > 15))
         return "Each word must be 15 characters or less";
       return "";
@@ -887,6 +889,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     try {
       if (
         !edu.degree &&
+        !edu.fieldOfStudy &&
         !edu.instituteName &&
         !edu.education_id
       ) {
@@ -929,6 +932,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       const payload = {
         education_type: "higher",
         degree: edu.degree || "",
+        field_of_study: edu.fieldOfStudy || "",
         institution_name: edu.instituteName || "",
         university_name: edu.universityBoard || "",
         start_year: buildYear(edu.startYear),
@@ -1003,6 +1007,8 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
         const updatePayload: Record<string, any> = {};
 
         if (edu.degree !== initial.degree) updatePayload.degree = edu.degree;
+        if ((edu.fieldOfStudy || "") !== (initial.fieldOfStudy || ""))
+          updatePayload.field_of_study = edu.fieldOfStudy || "";
         if (edu.instituteName !== initial.instituteName)
           updatePayload.institution_name = edu.instituteName;
         if (edu.universityBoard !== initial.universityBoard)
@@ -1222,6 +1228,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     const newEdu: HigherEducation = {
       id: newId,
       degree: "",
+      fieldOfStudy: "",
       instituteName: "",
       universityBoard: "",
       startYear: "",
@@ -1346,6 +1353,12 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
               onChange={(v) => updateHigherEducation(id, "degree", v)}
               options={degrees}
             />
+            <FormInput
+              label="Field of Study"
+              placeholder="Enter Field of Study"
+              value={education.fieldOfStudy || ""}
+              onChange={(v) => updateHigherEducation(id, "fieldOfStudy", v)}
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1355,6 +1368,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
               value={education.instituteName}
               onChange={(v) => updateHigherEducation(id, "instituteName", v)}
               error={errors[`higherEducation.${id}.instituteName`]}
+              maxLength={100}
             />
             <FormInput
               label="University / Board"
@@ -1473,17 +1487,6 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
                 Save
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => handleResetHigherEducation(id)}
-              className="w-6 h-6 flex items-center justify-center rounded-full border-2 border-gray-600 hover:bg-gray-100 transition-colors"
-              title="Reset to saved values"
-            >
-              <RotateCcw
-                className="w-3 h-3 text-gray-600 cursor-pointer"
-                strokeWidth={2.5}
-              />
-            </button>
           </div>
         </div>
       </FormSection>
@@ -1507,6 +1510,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
           value={data.sslc.instituteName}
           onChange={(v) => updateSSLC("instituteName", v)}
           error={errors["sslc.instituteName"]}
+          maxLength={100}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -1580,17 +1584,6 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
               Save
             </button>
           )}
-          <button
-            type="button"
-            onClick={handleResetSslc}
-            className="w-6 h-6 flex items-center justify-center rounded-full border-2 border-gray-600 hover:bg-gray-100 transition-colors"
-            title="Reset to saved values"
-          >
-            <RotateCcw
-              className="w-3 h-3 text-gray-600 cursor-pointer"
-              strokeWidth={2.5}
-            />
-          </button>
         </div>
       </FormSection>
 
@@ -1613,6 +1606,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
           value={data.preUniversity.instituteName}
           onChange={(v) => updatePreUniversity("instituteName", v)}
           error={errors["preUniversity.instituteName"]}
+          maxLength={100}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -1699,17 +1693,6 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
               Save
             </button>
           )}
-          <button
-            type="button"
-            onClick={handleResetPu}
-            className="w-6 h-6 flex items-center justify-center rounded-full border-2 border-gray-600 hover:bg-gray-100 transition-colors"
-            title="Reset to saved values"
-          >
-            <RotateCcw
-              className="w-3 h-3 text-gray-600 cursor-pointer"
-              strokeWidth={2.5}
-            />
-          </button>
         </div>
       </FormSection>
 

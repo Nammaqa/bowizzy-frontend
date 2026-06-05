@@ -632,15 +632,60 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
     }
   };
 
+  const isMobilePreviewDevice = () => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth < 768 || /Android|iPhone|iPad|iPod/i.test(window.navigator.userAgent);
+  };
+
+  const isSamsungPreviewBrowser = () => {
+    if (typeof window === 'undefined') return false;
+    return /SamsungBrowser/i.test(window.navigator.userAgent);
+  };
+
+  const getPreviewCanvasScale = () => (isMobilePreviewDevice() ? 1 : 2);
+
+  const generatePdfFromPrintablePages = async (printable: NodeListOf<Element>) => {
+    const pdfDoc = new jsPDF('p', 'pt', 'a4');
+    const pdfWidth = pdfDoc.internal.pageSize.getWidth();
+    const pdfHeight = pdfDoc.internal.pageSize.getHeight();
+    const canvasScale = getPreviewCanvasScale();
+
+    for (let i = 0; i < printable.length; i++) {
+      const canvas = await html2canvas(printable[i] as HTMLElement, {
+        scale: canvasScale,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+      const imgData = canvas.toDataURL('image/png');
+      if (i > 0) pdfDoc.addPage();
+      pdfDoc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    }
+
+    return pdfDoc.output('blob') as Blob;
+  };
+
+  const generatePdfFromReactPdf = async (dataForPdf: ResumeData) => {
+    if (!PDFComponent) return null;
+    const preparedData = await embedProfilePhoto(dataForPdf);
+    const doc = <PDFComponent data={preparedData} primaryColor={primaryColor} fontFamily={fontFamily} />;
+    const asPdf = pdf(doc);
+    return await asPdf.toBlob();
+  };
+
   const handleSetPdfUrl = async (blob: Blob) => {
-    if (window.innerWidth < 768) {
+    const localUrl = URL.createObjectURL(blob);
+    setPdfUrl(localUrl);
+
+    if (isSamsungPreviewBrowser()) return;
+
+    if (isMobilePreviewDevice()) {
       const cUrl = await uploadPdfToCloudinary(blob);
       if (cUrl) {
         setPdfUrl(`https://docs.google.com/viewer?url=${encodeURIComponent(cUrl)}&embedded=true`);
         return;
       }
     }
-    setPdfUrl(URL.createObjectURL(blob));
   };
 
   useEffect(() => {
@@ -666,22 +711,14 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
         const printable = await waitForPages();
 
         if (printable && printable.length > 0) {
-          const pdfDoc = new jsPDF('p', 'pt', 'a4');
-          const pdfWidth = pdfDoc.internal.pageSize.getWidth();
-          const pdfHeight = pdfDoc.internal.pageSize.getHeight();
-          for (let i = 0; i < printable.length; i++) {
-            const canvas = await html2canvas(printable[i] as HTMLElement, { scale: 2, useCORS: true });
-            const imgData = canvas.toDataURL('image/png');
-            if (i > 0) pdfDoc.addPage();
-            pdfDoc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          try {
+            generatedBlob = await generatePdfFromPrintablePages(printable);
+          } catch (canvasError) {
+            console.error('Canvas preview generation failed, falling back to PDF renderer:', canvasError);
+            generatedBlob = await generatePdfFromReactPdf(resumeDataRef.current);
           }
-          generatedBlob = pdfDoc.output('blob') as Blob;
-        } else {
-          const preparedData = await embedProfilePhoto(resumeDataRef.current);
-          const doc = <PDFComponent data={preparedData} primaryColor={primaryColor} fontFamily={fontFamily} />;
-          const asPdf = pdf(doc);
-          generatedBlob = await asPdf.toBlob();
         }
+        if (!generatedBlob) generatedBlob = await generatePdfFromReactPdf(resumeDataRef.current);
 
         if (generatedBlob) {
           cachedBlobRef.current = generatedBlob;
@@ -694,6 +731,7 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
         }
       } catch (err) {
         console.error('PDF generation error:', err);
+        onPreviewComplete?.();
       } finally {
         setIsDownloading(false);
       }
@@ -794,22 +832,13 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
 
     const printable = await waitForPages();
     if (printable && printable.length > 0) {
-      const pdfDoc = new jsPDF('p', 'pt', 'a4');
-      const pdfWidth = pdfDoc.internal.pageSize.getWidth();
-      const pdfHeight = pdfDoc.internal.pageSize.getHeight();
-      for (let i = 0; i < printable.length; i++) {
-        const canvas = await html2canvas(printable[i] as HTMLElement, { scale: 2, useCORS: true });
-        const imgData = canvas.toDataURL('image/png');
-        if (i > 0) pdfDoc.addPage();
-        pdfDoc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      try {
+        return await generatePdfFromPrintablePages(printable);
+      } catch (canvasError) {
+        console.error('Canvas preview generation failed, falling back to PDF renderer:', canvasError);
       }
-      return pdfDoc.output('blob') as Blob;
-    } else {
-      const preparedData = await embedProfilePhoto(resumeData);
-      const doc = <PDFComponent data={preparedData} primaryColor={primaryColor} fontFamily={fontFamily} />;
-      const asPdf = pdf(doc);
-      return await asPdf.toBlob();
     }
+    return await generatePdfFromReactPdf(resumeData);
   };
 
   return (
@@ -1089,6 +1118,16 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                 <div className="flex flex-col flex-1">
                   <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
                     <h3 className="text-lg font-semibold text-gray-900">Bowizzy Preview</h3>
+                    {pdfUrl && isMobilePreviewDevice() && (
+                      <a
+                        href={pdfUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3 py-1.5 text-xs font-medium text-white bg-blue-500 rounded-full"
+                      >
+                        Open Preview
+                      </a>
+                    )}
                   </div>
 
                   <div className="flex-1 overflow-auto bg-gray-100 rounded-lg mb-4">
