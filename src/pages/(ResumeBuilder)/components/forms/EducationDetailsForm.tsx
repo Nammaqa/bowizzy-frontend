@@ -502,23 +502,40 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
         const yearNum = parseInt(val, 10);
         if (yearNum < 1960) return "Year must be 1960 or later";
         return "";
-        return "Start year must be 1960 or later";
       }
+      return validateMonthFormat(val);
+    };
+
+    if (name.endsWith(".instituteName")) return validateInstitutionName(value);
+    if (name.endsWith(".universityBoard")) return validateUniversityBoard(value);
+    if (
+      name.endsWith(".yearOfPassing") ||
+      name.endsWith(".startYear") ||
+      name.endsWith(".endYear")
+    ) {
+      return validateYearOrMonth(value);
     }
-    if (endYear && !isCurrentlyPursuing) {
-      const endParts = endYear.split("-");
-      const endYearNum = parseInt(endParts[0], 10);
-      if (endYearNum < 1960) {
-        return "End year must be 1960 or later";
-      }
-    }
+    if (name.endsWith(".result")) return validateResult(value, resultFormat);
+
+    return "";
+  };
+
+  const validateDateRange = (
+    startYear: string,
+    endYear: string,
+    isCurrentlyPursuing = false
+  ) => {
     if (isCurrentlyPursuing) return "";
 
-    if (startYear && endYear) {
-      if (endYear < startYear) {
-        return "End year cannot be before start year";
-      }
+    if (endYear) {
+      const endYearNum = parseInt(endYear.split("-")[0], 10);
+      if (endYearNum < 1960) return "End year must be 1960 or later";
     }
+
+    if (startYear && endYear && endYear < startYear) {
+      return "End year cannot be before start year";
+    }
+
     return "";
   };
 
