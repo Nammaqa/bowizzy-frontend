@@ -218,8 +218,8 @@ const Template16PDF: React.FC<Template16PDFProps> = ({ data, primaryColor = '#11
                     <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>{p.projectTitle}</Text>
                     <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold, color: '#000' }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</Text>
                   </View>
-                  {p.role && renderBulletedParagraph(p.role)}
                   {p.description && renderBulletedParagraph(p.description)}
+                  {p.role && renderBulletedParagraph(p.role)}
                 </View>
               ))}
             </View>

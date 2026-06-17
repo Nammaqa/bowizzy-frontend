@@ -29,7 +29,6 @@ interface Certificate {
   id: string;
   certificateType: string;
   certificateTitle: string;
-  domain: string;
   certificateProvidedBy: string;
   date: string;
   description: string;
@@ -60,7 +59,6 @@ export default function CertificationDetailsForm({
           // Normalize all fields so the ref and state start identical
           certificateType: c.certificateType || "",
           certificateTitle: c.certificateTitle || "",
-          domain: c.domain || "",
           certificateProvidedBy: c.certificateProvidedBy || "",
           date: c.date || "",
           description: c.description || "",
@@ -74,7 +72,6 @@ export default function CertificationDetailsForm({
             id: "1",
             certificateType: "",
             certificateTitle: "",
-            domain: "",
             certificateProvidedBy: "",
             date: "",
             description: "",
@@ -120,8 +117,6 @@ export default function CertificationDetailsForm({
         changedFields.push("certificateType");
       if (norm(current.certificateTitle) !== norm(initial.certificateTitle))
         changedFields.push("certificateTitle");
-      if (norm(current.domain) !== norm(initial.domain))
-        changedFields.push("domain");
       if (norm(current.certificateProvidedBy) !== norm(initial.certificateProvidedBy))
         changedFields.push("certificateProvidedBy");
       if (norm(current.date) !== norm(initial.date))
@@ -151,13 +146,6 @@ export default function CertificationDetailsForm({
     }
     if (!/^[a-zA-Z0-9\s.,-:()&]+$/.test(value)) {
       return "Invalid characters in certificate title";
-    }
-    return "";
-  };
-
-  const validateDomain = (value: string) => {
-    if (value && !/^[a-zA-Z\s.,&\/\-]+$/.test(value)) {
-      return "Invalid characters in domain (no numbers allowed)";
     }
     return "";
   };
@@ -215,9 +203,6 @@ export default function CertificationDetailsForm({
     if (field === "certificateTitle" && typeof value === "string") {
       const error = validateCertificateTitle(value);
       setErrors((prev) => ({ ...prev, [`cert-${index}-certificateTitle`]: error }));
-    } else if (field === "domain" && typeof value === "string") {
-      const error = validateDomain(value);
-      setErrors((prev) => ({ ...prev, [`cert-${index}-domain`]: error }));
     } else if (field === "date" && typeof value === "string") {
       const error = validateDateValue(value);
       setErrors((prev) => ({ ...prev, [`cert-${index}-date`]: error }));
@@ -241,7 +226,6 @@ export default function CertificationDetailsForm({
       ...updated[index],
       certificateType: initial?.certificateType || "",
       certificateTitle: initial?.certificateTitle || "",
-      domain: initial?.domain || "",
       certificateProvidedBy: initial?.certificateProvidedBy || "",
       date: initial?.date || "",
       description: initial?.description || "",
@@ -279,7 +263,6 @@ export default function CertificationDetailsForm({
       id: newId,
       certificateType: "",
       certificateTitle: "",
-      domain: "",
       certificateProvidedBy: "",
       date: "",
       description: "",
@@ -423,13 +406,9 @@ export default function CertificationDetailsForm({
     const certId = cert.id;
     const changes = certChanges[certId];
 
-    const domainError = validateDomain(cert.domain || "");
     const providerError = validateProvider(cert.certificateProvidedBy || "");
     const dateError = validateDateValue(cert.date || "");
 
-    if (domainError) {
-      setErrors((prev) => ({ ...prev, [`cert-${index}-domain`]: domainError }));
-    }
     if (providerError) {
       setErrors((prev) => ({ ...prev, [`cert-${index}-certificateProvidedBy`]: providerError }));
     }
@@ -440,7 +419,6 @@ export default function CertificationDetailsForm({
     const updatedLocalErrors = [
       errors[`cert-${index}-certificateTitle`],
       errors[`cert-${index}-file`],
-      domainError,
       providerError,
       dateError,
     ].filter(Boolean);
@@ -464,7 +442,6 @@ export default function CertificationDetailsForm({
     let formDataToSend = new FormData();
     formDataToSend.append("certificate_type", cert.certificateType || "");
     formDataToSend.append("certificate_title", cert.certificateTitle || "");
-    formDataToSend.append("domain", cert.domain || "");
     formDataToSend.append("certificate_provided_by", cert.certificateProvidedBy || "");
     formDataToSend.append("date", cert.date || "");
     formDataToSend.append("description", cert.description || "");
@@ -681,32 +658,8 @@ export default function CertificationDetailsForm({
                 </div>
               </div>
 
-              {/* Domain, Certificate Provided By, Date */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                {/* Domain */}
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                    Domain
-                  </label>
-                  <input
-                    type="text"
-                    value={certificate.domain}
-                    onChange={(e) =>
-                      handleCertificateChange(index, "domain", e.target.value)
-                    }
-                    placeholder="Enter Domain"
-                    className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${
-                      errors[`cert-${index}-domain`]
-                        ? "border-red-500 focus:ring-red-400"
-                        : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
-                    }`}
-                  />
-                  {errors[`cert-${index}-domain`] && (
-                    <p className="mt-1 text-xs text-red-500">
-                      {errors[`cert-${index}-domain`]}
-                    </p>
-                  )}
-                </div>
+              {/* Certificate Provided By, Date */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
 
                 {/* Certificate Provided By */}
                 <div>

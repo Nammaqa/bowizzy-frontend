@@ -485,12 +485,57 @@ export default function EducationDetailsForm({
     );
   };
 
-  // Helper function to validate mandatory Result Format and Result if card is filled
-  const validateResultMandatory = (
+  // Helper function to validate mandatory fields if degree is selected
+  const validateMandatoryFields = (
     edu: HigherEducation,
     prefix: string
   ): void => {
-    if (isEducationCardFilled(edu)) {
+    if (edu.degree) {
+      const requiredFields = [
+        { key: "fieldOfStudy", message: "Field of Study is required" },
+        { key: "institutionName", message: "Institution Name is required" },
+        { key: "universityBoard", message: "University/Board is required" },
+        { key: "startYear", message: "Start Year is required" },
+        { key: "resultFormat", message: "Result Format is required" },
+      ];
+
+      requiredFields.forEach(({ key, message }) => {
+        if (!edu[key as keyof HigherEducation]) {
+          setErrors((prev) => ({ ...prev, [`${prefix}-${key}`]: message }));
+        } else {
+          setErrors((prev) => {
+            const updated = { ...prev };
+            delete updated[`${prefix}-${key}`];
+            return updated;
+          });
+        }
+      });
+
+      if (!edu.currentlyPursuing && !edu.endYear) {
+        setErrors((prev) => ({ ...prev, [`${prefix}-endYear`]: "End Year is required" }));
+      } else {
+        setErrors((prev) => {
+          const updated = { ...prev };
+          if (updated[`${prefix}-endYear`] === "End Year is required") {
+            delete updated[`${prefix}-endYear`];
+          }
+          return updated;
+        });
+      }
+
+      if (edu.resultFormat && !edu.result) {
+        setErrors((prev) => ({
+          ...prev,
+          [`${prefix}-result`]: "Result is required when result format is selected",
+        }));
+      } else {
+        setErrors((prev) => {
+          const updated = { ...prev };
+          delete updated[`${prefix}-result`];
+          return updated;
+        });
+      }
+    } else if (isEducationCardFilled(edu)) {
       if (!edu.resultFormat) {
         setErrors((prev) => ({
           ...prev,
@@ -518,10 +563,10 @@ export default function EducationDetailsForm({
       }
     } else {
       // If card is empty, clear the mandatory errors
+      const keysToClear = ["fieldOfStudy", "institutionName", "universityBoard", "startYear", "endYear", "resultFormat", "result"];
       setErrors((prev) => {
         const updated = { ...prev };
-        delete updated[`${prefix}-resultFormat`];
-        delete updated[`${prefix}-result`];
+        keysToClear.forEach(key => delete updated[`${prefix}-${key}`]);
         return updated;
       });
     }
@@ -676,7 +721,7 @@ export default function EducationDetailsForm({
     }
 
     // After all validations, check if result format and result are mandatory
-    validateResultMandatory(updatedEdu, prefix);
+    validateMandatoryFields(updatedEdu, prefix);
   };
 
   // Handler for saving SSLC details (PUT/POST call)
@@ -883,6 +928,7 @@ export default function EducationDetailsForm({
 
     // Check for validation errors in current card
     if (
+      errors[`${prefix}-fieldOfStudy`] ||
       errors[`${prefix}-result`] ||
       errors[`${prefix}-resultFormat`] ||
       errors[`${prefix}-institutionName`] ||
@@ -1436,8 +1482,17 @@ export default function EducationDetailsForm({
                     handleChange("fieldOfStudy", e.target.value)
                   }
                   placeholder="Enter Field of Study"
-                  className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm"
+                  className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${
+                    errors[`${prefix}-fieldOfStudy`]
+                      ? "border-red-500 focus:ring-red-400"
+                      : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                  }`}
                 />
+                {errors[`${prefix}-fieldOfStudy`] && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors[`${prefix}-fieldOfStudy`]}
+                  </p>
+                )}
               </div>
 
               {/* Institution Name */}

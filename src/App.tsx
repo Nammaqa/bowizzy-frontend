@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   createBrowserRouter,
   RouterProvider,
@@ -36,6 +36,7 @@ import {
   User,
   Video,
   BrainCircuit,
+  ChevronDown,
   Globe,
   Settings as SettingsIcon,
 } from "lucide-react";
@@ -73,6 +74,13 @@ import PortfolioList from "./pages/(Portfolio)/PortfolioList";
 import PortfolioLanding from "./pages/PortfolioLanding";
 import PortfolioEditor from "./pages/(Portfolio)/PortfolioEditor";
 import PublicPortfolioPreview from "./pages/(Portfolio)/PublicPortfolioPreview";
+import MockInterviewLanding from "./pages/(Interviews)/MockInterview/MockInterviewLanding";
+import TakeMockInterviewPage from "./pages/(Interviews)/MockInterview/TakeMockInterviewPage";
+import MockInterviewBookingsPage from "./pages/(Interviews)/MockInterview/MockInterviewBookingsPage";
+import ApplyInterviewerPage from "./pages/(Interviews)/MockInterview/ApplyInterviewerPage";
+import InterviewerDashboardPage from "./pages/(Interviews)/MockInterview/InterviewerDashboardPage";
+import CandidateReviewsPage from "./pages/(Interviews)/MockInterview/CandidateReviewsPage";
+import InterviewerReviewsPage from "./pages/(Interviews)/MockInterview/InterviewerReviewsPage";
 
 
 const isAuthenticated = () => {
@@ -99,12 +107,6 @@ const careerMap = [
     label: "My resumes",
   },
   {
-    href: "/interview-prep",
-    icon: <Video color="#3B3B3B" size={16} />,
-    label: "Interview Prep",
-    comingSoon: true,
-  },
-  {
     href: "/ai-resume-builder",
     icon: <BrainCircuit color="#3B3B3B" size={16} />,
     label: "AI Resume Builder",
@@ -119,6 +121,13 @@ const careerMap = [
   //   icon: <Linkedin color="#3B3B3B" size={16} />,
   //   label: "LinkedIn optimization",
   // },
+];
+
+const interviews = [
+  {
+    href: "/interviews/mock-interview",
+    label: "Mock interview",
+  },
 ];
 
 // All Bowizzy items hidden for now as requested.
@@ -142,6 +151,11 @@ const bowizzy = [
 
 function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isInterviewsOpen, setIsInterviewsOpen] = useState(
+    location.pathname.startsWith("/interviews") ||
+    location.pathname.startsWith("/interview-prep")
+  );
 
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem("user"));
@@ -160,7 +174,6 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
     }
   }, [navigate]);
 
-  const location = useLocation();
   const isPortfolioEditor = location.pathname.includes("/portfolio/editor/");
 
   return (
@@ -217,6 +230,40 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
                     </a>
                   </SidebarMenuButton>
                 ))}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    className="p-5 flex items-center justify-between"
+                    onClick={() => setIsInterviewsOpen((isOpen) => !isOpen)}
+                  >
+                    <span className="flex items-center">
+                      <Video color="#3B3B3B" size={16} />
+                      <span className="ml-4" style={{ fontSize: "14px" }}>
+                        Interviews
+                      </span>
+                    </span>
+                    <ChevronDown
+                      color="#3B3B3B"
+                      size={16}
+                      className={`transition-transform ${isInterviewsOpen ? "rotate-180" : ""}`}
+                    />
+                  </SidebarMenuButton>
+
+                  {isInterviewsOpen && (
+                    <div className="ml-9 mt-1 space-y-1 border-l border-[#E5E5E5] pl-3">
+                      {interviews.map((item) => (
+                        <SidebarMenuButton
+                          asChild
+                          key={item.label}
+                          className="h-9 px-3 text-[#3B3B3B]"
+                        >
+                          <a href={item.href}>
+                            <span style={{ fontSize: "13px" }}>{item.label}</span>
+                          </a>
+                        </SidebarMenuButton>
+                      ))}
+                    </div>
+                  )}
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -301,6 +348,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
+  if (isAuthenticated()) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <>{children}</>;
+}
+
 function App() {
   const router = createBrowserRouter([
     {
@@ -314,7 +368,11 @@ function App() {
     },
     {
       path: "login",
-      Component: () => <Login />,
+      Component: () => (
+        <PublicOnlyRoute>
+          <Login />
+        </PublicOnlyRoute>
+      ),
     },
     {
       path: "signup",
@@ -376,6 +434,76 @@ function App() {
         <ProtectedRoute>
           <LayoutWrapper>
             <InterviewPrep />
+          </LayoutWrapper>
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "interviews/mock-interview",
+      Component: () => (
+        <ProtectedRoute>
+          <LayoutWrapper>
+            <MockInterviewLanding />
+          </LayoutWrapper>
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "interviews/mock-interview/take",
+      Component: () => (
+        <ProtectedRoute>
+          <LayoutWrapper>
+            <TakeMockInterviewPage />
+          </LayoutWrapper>
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "interviews/mock-interview/bookings",
+      Component: () => (
+        <ProtectedRoute>
+          <LayoutWrapper>
+            <MockInterviewBookingsPage />
+          </LayoutWrapper>
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "interviews/mock-interview/apply-interviewer",
+      Component: () => (
+        <ProtectedRoute>
+          <LayoutWrapper>
+            <ApplyInterviewerPage />
+          </LayoutWrapper>
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "interviews/mock-interview/dashboard",
+      Component: () => (
+        <ProtectedRoute>
+          <LayoutWrapper>
+            <InterviewerDashboardPage />
+          </LayoutWrapper>
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "interviews/mock-interview/candidate-reviews/:id",
+      Component: () => (
+        <ProtectedRoute>
+          <LayoutWrapper>
+            <CandidateReviewsPage />
+          </LayoutWrapper>
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "interviews/mock-interview/interviewer-reviews/:id",
+      Component: () => (
+        <ProtectedRoute>
+          <LayoutWrapper>
+            <InterviewerReviewsPage />
           </LayoutWrapper>
         </ProtectedRoute>
       ),

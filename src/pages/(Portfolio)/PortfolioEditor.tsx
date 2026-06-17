@@ -608,7 +608,7 @@ export default function PortfolioEditor() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans">
-      <DashNav heading="Edit Portfolio" />
+      <DashNav heading="Edit Portfolio" zindex={100} />
 
       {/* Editor Main Section */}
       <div 
@@ -618,7 +618,7 @@ export default function PortfolioEditor() {
         {isDragging && <div className="fixed inset-0 z-50 cursor-col-resize select-none" />}
 
         {/* Left Side: Form Controls */}
-        <div className="w-full lg:w-[var(--left-width)] p-6 overflow-y-auto border-r border-gray-200">
+        <div className="w-full lg:w-[var(--left-width)] px-6 pb-6 pt-0 overflow-y-auto border-r border-gray-200">
           <PortfolioEditorComponent
             portfolioName={portfolioName}
             setPortfolioName={setPortfolioName}

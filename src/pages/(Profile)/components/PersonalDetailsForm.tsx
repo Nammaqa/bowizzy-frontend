@@ -81,7 +81,6 @@ export default function PersonalDetailsForm({
     city: initialData.city || "",
     pincode: initialData.pincode || "",
     nationality: initialData.nationality || "",
-    passportNumber: initialData.passportNumber || "",
     uploadedPhotoURL: initialData.uploadedPhotoURL || "",
     uploadedPublicId: initialData.uploadedPublicId || "",
     profilePhoto: initialData.profilePhoto || null,
@@ -254,7 +253,6 @@ export default function PersonalDetailsForm({
     city: initialData.city || "",
     pincode: initialData.pincode || "",
     nationality: initialData.nationality || "",
-    passportNumber: initialData.passportNumber || "",
   });
 
   const [changedLanguages, setChangedLanguages] = useState(false);
@@ -285,8 +283,6 @@ export default function PersonalDetailsForm({
       changedFields.push("pincode");
     if (formData.nationality !== initialLocation.current.nationality)
       changedFields.push("nationality");
-    if (formData.passportNumber !== initialLocation.current.passportNumber)
-      changedFields.push("passportNumber");
 
     setChangedLocationFields(changedFields);
     setLocationChanged(changedFields.length > 0);
@@ -297,7 +293,6 @@ export default function PersonalDetailsForm({
     formData.city,
     formData.pincode,
     formData.nationality,
-    formData.passportNumber,
   ]);
 
   useEffect(() => {
@@ -384,11 +379,7 @@ export default function PersonalDetailsForm({
           error = "Address is too short";
         }
         break;
-
-      case "passportNumber":
-        if (value && !/^[A-Z][0-9]{7}$/.test(value)) {
-          error = "Invalid Passport Number: Must contain 1 uppercase letter followed by 7 digits";
-        }
+      default:
         break;
     }
 
@@ -404,48 +395,35 @@ export default function PersonalDetailsForm({
     let newValue = value;
     let error = "";
 
-    // 1. First Name, Middle Name, Last Name: Filter to allow only letters and spaces
     if (name === "firstName" || name === "middleName" || name === "lastName") {
-      // Remove any non-letter and non-space characters
       newValue = value.replace(/[^a-zA-Z\s]/g, "");
       if (newValue !== value) {
         error = "Only letters and spaces allowed";
       }
     }
-    // 2. Pincode: Allow only digits, max 6
     else if (name === "pincode") {
       if (!/^\d*$/.test(value)) {
-        // Block non-digit input
         error = "Only digits allowed";
         setErrors((prev) => ({ ...prev, [name]: error }));
         return;
       }
       if (value.length > 6) return;
     } 
-    // 3. Mobile Number: Allow only digits, max 10
     else if (name === "mobileNumber") {
       if (!/^\d*$/.test(value)) {
         return;
       }
       if (value.length > 10) return;
     } 
-    // 4. Passport Number: Convert to uppercase, allow only A-Z and 0-9, max 8
-    else if (name === "passportNumber") {
-      const upperValue = value.toUpperCase();
-      if (!/^[A-Z0-9]*$/.test(upperValue)) {
-        // Block special characters / non-alphanumeric input
-        error = "Only uppercase letters and numbers allowed";
-        setErrors((prev) => ({ ...prev, [name]: error }));
+    else if (name === "nationality") {
+      if (!/^[a-zA-Z\s]*$/.test(value)) {
         return;
       }
-      if (upperValue.length > 8) return;
-      newValue = upperValue;
+      if (value.length > 30) return;
     }
 
-    // Update formData only if input was valid or non-restricted
     setFormData((prev) => ({ ...prev, [name]: newValue }));
 
-    // Run full validation and update error state (only if error wasn't already set during filtering)
     if (!error) {
       error = validateField(name, newValue);
     }
@@ -455,6 +433,26 @@ export default function PersonalDetailsForm({
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp"];
+    const maxSizeBytes = 5 * 1024 * 1024; // 5MB
+
+    const isTypeAllowed = allowedTypes.includes(file.type);
+    const fileName = file.name.toLowerCase();
+    const isExtensionAllowed = allowedExtensions.some(ext => fileName.endsWith(ext));
+
+    if (!isTypeAllowed && !isExtensionAllowed) {
+      alert("Only JPG, JPEG, PNG, and WEBP images are allowed.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    if (file.size > maxSizeBytes) {
+      alert("Image size must be 5 MB or less.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
 
     const prev = formData.profilePhotoPreview;
     if (prev && typeof prev === "string" && prev.startsWith("blob:")) {
@@ -564,12 +562,10 @@ export default function PersonalDetailsForm({
       city: initialLocation.current.city,
       pincode: initialLocation.current.pincode,
       nationality: initialLocation.current.nationality,
-      passportNumber: initialLocation.current.passportNumber,
     }));
     setErrors((prev) => {
       const newErrors = { ...prev };
       delete newErrors.pincode;
-      delete newErrors.passportNumber;
       delete newErrors.address;
       return newErrors;
     });
@@ -641,9 +637,6 @@ export default function PersonalDetailsForm({
           case "nationality":
             payload.nationality = formData.nationality;
             break;
-          case "passportNumber":
-            payload.passport_number = formData.passportNumber;
-            break;
         }
       });
 
@@ -656,7 +649,6 @@ export default function PersonalDetailsForm({
         city: formData.city,
         pincode: formData.pincode,
         nationality: formData.nationality,
-        passportNumber: formData.passportNumber,
       };
 
       setLocationChanged(false);
@@ -786,7 +778,7 @@ export default function PersonalDetailsForm({
     }
 
     // 🔹 Validation errors check
-    if (Object.keys(errors).some((key) => key !== "passportNumber" && errors[key])) {
+    if (Object.keys(errors).some((key) => errors[key])) {
       setSubmitError("Please fix validation errors before proceeding.");
       return;
     }
@@ -1062,7 +1054,7 @@ export default function PersonalDetailsForm({
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept="image/*"
+                      accept="image/png,image/jpeg,image/webp"
                       onChange={handlePhotoUpload}
                       className="hidden"
                     />
@@ -1481,42 +1473,14 @@ export default function PersonalDetailsForm({
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
                     Nationality <span className="text-red-500">*</span>
                   </label>
-                  <div className="relative">
-                    <select
-                      name="nationality"
-                      value={formData.nationality}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
-                    >
-                      <option value="">Select Nationality</option>
-                      <option value="Indian">Indian</option>
-                      <option value="American">American</option>
-                      <option value="British">British</option>
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                    Passport Number
-                  </label>
                   <input
                     type="text"
-                    name="passportNumber"
-                    value={formData.passportNumber}
+                    name="nationality"
+                    value={formData.nationality}
                     onChange={handleInputChange}
-                    placeholder="Enter Passport Number (letters + numbers required)"
-                    className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${errors.passportNumber
-                      ? "border-red-500 focus:ring-red-400"
-                      : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
-                      }`}
+                    placeholder="Enter Nationality"
+                    className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm bg-white"
                   />
-                  {errors.passportNumber && (
-                    <p className="mt-1 text-xs text-red-500">
-                      {errors.passportNumber}
-                    </p>
-                  )}
                 </div>
               </div>
             </div>

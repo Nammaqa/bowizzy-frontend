@@ -608,6 +608,11 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
 
     if (errors["sslc.result"] || errors["sslc.instituteName"]) return;
 
+    if (currentData.result && !currentData.resultFormat) {
+      setErrors((prev) => ({ ...prev, "sslc.resultFormat": "Select result format" }));
+      return;
+    }
+
     try {
       if (education_id && !isEnabled && !hasSslcChanged()) {
         await deleteEducation(userId, token, education_id);
@@ -718,6 +723,11 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       errors["preUniversity.instituteName"]
     )
       return;
+
+    if (currentData.result && !currentData.resultFormat) {
+      setErrors((prev) => ({ ...prev, "preUniversity.resultFormat": "Select result format" }));
+      return;
+    }
 
     try {
       if (education_id && !isEnabled && !hasPuChanged()) {
@@ -845,6 +855,11 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       errors[`higherEducation.${edu.id}.endYear`]
     )
       return;
+
+    if (edu.result && !edu.resultFormat) {
+      setErrors((prev) => ({ ...prev, [`higherEducation.${edu.id}.resultFormat`]: "Select result format" }));
+      return;
+    }
 
     try {
       if (

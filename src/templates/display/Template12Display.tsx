@@ -147,10 +147,10 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
               {education.preUniversityEnabled && education.preUniversity.instituteName && (
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ fontWeight: 700, color: '#111827' }}>PUC</div>
+                    <div style={{ fontWeight: 700, color: '#111827' }}>PUC{education.preUniversity.subjectStream ? ` in ${education.preUniversity.subjectStream}` : ''}</div>
                     <div style={{ color: '#111827', fontSize: 11, fontWeight: 700 }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
                   </div>
-                  <div style={{ color: '#111827', fontSize: 11, marginTop: 4 }}>{education.preUniversity.instituteName}</div>
+                  <div style={{ color: '#111827', fontSize: 11, marginTop: 4 }}>{education.preUniversity.instituteName}{education.preUniversity.boardType ? `, ${education.preUniversity.boardType}` : ''}</div>
                   {education.preUniversity.resultFormat && education.preUniversity.result && (
                     <div style={{ fontSize: 11, color: '#2b2a2a', marginTop: 4 }}>{education.preUniversity.resultFormat}: {education.preUniversity.result}</div>
                   )}
@@ -163,7 +163,7 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
                     <div style={{ fontWeight: 700, color: '#111827' }}>SSLC</div>
                     <div style={{ color: '#111827', fontSize: 11, fontWeight: 700 }}>{formatResumeEducationDateRange(education.sslc)}</div>
                   </div>
-                  <div style={{ color: '#111827', fontSize: 11, marginTop: 4 }}>{education.sslc.instituteName}</div>
+                  <div style={{ color: '#111827', fontSize: 11, marginTop: 4 }}>{education.sslc.instituteName}{education.sslc.boardType ? `, ${education.sslc.boardType}` : ''}</div>
                   {education.sslc.resultFormat && education.sslc.result && (
                     <div style={{ fontSize: 11, color: '#2b2a2a', marginTop: 4 }}>{education.sslc.resultFormat}: {education.sslc.result}</div>
                   )}

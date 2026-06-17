@@ -162,16 +162,17 @@ const Template16Display: React.FC<Template16DisplayProps> = ({
                       <div style={{ fontWeight: 700 }}>{p.projectTitle}</div>
                       <div style={{ color: '#000' }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</div>
                     </div>
-                    {p.rolesResponsibilities && (
-                      <div style={{ marginTop: 2, color: '#444', paddingLeft: 10 }}
-                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(p.rolesResponsibilities || '') }}
-                      />
-                    )}
                     {p.description && (
                       <div style={{ marginTop: 4, color: '#444', paddingLeft: 10 }}
                         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(p.description || '') }}
                       />
                     )}
+                    {p.rolesResponsibilities && (
+                      <div style={{ marginTop: 2, color: '#444', paddingLeft: 10 }}
+                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(p.rolesResponsibilities || '') }}
+                      />
+                    )}
+
                   </div>
                 ))}
               </div>
@@ -202,7 +203,7 @@ const Template16Display: React.FC<Template16DisplayProps> = ({
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 700 }}>{education.preUniversity.instituteName || 'Pre University'}</div>
-                  <div style={{ color: '#000' }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
+                    <div style={{ color: '#000' }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#000', marginTop: 4 }}>Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}</div>
                   {education.preUniversity.resultFormat && education.preUniversity.result && (<div style={{ marginTop: 6, color: '#000' }}>{education.preUniversity.resultFormat}: {education.preUniversity.result}</div>)}
@@ -213,7 +214,7 @@ const Template16Display: React.FC<Template16DisplayProps> = ({
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 700 }}>{education.sslc.instituteName || 'SSLC'}</div>
-                  <div style={{ color: '#000' }}>{formatResumeEducationDateRange(education.sslc)}</div>
+                    <div style={{ color: '#000' }}>{formatResumeEducationDateRange(education.sslc)}</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#000', marginTop: 4 }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</div>
                   {education.sslc.resultFormat && education.sslc.result && (<div style={{ marginTop: 6, color: '#000' }}>{education.sslc.resultFormat}: {education.sslc.result}</div>)}
