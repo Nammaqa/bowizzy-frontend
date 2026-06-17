@@ -87,7 +87,7 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
             <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1, color: primaryColor }}>SKILLS</div>
             <div style={{ height: 1, background: '#999', marginTop: 6, marginBottom: 8 }} />
             <div style={{ color: '#000' }}>
-              {(skillsLinks.skills || []).filter(s => s.enabled && s.skillName).slice(0, 6).map((s, i) => (
+              {(skillsLinks.skills || []).filter(s => s.enabled && s.skillName).map((s, i) => (
                 <div key={i} style={{ marginBottom: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, fontSize: 11 }}>
                   <span>• {s.skillName}</span>
                   <span style={{ fontSize: 11 }}>{getSkillStars(s.skillLevel)}</span>
