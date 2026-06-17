@@ -487,8 +487,9 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
       return;
     }
 
-    if (field === "pincode" && typeof newValue === "string" && newValue.length > 6) {
-      return;
+    if (field === "pincode" && typeof newValue === "string") {
+      if (!/^\d*$/.test(newValue)) return;
+      if (newValue.length > 6) return;
     }
 
     if (field === "passportNumber" && typeof newValue === "string") {
@@ -505,6 +506,11 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
       } else {
         setErrors((prev) => ({ ...prev, [field]: "" }));
       }
+    }
+
+    if (field === "nationality" && typeof newValue === "string") {
+      if (!/^[a-zA-Z\s]*$/.test(newValue)) return;
+      if (newValue.length > 30) return;
     }
 
     console.log("Updating field:", field, "with value:", newValue);
@@ -548,6 +554,26 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp"];
+    const maxSizeBytes = 5 * 1024 * 1024; // 5MB
+
+    const isTypeAllowed = allowedTypes.includes(file.type);
+    const fileName = file.name.toLowerCase();
+    const isExtensionAllowed = allowedExtensions.some(ext => fileName.endsWith(ext));
+
+    if (!isTypeAllowed && !isExtensionAllowed) {
+      alert("Only JPG, JPEG, PNG, and WEBP images are allowed.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    if (file.size > maxSizeBytes) {
+      alert("Image size must be 5 MB or less.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
 
     try {
       const cloudinaryRes = await uploadToCloudinary(file);
@@ -871,7 +897,7 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/png,image/jpeg,image/webp"
               onChange={handlePhotoUpload}
               className="hidden"
             />

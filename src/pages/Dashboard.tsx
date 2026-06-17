@@ -315,7 +315,7 @@ export default function Dashboard() {
       <DashNav heading={"Welcome to BoWizzy"} />
 
       {showCancelModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-[200]">
           <div className="bg-white w-[420px] rounded-2xl shadow-xl p-10 relative text-center">
 
             <button

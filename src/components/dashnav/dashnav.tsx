@@ -16,7 +16,7 @@ interface ProfileData {
 }
 
 
-export default function DashNav({ heading }: { heading: string }) {
+export default function DashNav({ heading, zindex }: { heading: string; zindex?: number }) {
     const { toggleSidebar } = useSidebar();
     const [showProfileDropdown, setShowProfileDropdown] = useState(false);
     const [profileData, setProfileData] = useState<ProfileData | null>(null);
@@ -97,7 +97,7 @@ export default function DashNav({ heading }: { heading: string }) {
 
     return (
         <>
-            <nav className="relative z-[100] flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200">
+            <nav className={`relative z-[${zindex || 50}] flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200`}>
                 <div className="text-lg font-medium text-gray-700">{heading}</div>
 
                 <div className="flex items-center gap-2">

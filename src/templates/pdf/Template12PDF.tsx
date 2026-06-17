@@ -231,10 +231,10 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
               {education.preUniversityEnabled && education.preUniversity.instituteName && (
                 <View style={{ marginBottom: 8 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>PUC</Text>
+                    <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>PUC{education.preUniversity.subjectStream ? ` in ${education.preUniversity.subjectStream}` : ''}</Text>
                     <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
                   </View>
-                  <Text style={{ fontSize: 10, color: '#2b2a2a', marginTop: 4 }}>{education.preUniversity.instituteName}</Text>
+                  <Text style={{ fontSize: 10, color: '#2b2a2a', marginTop: 4 }}>{education.preUniversity.instituteName}{education.preUniversity.boardType ? `, ${education.preUniversity.boardType}` : ''}</Text>
                   {education.preUniversity.resultFormat && education.preUniversity.result && (
                     <Text style={{ fontSize: 10, color: '#2b2a2a', marginTop: 4 }}>{education.preUniversity.resultFormat}: {education.preUniversity.result}</Text>
                   )}
@@ -247,7 +247,7 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
                     <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>SSLC</Text>
                     <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.sslc)}</Text>
                   </View>
-                  <Text style={{ fontSize: 10, color: '#2b2a2a', marginTop: 4 }}>{education.sslc.instituteName}</Text>
+                  <Text style={{ fontSize: 10, color: '#2b2a2a', marginTop: 4 }}>{education.sslc.instituteName}{education.sslc.boardType ? `, ${education.sslc.boardType}` : ''}</Text>
                   {education.sslc.resultFormat && education.sslc.result && (
                     <Text style={{ fontSize: 10, color: '#2b2a2a', marginTop: 4 }}>{education.sslc.resultFormat}: {education.sslc.result}</Text>
                   )}

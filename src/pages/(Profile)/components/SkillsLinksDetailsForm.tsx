@@ -431,24 +431,17 @@ export default function SkillsLinksDetailsForm({
         field: "portfolioUrl",
         dbId: "link_id_portfolio",
         apiType: "portfolio",
-        descField: "portfolioDescription",
-      },
-      {
-        field: "publicationUrl",
-        dbId: "link_id_publication",
-        apiType: "publication",
-        descField: "publicationDescription",
       },
     ];
 
-    for (const { field, dbId, apiType, descField } of fieldsToSync) {
+    for (const { field, dbId, apiType } of fieldsToSync) {
       let url = link[field as keyof Link] as string;
       if (url) {
         url = cleanUrl(url);
         link[field as keyof Link] = url;
       }
       const dbIdValue = link[dbId as keyof Link];
-      const description = descField ? link[descField as keyof Link] : null;
+      const description = null;
       const linkIndex = 0;
 
       if (errors[`link-${linkIndex}-${field}`]) {
@@ -490,7 +483,6 @@ export default function SkillsLinksDetailsForm({
           deleteLink(userId, token, dbIdValue as string)
             .then(() => {
               link[dbId as keyof Link] = undefined;
-              if (descField) link[descField as keyof Link] = "";
               link[field as keyof Link] = "";
               successCount++;
             })
@@ -910,9 +902,6 @@ export default function SkillsLinksDetailsForm({
                   {renderLinkField(link, linkIndex, "LinkedIn Profile", "linkedinProfile", "link_id_linkedin")}
                   {renderLinkField(link, linkIndex, "GitHub Profile", "githubProfile", "link_id_github")}
                   {renderLinkField(link, linkIndex, "Portfolio URL", "portfolioUrl", "link_id_portfolio")}
-                  {renderLinkField(link, linkIndex, "Portfolio Description", "portfolioDescription", "link_id_portfolio", true)}
-                  {renderLinkField(link, linkIndex, "Publication URL", "publicationUrl", "link_id_publication")}
-                  {renderLinkField(link, linkIndex, "Publication Description", "publicationDescription", "link_id_publication", true)}
                 </div>
 
                 {/* Links Save Row — inside the expanded content div */}

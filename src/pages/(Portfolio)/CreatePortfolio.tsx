@@ -21,7 +21,7 @@ import api from "@/api";
 const MIN_CREDITS = 1;
 const MAX_CREDITS = 10;
 const CREDIT_TO_INR = 0.5; // 1 credit = ₹0.5
-const BASE_PRICE_INR = 5; // Base portfolio creation price in INR
+const BASE_PRICE_INR = 10; // Base portfolio creation price in INR
 
 const parseAvailableCredits = (payload: any): number => {
   const rawCredits =
@@ -741,7 +741,7 @@ export default function CreatePortfolio() {
 
             <div className="flex items-center justify-between text-sm mb-2">
               <span className="text-gray-600">Portfolio creation</span>
-              <span className="font-semibold text-gray-800">₹{BASE_PRICE_INR}</span>
+              <span className="font-semibold text-gray-800">₹{BASE_PRICE_INR}.00</span>
             </div>
 
             {useCredits && selectedCredits > 0 && (

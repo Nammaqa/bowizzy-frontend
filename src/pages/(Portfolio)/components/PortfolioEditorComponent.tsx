@@ -227,14 +227,19 @@ export default function PortfolioEditorComponent({
   const experienceTextMax = 80;
   const techStackMax = 30;
   const maxImageSizeBytes = 5 * 1024 * 1024;
-  const allowedImageTypes = ["image/png", "image/jpeg"];
+  const allowedImageTypes = ["image/png", "image/jpeg", "image/webp"];
   const mmYYYYRegex = /^(0[1-9]|1[0-2])-\d{4}$/;
 
   const sanitizePlainText = (val: string) => val.replace(/[^A-Za-z0-9 ]/g, "");
 
   const isValidImageFile = (file: File) => {
-    if (!allowedImageTypes.includes(file.type)) {
-      alert("Only PNG and JPG images are allowed.");
+    const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp"];
+    const isTypeAllowed = allowedImageTypes.includes(file.type);
+    const fileName = file.name.toLowerCase();
+    const isExtensionAllowed = allowedExtensions.some(ext => fileName.endsWith(ext));
+
+    if (!isTypeAllowed && !isExtensionAllowed) {
+      alert("Only PNG, JPG, JPEG, and WEBP images are allowed.");
       return false;
     }
 
@@ -588,7 +593,7 @@ export default function PortfolioEditorComponent({
           </label>
           <input
             type="file"
-            accept="image/png,image/jpeg"
+            accept="image/png,image/jpeg,image/webp"
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (file) {
@@ -958,7 +963,7 @@ export default function PortfolioEditorComponent({
                         </label>
                         <input
                           type="file"
-                          accept="image/png,image/jpeg"
+                          accept="image/png,image/jpeg,image/webp"
                           onChange={async (e) => {
                             const file = e.target.files?.[0];
                             if (!file) return;
