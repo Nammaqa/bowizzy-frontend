@@ -493,6 +493,15 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       const monthNum = parseInt(m, 10);
       if (isNaN(monthNum) || monthNum < 1 || monthNum > 12)
         return "Invalid month";
+
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth() + 1;
+      
+      if (yearNum > currentYear || (yearNum === currentYear && monthNum > currentMonth)) {
+        return "Cannot be a future date";
+      }
+
       return "";
     };
 
@@ -501,6 +510,11 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       if (/^\d{4}$/.test(val)) {
         const yearNum = parseInt(val, 10);
         if (yearNum < 1960) return "Year must be 1960 or later";
+        
+        if (yearNum > new Date().getFullYear()) {
+          return "Cannot be a future date";
+        }
+
         return "";
       }
       return validateMonthFormat(val);
