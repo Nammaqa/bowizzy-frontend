@@ -172,7 +172,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
             <View style={{ marginTop: 18 }}>
               <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Skills</Text>
               <View style={{ ...styles.divider, backgroundColor: primaryColor }} />
-              {(skillsLinks.skills || []).filter((s: any) => s.enabled && s.skillName).slice(0, 6).map((s: any, i: number) => (<View key={i} style={{ marginTop: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}><Text style={{ fontSize: 9, color: '#000', flex: 1 }}>• {s.skillName}</Text><Text style={{ fontSize: 9, color: '#000' }}>{getSkillStars(s.skillLevel)}</Text></View>))}
+              {(skillsLinks.skills || []).filter((s: any) => s.enabled && s.skillName).map((s: any, i: number) => (<View key={i} style={{ marginTop: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}><Text style={{ fontSize: 9, color: '#000', flex: 1 }}>• {s.skillName}</Text><Text style={{ fontSize: 9, color: '#000' }}>{getSkillStars(s.skillLevel)}</Text></View>))}
             </View>
           )}
 

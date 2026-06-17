@@ -1076,6 +1076,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     const updatedSslc = {
       ...data.sslc,
       [field]: value,
+      ...(field === "yearOfPassing" ? { endYear: value } : {}),
       ...(field === "resultFormat" ? { result: "" } : {}),
     };
     onChange({
@@ -1100,6 +1101,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     const updatedPu = {
       ...data.preUniversity,
       [field]: value,
+      ...(field === "yearOfPassing" ? { endYear: value } : {}),
       ...(field === "resultFormat" ? { result: "" } : {}),
     };
     onChange({
@@ -1354,6 +1356,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
             <FormInput
               label="Institute Name"
               placeholder="Enter Institute Name"
+              required
               value={education.instituteName}
               onChange={(v) => updateHigherEducation(id, "instituteName", v)}
               error={errors[`higherEducation.${id}.instituteName`]}
@@ -1496,6 +1499,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
         <FormInput
           label="Institution Name"
           placeholder="Enter Institute Name"
+          required
           value={data.sslc.instituteName}
           onChange={(v) => updateSSLC("instituteName", v)}
           error={errors["sslc.instituteName"]}
@@ -1592,6 +1596,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
         <FormInput
           label="Institution Name"
           placeholder="Enter Institute Name"
+          required
           value={data.preUniversity.instituteName}
           onChange={(v) => updatePreUniversity("instituteName", v)}
           error={errors["preUniversity.instituteName"]}
