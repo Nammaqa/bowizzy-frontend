@@ -1,2 +1,2 @@
 # BoWizzy 
-# PROJECT SDE Wizzybox
+# PROJECT BOWIZZY
