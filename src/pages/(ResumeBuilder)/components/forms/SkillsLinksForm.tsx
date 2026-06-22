@@ -196,15 +196,26 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
       return;
     }
 
-    // Validate that all skills have a name
-    const skillsWithoutName = data.skills.filter(
-      (skill) => !skill.skillName || !skill.skillName.trim()
+    // Validate that all skills have a name and a level
+    const incompleteSkills = data.skills.filter(
+      (skill) => !skill.skillName || !skill.skillName.trim() || !skill.skillLevel
     );
-    if (skillsWithoutName.length > 0) {
+    if (incompleteSkills.length > 0) {
       setSkillFeedback({
-        ["all"]: `Skill name is mandatory. Please fill in ${skillsWithoutName.length} skill(s).`,
+        ["all"]: `Both skill name and level are mandatory. Please complete ${incompleteSkills.length} skill(s).`,
       });
       setTimeout(() => setSkillFeedback({}), 3000);
+      
+      const newErrors = { ...errors };
+      data.skills.forEach((skill) => {
+        if (!skill.skillName || !skill.skillName.trim()) {
+           newErrors[`skill-${skill.id}-skillName`] = "Required";
+        }
+        if (!skill.skillLevel) {
+           newErrors[`skill-${skill.id}-skillLevel`] = "Required";
+        }
+      });
+      setErrors(newErrors);
       return;
     }
 
@@ -533,6 +544,12 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
       if (strValue.length > 20) return;
       const error = validateSkillName(strValue);
       setErrors((prev) => ({ ...prev, [`skill-${id}-skillName`]: error }));
+    } else if (field === "skillLevel") {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[`skill-${id}-skillLevel`];
+        return next;
+      });
     }
 
     onChange({
@@ -735,6 +752,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
                   value={skill.skillLevel}
                   onChange={(v) => updateSkill(skill.id, "skillLevel", v)}
                   options={skillLevels}
+                  error={errors[`skill-${skill.id}-skillLevel`]}
                 />
               </div>
 

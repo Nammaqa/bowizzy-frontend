@@ -7,9 +7,9 @@ import { formatEducationDateRange as formatResumeEducationDateRange, formatEduca
 const styles = StyleSheet.create({
   page: { padding: 24, fontSize: 10 },
   header: { marginBottom: 12 },
-  nameRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  name: { fontSize: 20 },
-  role: { fontSize: 12 },
+  nameRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  name: { width: '50%', fontSize: 20, paddingRight: 12, lineHeight: 1.05 },
+  role: { width: '50%', fontSize: 12, textAlign: 'right' },
   dividerThick: { height: 1, backgroundColor: '#000', marginBottom: 12 },
   leftCol: { width: 170, paddingRight: 12 },
   rightCol: { flex: 1 },

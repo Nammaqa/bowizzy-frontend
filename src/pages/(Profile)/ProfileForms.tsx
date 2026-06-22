@@ -390,9 +390,6 @@ export default function ProfileForm() {
 
     if (skillsForm.skills.length === 0) {
       skillsForm.skills.push({ id: "1", skillName: "", skillLevel: "" });
-      skillsForm.skills.push({ id: "2", skillName: "", skillLevel: "" });
-    } else if (skillsForm.skills.length === 1) {
-         skillsForm.skills.push({ id: Date.now().toString(), skillName: "", skillLevel: "" });
     }
 
     // Map Links
@@ -548,7 +545,7 @@ export default function ProfileForm() {
         const linksArray = data.links || [];
 
         const hasValidSkill = skillsArray.some(
-          (skill: any) => skill.skillName
+          (skill: any) => skill.skillName && skill.skillName.trim() && skill.skillLevel
         );
         if (!hasValidSkill) {
           return false;

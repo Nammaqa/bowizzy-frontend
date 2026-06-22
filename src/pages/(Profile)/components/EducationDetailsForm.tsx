@@ -417,6 +417,10 @@ export default function EducationDetailsForm({
     return "";
   };
 
+  const validateBoardType = (value: string) => {
+    if (!value || !value.trim()) return "Board Type is required";
+    return "";
+  };
 
   // Helper function to validate date range
   const validateDateRange = (startDate: string, endDate: string) => {
@@ -598,6 +602,9 @@ export default function EducationDetailsForm({
     } else if (name === "institutionName") {
       const error = validateInstitutionName(finalValue);
       setErrors((prev) => ({ ...prev, [`sslc-institutionName`]: error }));
+    } else if (name === "boardType") {
+      const error = validateBoardType(finalValue);
+      setErrors((prev) => ({ ...prev, [`sslc-boardType`]: error }));
     }
   };
 
@@ -627,6 +634,9 @@ export default function EducationDetailsForm({
     } else if (name === "institutionName") {
       const error = validateInstitutionName(finalValue);
       setErrors((prev) => ({ ...prev, [`pu-institutionName`]: error }));
+    } else if (name === "boardType") {
+      const error = validateBoardType(finalValue);
+      setErrors((prev) => ({ ...prev, [`pu-boardType`]: error }));
     }
   };
 
@@ -728,6 +738,12 @@ export default function EducationDetailsForm({
   const handleSaveSslc = async () => {
     const currentData = sslcData;
     const initial = initialSslc.current;
+    const boardTypeError = validateBoardType(currentData.boardType);
+    if (boardTypeError) {
+      setErrors((prev) => ({ ...prev, "sslc-boardType": boardTypeError }));
+      return;
+    }
+
     const resultError = validateResult(currentData.result, currentData.resultFormat);
     if (resultError) {
       setErrors((prev) => ({ ...prev, "sslc-result": resultError }));
@@ -735,7 +751,7 @@ export default function EducationDetailsForm({
     }
 
     // Check for validation errors
-    if (errors["sslc-result"] || errors["sslc-institutionName"]) return;
+    if (errors["sslc-result"] || errors["sslc-institutionName"] || errors["sslc-boardType"]) return;
 
     try {
       let payload: Record<string, any> = {};
@@ -819,6 +835,12 @@ export default function EducationDetailsForm({
   const handleSavePu = async () => {
     const currentData = puData;
     const initial = initialPu.current;
+    const boardTypeError = validateBoardType(currentData.boardType);
+    if (boardTypeError) {
+      setErrors((prev) => ({ ...prev, "pu-boardType": boardTypeError }));
+      return;
+    }
+
     const resultError = validateResult(currentData.result, currentData.resultFormat);
     if (resultError) {
       setErrors((prev) => ({ ...prev, "pu-result": resultError }));
@@ -826,7 +848,7 @@ export default function EducationDetailsForm({
     }
 
     // Check for validation errors
-    if (errors["pu-result"] || errors["pu-institutionName"]) return;
+    if (errors["pu-result"] || errors["pu-institutionName"] || errors["pu-boardType"]) return;
 
     try {
       let payload: Record<string, any> = {};
@@ -1295,9 +1317,21 @@ export default function EducationDetailsForm({
     e.preventDefault();
 
     const resultErrors: { [key: string]: string } = {};
+    const sslcBoardTypeError =
+      sslcData.boardType ||
+      !(sslcData.institutionName || sslcData.resultFormat || sslcData.yearOfPassing || sslcData.result)
+        ? ""
+        : "Board Type is required";
+    const puBoardTypeError =
+      puData.boardType ||
+      !(puData.institutionName || puData.subjectStream || puData.resultFormat || puData.yearOfPassing || puData.result)
+        ? ""
+        : "Board Type is required";
     const sslcResultError = validateResult(sslcData.result, sslcData.resultFormat);
     const puResultError = validateResult(puData.result, puData.resultFormat);
 
+    if (sslcBoardTypeError) resultErrors["sslc-boardType"] = sslcBoardTypeError;
+    if (puBoardTypeError) resultErrors["pu-boardType"] = puBoardTypeError;
     if (sslcResultError) resultErrors["sslc-result"] = sslcResultError;
     if (puResultError) resultErrors["pu-result"] = puResultError;
 
@@ -1803,7 +1837,10 @@ export default function EducationDetailsForm({
                       name="boardType"
                       value={sslcData.boardType}
                       onChange={handleSslcChange}
-                      className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
+                      className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm appearance-none bg-white pr-8 ${errors["sslc-boardType"]
+                        ? "border-red-500 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                        }`}
                     >
                       <option value="">Select Board Type</option>
                       <option value="CBSE">CBSE</option>
@@ -1812,6 +1849,11 @@ export default function EducationDetailsForm({
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
+                  {errors["sslc-boardType"] && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors["sslc-boardType"]}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
@@ -1950,7 +1992,10 @@ export default function EducationDetailsForm({
                       name="boardType"
                       value={puData.boardType}
                       onChange={handlePuChange}
-                      className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
+                      className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm appearance-none bg-white pr-8 ${errors["pu-boardType"]
+                        ? "border-red-500 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                        }`}
                     >
                       <option value="">Select Board Type</option>
                       <option value="CBSE">CBSE</option>
@@ -1959,6 +2004,11 @@ export default function EducationDetailsForm({
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
+                  {errors["pu-boardType"] && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors["pu-boardType"]}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
