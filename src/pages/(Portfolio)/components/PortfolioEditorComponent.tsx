@@ -258,6 +258,26 @@ export default function PortfolioEditorComponent({
     return start || end || "";
   };
 
+  const normalizeMonthYear = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+    if (/^\d{4}-\d{2}$/.test(trimmed)) {
+      const [year, month] = trimmed.split("-");
+      return `${month}-${year}`;
+    }
+    return trimmed;
+  };
+
+  const toMonthInputValue = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+    if (/^\d{2}-\d{4}$/.test(trimmed)) {
+      const [month, year] = trimmed.split("-");
+      return `${year}-${month}`;
+    }
+    return trimmed;
+  };
+
   const splitDuration = (duration: string) => {
     const [start = "", end = ""] = duration.split(/\s+-\s+/);
     return {
@@ -270,12 +290,13 @@ export default function PortfolioEditorComponent({
     exp[field] || splitDuration(exp.duration)[field];
 
   const handleUpdateExperienceDate = (index: number, field: "startDate" | "endDate", val: string) => {
+    const normalizedValue = normalizeMonthYear(val);
     const updated = [...experiences];
     const current = updated[index];
     const dates = {
       startDate: getExperienceDate(current, "startDate"),
       endDate: getExperienceDate(current, "endDate"),
-      [field]: val,
+      [field]: normalizedValue,
     };
     updated[index] = {
       ...current,
@@ -1169,13 +1190,10 @@ export default function PortfolioEditorComponent({
                       Start Date
                     </label>
                     <input
-                      type="text"
-                      value={getExperienceDate(exp, "startDate")}
+                      type="month"
+                      value={toMonthInputValue(getExperienceDate(exp, "startDate"))}
                       onChange={(e) => handleUpdateExperienceDate(idx, "startDate", e.target.value)}
-                      placeholder="MM-YYYY"
-                      maxLength={7}
-                      pattern="(0[1-9]|1[0-2])-[0-9]{4}"
-                      title="Use MM-YYYY format, e.g. 04-2024"
+                      title="Use month-year format, e.g. April 2024"
                       className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                     />
                   </div>
@@ -1184,13 +1202,10 @@ export default function PortfolioEditorComponent({
                       End Date
                     </label>
                     <input
-                      type="text"
-                      value={getExperienceDate(exp, "endDate")}
+                      type="month"
+                      value={toMonthInputValue(getExperienceDate(exp, "endDate"))}
                       onChange={(e) => handleUpdateExperienceDate(idx, "endDate", e.target.value)}
-                      placeholder="MM-YYYY"
-                      maxLength={7}
-                      pattern="(0[1-9]|1[0-2])-[0-9]{4}"
-                      title="Use MM-YYYY format, e.g. 05-2026"
+                      title="Use month-year format, e.g. May 2026"
                       className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                     />
                   </div>

@@ -490,6 +490,11 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
     if (field === "pincode" && typeof newValue === "string") {
       if (!/^\d*$/.test(newValue)) return;
       if (newValue.length > 6) return;
+      // Reset address when pincode changes so the location hierarchy remains consistent
+      onChange({ ...data, pincode: newValue, address: "" });
+      const error = validateField(field, newValue);
+      setErrors((prev) => ({ ...prev, [field]: error, address: "" }));
+      return;
     }
 
     if (field === "passportNumber" && typeof newValue === "string") {
@@ -530,24 +535,29 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
       ...data,
       [field]: value,
       address: "",
-      nationality: "",
-      passportNumber: "",
+      pincode: data.pincode,
     };
 
     if (field === "country") {
       nextData.state = "";
       nextData.city = "";
+      nextData.pincode = "";
     }
 
     if (field === "state") {
       nextData.city = "";
+      nextData.pincode = "";
+    }
+
+    if (field === "city") {
+      nextData.pincode = "";
     }
 
     onChange(nextData);
     setErrors((prev) => ({
       ...prev,
       address: "",
-      passportNumber: "",
+      pincode: "",
     }));
   };
 

@@ -56,7 +56,6 @@ export default function SkillsLinksDetailsForm({
       }))
       : [
         { id: "1", skillName: "", skillLevel: "" },
-        { id: "2", skillName: "", skillLevel: "" },
       ];
 
   const [skills, setSkills] = useState<Skill[]>(initialSkills);
@@ -206,6 +205,12 @@ export default function SkillsLinksDetailsForm({
         if (value.trim()) delete next.skills;
         return next;
       });
+    } else if (field === "skillLevel") {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[`skill-${index}-skillLevel`];
+        return next;
+      });
     }
   };
 
@@ -213,6 +218,23 @@ export default function SkillsLinksDetailsForm({
     const changesToSave = Object.keys(skillChanges);
     if (changesToSave.length === 0) {
       setSkillFeedback({ ["1"]: "No changes to save." });
+      setTimeout(() => setSkillFeedback({}), 3000);
+      return;
+    }
+
+    let hasError = false;
+    skills.forEach((s, index) => {
+      if (s.skillName && !s.skillLevel) {
+        setErrors((prev) => ({ ...prev, [`skill-${index}-skillLevel`]: "Skill Level is required" }));
+        hasError = true;
+      }
+      if (!s.skillName && s.skillLevel) {
+        setErrors((prev) => ({ ...prev, [`skill-${index}-skillName`]: "Skill Name is required" }));
+        hasError = true;
+      }
+    });
+    if (hasError) {
+      setSkillFeedback({ ["1"]: "Please provide both name and level for all skills." });
       setTimeout(() => setSkillFeedback({}), 3000);
       return;
     }
@@ -297,7 +319,7 @@ export default function SkillsLinksDetailsForm({
   const removeSkill = async (index: number) => {
     const skill = skills[index];
 
-    if (skills.length <= 2) return;
+    if (skills.length <= 1) return;
 
     if (skill.skill_id) {
       try {
@@ -548,9 +570,21 @@ export default function SkillsLinksDetailsForm({
     e.preventDefault();
     setHasAttemptedProceed(true);
 
-    const hasSkill = skills.some((s) => s.skillName && s.skillName.trim());
-    if (!hasSkill) {
-      setErrors((prev) => ({ ...prev, skills: "At least one skill is required" }));
+    let hasError = false;
+    skills.forEach((s, index) => {
+      if (s.skillName && !s.skillLevel) {
+        setErrors((prev) => ({ ...prev, [`skill-${index}-skillLevel`]: "Skill Level is required" }));
+        hasError = true;
+      }
+      if (!s.skillName && s.skillLevel) {
+        setErrors((prev) => ({ ...prev, [`skill-${index}-skillName`]: "Skill Name is required" }));
+        hasError = true;
+      }
+    });
+
+    const hasCompleteSkill = skills.some((s) => s.skillName && s.skillName.trim() && s.skillLevel);
+    if (!hasCompleteSkill || hasError) {
+      setErrors((prev) => ({ ...prev, skills: "At least one complete skill (with name and level) is required, and all added skills must be complete." }));
       setSkillsExpanded(true);
       const firstSkill = document.querySelector(
         '#skills-links-details-form-root input[aria-required="true"]'
@@ -796,7 +830,11 @@ export default function SkillsLinksDetailsForm({
                                 onChange={(e) =>
                                   handleSkillChange(index, "skillLevel", e.target.value)
                                 }
-                                className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
+                                className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm appearance-none bg-white pr-8 ${
+                                  errors[`skill-${index}-skillLevel`] || errors.skills
+                                    ? "border-red-500 focus:ring-red-400"
+                                    : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                                }`}
                               >
                                 <option value="">Select Skill Level</option>
                                 <option value="Beginner">Beginner</option>
@@ -808,9 +846,14 @@ export default function SkillsLinksDetailsForm({
                                 <ChevronDown className="w-4 h-4 text-gray-400 pointer-events-none" />
                               </div>
                             </div>
+                            {errors[`skill-${index}-skillLevel`] && (
+                              <p className="mt-1 text-xs text-red-500">
+                                {errors[`skill-${index}-skillLevel`]}
+                              </p>
+                            )}
                           </div>
 
-                          {skills.length > 2 && (
+                          {skills.length > 1 && (
                             <button
                               type="button"
                               onClick={() => removeSkill(index)}

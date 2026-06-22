@@ -103,6 +103,7 @@ const isCancelledByUser = (b: MockInterviewBooking, userId?: string | number): b
 const getStatusConfig = (status: string) => {
   const s = status.toLowerCase();
   if (s.includes("cancel"))  return { badge: "bg-red-50 text-red-600",           border: "border-l-red-400"     };
+  if (s.includes("expired")) return { badge: "bg-slate-100 text-slate-600",      border: "border-l-slate-400"   };
   if (s.includes("complete"))return { badge: "bg-emerald-50 text-emerald-700",   border: "border-l-emerald-400" };
   if (s.includes("waiting")) return { badge: "bg-sky-50 text-sky-600",           border: "border-l-sky-400"     };
   if (s.includes("pending")) return { badge: "bg-amber-50 text-amber-700",       border: "border-l-amber-400"   };
@@ -206,7 +207,11 @@ const MockInterviewBookingsPage = () => {
     const rawStatus    = booking.interview_status || "scheduled";
     const isCancelled  = isCancelledBooking(booking);
     const displayStatus =
-      !isCancelled && booking.interviewer_id == null ? "Waiting to be accepted" : rawStatus;
+      !isCancelled && tab === "past" && booking.interviewer_id == null
+        ? "Expired"
+        : !isCancelled && booking.interviewer_id == null
+          ? "Waiting to be accepted"
+          : rawStatus;
     const paymentStatus = booking.payment_status || "pending";
     const feedbackGiven = isInterviewerFeedbackGiven(booking);
     const { badge: statusBadge, border } = getStatusConfig(displayStatus);

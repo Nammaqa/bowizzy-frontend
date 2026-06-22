@@ -70,8 +70,8 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
     <div style={{ width: '210mm', minHeight: '297mm', fontFamily: fontFamily, background: '#fff', padding: 24, boxSizing: 'border-box' }}>
       <div style={{ paddingBottom: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 style={{ margin: 0, fontFamily: fontFamily, fontSize: 28, color: primaryColor, }}>{personal.firstName} {personal.middleName || ''} {personal.lastName}</h1>
-          {(experience && (experience as any).jobRole) && <div style={{ fontSize: 14, color: primaryColor, fontFamily: 'monospace' }}>{(experience as any).jobRole}</div>}
+          <h1 style={{ margin: 0, width: '50%', flexShrink: 0, paddingRight: 12, fontFamily: fontFamily, fontSize: 28, lineHeight: 1.05, color: primaryColor, }}>{personal.firstName} {personal.middleName || ''} {personal.lastName}</h1>
+          {(experience && (experience as any).jobRole) && <div style={{ width: '50%', textAlign: 'right', flexShrink: 0, fontSize: 14, color: primaryColor, fontFamily: 'monospace' }}>{(experience as any).jobRole}</div>}
         </div>
       </div>
 
