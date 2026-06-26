@@ -224,12 +224,12 @@ export default function SkillsLinksDetailsForm({
 
     let hasError = false;
     skills.forEach((s, index) => {
-      if (s.skillName && !s.skillLevel) {
-        setErrors((prev) => ({ ...prev, [`skill-${index}-skillLevel`]: "Skill Level is required" }));
+      if (!s.skillName || !s.skillName.trim()) {
+        setErrors((prev) => ({ ...prev, [`skill-${index}-skillName`]: "Skill Name is required" }));
         hasError = true;
       }
-      if (!s.skillName && s.skillLevel) {
-        setErrors((prev) => ({ ...prev, [`skill-${index}-skillName`]: "Skill Name is required" }));
+      if (!s.skillLevel) {
+        setErrors((prev) => ({ ...prev, [`skill-${index}-skillLevel`]: "Skill Level is required" }));
         hasError = true;
       }
     });
@@ -572,12 +572,12 @@ export default function SkillsLinksDetailsForm({
 
     let hasError = false;
     skills.forEach((s, index) => {
-      if (s.skillName && !s.skillLevel) {
-        setErrors((prev) => ({ ...prev, [`skill-${index}-skillLevel`]: "Skill Level is required" }));
+      if (!s.skillName || !s.skillName.trim()) {
+        setErrors((prev) => ({ ...prev, [`skill-${index}-skillName`]: "Skill Name is required" }));
         hasError = true;
       }
-      if (!s.skillName && s.skillLevel) {
-        setErrors((prev) => ({ ...prev, [`skill-${index}-skillName`]: "Skill Name is required" }));
+      if (!s.skillLevel) {
+        setErrors((prev) => ({ ...prev, [`skill-${index}-skillLevel`]: "Skill Level is required" }));
         hasError = true;
       }
     });

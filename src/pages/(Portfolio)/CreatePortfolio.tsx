@@ -385,6 +385,8 @@ export default function CreatePortfolio() {
                     src="/Bowizzy Logo (No Container).png"
                     alt="Developer Logo"
                     className="w-full h-full object-contain"
+                    draggable={false}
+                    onDragStart={(e) => e.preventDefault()}
                   />
                 </div>
                 <h3 className="text-sm font-bold text-gray-800 mb-1">Developer Portfolio</h3>
@@ -419,6 +421,8 @@ export default function CreatePortfolio() {
                     src="/Bowizzy Logo (No Container).png"
                     alt="Designer Logo"
                     className="w-full h-full object-contain"
+                    draggable={false}
+                    onDragStart={(e) => e.preventDefault()}
                   />
                 </div>
                 <h3 className="text-sm font-bold text-gray-800 mb-1">Designer Portfolio</h3>
@@ -467,6 +471,10 @@ export default function CreatePortfolio() {
                   }}
                   placeholder="e.g. John Doe — UX Designer"
                   maxLength={50}
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => e.preventDefault()}
                   className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder-gray-400 outline-none transition focus:ring-2 focus:ring-violet-300 ${nameError
                     ? "border-red-300 bg-red-50"
                     : "border-gray-200 bg-gray-50 focus:bg-white"
@@ -499,6 +507,8 @@ export default function CreatePortfolio() {
                   placeholder="A brief intro about yourself or what this portfolio showcases…"
                   rows={3}
                   maxLength={100}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => e.preventDefault()}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white text-sm text-gray-800 placeholder-gray-400 outline-none focus:ring-2 focus:ring-violet-300 transition resize-none"
                 />
                 <p className="text-xs text-gray-400 text-right mt-1">
@@ -553,8 +563,8 @@ export default function CreatePortfolio() {
                   {creditsLoading
                     ? "Loading credits…"
                     : userCredits > 0
-                    ? `You have ${userCredits} credit${userCredits !== 1 ? "s" : ""} · Use 1-${Math.min(userCredits, MAX_CREDITS)} credits · 1 credit = ₹${CREDIT_TO_INR}`
-                    : `You have 0 credits · 1 credit = ₹${CREDIT_TO_INR}`}
+                      ? `You have ${userCredits} credit${userCredits !== 1 ? "s" : ""} · Use 1-${Math.min(userCredits, MAX_CREDITS)} credits · 1 credit = ₹${CREDIT_TO_INR}`
+                      : `You have 0 credits · 1 credit = ₹${CREDIT_TO_INR}`}
                 </p>
               </div>
             </label>
