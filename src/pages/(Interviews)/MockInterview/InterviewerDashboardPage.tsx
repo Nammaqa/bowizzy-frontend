@@ -587,9 +587,6 @@ const InterviewerDashboardPage = () => {
                       <h2 className="text-lg font-bold text-[#2F2F2F]">
                         Available interviews
                       </h2>
-                      <p className="text-xs text-[#777777]">
-                        Results from the matching API.
-                      </p>
                     </div>
                     {loadingInterviews && (
                       <span className="text-sm font-semibold text-[#F26D3A]">

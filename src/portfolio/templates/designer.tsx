@@ -100,7 +100,7 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
 
   return (
     <main
-      className="@container min-h-screen overflow-hidden"
+      className="@container designer-root min-h-screen overflow-hidden"
       style={
         {
           background: bg,
@@ -123,6 +123,20 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
         .designer-page {
           max-width: 1180px;
           margin: 0 auto;
+        }
+        .designer-root,
+        .designer-root * {
+          min-width: 0;
+        }
+        .designer-text-wrap,
+        .designer-rich,
+        .designer-rich * {
+          overflow-wrap: anywhere;
+          word-break: break-word;
+        }
+        .designer-root img {
+          -webkit-user-drag: none;
+          user-select: none;
         }
         .designer-rich p { margin: 0 0 0.45rem; }
         .designer-rich p:last-child { margin-bottom: 0; }
@@ -174,7 +188,7 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
         </nav>
 
         <header id="top" className="min-h-[660px] grid grid-cols-1 @lg:grid-cols-[1.08fr_0.92fr] gap-9 py-12 @lg:py-16 items-center border-b" style={{ borderColor: line }}>
-          <div>
+          <div className="min-w-0">
             <div className="inline-flex items-center gap-2 text-xs font-extrabold uppercase mb-6" style={{ color: accent }}>
               <Sparkles className="w-4 h-4" />
               Designer Portfolio
@@ -182,7 +196,7 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
             <h1 className="text-5xl @md:text-6xl @lg:text-7xl leading-none font-extrabold max-w-3xl">
               {data.portfolioName || "Creative Mind"}
             </h1>
-            <p className="mt-7 max-w-2xl text-base @md:text-lg leading-8 font-medium" style={{ color: muted }}>
+            <p className="designer-text-wrap mt-7 max-w-2xl text-base @md:text-lg leading-8 font-medium" style={{ color: muted }}>
               {data.tagline ||
                 data.portfolioDescription ||
                 "I design sharp, human digital products with expressive visuals, clean systems, and careful interaction craft."}
@@ -235,6 +249,8 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
                   src={data.avatarUrl}
                   alt={data.portfolioName || "Designer"}
                   className="absolute inset-0 h-full w-full object-cover"
+                  draggable={false}
+                  onDragStart={(event) => event.preventDefault()}
                 />
               ) : (
                 <div
@@ -290,7 +306,7 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
             </h2>
           </div>
           <div>
-            <p className="text-xl @md:text-2xl leading-10 font-bold">
+            <p className="designer-text-wrap text-xl @md:text-2xl leading-10 font-bold">
               {data.portfolioDescription ||
                 "I help teams turn rough ideas into clear, polished digital experiences that feel considered from the first impression to the final interaction."}
             </p>
@@ -342,6 +358,8 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
                         src={study.imageUrl}
                         alt={study.title || "Case study cover"}
                         className="absolute inset-0 h-full w-full object-cover"
+                        draggable={false}
+                        onDragStart={(event) => event.preventDefault()}
                       />
                     ) : (
                       <div className="absolute inset-5 grid grid-cols-5 grid-rows-4 gap-3">

@@ -635,8 +635,7 @@ const TakeMockInterviewPage = () => {
             <section className="rounded-3xl bg-white p-6 shadow-sm">
               <h1 className="text-2xl font-bold text-[#2F2F2F]">Book your mock interview</h1>
               <p className="mt-2 text-sm leading-6 text-[#666666]">
-                Choose your interview mode, job role, weekday slot, and skills. No booking API
-                is called on this page.
+                Choose your interview mode, job role, weekday slot, and skills
               </p>
 
               <div className="mt-6 grid gap-3 sm:grid-cols-2">

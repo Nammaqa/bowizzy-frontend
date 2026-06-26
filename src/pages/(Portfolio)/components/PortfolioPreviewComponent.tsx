@@ -16,8 +16,14 @@ export default function PortfolioPreviewComponent({
   customUrl,
   data,
 }: PortfolioPreviewProps) {
+  const preventImageDrag = (event: React.DragEvent<HTMLDivElement>) => {
+    if ((event.target as HTMLElement).tagName.toLowerCase() === "img") {
+      event.preventDefault();
+    }
+  };
+
   return (
-    <div className="flex flex-col h-full space-y-4">
+    <div className="flex flex-col h-full space-y-4" onDragStart={preventImageDrag}>
 
       {/* Dynamic Live Preview Render as Mock Browser */}
       <div className="flex-1 min-h-0 border border-slate-800 rounded-xl overflow-hidden bg-slate-950 shadow-2xl flex flex-col">
