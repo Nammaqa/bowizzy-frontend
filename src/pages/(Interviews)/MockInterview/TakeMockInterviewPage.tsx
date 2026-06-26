@@ -186,11 +186,12 @@ const getBookingEnd = (booking: any) =>
   booking?.end_time_utc || booking?.endTimeUtc || booking?.end_time || booking?.endTime;
 
 const isBookingActive = (booking: any) => {
-  const status = String(
-    booking?.interview_status || booking?.booking_status || booking?.status || ""
-  ).toLowerCase();
+  const cancelledBy = String(booking?.cancelled_by || "").toLowerCase().trim();
+  const cancelledByCandidate =
+    cancelledBy === "candidate" ||
+    cancelledBy.includes("candidate");
 
-  return !["cancelled", "canceled", "rejected", "failed"].includes(status);
+  return !cancelledByCandidate;
 };
 
 const isSlotBooked = (bookings: any[], dateValue: string, slot: string) => {
