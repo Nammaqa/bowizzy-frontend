@@ -13,7 +13,7 @@ const CGST_RATE = 0.09;
 const SGST_RATE = 0.09;
 
 import { Lock, Tag, Sparkles, ChevronDown, ChevronUp, Info } from "lucide-react";
-import { X, Download, Eye, Save } from "lucide-react";
+import { X, Download, Eye } from "lucide-react";
 import type { ResumeData } from "@/types/resume";
 import { getTemplateById } from "@/templates/templateRegistry";
 import { pdf } from "@react-pdf/renderer";
@@ -545,9 +545,9 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
   primaryColor = '#111827',
   fontFamily = 'Times New Roman, serif',
 }) => {
-  const [showPayMsg, setShowPayMsg] = React.useState(false);
   const [resumeUnlocked, setResumeUnlocked] = React.useState(false);
   const [showPaymentBreakdown, setShowPaymentBreakdown] = React.useState(false);
+  const pendingSaveAfterPaymentRef = useRef(false);
 
   const generateDefaultResumeName = (): string => {
     const fn = (resumeData?.personal?.firstName || '').trim().replace(/\s+/g, '').replace(/[^a-zA-Z0-9-_]/g, '');
@@ -564,8 +564,6 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
   const [showNameDialog, setShowNameDialog] = useState(false);
   const [resumeName, setResumeName] = useState<string>('');
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
-  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
-  const [saveMode, setSaveMode] = useState<'download' | 'template' | null>(null);
 
   useEffect(() => {
     if (showNameDialog && !resumeName) {
@@ -779,11 +777,11 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
     }
   };
 
-  const handleSaveAndExitClick = () => {
-    setSaveMode('template');
+  const openSaveAndDownloadDialog = () => {
     setShowDownloadDialog(false);
     if (pdfUrl && !pdfUrl.includes('docs.google.com')) URL.revokeObjectURL(pdfUrl);
     setPdfUrl(null);
+    setPdfBlob(null);
     setResumeName(generateDefaultResumeName());
     setShowNameDialog(true);
   };
@@ -841,15 +839,73 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
     return await generatePdfFromReactPdf(resumeData);
   };
 
+  const downloadPdfBlob = (blob: Blob, name: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${name}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleSaveAndDownloadPdf = async (paymentAlreadyCompleted = false) => {
+    const finalName = resumeName.trim();
+    if (!finalName) return;
+
+    if (isTemplateLocked && !resumeUnlocked && !paymentAlreadyCompleted) {
+      pendingSaveAfterPaymentRef.current = true;
+      setShowPaymentBreakdown(true);
+      return;
+    }
+
+    setIsDownloadingPdf(true);
+    try {
+      const finalBlob = pdfBlob ?? cachedBlobRef.current ?? await generatePdfBlob();
+      if (!finalBlob) {
+        alert('Failed to generate PDF.');
+        return;
+      }
+
+      await onSaveAndExit?.();
+
+      const cloudinaryUrl = await uploadPdfToCloudinary(finalBlob);
+      if (!cloudinaryUrl) {
+        alert('Failed to upload PDF to Cloudinary');
+        return;
+      }
+
+      await saveResumeTemplate(cloudinaryUrl);
+      downloadPdfBlob(finalBlob, finalName);
+      setShowNameDialog(false);
+      setShowDownloadDialog(false);
+      onClose();
+    } catch (err) {
+      console.error('Error:', err);
+      alert('Failed to save and download PDF. See console for details.');
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
+
   return (
     <>
       {/* Payment Breakdown Modal */}
       <PaymentBreakdownModal
         isOpen={showPaymentBreakdown}
-        onClose={() => setShowPaymentBreakdown(false)}
+        onClose={() => {
+          pendingSaveAfterPaymentRef.current = false;
+          setShowPaymentBreakdown(false);
+        }}
         onPaymentSuccess={() => {
           setResumeUnlocked(true);
-          setShowPayMsg(false);
+          if (pendingSaveAfterPaymentRef.current) {
+            pendingSaveAfterPaymentRef.current = false;
+            setTimeout(() => {
+              void handleSaveAndDownloadPdf(true);
+            }, 0);
+          }
         }}
         templateId={templateId}
         userId={userId}
@@ -932,19 +988,11 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
             </button>
 
             <button
-              onClick={handleSaveAndExitClick}
-              className="flex items-center bg-white text-left py-3 px-4 rounded-full border-0 hover:bg-gray-50 transition-colors shadow-md cursor-pointer"
-            >
-              <Save className="w-5 h-5 mr-2 text-orange-500" />
-              <span className="text-black text-sm font-medium whitespace-nowrap">Save & Exit</span>
-            </button>
-
-            <button
-              onClick={() => { setShowNameDialog(true); }}
+              onClick={openSaveAndDownloadDialog}
               className="flex items-center bg-orange-500 text-left py-3 px-4 rounded-full border-0 hover:bg-orange-600 transition-colors shadow-md cursor-pointer"
             >
               <Download className="w-5 h-5 mr-2 text-white" />
-              <span className="text-white text-sm font-medium whitespace-nowrap">Download PDF</span>
+              <span className="text-white text-sm font-medium whitespace-nowrap">Save & Download PDF</span>
             </button>
 
             {PDFComponent && (
@@ -1006,8 +1054,7 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                   onChange={(e) => setResumeName(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && resumeName.trim()) {
-                      const downloadBtn = document.querySelector('[data-download-trigger]') as HTMLButtonElement;
-                      if (downloadBtn) downloadBtn.click();
+                      void handleSaveAndDownloadPdf();
                     }
                   }}
                   className="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
@@ -1025,50 +1072,17 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                 </button>
                 <button
                   data-download-trigger
-                  onClick={async () => {
-                    if (!resumeName.trim()) return;
-                    setIsDownloadingPdf(true);
-                    try {
-                      const finalBlob = await generatePdfBlob();
-
-                      if (saveMode === 'template') {
-                        const cloudinaryUrl = await uploadPdfToCloudinary(finalBlob!);
-                        if (cloudinaryUrl) {
-                          await saveResumeTemplate(cloudinaryUrl);
-                          setShowNameDialog(false);
-                          onClose();
-                        } else {
-                          alert('Failed to upload PDF to Cloudinary');
-                        }
-                      } else {
-                        const url = URL.createObjectURL(finalBlob!);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `${resumeName.trim()}.pdf`;
-                        document.body.appendChild(a);
-                        a.click();
-                        a.remove();
-                        URL.revokeObjectURL(url);
-                        setShowNameDialog(false);
-                      }
-                    } catch (err) {
-                      console.error('Error:', err);
-                      alert('Failed to process PDF. See console for details.');
-                    } finally {
-                      setIsDownloadingPdf(false);
-                      setSaveMode(null);
-                    }
-                  }}
+                  onClick={() => void handleSaveAndDownloadPdf()}
                   disabled={!resumeName.trim() || isDownloadingPdf}
                   className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 >
                   {isDownloadingPdf ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      {saveMode === 'template' ? 'Saving...' : 'Downloading...'}
+                      Saving & downloading...
                     </>
                   ) : (
-                    saveMode === 'template' ? 'Save' : 'Download'
+                    'Save & Download PDF'
                   )}
                 </button>
               </div>
@@ -1175,16 +1189,6 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                           <span className="text-gray-400"> · Credits & GST applicable</span>
                         </p>
                       </div>
-                      <button
-                        onClick={() => setShowPaymentBreakdown(true)}
-                        className="flex-shrink-0 px-4 py-2 rounded-xl text-sm font-bold text-white transition-all"
-                        style={{
-                          background: 'linear-gradient(135deg, #F97316, #ea580c)',
-                          boxShadow: '0 4px 12px rgba(249,115,22,0.3)',
-                        }}
-                      >
-                        Unlock Now
-                      </button>
                     </div>
                   )}
 
@@ -1212,27 +1216,9 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                         <X className="w-4 h-4" />
                         Back to Edit
                       </button>
-                      <button
-                        onClick={handleSaveAndExitClick}
-                        className="px-6 py-2.5 text-sm font-medium border-2 rounded-full flex items-center gap-2 transition-colors bg-white border-orange-400 text-gray-800 hover:bg-orange-50 shadow-sm"
-                      >
-                        <Save className="w-4 h-4 text-orange-500" />
-                        Save & Exit
-                      </button>
                     </div>
                     <button
-                      onClick={() => {
-                        if (isTemplateLocked && !resumeUnlocked) {
-                          setShowPaymentBreakdown(true);
-                          return;
-                        }
-                        setShowDownloadDialog(false);
-                        if (pdfUrl && !pdfUrl.includes('docs.google.com')) URL.revokeObjectURL(pdfUrl);
-                        setPdfUrl(null);
-                        setPdfBlob(null);
-                        setResumeName(generateDefaultResumeName());
-                        setShowNameDialog(true);
-                      }}
+                      onClick={openSaveAndDownloadDialog}
                       className={`px-6 py-2.5 text-sm font-medium rounded-full flex items-center gap-2 transition-colors ${isTemplateLocked && !resumeUnlocked
                         ? 'bg-orange-500 hover:bg-orange-600 text-white'
                         : 'text-white bg-orange-500 hover:bg-orange-600'
@@ -1240,13 +1226,13 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                     >
                       {isTemplateLocked && !resumeUnlocked ? (
                         <>
-                          <Lock className="w-4 h-4 text-white" />
-                          Unlock & Download
+                          <Download className="w-4 h-4 text-white" />
+                          Pay, Save & Download PDF
                         </>
                       ) : (
                         <>
                           <Download className="w-4 h-4 text-white" />
-                          Download PDF
+                          Save & Download PDF
                         </>
                       )}
                     </button>

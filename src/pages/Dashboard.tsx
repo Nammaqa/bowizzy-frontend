@@ -48,9 +48,15 @@ export default function Dashboard() {
       })
       .catch((error) => {
         if (error.response?.status === 401) {
-          // Clear user data and logout
           localStorage.removeItem("user");
-          navigate("/login");
+          localStorage.removeItem("token");
+          // Flood history so back-button can't reach old session pages
+          const depth = window.history.length + 10;
+          window.history.replaceState(null, "", "/login");
+          for (let i = 0; i < depth; i++) {
+            window.history.pushState(null, "", "/login");
+          }
+          window.location.reload();
         }
       });
 

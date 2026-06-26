@@ -252,8 +252,10 @@ export default function PortfolioEditorComponent({
   };
 
   const formatDuration = (startDate?: string, endDate?: string) => {
-    const start = (startDate || "").trim();
-    const end = (endDate || "").trim();
+    let start = (startDate || "").trim();
+    let end = (endDate || "").trim();
+    if (/^\d{2}-\d{4}$/.test(start)) start = start.replace("-", " - ");
+    if (/^\d{2}-\d{4}$/.test(end)) end = end.replace("-", " - ");
     if (start && end) return `${start} - ${end}`;
     return start || end || "";
   };
@@ -263,7 +265,7 @@ export default function PortfolioEditorComponent({
     if (!trimmed) return "";
     if (/^\d{4}-\d{2}$/.test(trimmed)) {
       const [year, month] = trimmed.split("-");
-      return `${month}-${year}`;
+      return `${month} - ${year}`;
     }
     return trimmed;
   };
@@ -271,19 +273,28 @@ export default function PortfolioEditorComponent({
   const toMonthInputValue = (value: string) => {
     const trimmed = value.trim();
     if (!trimmed) return "";
-    if (/^\d{2}-\d{4}$/.test(trimmed)) {
-      const [month, year] = trimmed.split("-");
-      return `${year}-${month}`;
+    const match = trimmed.match(/^(\d{2})\s*-\s*(\d{4})$/);
+    if (match) {
+      return `${match[2]}-${match[1]}`;
     }
     return trimmed;
   };
 
   const splitDuration = (duration: string) => {
-    const [start = "", end = ""] = duration.split(/\s+-\s+/);
-    return {
-      startDate: mmYYYYRegex.test(start.trim()) ? start.trim() : "",
-      endDate: mmYYYYRegex.test(end.trim()) ? end.trim() : "",
-    };
+    const match = duration.match(/^(\d{2}\s*-\s*\d{4})(?:\s*-\s*(\d{2}\s*-\s*\d{4}))?$/);
+    if (match) {
+      const start = match[1] || "";
+      const end = match[2] || "";
+      return {
+        startDate: mmYYYYRegex.test(start) ? start : "",
+        endDate: mmYYYYRegex.test(end) ? end : "",
+      };
+    }
+    const parts = duration.split(/\s+-\s+/);
+    if (parts.length === 2 && mmYYYYRegex.test(parts[0]) && mmYYYYRegex.test(parts[1])) {
+       return { startDate: parts[0], endDate: parts[1] };
+    }
+    return { startDate: "", endDate: "" };
   };
 
   const getExperienceDate = (exp: Experience, field: "startDate" | "endDate") =>

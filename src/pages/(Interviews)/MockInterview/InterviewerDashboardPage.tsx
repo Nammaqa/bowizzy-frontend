@@ -725,7 +725,7 @@ const InterviewerDashboardPage = () => {
               </div>
 
               <aside className="h-fit rounded-2xl border border-[#FFE1D2] bg-[#FFF8F3] p-4 lg:sticky lg:top-4">
-                <h2 className="text-lg font-bold text-[#2F2F2F]">Matching profile</h2>
+                <h2 className="text-lg font-bold text-[#2F2F2F]">My profile</h2>
                 <p className="mt-1 text-xs leading-5 text-[#777777]">
                   These values are sent to fetch available mock interviews.
                 </p>

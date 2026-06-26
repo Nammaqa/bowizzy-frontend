@@ -14,6 +14,7 @@ import {
   Twitter,
 } from "lucide-react";
 import type { PortfolioData } from "./developer";
+import { formatPortfolioDuration } from "./dateFormat";
 
 function hexToRgb(hex: string) {
   const normalized = hex.replace("#", "").trim();
@@ -466,36 +467,41 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
 
           <div className="space-y-4">
             {data.experiences.length ? (
-              data.experiences.map((exp, index) => (
-                <article
-                  key={`${exp.role}-${index}`}
-                  className="grid grid-cols-[2.75rem_1fr] gap-4 border-b pb-6"
-                  style={{ borderColor: line }}
-                >
-                  <span
-                    className="h-11 w-11 grid place-items-center border"
-                    style={{ borderColor: line, background: panel, borderRadius: 8 }}
+              data.experiences.map((exp, index) => {
+                const displayDuration = formatPortfolioDuration(exp.duration);
+                return (
+                  <article
+                    key={`${exp.role}-${index}`}
+                    className="grid grid-cols-[2.75rem_1fr] gap-4 border-b pb-6"
+                    style={{ borderColor: line }}
                   >
-                    <Briefcase className="w-4 h-4" style={{ color: accent }} />
-                  </span>
-                  <div>
-                    <div className="flex flex-wrap justify-between gap-3 mb-1">
-                      <h3 className="text-lg font-extrabold">{exp.role || "Lead Designer"}</h3>
-                      <span className="text-xs font-extrabold uppercase" style={{ color: muted }}>
-                        {exp.duration}
-                      </span>
+                    <span
+                      className="h-11 w-11 grid place-items-center border"
+                      style={{ borderColor: line, background: panel, borderRadius: 8 }}
+                    >
+                      <Briefcase className="w-4 h-4" style={{ color: accent }} />
+                    </span>
+                    <div>
+                      <div className="flex flex-wrap justify-between gap-3 mb-1">
+                        <h3 className="text-lg font-extrabold">{exp.role || "Lead Designer"}</h3>
+                        {displayDuration && (
+                          <span className="text-xs font-extrabold uppercase" style={{ color: muted }}>
+                            {displayDuration}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm font-extrabold mb-3" style={{ color: accent }}>
+                        {exp.company || "Creative Studio"}
+                      </p>
+                      <RichText
+                        html={exp.details}
+                        fallback="Experience details..."
+                        className="text-sm leading-7"
+                      />
                     </div>
-                    <p className="text-sm font-extrabold mb-3" style={{ color: accent }}>
-                      {exp.company || "Creative Studio"}
-                    </p>
-                    <RichText
-                      html={exp.details}
-                      fallback="Experience details..."
-                      className="text-sm leading-7"
-                    />
-                  </div>
-                </article>
-              ))
+                  </article>
+                );
+              })
             ) : (
               <p className="text-sm" style={{ color: muted }}>
                 Add experience in the editor to show the career timeline.

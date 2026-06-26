@@ -94,6 +94,66 @@ const isAuthenticated = () => {
   }
 };
 
+/**
+ * Shared logout function — floods the history stack with /login entries so
+ * ALL old session pages are buried, then does a hard reload at /login.
+ * This is the web equivalent of navigation.reset({ index:0, routes:[{name:'Login'}] }).
+ */
+function clearHistoryAndLogout() {
+  try {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+  } catch { /* ignore */ }
+
+  // Replace current entry with /login, then push enough /login entries
+  // to completely bury every old history entry the user may have visited.
+  const depth = window.history.length + 10;
+  window.history.replaceState(null, "", "/login");
+  for (let i = 0; i < depth; i++) {
+    window.history.pushState(null, "", "/login");
+  }
+
+  // Hard reload — React + React Router restart completely fresh at /login.
+  window.location.reload();
+}
+
+/**
+ * Global guard: intercepts any back/forward press and, if the user is no
+ * longer authenticated, does a hard redirect to /login instead of letting
+ * React Router render a stale protected page.
+ * Also handles bfcache restoration (event.persisted) so the frozen DOM is
+ * never shown to an unauthenticated user.
+ */
+function AuthPopstateGuard() {
+  useEffect(() => {
+    // Sentinel push so the very first back-press is also interceptable.
+    window.history.pushState(null, "", window.location.href);
+
+    const handlePopState = () => {
+      if (!isAuthenticated()) {
+        window.location.replace("/login");
+      }
+    };
+
+    // pageshow fires when bfcache restores a frozen page — JS never ran on
+    // restore, so this is the only reliable hook for that case.
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted && !isAuthenticated()) {
+        window.location.replace("/login");
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    window.addEventListener("pageshow", handlePageShow);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, []);
+
+  return null;
+}
+
 // Only show Profile & My resumes for now. Remaining items are hidden as requested. (okna)
 const careerMap = [
   {
@@ -166,13 +226,11 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
       getProfileProgress(userId, token)
         .catch((error) => {
           if (error.response?.status === 401) {
-            // Clear user data and logout
-            localStorage.removeItem("user");
-            navigate("/login");
+            clearHistoryAndLogout();
           }
         });
     }
-  }, [navigate]);
+  }, []);
 
   const isPortfolioEditor = location.pathname.includes("/portfolio/editor/");
 
@@ -312,14 +370,7 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
                   className="p-5 flex items-center border-2 border-[#FF0000]"
                   onClick={(e) => {
                     e.preventDefault();
-                    try {
-                      localStorage.removeItem("user");
-                      localStorage.removeItem("token");
-                    } catch {
-                      /* ignore */
-                    }
-                    window.location.href = "/login";
-                    window.location.reload();
+                    clearHistoryAndLogout();
                   }}
                 >
                   <LogOut color="#FF0000" size={16} />
@@ -343,7 +394,7 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (!isAuthenticated()) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
   return <>{children}</>;
 }
@@ -777,7 +828,13 @@ function App() {
     },
   ]);
 
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      {/* Always-on guard: equivalent of navigation.reset() on logout */}
+      <AuthPopstateGuard />
+      <RouterProvider router={router} />
+    </>
+  );
 }
 
 export default App;

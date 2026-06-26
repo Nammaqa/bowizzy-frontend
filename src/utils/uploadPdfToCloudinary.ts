@@ -17,6 +17,7 @@ export const uploadPdfToCloudinary = async (file: File) => {
   if (apiKey && apiSecret) {
     const timestamp = Math.floor(Date.now() / 1000);
     const paramsToSign: Record<string, string | number> = {
+      return_delete_token: "true",
       timestamp,
     };
 
@@ -33,6 +34,7 @@ export const uploadPdfToCloudinary = async (file: File) => {
     formData.append("api_key", apiKey);
     formData.append("timestamp", String(timestamp));
     formData.append("signature", signature);
+    formData.append("return_delete_token", "true");
 
     const res = await fetch(endpoint, {
       method: "POST",
@@ -51,6 +53,7 @@ export const uploadPdfToCloudinary = async (file: File) => {
   const fd = new FormData();
   fd.append("file", file);
   if (uploadPreset) fd.append("upload_preset", uploadPreset);
+  fd.append("return_delete_token", "true");
 
   const res = await fetch(endpoint, {
     method: "POST",

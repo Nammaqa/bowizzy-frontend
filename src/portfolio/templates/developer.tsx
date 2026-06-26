@@ -3,6 +3,7 @@ import {
   Github, Linkedin, Twitter, ExternalLink, Briefcase,
   Code2, Mail, Globe, Rocket, ChevronRight, ArrowUpRight, Sparkles, Download
 } from "lucide-react";
+import { formatPortfolioDuration } from "./dateFormat";
 
 export interface PortfolioData {
   portfolioName: string;
@@ -29,7 +30,7 @@ export interface PortfolioData {
     role: string;
   }>;
   projects: Array<{ title: string; description: string; link: string; tech: string }>;
-  experiences: Array<{ role: string; company: string; duration: string; details: string }>;
+  experiences: Array<{ role: string; company: string; startDate?: string; endDate?: string; duration: string; details: string }>;
   skills: string[];
 }
 
@@ -163,6 +164,7 @@ function SkillChip({ skill }: { skill: string }) {
 function ExpCard({ exp, index }: { exp: PortfolioData["experiences"][0]; index: number }) {
   const icons = [<Briefcase />, <Rocket />, <Code2 />, <Globe />];
   const Icon = icons[index % icons.length];
+  const displayDuration = formatPortfolioDuration(exp.duration);
   return (
     <div
       className="exp-card py-6 flex gap-4 @sm:gap-5 transition-all duration-200"
@@ -184,12 +186,12 @@ function ExpCard({ exp, index }: { exp: PortfolioData["experiences"][0]; index: 
             <p className="text-sm font-semibold" style={{ color: "var(--exp-title)" }}>{exp.role || "Role"}</p>
             <p className="text-xs font-medium mt-0.5" style={{ color: "var(--exp-subtitle)" }}>{exp.company || "Company"}</p>
           </div>
-          {exp.duration && (
+          {displayDuration && (
             <span
               className="text-xs whitespace-nowrap px-2.5 py-1 rounded-full flex-shrink-0"
               style={{ color: "var(--exp-meta-text)", background: "var(--exp-meta-bg)", border: "0.5px solid var(--exp-meta-border)" }}
             >
-              {exp.duration}
+              {displayDuration}
             </span>
           )}
         </div>

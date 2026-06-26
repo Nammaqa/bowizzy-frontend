@@ -25,9 +25,9 @@ const Settings = () => {
         await deleteAccount(userId, token);
         localStorage.removeItem("user");
         localStorage.removeItem("token");
-        window.location.href = "/login";
+        window.location.replace("/login");
       } else {
-        navigate("/login");
+        navigate("/login", { replace: true });
       }
     } catch (error) {
       console.error("Error deleting account:", error);

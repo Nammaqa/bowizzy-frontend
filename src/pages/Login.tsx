@@ -41,7 +41,12 @@ export default function Login() {
         })
       );
 
-      navigate("/dashboard");
+      // Hard redirect: replaceState changes the browser's current history
+      // entry to /dashboard, then reload() forces a full page refresh so
+      // React Router re-initialises with a completely empty in-memory stack.
+      // This mirrors navigation.reset() — no old session pages survive.
+      window.history.replaceState(null, "", "/dashboard");
+      window.location.reload();
     } catch (err) {
       setError(err.response?.data?.message || "Login error");
     } finally {

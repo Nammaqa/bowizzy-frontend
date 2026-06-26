@@ -221,20 +221,24 @@ export default function PortfolioEditor() {
     fetchPortfolioData();
   }, [id]);
 
-  const mmYYYYRegex = /^(0[1-9]|1[0-2])-\d{4}$/;
+  const mmYYYYRegex = /^(0[1-9]|1[0-2])\s*-\s*\d{4}$/;
   const plainTextRegex = /^[A-Za-z0-9 ]*$/;
   const linkMaxLength = 250;
 
   const formatDuration = (startDate?: string, endDate?: string) => {
-    const start = (startDate || "").trim();
-    const end = (endDate || "").trim();
+    let start = (startDate || "").trim();
+    let end = (endDate || "").trim();
+    if (/^\d{2}-\d{4}$/.test(start)) start = start.replace("-", " - ");
+    if (/^\d{2}-\d{4}$/.test(end)) end = end.replace("-", " - ");
     if (start && end) return `${start} - ${end}`;
     return start || end || "";
   };
 
   const normalizeExperience = (exp: Experience): Experience => {
-    const startDate = (exp.startDate || "").trim();
-    const endDate = (exp.endDate || "").trim();
+    let startDate = (exp.startDate || "").trim();
+    let endDate = (exp.endDate || "").trim();
+    if (/^\d{2}-\d{4}$/.test(startDate)) startDate = startDate.replace("-", " - ");
+    if (/^\d{2}-\d{4}$/.test(endDate)) endDate = endDate.replace("-", " - ");
     return {
       ...exp,
       startDate,
@@ -243,12 +247,12 @@ export default function PortfolioEditor() {
     };
   };
 
-  // Helper to format dates from API (e.g. YYYY-MM-DD or YYYY-MM) to "MM-YYYY"
+  // Helper to format dates from API (e.g. YYYY-MM-DD or YYYY-MM) to "MM - YYYY"
   const formatApiDate = (dateStr: string) => {
     if (!dateStr) return "";
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
-    return `${String(d.getMonth() + 1).padStart(2, "0")}-${d.getFullYear()}`;
+    return `${String(d.getMonth() + 1).padStart(2, "0")} - ${d.getFullYear()}`;
   };
 
   // Import Details from Profile APIs
