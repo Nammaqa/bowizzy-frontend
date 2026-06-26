@@ -152,10 +152,23 @@ const getInterviewEndDate = (interview: any) => {
 };
 
 const getInterviewStartDate = (interview: any) => {
-  const dateValue = interview?.start_time_utc || interview?.scheduled_time;
+  const dateValue =
+    interview?.start_time_utc ||
+    interview?.startTimeUtc ||
+    interview?.start_time ||
+    interview?.startTime ||
+    interview?.scheduled_time;
   const date = dateValue ? new Date(dateValue) : null;
 
   return date && !Number.isNaN(date.getTime()) ? date : null;
+};
+
+const isAvailableInterviewActive = (interview: any, currentDate: Date) => {
+  const status = String(interview?.interview_status || interview?.status || "").toLowerCase();
+  const startDate = getInterviewStartDate(interview);
+
+  if (status === "expired") return false;
+  return startDate ? startDate > currentDate : true;
 };
 
 const isPastInterview = (interview: any, currentDate: Date) => {
@@ -262,7 +275,12 @@ const InterviewerDashboardPage = () => {
               }),
               getAcceptedMockInterviews(userId, token),
             ]);
-            setAvailableInterviews(normalizeAvailableInterviews(interviewsResponse));
+            const currentDate = new Date();
+            setAvailableInterviews(
+              normalizeAvailableInterviews(interviewsResponse).filter((interview) =>
+                isAvailableInterviewActive(interview, currentDate)
+              )
+            );
             setAcceptedInterviews(normalizeAvailableInterviews(acceptedResponse));
           } catch (error: any) {
             setInterviewsError(
@@ -413,6 +431,9 @@ const InterviewerDashboardPage = () => {
   const selectedInterviewSkills = normalizeSkills(selectedInterview?.skills);
   const selectedInterviewMeetingLink = getMeetingLink(selectedInterview);
   const currentDate = new Date();
+  const activeAvailableInterviews = availableInterviews.filter((interview) =>
+    isAvailableInterviewActive(interview, currentDate)
+  );
   const pastAcceptedInterviews = acceptedInterviews.filter((interview) =>
     isPastInterview(interview, currentDate)
   );
@@ -583,15 +604,15 @@ const InterviewerDashboardPage = () => {
                     </p>
                   )}
 
-                  {!loadingInterviews && !interviewsError && availableInterviews.length === 0 && (
+                  {!loadingInterviews && !interviewsError && activeAvailableInterviews.length === 0 && (
                     <p className="mt-3 rounded-xl bg-[#FAFAFA] p-3 text-sm text-[#777777]">
                       No available interviews returned yet.
                     </p>
                   )}
 
-                  {availableInterviews.length > 0 && (
+                  {activeAvailableInterviews.length > 0 && (
                     <div className="mt-3 grid gap-2">
-                      {availableInterviews.map((interview, index) => (
+                      {activeAvailableInterviews.map((interview, index) => (
                         <div
                           key={interview?.mock_interview_id || interview?.id || index}
                           className="rounded-2xl border border-[#E8E8E8] p-3 transition hover:border-[#F26D3A]/40 hover:shadow-sm"

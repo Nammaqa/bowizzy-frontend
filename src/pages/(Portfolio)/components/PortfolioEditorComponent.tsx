@@ -52,8 +52,16 @@ interface CaseStudy {
   subtitle: string;
   description: string;
   imageUrl: string;
+  imagePublicId?: string;
+  imageDeleteToken?: string | null;
   link: string;
   role: string;
+}
+
+interface UploadedAsset {
+  url: string;
+  publicId?: string | null;
+  deleteToken?: string | null;
 }
 
 export interface PortfolioEditorComponentProps {
@@ -73,8 +81,12 @@ export interface PortfolioEditorComponentProps {
   setCustomUrl: (val: string) => void;
   cvUrl: string;
   setCvUrl: (val: string) => void;
+  onCvUploaded?: (asset: UploadedAsset) => Promise<void>;
+  onCvRemoved?: () => Promise<void>;
   profileImageUrl: string;
   setProfileImageUrl: (val: string) => void;
+  onProfileImageUploaded?: (asset: UploadedAsset) => Promise<void>;
+  onProfileImageRemoved?: () => Promise<void>;
   email: string;
   setEmail: (val: string) => void;
   themeColor: string;
@@ -89,6 +101,8 @@ export interface PortfolioEditorComponentProps {
   setDesignProcess: React.Dispatch<React.SetStateAction<DesignProcessStep[]>>;
   caseStudies: CaseStudy[];
   setCaseStudies: React.Dispatch<React.SetStateAction<CaseStudy[]>>;
+  onCaseStudyImageUploaded?: (index: number, asset: UploadedAsset) => Promise<void>;
+  onCaseStudyImageRemoved?: (index: number) => Promise<void>;
 
   projects: Project[];
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
@@ -124,8 +138,12 @@ export default function PortfolioEditorComponent({
   setCustomUrl,
   cvUrl,
   setCvUrl,
+  onCvUploaded,
+  onCvRemoved,
   profileImageUrl,
   setProfileImageUrl,
+  onProfileImageUploaded,
+  onProfileImageRemoved,
   email,
   setEmail,
   themeColor,
@@ -140,6 +158,8 @@ export default function PortfolioEditorComponent({
   setDesignProcess,
   caseStudies,
   setCaseStudies,
+  onCaseStudyImageUploaded,
+  onCaseStudyImageRemoved,
   projects,
   setProjects,
   experiences,
@@ -156,6 +176,9 @@ export default function PortfolioEditorComponent({
   importSuccess = false,
 }: PortfolioEditorComponentProps) {
   const [newSkill, setNewSkill] = useState("");
+  const [removingProfileImage, setRemovingProfileImage] = useState(false);
+  const [removingCv, setRemovingCv] = useState(false);
+  const [removingCaseStudyImageIndex, setRemovingCaseStudyImageIndex] = useState<number | null>(null);
   const palettePresets: Array<{
     id: string;
     name: string;
@@ -392,6 +415,54 @@ export default function PortfolioEditorComponent({
     setCaseStudies(caseStudies.filter((_, i) => i !== index));
   };
 
+  const removeProfileImage = async () => {
+    try {
+      setRemovingProfileImage(true);
+      if (onProfileImageRemoved) {
+        await onProfileImageRemoved();
+      } else {
+        setProfileImageUrl("");
+      }
+    } catch (err) {
+      console.error("Profile image removal failed", err);
+      alert("Unable to remove profile image right now.");
+    } finally {
+      setRemovingProfileImage(false);
+    }
+  };
+
+  const removeCv = async () => {
+    try {
+      setRemovingCv(true);
+      if (onCvRemoved) {
+        await onCvRemoved();
+      } else {
+        setCvUrl("");
+      }
+    } catch (err) {
+      console.error("CV removal failed", err);
+      alert("Unable to remove CV right now.");
+    } finally {
+      setRemovingCv(false);
+    }
+  };
+
+  const removeCaseStudyImage = async (index: number) => {
+    try {
+      setRemovingCaseStudyImageIndex(index);
+      if (onCaseStudyImageRemoved) {
+        await onCaseStudyImageRemoved(index);
+      } else {
+        handleUpdateCaseStudy(index, "imageUrl", "");
+      }
+    } catch (err) {
+      console.error("Case study image removal failed", err);
+      alert("Unable to remove case study image right now.");
+    } finally {
+      setRemovingCaseStudyImageIndex(null);
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header / Actions Row (Sticky top bar) */}
@@ -623,31 +694,47 @@ export default function PortfolioEditorComponent({
           <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">
             Upload Profile Image
           </label>
-          <input
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                if (!isValidImageFile(file)) {
-                  e.target.value = "";
-                  return;
-                }
-                try {
-                  const result = await uploadToCloudinary(file);
-                  setProfileImageUrl(result.url);
-                } catch (err) {
-                  console.error('Profile image upload failed', err);
-                }
-              }
-            }}
-            className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
-          />
-          {profileImageUrl && (
-            <div className="mt-2 flex items-center gap-2">
+          {profileImageUrl ? (
+            <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-gray-200 p-2">
+              <div className="flex items-center gap-2">
               <img src={profileImageUrl} alt="Profile" className="w-10 h-10 rounded-full object-cover border border-gray-200" />
               <p className="text-xs text-gray-600">Uploaded Profile Image</p>
+              </div>
+              <button
+                type="button"
+                onClick={removeProfileImage}
+                disabled={removingProfileImage}
+                className="inline-flex items-center gap-1 rounded-lg border border-red-100 bg-red-50 px-2 py-1 text-[11px] font-bold text-red-600 transition hover:bg-red-100 disabled:opacity-60"
+              >
+                {removingProfileImage ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                Remove
+              </button>
             </div>
+          ) : (
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  if (!isValidImageFile(file)) {
+                    e.target.value = "";
+                    return;
+                  }
+                  try {
+                    const result = await uploadToCloudinary(file);
+                    if (onProfileImageUploaded) {
+                      await onProfileImageUploaded(result);
+                    } else {
+                      setProfileImageUrl(result.url);
+                    }
+                  } catch (err) {
+                    console.error('Profile image upload failed', err);
+                  }
+                }
+              }}
+              className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+            />
           )}
         </div>
 
@@ -656,24 +743,40 @@ export default function PortfolioEditorComponent({
           <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">
             Upload CV (PDF)
           </label>
-          <input
-            type="file"
-            accept="application/pdf"
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                try {
-                  const result = await uploadPdfToCloudinary(file);
-                  setCvUrl(result.url);
-                } catch (err) {
-                  console.error('CV upload failed', err);
+          {cvUrl ? (
+            <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-gray-200 p-2">
+              <p className="text-xs text-gray-600">Uploaded CV: <a href={cvUrl} target="_blank" rel="noopener noreferrer" className="underline text-violet-600 font-medium">View CV</a></p>
+              <button
+                type="button"
+                onClick={removeCv}
+                disabled={removingCv}
+                className="inline-flex items-center gap-1 rounded-lg border border-red-100 bg-red-50 px-2 py-1 text-[11px] font-bold text-red-600 transition hover:bg-red-100 disabled:opacity-60"
+              >
+                {removingCv ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                Remove
+              </button>
+            </div>
+          ) : (
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  try {
+                    const result = await uploadPdfToCloudinary(file);
+                    if (onCvUploaded) {
+                      await onCvUploaded(result);
+                    } else {
+                      setCvUrl(result.url);
+                    }
+                  } catch (err) {
+                    console.error('CV upload failed', err);
+                  }
                 }
-              }
-            }}
-            className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
-          />
-          {cvUrl && (
-            <p className="mt-2 text-xs text-gray-600">Uploaded CV: <a href={cvUrl} target="_blank" rel="noopener noreferrer" className="underline text-violet-600 font-medium">View CV</a></p>
+              }}
+              className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+            />
           )}
         </div>
 
@@ -993,30 +1096,47 @@ export default function PortfolioEditorComponent({
                         <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
                           Cover Image
                         </label>
-                        <input
-                          type="file"
-                          accept="image/png,image/jpeg,image/webp"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            if (!isValidImageFile(file)) {
-                              e.target.value = "";
-                              return;
-                            }
-                            try {
-                              const result = await uploadToCloudinary(file);
-                              handleUpdateCaseStudy(idx, "imageUrl", result.url);
-                            } catch (err) {
-                              console.error("Case study image upload failed", err);
-                            }
-                          }}
-                          className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
-                        />
                         {study.imageUrl && (
-                          <img
-                            src={study.imageUrl}
-                            alt={study.title || "Case study cover"}
-                            className="mt-2 w-full h-24 object-cover rounded-lg border border-gray-200"
+                          <div className="rounded-lg border border-gray-200 p-2">
+                            <img
+                              src={study.imageUrl}
+                              alt={study.title || "Case study cover"}
+                              className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeCaseStudyImage(idx)}
+                              disabled={removingCaseStudyImageIndex === idx}
+                              className="mt-2 inline-flex items-center gap-1 rounded-lg border border-red-100 bg-red-50 px-2 py-1 text-[11px] font-bold text-red-600 transition hover:bg-red-100 disabled:opacity-60"
+                            >
+                              {removingCaseStudyImageIndex === idx ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                              Remove
+                            </button>
+                          </div>
+                        )}
+                        {!study.imageUrl && (
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              if (!isValidImageFile(file)) {
+                                e.target.value = "";
+                                return;
+                              }
+                              try {
+                                const result = await uploadToCloudinary(file);
+                                if (onCaseStudyImageUploaded) {
+                                  await onCaseStudyImageUploaded(idx, result);
+                                } else {
+                                  handleUpdateCaseStudy(idx, "imageUrl", result.url);
+                                }
+                              } catch (err) {
+                                console.error("Case study image upload failed", err);
+                              }
+                            }}
+                            className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                           />
                         )}
                       </div>
