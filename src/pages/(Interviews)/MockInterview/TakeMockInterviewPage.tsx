@@ -186,11 +186,12 @@ const getBookingEnd = (booking: any) =>
   booking?.end_time_utc || booking?.endTimeUtc || booking?.end_time || booking?.endTime;
 
 const isBookingActive = (booking: any) => {
-  const status = String(
-    booking?.interview_status || booking?.booking_status || booking?.status || ""
-  ).toLowerCase();
+  const cancelledBy = String(booking?.cancelled_by || "").toLowerCase().trim();
+  const cancelledByCandidate =
+    cancelledBy === "candidate" ||
+    cancelledBy.includes("candidate");
 
-  return !["cancelled", "canceled", "rejected", "failed"].includes(status);
+  return !cancelledByCandidate;
 };
 
 const isSlotBooked = (bookings: any[], dateValue: string, slot: string) => {
@@ -635,8 +636,7 @@ const TakeMockInterviewPage = () => {
             <section className="rounded-3xl bg-white p-6 shadow-sm">
               <h1 className="text-2xl font-bold text-[#2F2F2F]">Book your mock interview</h1>
               <p className="mt-2 text-sm leading-6 text-[#666666]">
-                Choose your interview mode, job role, weekday slot, and skills. No booking API
-                is called on this page.
+                Choose your interview mode, job role, weekday slot, and skills
               </p>
 
               <div className="mt-6 grid gap-3 sm:grid-cols-2">

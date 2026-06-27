@@ -104,7 +104,7 @@ export default function PortfolioLanding() {
               onClick={() => navigate("/portfolio/list")}
               className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-violet-600 to-violet-500 text-white font-semibold text-sm hover:from-violet-700 hover:to-violet-600 transition shadow-md shadow-violet-200 cursor-pointer"
             >
-              Get Started
+              Create my Portfolio
               <ArrowRight className="w-4 h-4" />
             </button>
             <button

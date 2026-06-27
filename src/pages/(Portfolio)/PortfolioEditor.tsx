@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import DashNav from "@/components/dashnav/dashnav";
 import { Loader2 } from "lucide-react";
 import api from "@/api";
+import { deleteFromCloudinary } from "@/utils/deleteFromCloudinary";
 import PortfolioEditorComponent from "./components/PortfolioEditorComponent";
 import PortfolioPreviewComponent from "./components/PortfolioPreviewComponent";
 
@@ -32,8 +33,16 @@ interface CaseStudy {
   subtitle: string;
   description: string;
   imageUrl: string;
+  imagePublicId?: string;
+  imageDeleteToken?: string | null;
   link: string;
   role: string;
+}
+
+interface UploadedAsset {
+  url: string;
+  publicId?: string | null;
+  deleteToken?: string | null;
 }
 
 const getDefaultTheme = (type: string) =>
@@ -54,7 +63,11 @@ export default function PortfolioEditor() {
   const [twitterUrl, setTwitterUrl] = useState("");
   const [customUrl, setCustomUrl] = useState("");
   const [cvUrl, setCvUrl] = useState("");
+  const [cvPublicId, setCvPublicId] = useState("");
+  const [cvDeleteToken, setCvDeleteToken] = useState<string | null>(null);
   const [profileImageUrl, setProfileImageUrl] = useState("");
+  const [profileImagePublicId, setProfileImagePublicId] = useState("");
+  const [profileImageDeleteToken, setProfileImageDeleteToken] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [themeColor, setThemeColor] = useState("#4f46e5");
   const [backgroundColor, setBackgroundColor] = useState("#0a0f1e");
@@ -170,7 +183,11 @@ export default function PortfolioEditor() {
                 setTwitterUrl(cfg.twitter || "");
                 setCustomUrl(cfg.customUrl || "");
                 setCvUrl(cfg.cvUrl || "");
+                setCvPublicId(cfg.cvPublicId || "");
+                setCvDeleteToken(cfg.cvDeleteToken || null);
                 setProfileImageUrl(cfg.profileImageUrl || "");
+                setProfileImagePublicId(cfg.profileImagePublicId || "");
+                setProfileImageDeleteToken(cfg.profileImageDeleteToken || null);
                 setEmail(cfg.email || "");
                 setThemeColor(cfg.themeColor || cfgTheme.themeColor);
                 setBackgroundColor(cfg.backgroundColor || cfgTheme.backgroundColor);
@@ -381,6 +398,29 @@ export default function PortfolioEditor() {
 
   const hasAllowedUrlCharacters = (url: string): boolean => /^[A-Za-z0-9:/?#[\]@!$&'()*+,;=._~%-]+$/.test(url);
 
+  const getCloudinaryPublicIdFromUrl = (
+    url: string,
+    resourceType: "image" | "raw" | "video"
+  ) => {
+    if (!url || !url.includes("res.cloudinary.com")) return "";
+
+    try {
+      const parsedUrl = new URL(url);
+      const marker = `/${resourceType}/upload/`;
+      const markerIndex = parsedUrl.pathname.indexOf(marker);
+      if (markerIndex === -1) return "";
+
+      const uploadPath = parsedUrl.pathname.slice(markerIndex + marker.length);
+      const pathWithoutVersion = uploadPath.replace(/^v\d+\//, "");
+      const extensionIndex = pathWithoutVersion.lastIndexOf(".");
+      return decodeURIComponent(
+        extensionIndex === -1 ? pathWithoutVersion : pathWithoutVersion.slice(0, extensionIndex)
+      );
+    } catch {
+      return "";
+    }
+  };
+
   const validateProfileUrl = (
     url: string,
     expectedHosts: string[],
@@ -410,6 +450,171 @@ export default function PortfolioEditor() {
     } catch {
       return false;
     }
+  };
+
+  const buildPortfolioPayload = (overrides: Record<string, any> = {}) => {
+    const normalizedExperiences = experiences.map(normalizeExperience);
+
+    return {
+      name: portfolioName,
+      description: portfolioDescription,
+      portfolio_type: portfolioType,
+      github: githubUrl,
+      linkedin: linkedinUrl,
+      twitter: twitterUrl,
+      customUrl: customUrl,
+      cvUrl: cvUrl,
+      cvPublicId,
+      cvDeleteToken,
+      profileImageUrl: profileImageUrl,
+      profileImagePublicId,
+      profileImageDeleteToken,
+      email: email,
+      themeColor: themeColor,
+      backgroundColor: backgroundColor,
+      behanceUrl: behanceUrl,
+      dribbbleUrl: dribbbleUrl,
+      designProcess: portfolioType === "designer" ? designProcess : [],
+      caseStudies: portfolioType === "designer" ? caseStudies : [],
+      projects: projects,
+      experiences: normalizedExperiences,
+      skills: skills,
+      ...overrides,
+    };
+  };
+
+  const pushPortfolioJson = async (overrides: Record<string, any> = {}) => {
+    const userData = JSON.parse(localStorage.getItem("user") || "null");
+    if (!userData?.token) {
+      throw new Error("User not authenticated.");
+    }
+
+    const portfolioPayload = buildPortfolioPayload(overrides);
+    await api.put(
+      `/portfolio/${id}`,
+      {
+        portfolio_name: portfolioPayload.name,
+        description: portfolioPayload.description,
+        portfolio_json: portfolioPayload,
+      },
+      { headers: { Authorization: `Bearer ${userData.token}` } }
+    );
+
+    setSuccess(true);
+    setTimeout(() => setSuccess(false), 3000);
+  };
+
+  const deleteCloudinaryAsset = async (
+    url: string,
+    deleteToken: string | null,
+    publicId: string,
+    resourceType: "image" | "raw" | "video"
+  ) => {
+    const resolvedPublicId = publicId || getCloudinaryPublicIdFromUrl(url, resourceType);
+    if (!deleteToken && !resolvedPublicId) return true;
+    return deleteFromCloudinary(deleteToken, resolvedPublicId, resourceType);
+  };
+
+  const handleProfileImageUploaded = async (asset: UploadedAsset) => {
+    await pushPortfolioJson({
+      profileImageUrl: asset.url,
+      profileImagePublicId: asset.publicId || "",
+      profileImageDeleteToken: asset.deleteToken || null,
+    });
+    setProfileImageUrl(asset.url);
+    setProfileImagePublicId(asset.publicId || "");
+    setProfileImageDeleteToken(asset.deleteToken || null);
+  };
+
+  const handleCvUploaded = async (asset: UploadedAsset) => {
+    await pushPortfolioJson({
+      cvUrl: asset.url,
+      cvPublicId: asset.publicId || "",
+      cvDeleteToken: asset.deleteToken || null,
+    });
+    setCvUrl(asset.url);
+    setCvPublicId(asset.publicId || "");
+    setCvDeleteToken(asset.deleteToken || null);
+  };
+
+  const handleProfileImageRemoved = async () => {
+    const deleted = await deleteCloudinaryAsset(
+      profileImageUrl,
+      profileImageDeleteToken,
+      profileImagePublicId,
+      "image"
+    );
+    if (!deleted) throw new Error("Unable to delete profile image from Cloudinary.");
+
+    await pushPortfolioJson({
+      profileImageUrl: "",
+      profileImagePublicId: "",
+      profileImageDeleteToken: null,
+    });
+    setProfileImageUrl("");
+    setProfileImagePublicId("");
+    setProfileImageDeleteToken(null);
+  };
+
+  const handleCvRemoved = async () => {
+    const deleted = await deleteCloudinaryAsset(cvUrl, cvDeleteToken, cvPublicId, "raw");
+    if (!deleted) throw new Error("Unable to delete CV from Cloudinary.");
+
+    await pushPortfolioJson({
+      cvUrl: "",
+      cvPublicId: "",
+      cvDeleteToken: null,
+    });
+    setCvUrl("");
+    setCvPublicId("");
+    setCvDeleteToken(null);
+  };
+
+  const handleCaseStudyImageUploaded = async (index: number, asset: UploadedAsset) => {
+    const updatedCaseStudies = caseStudies.map((study, studyIndex) =>
+      studyIndex === index
+        ? {
+            ...study,
+            imageUrl: asset.url,
+            imagePublicId: asset.publicId || "",
+            imageDeleteToken: asset.deleteToken || null,
+          }
+        : study
+    );
+
+    await pushPortfolioJson({
+      caseStudies: portfolioType === "designer" ? updatedCaseStudies : [],
+    });
+    setCaseStudies(updatedCaseStudies);
+  };
+
+  const handleCaseStudyImageRemoved = async (index: number) => {
+    const target = caseStudies[index];
+    if (!target) return;
+
+    const deleted = await deleteCloudinaryAsset(
+      target.imageUrl,
+      target.imageDeleteToken || null,
+      target.imagePublicId || "",
+      "image"
+    );
+    if (!deleted) throw new Error("Unable to delete case study image from Cloudinary.");
+
+    const updatedCaseStudies = caseStudies.map((study, studyIndex) =>
+      studyIndex === index
+        ? {
+            ...study,
+            imageUrl: "",
+            imagePublicId: "",
+            imageDeleteToken: null,
+          }
+        : study
+    );
+
+    await pushPortfolioJson({
+      caseStudies: portfolioType === "designer" ? updatedCaseStudies : [],
+    });
+    setCaseStudies(updatedCaseStudies);
   };
 
   // Submit and Save Portfolio
@@ -533,7 +738,11 @@ export default function PortfolioEditor() {
         twitter: cleanTwitter,
         customUrl: cleanCustom,
         cvUrl: cvUrl,
+        cvPublicId,
+        cvDeleteToken,
         profileImageUrl: profileImageUrl,
+        profileImagePublicId,
+        profileImageDeleteToken,
         email: email,
         themeColor: themeColor,
         backgroundColor: backgroundColor,
@@ -640,8 +849,12 @@ export default function PortfolioEditor() {
             setCustomUrl={setCustomUrl}
             cvUrl={cvUrl}
             setCvUrl={setCvUrl}
+            onCvUploaded={handleCvUploaded}
+            onCvRemoved={handleCvRemoved}
             profileImageUrl={profileImageUrl}
             setProfileImageUrl={setProfileImageUrl}
+            onProfileImageUploaded={handleProfileImageUploaded}
+            onProfileImageRemoved={handleProfileImageRemoved}
             email={email}
             setEmail={setEmail}
             themeColor={themeColor}
@@ -656,6 +869,8 @@ export default function PortfolioEditor() {
             setDesignProcess={setDesignProcess}
             caseStudies={caseStudies}
             setCaseStudies={setCaseStudies}
+            onCaseStudyImageUploaded={handleCaseStudyImageUploaded}
+            onCaseStudyImageRemoved={handleCaseStudyImageRemoved}
             projects={projects}
             setProjects={setProjects}
             experiences={experiences}

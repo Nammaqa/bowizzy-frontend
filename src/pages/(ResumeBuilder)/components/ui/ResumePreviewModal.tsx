@@ -753,8 +753,29 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
 
 
 
+  const getAuthForSave = () => {
+    let resolvedUserId = userId;
+    let resolvedToken = token;
+
+    if ((!resolvedUserId || !resolvedToken) && typeof window !== 'undefined') {
+      try {
+        const userData = JSON.parse(localStorage.getItem('user') || '{}');
+        resolvedUserId = resolvedUserId || userData.user_id || userData.id || userData.userId || '';
+        resolvedToken = resolvedToken || userData.token || localStorage.getItem('token') || '';
+      } catch {
+        resolvedToken = resolvedToken || localStorage.getItem('token') || '';
+      }
+    }
+
+    if (!resolvedUserId || !resolvedToken) {
+      throw new Error('Missing login details. Please log in again before saving your resume.');
+    }
+
+    return { resolvedUserId, resolvedToken };
+  };
+
   const saveResumeTemplate = async (templateFileUrl: string) => {
-    if (!userId || !token) return;
+    const { resolvedUserId, resolvedToken } = getAuthForSave();
     try {
       const templatePayload = {
         template_name: resumeName.trim(),
@@ -764,13 +785,13 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
       };
       const payload = { templates: [templatePayload] };
       const endpoint = resumeTemplateId
-        ? `/users/${userId}/resume-templates/${resumeTemplateId}`
-        : `/users/${userId}/resume-templates`;
+        ? `/users/${resolvedUserId}/resume-templates/${resumeTemplateId}`
+        : `/users/${resolvedUserId}/resume-templates`;
       const method = resumeTemplateId ? 'put' : 'post';
       const response = await api[method](endpoint, payload, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${resolvedToken}` },
       });
-      return response.data;
+      return response.data ?? true;
     } catch (error) {
       console.error('Error saving template:', error);
       throw error;
@@ -876,7 +897,12 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
         return;
       }
 
-      await saveResumeTemplate(cloudinaryUrl);
+      const savedTemplate = await saveResumeTemplate(cloudinaryUrl);
+      if (!savedTemplate) {
+        alert('Failed to save resume before download.');
+        return;
+      }
+
       downloadPdfBlob(finalBlob, finalName);
       setShowNameDialog(false);
       setShowDownloadDialog(false);

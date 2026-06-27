@@ -13,6 +13,7 @@ import {
   Clock,
   X,
   AlertCircle,
+  ArrowLeft,
 } from "lucide-react";
 
 import api from "@/api";
@@ -68,7 +69,7 @@ function PortfolioCard({
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-xl border border-gray-100 p-5 flex flex-col gap-3 hover:shadow-md transition-shadow group relative cursor-pointer"
+      className="h-full min-h-[205px] bg-white rounded-xl border border-gray-100 p-5 flex flex-col gap-3 hover:shadow-md transition-shadow group relative cursor-pointer"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -95,11 +96,9 @@ function PortfolioCard({
         </button>
       </div>
 
-      {portfolio.description && (
-        <p className="text-xs text-gray-500 leading-relaxed line-clamp-3 mt-1">
-          {portfolio.description}
-        </p>
-      )}
+      <p className="min-h-[54px] text-xs text-gray-500 leading-relaxed line-clamp-3 mt-1">
+        {portfolio.description || ""}
+      </p>
 
       {/* Buttons: Manage & Preview */}
       <div className="mt-auto pt-4 flex gap-2">
@@ -282,6 +281,13 @@ export default function PortfolioList() {
       <DashNav heading="My Portfolios" />
 
       <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-8">
+        <button
+          onClick={() => navigate("/portfolio")}
+          className="inline-flex items-center gap-2 mb-5 text-sm font-semibold text-gray-600 hover:text-violet-600 transition cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Portfolio Page
+        </button>
 
         {/* Header row */}
         <div className="flex items-center justify-between mb-6">
@@ -319,7 +325,7 @@ export default function PortfolioList() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {portfolios.map((p) => (
-              <div key={p.portfolio_id} className={deleting === String(p.portfolio_id) ? "opacity-50 pointer-events-none" : ""}>
+              <div key={p.portfolio_id} className={`h-full ${deleting === String(p.portfolio_id) ? "opacity-50 pointer-events-none" : ""}`}>
                 <PortfolioCard
                   portfolio={p}
                   onDelete={handleDelete}
