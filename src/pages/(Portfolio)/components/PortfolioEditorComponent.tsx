@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { uploadPdfToCloudinary } from "@/utils/uploadPdfToCloudinary";
 import { uploadToCloudinary } from "@/utils/uploadToCloudinary";
 import {
@@ -179,6 +179,25 @@ export default function PortfolioEditorComponent({
   const [removingProfileImage, setRemovingProfileImage] = useState(false);
   const [removingCv, setRemovingCv] = useState(false);
   const [removingCaseStudyImageIndex, setRemovingCaseStudyImageIndex] = useState<number | null>(null);
+
+  // Block drag and drop into text fields in the portfolio editor
+  useEffect(() => {
+    const handleDrop = (e: DragEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        (target.tagName === "INPUT" && (target as HTMLInputElement).type !== "file") ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener("drop", handleDrop, { capture: true });
+    return () => {
+      document.removeEventListener("drop", handleDrop, { capture: true });
+    };
+  }, []);
   const palettePresets: Array<{
     id: string;
     name: string;

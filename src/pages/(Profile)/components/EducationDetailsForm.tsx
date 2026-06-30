@@ -501,6 +501,7 @@ export default function EducationDetailsForm({
         { key: "universityBoard", message: "University/Board is required" },
         { key: "startYear", message: "Start Year is required" },
         { key: "resultFormat", message: "Result Format is required" },
+        { key: "result", message: "Result is required" },
       ];
 
       requiredFields.forEach(({ key, message }) => {
@@ -527,18 +528,6 @@ export default function EducationDetailsForm({
         });
       }
 
-      if (edu.resultFormat && !edu.result) {
-        setErrors((prev) => ({
-          ...prev,
-          [`${prefix}-result`]: "Result is required when result format is selected",
-        }));
-      } else {
-        setErrors((prev) => {
-          const updated = { ...prev };
-          delete updated[`${prefix}-result`];
-          return updated;
-        });
-      }
     } else if (isEducationCardFilled(edu)) {
       if (!edu.resultFormat) {
         setErrors((prev) => ({
@@ -553,10 +542,10 @@ export default function EducationDetailsForm({
         });
       }
 
-      if (edu.resultFormat && !edu.result) {
+      if (!edu.result) {
         setErrors((prev) => ({
           ...prev,
-          [`${prefix}-result`]: "Result is required when result format is selected",
+          [`${prefix}-result`]: "Result is required if data is entered",
         }));
       } else {
         setErrors((prev) => {
@@ -738,20 +727,41 @@ export default function EducationDetailsForm({
   const handleSaveSslc = async () => {
     const currentData = sslcData;
     const initial = initialSslc.current;
+
+    let hasError = false;
+
+    const instError = validateInstitutionName(currentData.institutionName);
+    if (instError) {
+      setErrors((prev) => ({ ...prev, "sslc-institutionName": instError }));
+      hasError = true;
+    }
+
     const boardTypeError = validateBoardType(currentData.boardType);
     if (boardTypeError) {
       setErrors((prev) => ({ ...prev, "sslc-boardType": boardTypeError }));
-      return;
+      hasError = true;
     }
 
-    const resultError = validateResult(currentData.result, currentData.resultFormat);
-    if (resultError) {
-      setErrors((prev) => ({ ...prev, "sslc-result": resultError }));
-      return;
+    if (!currentData.resultFormat) {
+      setErrors((prev) => ({ ...prev, "sslc-resultFormat": "Result Format is required" }));
+      hasError = true;
     }
 
-    // Check for validation errors
-    if (errors["sslc-result"] || errors["sslc-institutionName"] || errors["sslc-boardType"]) return;
+    if (!currentData.result) {
+      setErrors((prev) => ({ ...prev, "sslc-result": "Result is required" }));
+      hasError = true;
+    } else if (currentData.resultFormat) {
+      const resultError = validateResult(currentData.result, currentData.resultFormat);
+      if (resultError) {
+        setErrors((prev) => ({ ...prev, "sslc-result": resultError }));
+        hasError = true;
+      }
+    }
+
+    if (hasError) return;
+
+    // Check for any remaining validation errors
+    if (errors["sslc-institutionName"] || errors["sslc-boardType"] || errors["sslc-resultFormat"] || errors["sslc-result"]) return;
 
     try {
       let payload: Record<string, any> = {};
@@ -835,20 +845,41 @@ export default function EducationDetailsForm({
   const handleSavePu = async () => {
     const currentData = puData;
     const initial = initialPu.current;
+
+    let hasError = false;
+
+    const instError = validateInstitutionName(currentData.institutionName);
+    if (instError) {
+      setErrors((prev) => ({ ...prev, "pu-institutionName": instError }));
+      hasError = true;
+    }
+
     const boardTypeError = validateBoardType(currentData.boardType);
     if (boardTypeError) {
       setErrors((prev) => ({ ...prev, "pu-boardType": boardTypeError }));
-      return;
+      hasError = true;
     }
 
-    const resultError = validateResult(currentData.result, currentData.resultFormat);
-    if (resultError) {
-      setErrors((prev) => ({ ...prev, "pu-result": resultError }));
-      return;
+    if (!currentData.resultFormat) {
+      setErrors((prev) => ({ ...prev, "pu-resultFormat": "Result Format is required" }));
+      hasError = true;
     }
 
-    // Check for validation errors
-    if (errors["pu-result"] || errors["pu-institutionName"] || errors["pu-boardType"]) return;
+    if (!currentData.result) {
+      setErrors((prev) => ({ ...prev, "pu-result": "Result is required" }));
+      hasError = true;
+    } else if (currentData.resultFormat) {
+      const resultError = validateResult(currentData.result, currentData.resultFormat);
+      if (resultError) {
+        setErrors((prev) => ({ ...prev, "pu-result": resultError }));
+        hasError = true;
+      }
+    }
+
+    if (hasError) return;
+
+    // Check for any remaining validation errors
+    if (errors["pu-institutionName"] || errors["pu-boardType"] || errors["pu-resultFormat"] || errors["pu-result"]) return;
 
     try {
       let payload: Record<string, any> = {};
@@ -943,12 +974,27 @@ export default function EducationDetailsForm({
       ? `extra-${extraEducations.findIndex((e) => e.id === edu.id)}`
       : `higher-${higherEducations.findIndex((e) => e.id === edu.id)}`;
     const resultError = validateResult(edu.result, edu.resultFormat);
-    if (resultError) {
-      setErrors((prev) => ({ ...prev, [`${prefix}-result`]: resultError }));
+    
+    let hasError = false;
+    const newErrors: Record<string, string> = {};
+
+    if (edu.degree || isEducationCardFilled(edu)) {
+      if (!edu.fieldOfStudy) { newErrors[`${prefix}-fieldOfStudy`] = "Field of Study is required"; hasError = true; }
+      if (!edu.institutionName) { newErrors[`${prefix}-institutionName`] = "Institution Name is required"; hasError = true; }
+      if (!edu.universityBoard) { newErrors[`${prefix}-universityBoard`] = "University/Board is required"; hasError = true; }
+      if (!edu.startYear) { newErrors[`${prefix}-startYear`] = "Start Year is required"; hasError = true; }
+      if (!edu.currentlyPursuing && !edu.endYear) { newErrors[`${prefix}-endYear`] = "End Year is required"; hasError = true; }
+      if (!edu.resultFormat) { newErrors[`${prefix}-resultFormat`] = "Result Format is required"; hasError = true; }
+      if (!edu.result) { newErrors[`${prefix}-result`] = "Result is required"; hasError = true; }
+      if (resultError) { newErrors[`${prefix}-result`] = resultError; hasError = true; }
+    }
+
+    if (hasError) {
+      setErrors((prev) => ({ ...prev, ...newErrors }));
       return;
     }
 
-    // Check for validation errors in current card
+    // Check for any other pre-existing validation errors
     if (
       errors[`${prefix}-fieldOfStudy`] ||
       errors[`${prefix}-result`] ||
@@ -959,6 +1005,7 @@ export default function EducationDetailsForm({
       errors[`${prefix}-endYear`]
     )
       return;
+
     const isNew = !edu.education_id;
     // Handle initial save or update
     try {
