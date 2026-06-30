@@ -974,7 +974,7 @@ export default function EducationDetailsForm({
       ? `extra-${extraEducations.findIndex((e) => e.id === edu.id)}`
       : `higher-${higherEducations.findIndex((e) => e.id === edu.id)}`;
     const resultError = validateResult(edu.result, edu.resultFormat);
-    
+
     let hasError = false;
     const newErrors: Record<string, string> = {};
 
@@ -1366,30 +1366,49 @@ export default function EducationDetailsForm({
     const resultErrors: { [key: string]: string } = {};
     const sslcBoardTypeError =
       sslcData.boardType ||
-      !(sslcData.institutionName || sslcData.resultFormat || sslcData.yearOfPassing || sslcData.result)
+        !(sslcData.institutionName || sslcData.resultFormat || sslcData.yearOfPassing || sslcData.result)
         ? ""
         : "Board Type is required";
     const puBoardTypeError =
       puData.boardType ||
-      !(puData.institutionName || puData.subjectStream || puData.resultFormat || puData.yearOfPassing || puData.result)
+        !(puData.institutionName || puData.subjectStream || puData.resultFormat || puData.yearOfPassing || puData.result)
         ? ""
         : "Board Type is required";
     const sslcResultError = validateResult(sslcData.result, sslcData.resultFormat);
     const puResultError = validateResult(puData.result, puData.resultFormat);
 
+    const sslcResultFormatError =
+      sslcData.resultFormat ||
+        !(sslcData.institutionName || sslcData.boardType || sslcData.yearOfPassing || sslcData.result)
+        ? ""
+        : "Result Format is required";
+    const puResultFormatError =
+      puData.resultFormat ||
+        !(puData.institutionName || puData.boardType || puData.subjectStream || puData.yearOfPassing || puData.result)
+        ? ""
+        : "Result Format is required";
+
     if (sslcBoardTypeError) resultErrors["sslc-boardType"] = sslcBoardTypeError;
     if (puBoardTypeError) resultErrors["pu-boardType"] = puBoardTypeError;
     if (sslcResultError) resultErrors["sslc-result"] = sslcResultError;
     if (puResultError) resultErrors["pu-result"] = puResultError;
+    if (sslcResultFormatError) resultErrors["sslc-resultFormat"] = sslcResultFormatError;
+    if (puResultFormatError) resultErrors["pu-resultFormat"] = puResultFormatError;
 
     higherEducations.forEach((edu, index) => {
       const resultError = validateResult(edu.result, edu.resultFormat);
       if (resultError) resultErrors[`higher-${index}-result`] = resultError;
+      if (!edu.resultFormat && (edu.degree || isEducationCardFilled(edu))) {
+        resultErrors[`higher-${index}-resultFormat`] = "Result Format is required";
+      }
     });
 
     extraEducations.forEach((edu, index) => {
       const resultError = validateResult(edu.result, edu.resultFormat);
       if (resultError) resultErrors[`extra-${index}-result`] = resultError;
+      if (!edu.resultFormat && (edu.degree || isEducationCardFilled(edu))) {
+        resultErrors[`extra-${index}-resultFormat`] = "Result Format is required";
+      }
     });
 
     if (Object.keys(resultErrors).length > 0) {
@@ -1563,11 +1582,10 @@ export default function EducationDetailsForm({
                     handleChange("fieldOfStudy", e.target.value)
                   }
                   placeholder="Enter Field of Study"
-                  className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${
-                    errors[`${prefix}-fieldOfStudy`]
-                      ? "border-red-500 focus:ring-red-400"
-                      : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
-                  }`}
+                  className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${errors[`${prefix}-fieldOfStudy`]
+                    ? "border-red-500 focus:ring-red-400"
+                    : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                    }`}
                 />
                 {errors[`${prefix}-fieldOfStudy`] && (
                   <p className="mt-1 text-xs text-red-500">
@@ -1700,11 +1718,11 @@ export default function EducationDetailsForm({
                     onChange={(e) =>
                       handleChange("resultFormat", e.target.value)
                     }
-                    className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm appearance-none bg-white pr-8 ${
-                      errors[`${prefix}-resultFormat`]
-                        ? "border-red-500 focus:ring-red-400"
-                        : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
-                    }`}
+                    required
+                    className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm appearance-none bg-white pr-8 ${errors[`${prefix}-resultFormat`]
+                      ? "border-red-500 focus:ring-red-400"
+                      : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                      }`}
                   >
                     <option value="">Select Result Format</option>
                     <option value="Percentage">Percentage</option>
@@ -1925,7 +1943,11 @@ export default function EducationDetailsForm({
                       name="resultFormat"
                       value={sslcData.resultFormat}
                       onChange={handleSslcChange}
-                      className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
+                      required
+                      className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm appearance-none bg-white pr-8 ${errors["sslc-resultFormat"]
+                        ? "border-red-500 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                        }`}
                     >
                       <option value="">Select Result Format</option>
                       <option value="Percentage">Percentage</option>
@@ -1934,6 +1956,11 @@ export default function EducationDetailsForm({
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
+                  {errors["sslc-resultFormat"] && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors["sslc-resultFormat"]}
+                    </p>
+                  )}
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
@@ -2099,7 +2126,11 @@ export default function EducationDetailsForm({
                       name="resultFormat"
                       value={puData.resultFormat}
                       onChange={handlePuChange}
-                      className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
+                      required
+                      className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm appearance-none bg-white pr-8 ${errors["pu-resultFormat"]
+                        ? "border-red-500 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                        }`}
                     >
                       <option value="">Select Result Format</option>
                       <option value="Percentage">Percentage</option>
@@ -2108,6 +2139,11 @@ export default function EducationDetailsForm({
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
+                  {errors["pu-resultFormat"] && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors["pu-resultFormat"]}
+                    </p>
+                  )}
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
