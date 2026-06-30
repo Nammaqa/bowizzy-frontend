@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { uploadPdfToCloudinary } from "@/utils/uploadPdfToCloudinary";
 import { uploadToCloudinary } from "@/utils/uploadToCloudinary";
 import {
@@ -179,6 +179,25 @@ export default function PortfolioEditorComponent({
   const [removingProfileImage, setRemovingProfileImage] = useState(false);
   const [removingCv, setRemovingCv] = useState(false);
   const [removingCaseStudyImageIndex, setRemovingCaseStudyImageIndex] = useState<number | null>(null);
+
+  // Block drag and drop into text fields in the portfolio editor
+  useEffect(() => {
+    const handleDrop = (e: DragEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        (target.tagName === "INPUT" && (target as HTMLInputElement).type !== "file") ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener("drop", handleDrop, { capture: true });
+    return () => {
+      document.removeEventListener("drop", handleDrop, { capture: true });
+    };
+  }, []);
   const palettePresets: Array<{
     id: string;
     name: string;
@@ -254,6 +273,15 @@ export default function PortfolioEditorComponent({
   const mmYYYYRegex = /^(0[1-9]|1[0-2])-\d{4}$/;
 
   const sanitizePlainText = (val: string) => val.replace(/[^A-Za-z0-9 ]/g, "");
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const monthOffset = (years: number) => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() + years);
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+  };
+  const minMonth = monthOffset(-60); // 60 years back
+  const maxMonth = monthOffset(40); // 40 years ahead
 
   const isValidImageFile = (file: File) => {
     const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp"];
@@ -1325,6 +1353,11 @@ export default function PortfolioEditorComponent({
                       value={toMonthInputValue(getExperienceDate(exp, "startDate"))}
                       onChange={(e) => handleUpdateExperienceDate(idx, "startDate", e.target.value)}
                       title="Use month-year format, e.g. April 2024"
+                      min={minMonth}
+                      max={maxMonth}
+                      onKeyDown={(e) => e.preventDefault()}
+                      onPaste={(e) => e.preventDefault()}
+                      onInput={(e) => e.preventDefault()}
                       className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                     />
                   </div>
@@ -1337,6 +1370,11 @@ export default function PortfolioEditorComponent({
                       value={toMonthInputValue(getExperienceDate(exp, "endDate"))}
                       onChange={(e) => handleUpdateExperienceDate(idx, "endDate", e.target.value)}
                       title="Use month-year format, e.g. May 2026"
+                      min={minMonth}
+                      max={maxMonth}
+                      onKeyDown={(e) => e.preventDefault()}
+                      onPaste={(e) => e.preventDefault()}
+                      onInput={(e) => e.preventDefault()}
                       className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                     />
                   </div>
