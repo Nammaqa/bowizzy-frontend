@@ -531,13 +531,9 @@ export default function ProfileForm() {
         break;
 
       case 3: // Projects
-        const hasValidProject = data.projects.some(
-          (p) => p.projectTitle
-        );
-        if (!hasValidProject) {
-          return false;
-        }
-        break;
+        // Projects are optional, so an empty selection should still allow
+        // the user to move to the next profile step.
+        return true;
 
       case 4: // Skills & Links
         // Access skills and links arrays directly

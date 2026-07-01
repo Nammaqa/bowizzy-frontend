@@ -43,6 +43,9 @@ interface Certificate {
 
 // Normalize any value to a comparable string, treating null/undefined/"" as identical
 const norm = (v: any): string => (v == null ? "" : String(v));
+const CERTIFICATE_PROVIDER_MAX_LENGTH = 50;
+const CERTIFICATE_DESCRIPTION_MAX_LENGTH = 500;
+const MIN_CERTIFICATE_YEAR = 1960;
 
 export default function CertificationDetailsForm({
   onNext,
@@ -151,8 +154,21 @@ export default function CertificationDetailsForm({
   };
 
   const validateProvider = (value: string) => {
-    if (value && !/^[a-zA-Z\s.,&'\-]+$/.test(value)) {
+    const trimmedValue = value.trim();
+    if (!trimmedValue) return "";
+    if (trimmedValue.length > CERTIFICATE_PROVIDER_MAX_LENGTH) {
+      return `Certificate provided by cannot exceed ${CERTIFICATE_PROVIDER_MAX_LENGTH} characters`;
+    }
+    if (!/^[a-zA-Z\s.,&'\-]+$/.test(trimmedValue)) {
       return "Invalid characters in provider name (no numbers allowed)";
+    }
+    return "";
+  };
+
+  const validateDescription = (value: string) => {
+    const text = value.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").trim();
+    if (text.length > CERTIFICATE_DESCRIPTION_MAX_LENGTH) {
+      return `Description cannot exceed ${CERTIFICATE_DESCRIPTION_MAX_LENGTH} characters`;
     }
     return "";
   };
@@ -178,15 +194,28 @@ export default function CertificationDetailsForm({
     return `${year}-${month}-${day}`;
   };
 
+  const getMaxCertificateDate = (): string => {
+    const now = new Date();
+    now.setFullYear(now.getFullYear() - 1);
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   const validateDateValue = (value: string) => {
     if (!value || value === "") return "";
     if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return "Please select a valid date";
     const [y, m, d] = value.split("-");
     if (y.length !== 4) return "Year must be 4 digits";
+    const yearNum = parseInt(y, 10);
     const monthNum = parseInt(m, 10);
     const dayNum = parseInt(d, 10);
     if (isNaN(monthNum) || monthNum < 1 || monthNum > 12) return "Invalid month";
     if (isNaN(dayNum) || dayNum < 1 || dayNum > 31) return "Invalid day";
+    if (yearNum <= MIN_CERTIFICATE_YEAR || yearNum >= new Date().getFullYear()) {
+      return `Year must be greater than ${MIN_CERTIFICATE_YEAR} and less than the current year`;
+    }
     if (value > getTodayDate()) return "Cannot select a future date";
     return "";
   };
@@ -209,6 +238,9 @@ export default function CertificationDetailsForm({
     } else if (field === "certificateProvidedBy" && typeof value === "string") {
       const error = validateProvider(value);
       setErrors((prev) => ({ ...prev, [`cert-${index}-certificateProvidedBy`]: error }));
+    } else if (field === "description" && typeof value === "string") {
+      const error = validateDescription(value);
+      setErrors((prev) => ({ ...prev, [`cert-${index}-description`]: error }));
     }
   };
 
@@ -408,6 +440,7 @@ export default function CertificationDetailsForm({
 
     const providerError = validateProvider(cert.certificateProvidedBy || "");
     const dateError = validateDateValue(cert.date || "");
+    const descriptionError = validateDescription(cert.description || "");
 
     if (providerError) {
       setErrors((prev) => ({ ...prev, [`cert-${index}-certificateProvidedBy`]: providerError }));
@@ -415,12 +448,16 @@ export default function CertificationDetailsForm({
     if (dateError) {
       setErrors((prev) => ({ ...prev, [`cert-${index}-date`]: dateError }));
     }
+    if (descriptionError) {
+      setErrors((prev) => ({ ...prev, [`cert-${index}-description`]: descriptionError }));
+    }
 
     const updatedLocalErrors = [
       errors[`cert-${index}-certificateTitle`],
       errors[`cert-${index}-file`],
       providerError,
       dateError,
+      descriptionError,
     ].filter(Boolean);
 
     if (updatedLocalErrors.length > 0) return;
@@ -672,6 +709,7 @@ export default function CertificationDetailsForm({
                     onChange={(e) =>
                       handleCertificateChange(index, "certificateProvidedBy", e.target.value)
                     }
+                    maxLength={CERTIFICATE_PROVIDER_MAX_LENGTH}
                     placeholder="Certificate Provided By"
                     className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${
                       errors[`cert-${index}-certificateProvidedBy`]
@@ -700,7 +738,8 @@ export default function CertificationDetailsForm({
                       }
                       placeholder="Select Month and Year"
                       className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm pr-8"
-                      max={getTodayDate()}
+                      min="1961-01-01"
+                      max={getMaxCertificateDate()}
                     />
                   </div>
                   {errors[`cert-${index}-date`] && (
@@ -724,6 +763,11 @@ export default function CertificationDetailsForm({
                   placeholder="Provide Description..."
                   rows={5}
                 />
+                {errors[`cert-${index}-description`] && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors[`cert-${index}-description`]}
+                  </p>
+                )}
               </div>
 
               {/* Upload Certificate */}

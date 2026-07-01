@@ -155,14 +155,13 @@ export default function SkillsLinksDetailsForm({
 
   // Validation functions
   const validateSkillName = (value: string) => {
-    if (value && !/^[a-zA-Z0-9\s.+#-]+$/.test(value)) {
-      return "Invalid characters in skill name";
+    const trimmedValue = value.trim();
+    if (!trimmedValue) return "";
+    if (trimmedValue.length > 20) {
+      return "Skill must be at most 20 characters";
     }
-    if (value && !/[A-Za-z]/.test(value)) {
-      return "Skill must contain at least one letter";
-    }
-    if (value && value.length > 13) {
-      return "Max 13 characters allowed";
+    if (!/^[A-Za-z\s]+$/.test(trimmedValue)) {
+      return "Skill must contain only letters and spaces";
     }
     return "";
   };
@@ -170,6 +169,10 @@ export default function SkillsLinksDetailsForm({
   // Handler for validating URLs
   const validateUrl = (value: string, type: string) => {
     if (!value) return "";
+
+    if (value.length > 100) {
+      return `${type} URL must be at most 100 characters`;
+    }
 
     const urlPattern =
       /^(https?:\/\/)?([\w\-]+(\.[\w\-]+)+)([\w\-\.,@?^=%&:/~\+#]*[\w\-@?^=%&/~\+#])?$/i;
@@ -192,7 +195,7 @@ export default function SkillsLinksDetailsForm({
   // --- SKILLS HANDLERS ---
 
   const handleSkillChange = (index: number, field: string, value: string) => {
-    if (field === "skillName" && value.length > 13) return;
+    if (field === "skillName" && value.length > 20) return;
 
     const updated = [...skills];
     updated[index] = { ...updated[index], [field]: value };
@@ -224,8 +227,12 @@ export default function SkillsLinksDetailsForm({
 
     let hasError = false;
     skills.forEach((s, index) => {
+      const nameError = validateSkillName(s.skillName);
       if (!s.skillName || !s.skillName.trim()) {
         setErrors((prev) => ({ ...prev, [`skill-${index}-skillName`]: "Skill Name is required" }));
+        hasError = true;
+      } else if (nameError) {
+        setErrors((prev) => ({ ...prev, [`skill-${index}-skillName`]: nameError }));
         hasError = true;
       }
       if (!s.skillLevel) {
@@ -408,6 +415,12 @@ export default function SkillsLinksDetailsForm({
       setErrors((prev) => ({
         ...prev,
         [`link-${linkIndex}-githubProfile`]: error,
+      }));
+    } else if (field === "portfolioUrl") {
+      const error = validateUrl(value, "Portfolio");
+      setErrors((prev) => ({
+        ...prev,
+        [`link-${linkIndex}-portfolioUrl`]: error,
       }));
     } else if (field === "publicationUrl") {
       const error = validateUrl(value, "Publication");
@@ -656,6 +669,7 @@ export default function SkillsLinksDetailsForm({
               required={fieldName === "linkedinProfile"}
               aria-required={fieldName === "linkedinProfile"}
               aria-invalid={!!errors[`link-${linkIndex}-${fieldName}`]}
+              maxLength={fieldName === "linkedinProfile" || fieldName === "githubProfile" || fieldName === "portfolioUrl" ? 100 : undefined}
               placeholder={`Enter ${label}...`}
               className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm pr-8 ${errors[`link-${linkIndex}-${fieldName}`]
                   ? "border-red-500 focus:ring-red-400"
@@ -804,6 +818,7 @@ export default function SkillsLinksDetailsForm({
                                   errors[`skill-${index}-skillName`] || errors.skills
                                 )
                               }
+                              maxLength={20}
                               placeholder="Enter Skill Name..."
                               className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm pr-8 ${errors[`skill-${index}-skillName`] || errors.skills
                                   ? "border-red-500 focus:ring-red-400"
