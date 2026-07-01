@@ -743,6 +743,22 @@ export default function ProjectDetailsForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // 0️⃣ Projects are optional. If no card has a title and nothing has
+    // ever been saved to the database for this section, skip every
+    // validation step and let the user proceed straight to the next
+    // profile section.
+    const hasAnyProjectData = projects.some(
+      (p) => (p.projectTitle && p.projectTitle.trim() !== "") || p.project_id
+    );
+    if (!hasAnyProjectData) {
+      setSubmitError("");
+      onNext({
+        projects: [],
+        deletedProjectIds: deletedProjectIds.current,
+      });
+      return;
+    }
+
     // 1️⃣ Validation errors check — only fields on cards that actually have
     // a project title filled in can block submission. An untitled card is
     // entirely optional, so any leftover errors on it are ignored here.
