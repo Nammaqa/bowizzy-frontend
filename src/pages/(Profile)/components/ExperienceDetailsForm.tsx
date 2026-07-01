@@ -9,6 +9,12 @@ import {
 } from "@/services/experienceService";
 import RichTextEditor from "@/pages/(ResumeBuilder)/components/ui/RichTextEditor";
 
+const CURRENT_YEAR = new Date().getFullYear();
+const MIN_EXPERIENCE_MONTH = "1960-01";
+const MAX_COMPANY_NAME_LENGTH = 100;
+const MAX_JOB_TITLE_LENGTH = 100;
+const MAX_DESCRIPTION_LENGTH = 500;
+
 interface ExperienceDetailsFormProps {
   onNext: (data: any) => void;
   onBack: () => void;
@@ -161,6 +167,7 @@ export default function ExperienceDetailsForm({
 
   const validateCompanyName = (value: string) => {
     if (!value.trim()) return "Company name is required";
+    if (value.length > MAX_COMPANY_NAME_LENGTH) return "Max 100 characters allowed";
     const regex = /^[a-zA-Z0-9\s.,&'-]+$/;
     if (!regex.test(value)) return "Invalid company name";
     if (!/[a-zA-Z]/.test(value)) return "Company name must include a letter";
@@ -169,22 +176,10 @@ export default function ExperienceDetailsForm({
 
   const validateJobTitle = (value: string) => {
     if (!value.trim()) return "Job title is required";
+    if (value.length > MAX_JOB_TITLE_LENGTH) return "Max 100 characters allowed";
     const regex = /^[a-zA-Z0-9\s./-]+$/;
     if (!regex.test(value)) return "Invalid job title";
     if (!/[a-zA-Z]/.test(value)) return "Job title must contain at least one letter";
-    return "";
-  };
-
-  const validateDateRange = (startDate: string, endDate: string) => {
-    if (startDate && startDate < "1960-01") {
-      return "Start date cannot be before 1960";
-    }
-    if (endDate && endDate < "1960-01") {
-      return "End date cannot be before 1960";
-    }
-    if (startDate && endDate && endDate < startDate) {
-      return "End date cannot be before start date";
-    }
     return "";
   };
 
@@ -193,6 +188,110 @@ export default function ExperienceDetailsForm({
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
     return `${year}-${month}`;
+  };
+
+  const getPlainTextLength = (value: string) => {
+    if (!value) return 0;
+    return value
+      .replace(/<[^>]*>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .trim().length;
+  };
+
+  const validateDescription = (value: string) => {
+    if (getPlainTextLength(value) > MAX_DESCRIPTION_LENGTH) {
+      return "Description must be 500 characters or less";
+    }
+    return "";
+  };
+
+  const validateMonthDate = (value: string, label: string) => {
+    if (!value) return "";
+    if (!/^\d{4}-\d{2}$/.test(value)) return `Select a valid ${label.toLowerCase()}`;
+
+    const [year, month] = value.split("-").map(Number);
+    if (year < 1960) return `${label} cannot be before 1960`;
+    if (year > CURRENT_YEAR) return `${label} cannot be after ${CURRENT_YEAR}`;
+    if (month < 1 || month > 12) return `Select a valid ${label.toLowerCase()}`;
+    if (value > getCurrentMonth()) return `${label} cannot be in the future`;
+
+    return "";
+  };
+
+  const validateDateRange = (startDate: string, endDate: string) => {
+    const startError = validateMonthDate(startDate, "Start date");
+    if (startError) return startError;
+
+    const endError = validateMonthDate(endDate, "End date");
+    if (endError) return endError;
+
+    if (startDate && endDate && endDate < startDate) {
+      return "End date cannot be before start date";
+    }
+
+    return "";
+  };
+
+  const validateExperience = (exp: WorkExperience) => {
+    const nextErrors: Record<string, string> = {};
+
+    const companyNameError = validateCompanyName(exp.companyName);
+    if (companyNameError) nextErrors.companyName = companyNameError;
+
+    const jobTitleError = validateJobTitle(exp.jobTitle);
+    if (jobTitleError) nextErrors.jobTitle = jobTitleError;
+
+    const startDateError = exp.startDate
+      ? validateMonthDate(exp.startDate, "Start date")
+      : "Start date is required";
+    if (startDateError) nextErrors.startDate = startDateError;
+
+    if (!exp.currentlyWorking) {
+      const endDateError = !exp.endDate
+        ? "End date is required"
+        : startDateError
+          ? validateMonthDate(exp.endDate, "End date")
+          : validateDateRange(exp.startDate, exp.endDate);
+      if (endDateError) nextErrors.endDate = endDateError;
+    }
+
+    const descriptionError = validateDescription(exp.description);
+    if (descriptionError) nextErrors.description = descriptionError;
+
+    return nextErrors;
+  };
+
+  const isExperienceFilled = (exp: WorkExperience) => {
+    return !!(
+      exp.companyName ||
+      exp.jobTitle ||
+      exp.employmentType ||
+      exp.location ||
+      exp.workMode ||
+      exp.startDate ||
+      exp.endDate ||
+      exp.description ||
+      exp.experience_id
+    );
+  };
+
+  const setExperienceValidationErrors = (index: number, validationErrors: Record<string, string>) => {
+    setErrors((prev) => {
+      const next = { ...prev };
+      ["companyName", "jobTitle", "startDate", "endDate", "description"].forEach((field) => {
+        const key = `exp-${index}-${field}`;
+        if (validationErrors[field]) {
+          next[key] = validationErrors[field];
+        } else {
+          delete next[key];
+        }
+      });
+      return next;
+    });
+  };
+
+  const clampTextValue = (value: string, maxLength: number) => {
+    return value.length > maxLength ? value.slice(0, maxLength) : value;
   };
 
   const normalizeMonthToDate = (val: string): string | null => {
@@ -235,9 +334,17 @@ export default function ExperienceDetailsForm({
 
   const handleExperienceChange = (index: number, field: string, value: string | boolean) => {
     const updated = [...workExperiences];
-    updated[index] = { ...updated[index], [field]: value, isExpanded: true };
+    let finalValue = value;
 
-    if (field === "currentlyWorking" && value === true) {
+    if (field === "companyName" && typeof value === "string") {
+      finalValue = clampTextValue(value, MAX_COMPANY_NAME_LENGTH);
+    } else if (field === "jobTitle" && typeof value === "string") {
+      finalValue = clampTextValue(value, MAX_JOB_TITLE_LENGTH);
+    }
+
+    updated[index] = { ...updated[index], [field]: finalValue, isExpanded: true };
+
+    if (field === "currentlyWorking" && finalValue === true) {
       updated[index].endDate = "";
       setErrors((prevErrors) => {
         const newErrors = { ...prevErrors };
@@ -248,18 +355,29 @@ export default function ExperienceDetailsForm({
 
     setWorkExperiences(updated);
 
-    if (field === "companyName" && typeof value === "string") {
-      const error = validateCompanyName(value);
+    if (field === "companyName" && typeof finalValue === "string") {
+      const error = validateCompanyName(finalValue);
       setErrors((prev) => ({ ...prev, [`exp-${index}-companyName`]: error }));
-    } else if (field === "jobTitle" && typeof value === "string") {
-      const error = validateJobTitle(value);
+    } else if (field === "jobTitle" && typeof finalValue === "string") {
+      const error = validateJobTitle(finalValue);
       setErrors((prev) => ({ ...prev, [`exp-${index}-jobTitle`]: error }));
-    } else if (field === "startDate" && typeof value === "string") {
-      const error = validateDateRange(value, updated[index].endDate);
+    } else if (field === "startDate" && typeof finalValue === "string") {
+      const startError = validateMonthDate(finalValue, "Start date");
+      const endError =
+        !startError && !updated[index].currentlyWorking && updated[index].endDate
+          ? validateDateRange(finalValue, updated[index].endDate)
+          : "";
+      setErrors((prev) => ({
+        ...prev,
+        [`exp-${index}-startDate`]: startError,
+        [`exp-${index}-endDate`]: endError,
+      }));
+    } else if (field === "endDate" && typeof finalValue === "string") {
+      const error = validateDateRange(updated[index].startDate, finalValue);
       setErrors((prev) => ({ ...prev, [`exp-${index}-endDate`]: error }));
-    } else if (field === "endDate" && typeof value === "string") {
-      const error = validateDateRange(updated[index].startDate, value);
-      setErrors((prev) => ({ ...prev, [`exp-${index}-endDate`]: error }));
+    } else if (field === "description" && typeof finalValue === "string") {
+      const error = validateDescription(finalValue);
+      setErrors((prev) => ({ ...prev, [`exp-${index}-description`]: error }));
     }
   };
 
@@ -268,11 +386,19 @@ export default function ExperienceDetailsForm({
     const expChanges = experienceChanges[exp.id];
     const index = workExperiences.findIndex((e) => e.id === exp.id);
     const prefix = `exp-${index}`;
+    const validationErrors = validateExperience(exp);
+
+    if (Object.keys(validationErrors).length > 0) {
+      setExperienceValidationErrors(index, validationErrors);
+      return;
+    }
 
     if (
       errors[`${prefix}-companyName`] ||
       errors[`${prefix}-jobTitle`] ||
-      errors[`${prefix}-endDate`]
+      errors[`${prefix}-startDate`] ||
+      errors[`${prefix}-endDate`] ||
+      errors[`${prefix}-description`]
     )
       return;
 
@@ -436,7 +562,9 @@ export default function ExperienceDetailsForm({
       const newErrors = { ...prev };
       delete newErrors[`exp-${index}-companyName`];
       delete newErrors[`exp-${index}-jobTitle`];
+      delete newErrors[`exp-${index}-startDate`];
       delete newErrors[`exp-${index}-endDate`];
+      delete newErrors[`exp-${index}-description`];
       return newErrors;
     });
     setExperienceFeedback((prev) => {
@@ -523,6 +651,25 @@ export default function ExperienceDetailsForm({
       setSubmitError("Job Role is required before proceeding.");
       setJobRoleExpanded(true);
       return;
+    }
+
+    if (experienceLevel === "intern" || experienceLevel === "experienced") {
+      const validationErrors: Record<string, string> = {};
+
+      workExperiences.forEach((exp, index) => {
+        if (!isExperienceFilled(exp)) return;
+
+        const expErrors = validateExperience(exp);
+        Object.entries(expErrors).forEach(([field, message]) => {
+          validationErrors[`exp-${index}-${field}`] = message;
+        });
+      });
+
+      if (Object.keys(validationErrors).length > 0) {
+        setErrors((prev) => ({ ...prev, ...validationErrors }));
+        setSubmitError("Please fix validation errors before proceeding.");
+        return;
+      }
     }
 
     if (Object.values(errors).some((err) => err.length > 0)) {
@@ -629,6 +776,7 @@ export default function ExperienceDetailsForm({
                   type="text"
                   value={experience.companyName}
                   onChange={(e) => handleExperienceChange(index, "companyName", e.target.value)}
+                  maxLength={MAX_COMPANY_NAME_LENGTH}
                   placeholder="Enter Company Name"
                   className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${errors[`exp-${index}-companyName`]
                       ? "border-red-500 focus:ring-red-400"
@@ -649,6 +797,7 @@ export default function ExperienceDetailsForm({
                   type="text"
                   value={experience.jobTitle}
                   onChange={(e) => handleExperienceChange(index, "jobTitle", e.target.value)}
+                  maxLength={MAX_JOB_TITLE_LENGTH}
                   placeholder="Enter Job Title"
                   className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${errors[`exp-${index}-jobTitle`]
                       ? "border-red-500 focus:ring-red-400"
@@ -735,10 +884,19 @@ export default function ExperienceDetailsForm({
                   value={experience.startDate}
                   onChange={(e) => handleExperienceChange(index, "startDate", e.target.value)}
                   max={getCurrentMonth()}
-                  min="1960-01"
+                  min={MIN_EXPERIENCE_MONTH}
+                  onKeyDown={(e) => e.preventDefault()}
+                  onPaste={(e) => e.preventDefault()}
+                  required
                   placeholder="Select Start Date"
-                  className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm pr-8"
+                  className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm pr-8 ${errors[`exp-${index}-startDate`]
+                      ? "border-red-500 focus:ring-red-400"
+                      : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                    }`}
                 />
+                {errors[`exp-${index}-startDate`] && (
+                  <p className="mt-1 text-xs text-red-500">{errors[`exp-${index}-startDate`]}</p>
+                )}
               </div>
 
               {/* End Date */}
@@ -751,7 +909,10 @@ export default function ExperienceDetailsForm({
                   value={experience.endDate}
                   onChange={(e) => handleExperienceChange(index, "endDate", e.target.value)}
                   max={getCurrentMonth()}
-                  min="1960-01"
+                  min={MIN_EXPERIENCE_MONTH}
+                  onKeyDown={(e) => e.preventDefault()}
+                  onPaste={(e) => e.preventDefault()}
+                  required={!experience.currentlyWorking}
                   placeholder="Select End Date"
                   disabled={experience.currentlyWorking}
                   className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm pr-8 disabled:bg-gray-100 ${errors[`exp-${index}-endDate`]
@@ -790,6 +951,9 @@ export default function ExperienceDetailsForm({
                   placeholder="Provide Description / Projects of your Work"
                   rows={6}
                 />
+                {errors[`exp-${index}-description`] && (
+                  <p className="mt-1 text-xs text-red-500">{errors[`exp-${index}-description`]}</p>
+                )}
               </div>
             </div>
 
