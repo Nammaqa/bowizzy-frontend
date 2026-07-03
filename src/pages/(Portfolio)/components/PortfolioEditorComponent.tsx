@@ -265,7 +265,14 @@ export default function PortfolioEditorComponent({
 
   const nameMax = 50;
   const descMax = 300;
-  const linkMax = 250;
+  const linkMax = 100;
+  const skillMax = 59;
+  const stepTitleMax = 100;
+  const stepDescriptionMax = 250;
+  const caseStudyTitleMax = 50;
+  const caseStudyRoleMax = 50;
+  const caseStudySubtitleMax = 250;
+  const caseStudyDescriptionMax = 500;
   const experienceTextMax = 80;
   const techStackMax = 30;
   const maxImageSizeBytes = 5 * 1024 * 1024;
@@ -273,6 +280,11 @@ export default function PortfolioEditorComponent({
   const mmYYYYRegex = /^(0[1-9]|1[0-2])-\d{4}$/;
 
   const sanitizePlainText = (val: string) => val.replace(/[^A-Za-z0-9 ]/g, "");
+
+  const getPlainText = (html: string) => {
+    if (!html) return "";
+    return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
+  };
 
   const pad = (n: number) => String(n).padStart(2, "0");
   const monthOffset = (years: number) => {
@@ -402,10 +414,18 @@ export default function PortfolioEditorComponent({
   const handleAddSkill = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = newSkill.trim();
-    if (trimmed && !skills.includes(trimmed)) {
-      setSkills([...skills, trimmed]);
-      setNewSkill("");
+    if (!trimmed) return;
+    if (trimmed.length > skillMax) {
+      alert(`Skill must be ${skillMax} characters or less.`);
+      return;
     }
+    const normalized = trimmed.toLowerCase();
+    if (skills.map((s) => s.trim().toLowerCase()).includes(normalized)) {
+      alert("Skills must not repeat.");
+      return;
+    }
+    setSkills([...skills, trimmed]);
+    setNewSkill("");
   };
 
   const handleRemoveSkill = (skillName: string) => {
@@ -679,6 +699,7 @@ export default function PortfolioEditorComponent({
                 <input
                   type="text"
                   value={themeColor}
+                  maxLength={7}
                   onChange={(e) => setThemeColor(e.target.value)}
                   placeholder="#4f46e5"
                   className="flex-1 text-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
@@ -700,6 +721,7 @@ export default function PortfolioEditorComponent({
                 <input
                   type="text"
                   value={backgroundColor}
+                  maxLength={7}
                   onChange={(e) => setBackgroundColor(e.target.value)}
                   placeholder="#0a0f1e"
                   className="flex-1 text-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
@@ -817,6 +839,7 @@ export default function PortfolioEditorComponent({
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              maxLength={150}
               placeholder="hello@example.com"
               className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-500 bg-white"
             />
@@ -948,6 +971,7 @@ export default function PortfolioEditorComponent({
             value={newSkill}
             onChange={(e) => setNewSkill(e.target.value)}
             placeholder="e.g. JavaScript, UI Design, AWS"
+            maxLength={skillMax}
             className="flex-1 text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
           />
           <button
@@ -1013,23 +1037,31 @@ export default function PortfolioEditorComponent({
                       </label>
                       <input
                         type="text"
+                        maxLength={stepTitleMax}
                         value={step.title}
                         onChange={(e) => handleUpdateProcessStep(idx, "title", e.target.value)}
                         placeholder="e.g. Research, Wireframe, Prototype"
                         className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                       />
+                      <div className="mt-1 text-[10px] text-gray-400 font-medium">
+                        {step.title.length}/{stepTitleMax}
+                      </div>
                     </div>
                     <div>
                       <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
                         Step Description
                       </label>
                       <textarea
+                        maxLength={stepDescriptionMax}
                         value={step.description}
                         onChange={(e) => handleUpdateProcessStep(idx, "description", e.target.value)}
                         placeholder="Describe what happens in this phase of your design process..."
                         rows={3}
                         className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 resize-y"
                       />
+                      <div className="mt-1 text-[10px] text-gray-400 font-medium">
+                        {step.description.length}/{stepDescriptionMax}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1074,11 +1106,15 @@ export default function PortfolioEditorComponent({
                         </label>
                         <input
                           type="text"
+                          maxLength={caseStudyTitleMax}
                           value={study.title}
                           onChange={(e) => handleUpdateCaseStudy(idx, "title", e.target.value)}
                           placeholder="e.g. Mobile Banking Redesign"
                           className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                         />
+                        <div className="mt-1 text-[10px] text-gray-400 font-medium">
+                          {study.title.length}/{caseStudyTitleMax}
+                        </div>
                       </div>
                       <div>
                         <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
@@ -1086,11 +1122,15 @@ export default function PortfolioEditorComponent({
                         </label>
                         <input
                           type="text"
+                          maxLength={caseStudyRoleMax}
                           value={study.role}
                           onChange={(e) => handleUpdateCaseStudy(idx, "role", e.target.value)}
                           placeholder="e.g. UX Research, UI Design"
                           className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                         />
+                        <div className="mt-1 text-[10px] text-gray-400 font-medium">
+                          {study.role.length}/{caseStudyRoleMax}
+                        </div>
                       </div>
                     </div>
 
@@ -1100,11 +1140,15 @@ export default function PortfolioEditorComponent({
                       </label>
                       <input
                         type="text"
+                        maxLength={caseStudySubtitleMax}
                         value={study.subtitle}
                         onChange={(e) => handleUpdateCaseStudy(idx, "subtitle", e.target.value)}
                         placeholder="e.g. Improving onboarding conversion for first-time users"
                         className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                       />
+                      <div className="mt-1 text-[10px] text-gray-400 font-medium">
+                        {study.subtitle.length}/{caseStudySubtitleMax}
+                      </div>
                     </div>
 
                     <div>
@@ -1113,10 +1157,17 @@ export default function PortfolioEditorComponent({
                       </label>
                       <RichTextEditor
                         value={study.description}
-                        onChange={(val) => handleUpdateCaseStudy(idx, "description", val)}
+                        onChange={(val) => {
+                          if (getPlainText(val).length <= caseStudyDescriptionMax) {
+                            handleUpdateCaseStudy(idx, "description", val);
+                          }
+                        }}
                         placeholder="Problem, process, solution, and outcome..."
                         minHeight="90px"
                       />
+                      <div className="mt-1 text-[10px] text-gray-400 font-medium">
+                        {getPlainText(study.description).length}/{caseStudyDescriptionMax}
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

@@ -236,6 +236,7 @@ const TakeMockInterviewPage = () => {
   const [skills, setSkills] = useState<string[]>(initialSkills);
   const [selectedSkills, setSelectedSkills] = useState<string[]>(initialSkills.slice(0, 5));
   const [newSkill, setNewSkill] = useState("");
+  const [skillError, setSkillError] = useState("");
   const [savedResumes, setSavedResumes] = useState<SavedResume[]>([]);
   const [loadingResumes, setLoadingResumes] = useState(false);
   const [uploadingResume, setUploadingResume] = useState(false);
@@ -422,8 +423,15 @@ const TakeMockInterviewPage = () => {
 
   const addSkill = () => {
     const trimmedSkill = newSkill.trim();
-    if (!trimmedSkill || skills.includes(trimmedSkill)) return;
+    if (!trimmedSkill) {
+      return;
+    }
+    if (skills.includes(trimmedSkill)) {
+      setSkillError("This skill is already present.");
+      return;
+    }
 
+    setSkillError("");
     setSkills((currentSkills) => [...currentSkills, trimmedSkill]);
     setSelectedSkills((currentSkills) => [...currentSkills, trimmedSkill]);
     setNewSkill("");
@@ -815,7 +823,10 @@ const TakeMockInterviewPage = () => {
               <div className="mt-4 flex gap-2">
                 <input
                   value={newSkill}
-                  onChange={(event) => setNewSkill(event.target.value)}
+                  onChange={(event) => {
+                    setNewSkill(event.target.value);
+                    if (skillError) setSkillError("");
+                  }}
                   placeholder="Add a skill"
                   className="flex-1 rounded-xl border border-[#D9D9D9] px-4 py-3 text-sm focus:border-[#F26D3A] focus:outline-none focus:ring-2 focus:ring-[#FFE0D0]"
                 />
@@ -827,6 +838,11 @@ const TakeMockInterviewPage = () => {
                   Add
                 </button>
               </div>
+              {skillError && (
+                <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
+                  {skillError}
+                </div>
+              )}
 
               <div className="mt-4 flex flex-wrap gap-2">
                 {skills.map((skill) => (

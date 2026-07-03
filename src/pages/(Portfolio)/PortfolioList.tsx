@@ -368,6 +368,8 @@ export default function PortfolioList() {
                       setDomainError("");
                     }}
                     placeholder="my-portfolio"
+                    min={3}
+                    max={63}
                     className="flex-1 min-w-0 text-sm px-4 py-2.5 outline-none text-gray-800"
                   />
                   <div className="bg-gray-50 border-l border-gray-200 px-4 py-2.5 text-sm text-gray-500 font-medium flex items-center">
