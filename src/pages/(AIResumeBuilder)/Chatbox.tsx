@@ -553,6 +553,7 @@ export default function ChatBox({
                 value={inputValue}
                 onChange={(e) => onInputChange(e.target.value)}
                 onKeyDown={handleKeyDown}
+                maxLength={850}
                 placeholder="Type your message..."
                 className="flex-1 min-w-0 text-sm px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400 bg-white placeholder-gray-400 transition"
               />

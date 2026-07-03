@@ -108,6 +108,13 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
   };
 
   // Validation functions
+  const getCurrentMonth = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  };
+
+  const isValidMonthValue = (value: string) => /^\d{4}(-\d{2})?$/.test(value);
+
   const validateProjectTitle = (value: string) => {
     if (value && !/^[a-zA-Z0-9\s.,-]+$/.test(value)) {
       return "Invalid characters in project title";
@@ -124,12 +131,39 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
     return "";
   };
 
-  const validateDateRange = (startDate: string, endDate: string) => {
-    if (startDate && endDate) {
-      if (endDate < startDate) {
-        return "End date cannot be before start date";
-      }
-    }
+  const validateStartDate = (value: string) => {
+    if (!value) return "";
+    if (!isValidMonthValue(value)) return "Enter a valid year or month";
+    const yearNum = parseInt(value.split("-")[0], 10);
+    if (yearNum < 1960) return "Start date cannot be before 1960";
+    if (yearNum > new Date().getFullYear()) return "Start date cannot be in the future";
+    return "";
+  };
+
+  const validateEndDate = (value: string, startDate: string) => {
+    if (!value) return "";
+    if (!isValidMonthValue(value)) return "Enter a valid year or month";
+    const yearNum = parseInt(value.split("-")[0], 10);
+    if (yearNum < 1960) return "End date cannot be before 1960";
+    if (yearNum > new Date().getFullYear()) return "End date cannot be in the future";
+    if (startDate && value < startDate) return "End date cannot be before start date";
+    return "";
+  };
+
+  const getPlainText = (html: string) => {
+    if (!html) return "";
+    return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
+  };
+
+  const validateDescription = (value: string) => {
+    const length = getPlainText(value).length;
+    if (length > 500) return "Description cannot exceed 500 characters";
+    return "";
+  };
+
+  const validateRolesResponsibilities = (value: string) => {
+    const length = getPlainText(value).length;
+    if (length > 500) return "Roles & Responsibilities cannot exceed 500 characters";
     return "";
   };
 
@@ -159,20 +193,23 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
     if (field === "projectTitle" && typeof value === "string") {
       const error = validateProjectTitle(value);
       setErrors((prev) => ({ ...prev, [`project-${id}-projectTitle`]: error }));
-    } else if (
-      field === "startDate" &&
-      typeof value === "string" &&
-      updatedProj
-    ) {
-      const error = validateDateRange(value, updatedProj.endDate);
+    } else if (field === "startDate" && typeof value === "string" && updatedProj) {
+      const error = validateStartDate(value);
+      const endDateError = validateEndDate(updatedProj.endDate, value);
+      setErrors((prev) => ({
+        ...prev,
+        [`project-${id}-startDate`]: error,
+        [`project-${id}-endDate`]: endDateError,
+      }));
+    } else if (field === "endDate" && typeof value === "string" && updatedProj) {
+      const error = validateEndDate(value, updatedProj.startDate);
       setErrors((prev) => ({ ...prev, [`project-${id}-endDate`]: error }));
-    } else if (
-      field === "endDate" &&
-      typeof value === "string" &&
-      updatedProj
-    ) {
-      const error = validateDateRange(updatedProj.startDate, value);
-      setErrors((prev) => ({ ...prev, [`project-${id}-endDate`]: error }));
+    } else if (field === "description" && typeof value === "string") {
+      const error = validateDescription(value);
+      setErrors((prev) => ({ ...prev, [`project-${id}-description`]: error }));
+    } else if (field === "rolesResponsibilities" && typeof value === "string") {
+      const error = validateRolesResponsibilities(value);
+      setErrors((prev) => ({ ...prev, [`project-${id}-rolesResponsibilities`]: error }));
     }
 
     // Clear end date error if currently working is checked
@@ -202,11 +239,31 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
     const isNew = !project.project_id;
 
     // Check local validation errors
+    const projectTitleError = validateProjectTitle(project.projectTitle || "");
+    const startDateError = validateStartDate(project.startDate || "");
+    const endDateError = validateEndDate(project.endDate || "", project.startDate || "");
+    const descriptionError = validateDescription(project.description || "");
+    const rolesError = validateRolesResponsibilities(project.rolesResponsibilities || "");
+
     if (
+      projectTitleError ||
+      startDateError ||
+      endDateError ||
+      descriptionError ||
+      rolesError ||
       errors[`project-${project.id}-projectTitle`] ||
       errors[`project-${project.id}-endDate`]
-    )
+    ) {
+      setErrors((prev) => ({
+        ...prev,
+        [`project-${project.id}-projectTitle`]: projectTitleError,
+        [`project-${project.id}-startDate`]: startDateError,
+        [`project-${project.id}-endDate`]: endDateError,
+        [`project-${project.id}-description`]: descriptionError,
+        [`project-${project.id}-rolesResponsibilities`]: rolesError,
+      }));
       return;
+    }
 
     // Check if there are actually changes to save
     if (!getProjectChangedStatus(project) && !isNew) {
@@ -488,11 +545,6 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
     });
   };
 
-  const getPlainText = (html: string) => {
-    if (!html) return "";
-    return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
-  };
-
   const handleEnhanceRoles = async (project: Project) => {
     const hasInput = getPlainText(project.rolesResponsibilities ?? "").length > 0;
     if (!hasInput) return;
@@ -565,8 +617,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
               value={project.projectTitle}
               onChange={(v) => updateProject(project.id, "projectTitle", v)}
               error={errors[`project-${project.id}-projectTitle`]}
-              max="50"
-              min="5"
+              maxLength={50}
             />
 
             <div className="mt-4">
@@ -586,6 +637,10 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
                 value={project.startDate}
                 onChange={(v) => updateProject(project.id, "startDate", v)}
                 type="month"
+                min="1960-01"
+                max={getCurrentMonth()}
+                onKeyDown={(e) => e.preventDefault()}
+                error={errors[`project-${project.id}-startDate`]}
               />
               <FormInput
                 label="End Date"
@@ -593,6 +648,9 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
                 value={project.endDate}
                 onChange={(v) => updateProject(project.id, "endDate", v)}
                 type="month"
+                min="1960-01"
+                max={getCurrentMonth()}
+                onKeyDown={(e) => e.preventDefault()}
                 disabled={project.currentlyWorking}
                 error={errors[`project-${project.id}-endDate`]}
               />
@@ -629,6 +687,11 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
                   placeholder="Provide Description of your project.."
                   rows={4}
                 />
+                {errors[`project-${project.id}-description`] && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors[`project-${project.id}-description`]}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -665,6 +728,11 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
                   placeholder="Provide your roles & responsibilities..."
                   rows={4}
                 />
+                {errors[`project-${project.id}-rolesResponsibilities`] && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors[`project-${project.id}-rolesResponsibilities`]}
+                  </p>
+                )}
 
                 {/* Error */}
                 {enhanceRolesError[project.id] && (

@@ -468,7 +468,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       const regex = /^[a-zA-Z0-9\s.,&'\-()]+$/;
       if (!regex.test(val)) return "Invalid institution name";
       if (!/[a-zA-Z]/.test(val)) return "Institution name must include a letter";
-      if (val.length > 100) return "Max 100 characters allowed";
+      if (val.length > 50) return "Max 50 characters allowed";
       if (val.split(/\s+/).some((word) => word.length > 15))
         return "Each word must be 15 characters or less";
       return "";
@@ -476,8 +476,8 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
 
     const validateUniversityBoard = (val: string) => {
       if (!val || !val.trim()) return "University/Board is required";
-      const regex = /^[a-zA-Z0-9\s.,&'\-()]+$/;
-      if (!regex.test(val)) return "Invalid university/board name";
+      const regex = /^[a-zA-Z\s]+$/;
+      if (!regex.test(val)) return "Only letters and spaces allowed";
       if (val.length > 50) return "Max 50 characters allowed";
       return "";
     };
@@ -505,19 +505,31 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       return "";
     };
 
-    const validateYearOrMonth = (val: string) => {
+    const validateYearOrMonth = (val: string, fieldName?: string) => {
       if (!val || val === "") return "";
-      if (/^\d{4}$/.test(val)) {
-        const yearNum = parseInt(val, 10);
-        if (yearNum < 1960) return "Year must be 1960 or later";
-        
-        if (yearNum > new Date().getFullYear()) {
+      if (!/^\d{4}-\d{2}$/.test(val))
+        return "Please select a valid month (YYYY-MM)";
+      const [y, m] = val.split("-");
+      if (y.length !== 4) return "Year must be 4 digits";
+      const yearNum = parseInt(y, 10);
+      if (yearNum < 1961 && fieldName === "startYear")
+        return "Start year must be greater than 1960";
+      if (yearNum < 1960) return "Year must be 1960 or later";
+      const monthNum = parseInt(m, 10);
+      if (isNaN(monthNum) || monthNum < 1 || monthNum > 12)
+        return "Invalid month";
+
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth() + 1;
+
+      if (fieldName === "endYear" || fieldName === "yearOfPassing") {
+        if (yearNum > currentYear || (yearNum === currentYear && monthNum > currentMonth)) {
           return "Cannot be a future date";
         }
-
-        return "";
       }
-      return validateMonthFormat(val);
+
+      return "";
     };
 
     if (name.endsWith(".instituteName")) return validateInstitutionName(value);
@@ -527,9 +539,19 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       name.endsWith(".startYear") ||
       name.endsWith(".endYear")
     ) {
-      return validateYearOrMonth(value);
+      const fieldName = name.endsWith(".startYear")
+        ? "startYear"
+        : name.endsWith(".endYear")
+        ? "endYear"
+        : "yearOfPassing";
+      return validateYearOrMonth(value, fieldName);
     }
-    if (name.endsWith(".result")) return validateResult(value, resultFormat);
+    if (name.endsWith(".resultFormat"))
+      return value.trim() ? "" : "Select result format";
+    if (name.endsWith(".result")) {
+      if (!value.trim()) return "Result is required";
+      return validateResult(value, resultFormat);
+    }
 
     return "";
   };
@@ -622,8 +644,22 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
 
     if (errors["sslc.result"] || errors["sslc.instituteName"]) return;
 
-    if (currentData.result && !currentData.resultFormat) {
-      setErrors((prev) => ({ ...prev, "sslc.resultFormat": "Select result format" }));
+    const ssclResultFormatError = validateField(
+      "sslc.resultFormat",
+      currentData.resultFormat,
+      currentData.resultFormat
+    );
+    const ssclResultError = validateField(
+      "sslc.result",
+      currentData.result,
+      currentData.resultFormat
+    );
+    if (ssclResultFormatError || ssclResultError) {
+      setErrors((prev) => ({
+        ...prev,
+        "sslc.resultFormat": ssclResultFormatError,
+        "sslc.result": ssclResultError,
+      }));
       return;
     }
 
@@ -738,8 +774,22 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     )
       return;
 
-    if (currentData.result && !currentData.resultFormat) {
-      setErrors((prev) => ({ ...prev, "preUniversity.resultFormat": "Select result format" }));
+    const puResultFormatError = validateField(
+      "preUniversity.resultFormat",
+      currentData.resultFormat,
+      currentData.resultFormat
+    );
+    const puResultError = validateField(
+      "preUniversity.result",
+      currentData.result,
+      currentData.resultFormat
+    );
+    if (puResultFormatError || puResultError) {
+      setErrors((prev) => ({
+        ...prev,
+        "preUniversity.resultFormat": puResultFormatError,
+        "preUniversity.result": puResultError,
+      }));
       return;
     }
 
@@ -870,8 +920,22 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     )
       return;
 
-    if (edu.result && !edu.resultFormat) {
-      setErrors((prev) => ({ ...prev, [`higherEducation.${edu.id}.resultFormat`]: "Select result format" }));
+    const higherResultFormatError = validateField(
+      `higherEducation.${edu.id}.resultFormat`,
+      edu.resultFormat,
+      edu.resultFormat
+    );
+    const higherResultError = validateField(
+      `higherEducation.${edu.id}.result`,
+      edu.result,
+      edu.resultFormat
+    );
+    if (higherResultFormatError || higherResultError) {
+      setErrors((prev) => ({
+        ...prev,
+        [`higherEducation.${edu.id}.resultFormat`]: higherResultFormatError,
+        [`higherEducation.${edu.id}.result`]: higherResultError,
+      }));
       return;
     }
 
@@ -1100,12 +1164,23 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     setSslcFeedback("");
 
     const fieldError = validateField(`sslc.${field}`, value, updatedSslc.resultFormat);
-    setErrors((prev) => ({ ...prev, [`sslc.${field}`]: fieldError }));
+    const resultFormatError = validateField(
+      `sslc.resultFormat`,
+      updatedSslc.resultFormat,
+      updatedSslc.resultFormat
+    );
+    const resultError = validateField(
+      `sslc.result`,
+      updatedSslc.result,
+      updatedSslc.resultFormat
+    );
 
-    if (field === "resultFormat") {
-      const resultError = validateField(`sslc.result`, "", value);
-      setErrors((prev) => ({ ...prev, [`sslc.result`]: resultError }));
-    }
+    setErrors((prev) => ({
+      ...prev,
+      [`sslc.${field}`]: fieldError,
+      "sslc.resultFormat": resultFormatError,
+      "sslc.result": resultError,
+    }));
   };
 
   const updatePreUniversity = (
@@ -1129,12 +1204,22 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       value,
       updatedPu.resultFormat
     );
-    setErrors((prev) => ({ ...prev, [`preUniversity.${field}`]: fieldError }));
-
-    if (field === "resultFormat") {
-      const resultError = validateField(`preUniversity.result`, "", value);
-      setErrors((prev) => ({ ...prev, [`preUniversity.result`]: resultError }));
-    }
+    const resultFormatError = validateField(
+      `preUniversity.resultFormat`,
+      updatedPu.resultFormat,
+      updatedPu.resultFormat
+    );
+    const resultError = validateField(
+      `preUniversity.result`,
+      updatedPu.result,
+      updatedPu.resultFormat
+    );
+    setErrors((prev) => ({
+      ...prev,
+      [`preUniversity.${field}`]: fieldError,
+      "preUniversity.resultFormat": resultFormatError,
+      "preUniversity.result": resultError,
+    }));
   };
 
   const updateHigherEducation = (
@@ -1190,22 +1275,22 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       typeof normalizedValue === "string" ? normalizedValue : (value as string),
       edu?.resultFormat
     );
+    const resultFormatError = validateField(
+      `higherEducation.${id}.resultFormat`,
+      edu?.resultFormat,
+      edu?.resultFormat
+    );
+    const resultError = validateField(
+      `higherEducation.${id}.result`,
+      edu?.result,
+      edu?.resultFormat
+    );
     setErrors((prev) => ({
       ...prev,
       [`higherEducation.${id}.${field}`]: fieldError,
+      [`higherEducation.${id}.resultFormat`]: resultFormatError,
+      [`higherEducation.${id}.result`]: resultError,
     }));
-
-    if (field === "resultFormat") {
-      const resultError = validateField(
-        `higherEducation.${id}.result`,
-        "",
-        edu?.resultFormat
-      );
-      setErrors((prev) => ({
-        ...prev,
-        [`higherEducation.${id}.result`]: resultError,
-      }));
-    }
 
     if (
       edu &&
@@ -1383,6 +1468,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
               value={education.universityBoard}
               onChange={(v) => updateHigherEducation(id, "universityBoard", v)}
               error={errors[`higherEducation.${id}.universityBoard`]}
+              maxLength={50}
             />
           </div>
 
@@ -1402,6 +1488,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
                     ? "border-red-500 focus:ring-red-400"
                     : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
                   }`}
+                onKeyDown={(e) => e.preventDefault()}
               />
               {errors[`higherEducation.${id}.startYear`] && (
                 <p className="mt-1 text-xs text-red-500">
@@ -1426,6 +1513,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
                     : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
                   }`}
                 max={getMaxEndDate()}
+                onKeyDown={(e) => e.preventDefault()}
               />
               {errors[`higherEducation.${id}.endYear`] && (
                 <p className="mt-1 text-xs text-red-500">
@@ -1460,6 +1548,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
               value={education.resultFormat}
               onChange={(v) => updateHigherEducation(id, "resultFormat", v)}
               options={resultFormats}
+              required
             />
             <FormInput
               label="Result"
@@ -1467,6 +1556,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
               value={education.result}
               onChange={(v) => updateHigherEducation(id, "result", v)}
               error={errors[`higherEducation.${id}.result`]}
+              required
             />
           </div>
 
@@ -1542,6 +1632,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
                   ? "border-red-500 focus:ring-red-400"
                   : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
                 }`}
+              onKeyDown={(e) => e.preventDefault()}
             />
             {errors["sslc.yearOfPassing"] && (
               <p className="mt-1 text-xs text-red-500">
@@ -1558,6 +1649,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
             value={data.sslc.resultFormat}
             onChange={(v) => updateSSLC("resultFormat", v)}
             options={resultFormats}
+            required
           />
           <FormInput
             label="Result"
@@ -1565,6 +1657,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
             value={data.sslc.result}
             onChange={(v) => updateSSLC("result", v)}
             error={errors["sslc.result"]}
+            required
           />
         </div>
 
@@ -1664,6 +1757,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
             value={data.preUniversity.resultFormat}
             onChange={(v) => updatePreUniversity("resultFormat", v)}
             options={resultFormats}
+            required
           />
           <FormInput
             label="Result"
@@ -1671,6 +1765,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
             value={data.preUniversity.result}
             onChange={(v) => updatePreUniversity("result", v)}
             error={errors["preUniversity.result"]}
+            required
           />
         </div>
 

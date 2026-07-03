@@ -149,8 +149,8 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
     if (/^\d+$/.test(value.trim())) {
       return "Skill cannot be only numbers";
     }
-    if (value.length > 20) {
-      return "Max 20 characters allowed";
+    if (value.length > 50) {
+      return "Max 50 characters allowed";
     }
 
     return "";
@@ -166,8 +166,8 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
       return `Invalid ${type} URL format`;
     }
 
-    if (value.length > 120) {
-      return "Max 120 characters allowed";
+    if (value.length > 100) {
+      return "Max 100 characters allowed";
     }
 
     if (
@@ -184,6 +184,12 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
     )
       return "Please enter a valid GitHub URL";
 
+    return "";
+  };
+
+  const validateTechnicalSummary = (value: string) => {
+    const length = getPlainText(value).length;
+    if (length > 500) return "Technical summary cannot exceed 500 characters";
     return "";
   };
 
@@ -482,6 +488,12 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
 
   // Handler for saving technical summary
   const handleSaveTechnicalSummary = async () => {
+    const technicalSummaryError = validateTechnicalSummary(data.technicalSummary || "");
+    if (technicalSummaryError) {
+      setErrors((prev) => ({ ...prev, technicalSummary: technicalSummaryError }));
+      return;
+    }
+
     if (!technicalSummaryChanges) {
       setTechnicalSummaryFeedback("No changes to save.");
       setTimeout(() => setTechnicalSummaryFeedback(""), 3000);
@@ -741,7 +753,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
                   value={skill.skillName}
                   onChange={(v) => updateSkill(skill.id, "skillName", v)}
                   error={errors[`skill-${skill.id}-skillName`]}
-                  maxLength={20}
+                  maxLength={50}
                 />
               </div>
 
@@ -830,7 +842,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
                 value={data.links.linkedinProfile}
                 onChange={(v) => updateLink("linkedinProfile", v)}
                 error={errors[`link-linkedinProfile`]}
-                max="120"
+                maxLength={100}
               />
             </div>
             <div className="mt-5">
@@ -850,6 +862,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
                 value={data.links.githubProfile}
                 onChange={(v) => updateLink("githubProfile", v)}
                 error={errors[`link-githubProfile`]}
+                maxLength={100}
               />
             </div>
             <div className="mt-5">
@@ -869,6 +882,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
                 value={data.links.portfolioUrl}
                 onChange={(v) => updateLink("portfolioUrl", v)}
                 error={errors[`link-portfolioUrl`]}
+                maxLength={100}
               />
             </div>
             <div className="mt-5">
@@ -995,9 +1009,19 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
               onChange({ ...data, technicalSummary: v });
               if (enhancedSummaryVersions) setEnhancedSummaryVersions(null);
               if (enhanceSummaryError) setEnhanceSummaryError("");
+              setErrors((prev) => {
+                const next = { ...prev };
+                delete next.technicalSummary;
+                return next;
+              });
             }}
             rows={5}
           />
+          {errors.technicalSummary && (
+            <p className="mt-1 text-xs text-red-500">
+              {errors.technicalSummary}
+            </p>
+          )}
         </div>
 
         {/* Error */}

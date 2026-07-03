@@ -240,7 +240,7 @@ export default function PortfolioEditor() {
 
   const mmYYYYRegex = /^(0[1-9]|1[0-2])\s*-\s*\d{4}$/;
   const plainTextRegex = /^[A-Za-z0-9 ]*$/;
-  const linkMaxLength = 250;
+  const linkMaxLength = 100;
 
   const formatDuration = (startDate?: string, endDate?: string) => {
     let start = (startDate || "").trim();
@@ -397,6 +397,20 @@ export default function PortfolioEditor() {
   };
 
   const hasAllowedUrlCharacters = (url: string): boolean => /^[A-Za-z0-9:/?#[\]@!$&'()*+,;=._~%-]+$/.test(url);
+
+  const isValidEmail = (email: string): boolean => {
+    const trimmed = email.trim();
+    if (!trimmed) return true;
+    if (trimmed.length > 150) return false;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+  };
+
+  const getPlainText = (html: string) => {
+    if (!html) return "";
+    return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
+  };
+
+  const isValidHexColor = (value: string) => /^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/.test(value.trim());
 
   const getCloudinaryPublicIdFromUrl = (
     url: string,
@@ -632,21 +646,78 @@ export default function PortfolioEditor() {
     const cleanBehance = behanceUrl.trim() ? ensureHttps(behanceUrl) : "";
     const cleanDribbble = dribbbleUrl.trim() ? ensureHttps(dribbbleUrl) : "";
 
+    if (!isValidHexColor(themeColor)) {
+      alert("Theme color must be a valid hex code, e.g. #RGB or #RRGGBB.");
+      return;
+    }
+
+    if (!isValidHexColor(backgroundColor)) {
+      alert("Background color must be a valid hex code, e.g. #RGB or #RRGGBB.");
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      alert("Please enter a valid email address with 150 characters or fewer.");
+      return;
+    }
+
+    if (skills.some((skill) => skill.trim().length > 59)) {
+      alert("Each skill must be 59 characters or less.");
+      return;
+    }
+
+    const normalizedSkillNames = skills.map((skill) => skill.trim().toLowerCase()).filter(Boolean);
+    const duplicateSkillFound = normalizedSkillNames.some(
+      (skill, index) => normalizedSkillNames.indexOf(skill) !== index
+    );
+    if (duplicateSkillFound) {
+      alert("Skills must not repeat.");
+      return;
+    }
+
+    const invalidStep = designProcess.find(
+      (step) => step.title.trim().length > 100 || step.description.trim().length > 250
+    );
+    if (invalidStep) {
+      alert("Each design process step must have a title of 100 characters or less and a description of 250 characters or less.");
+      return;
+    }
+
+    const invalidCaseStudyUrl = caseStudies.find(
+      (study) => (study.link || "").trim().length > linkMaxLength
+    );
+    if (invalidCaseStudyUrl) {
+      alert("Each case study URL must be 100 characters or less.");
+      return;
+    }
+
+    const invalidCaseStudyLength = caseStudies.find(
+      (study) =>
+        study.title.trim().length > 50 ||
+        study.role.trim().length > 50 ||
+        study.subtitle.trim().length > 250 ||
+        getPlainText(study.description).length > 500
+    );
+    if (invalidCaseStudyLength) {
+      alert("Case study title and role must be 50 characters or less, subtitle must be 250 characters or less, and description must be 500 characters or less.");
+      return;
+    }
+
     // Validate URLs
     if (cleanGithub && !validateProfileUrl(cleanGithub, ["github.com"], /^\/[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/)) {
-      alert("Please enter a valid GitHub profile URL under 250 characters.");
+      alert("Please enter a valid GitHub profile URL under 100 characters.");
       return;
     }
     if (cleanLinkedin && !validateProfileUrl(cleanLinkedin, ["linkedin.com"], /^\/in\/[A-Za-z0-9-]{3,100}$/)) {
-      alert("Please enter a valid LinkedIn profile URL under 250 characters.");
+      alert("Please enter a valid LinkedIn profile URL under 100 characters.");
       return;
     }
     if (cleanTwitter && !validateProfileUrl(cleanTwitter, ["twitter.com", "x.com"], /^\/[A-Za-z0-9_]{1,15}$/)) {
-      alert("Please enter a valid Twitter/X profile URL under 250 characters.");
+      alert("Please enter a valid Twitter/X profile URL under 100 characters.");
       return;
     }
     if (cleanCustom && !validateCustomUrl(cleanCustom)) {
-      alert("Please enter a valid Custom Domain URL under 250 characters.");
+      alert("Please enter a valid Custom Domain URL under 100 characters.");
       return;
     }
     if (cleanBehance && !isValidUrl(cleanBehance)) {
@@ -665,14 +736,11 @@ export default function PortfolioEditor() {
       cleanCustom,
       cleanBehance,
       cleanDribbble,
-      cvUrl,
-      profileImageUrl,
-      ...projects.map((project) => project.link || ""),
       ...caseStudies.map((study) => study.link || ""),
     ].find((link) => link.length > linkMaxLength);
 
     if (tooLongLink) {
-      alert("All portfolio links must be 250 characters or less.");
+      alert("All portfolio links must be 100 characters or less.");
       return;
     }
 

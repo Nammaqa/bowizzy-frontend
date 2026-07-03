@@ -95,6 +95,9 @@ export const CertificationsForm: React.FC<CertificationsFormProps> = ({
     if (value && !/[a-zA-Z]/.test(value)) {
       return "Certificate Title must include at least one letter";
     }
+    if (value && value.length > 100) {
+      return "Certificate Title cannot exceed 100 characters";
+    }
     return "";
   };
 
@@ -115,6 +118,20 @@ export const CertificationsForm: React.FC<CertificationsFormProps> = ({
     if (value && !/[a-zA-Z]/.test(value)) {
       return "Provider must include at least one letter";
     }
+    if (value && value.length > 50) {
+      return "Provider cannot exceed 50 characters";
+    }
+    return "";
+  };
+
+  const getPlainText = (html: string) => {
+    if (!html) return "";
+    return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
+  };
+
+  const validateDescription = (value: string) => {
+    const length = getPlainText(value).length;
+    if (length > 500) return "Description cannot exceed 500 characters";
     return "";
   };
 
@@ -131,6 +148,11 @@ export const CertificationsForm: React.FC<CertificationsFormProps> = ({
     }
 
     return "";
+  };
+
+  const getCertificateDateLimit = () => {
+    const year = new Date().getFullYear();
+    return `${year - 1}-12`;
   };
 
   const updateCertificate = (
@@ -155,9 +177,18 @@ export const CertificationsForm: React.FC<CertificationsFormProps> = ({
       const error = validateProvider(value);
       setErrors((prev) => ({ ...prev, [`cert-${id}-providedBy`]: error }));
     } else if (field === "date" && typeof value === "string") {
-      const currentMonth = new Date().toISOString().slice(0, 7);
-      const error = value && value > currentMonth ? "Date cannot be in the future" : "";
+      const yearNum = parseInt(value.split("-")[0], 10);
+      const currentYear = new Date().getFullYear();
+      let error = "";
+      if (value && yearNum <= 1960) {
+        error = "Date must be after 1960";
+      } else if (value && yearNum >= currentYear) {
+        error = "Date must be before current year";
+      }
       setErrors((prev) => ({ ...prev, [`cert-${id}-date`]: error }));
+    } else if (field === "description" && typeof value === "string") {
+      const error = validateDescription(value);
+      setErrors((prev) => ({ ...prev, [`cert-${id}-description`]: error }));
     }
   };
 
@@ -311,8 +342,10 @@ export const CertificationsForm: React.FC<CertificationsFormProps> = ({
     // Check local validation errors
     if (
       errors[`cert-${certificate.id}-certificateTitle`] ||
+      errors[`cert-${certificate.id}-providedBy`] ||
       errors[`cert-${certificate.id}-file`] ||
-      errors[`cert-${certificate.id}-date`]
+      errors[`cert-${certificate.id}-date`] ||
+      errors[`cert-${certificate.id}-description`]
     )
       return;
 
@@ -700,6 +733,7 @@ export const CertificationsForm: React.FC<CertificationsFormProps> = ({
                 updateCertificate(cert.id, "certificateTitle", v)
               }
               error={errors[`cert-${cert.id}-certificateTitle`]}
+              maxLength={100}
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -718,7 +752,9 @@ export const CertificationsForm: React.FC<CertificationsFormProps> = ({
                 value={cert.date}
                 onChange={(v) => updateCertificate(cert.id, "date", v)}
                 type="month"
-                max={new Date().toISOString().slice(0, 7)}
+                min="1961-01"
+                max={getCertificateDateLimit()}
+                onKeyDown={(e) => e.preventDefault()}
                 error={errors[`cert-${cert.id}-date`]}
               />
             </div>
@@ -740,6 +776,7 @@ export const CertificationsForm: React.FC<CertificationsFormProps> = ({
                 value={cert.providedBy}
                 onChange={(v) => updateCertificate(cert.id, "providedBy", v)}
                 error={errors[`cert-${cert.id}-providedBy`]}
+                maxLength={50}
               />
             </div>
 
@@ -752,6 +789,11 @@ export const CertificationsForm: React.FC<CertificationsFormProps> = ({
                   onChange={(v) => updateCertificate(cert.id, "description", v)}
                   rows={3}
                 />
+                {errors[`cert-${cert.id}-description`] && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors[`cert-${cert.id}-description`]}
+                  </p>
+                )}
               </div>
             </div>
 

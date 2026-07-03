@@ -95,23 +95,23 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
   }, [data.workExperiences, experienceDataIdMap]);
 
   const workExperiences = getCurrentExperiences();
-  
+
   const setWorkExperiences = (updatedExperiences: WorkExperience[]) => {
     onChange({
       ...data,
-      workExperiences: updatedExperiences.map(exp => ({...exp, experience_id: undefined, isExpanded: exp.isExpanded})) as WET[], 
+      workExperiences: updatedExperiences.map(exp => ({ ...exp, experience_id: undefined, isExpanded: exp.isExpanded })) as WET[],
     });
-    
+
     const newMap = updatedExperiences.reduce((acc, exp) => {
       if (exp.experience_id) acc[exp.id] = exp.experience_id;
       return acc;
     }, {} as Record<string, number>);
     setExperienceDataIdMap(newMap);
   };
-  
+
 
   const toggleCollapse = (id: string) => {
-    const updated = workExperiences.map(exp => 
+    const updated = workExperiences.map(exp =>
       exp.id === id ? { ...exp, isExpanded: !exp.isExpanded } : exp
     );
     setWorkExperiences(updated);
@@ -121,16 +121,16 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
 
   const getExperienceChangedStatus = useCallback((current: WorkExperience): boolean => {
     const initial = initialDataRef.current.workExperiences.find(i => i.id === current.id);
-    
+
     if (!initial) {
       return !!(current.companyName || current.jobTitle);
     }
-    
-    const initialExpWithId = { 
-      ...initial, 
-      experience_id: experienceDataIdMap[initial.id] 
+
+    const initialExpWithId = {
+      ...initial,
+      experience_id: experienceDataIdMap[initial.id]
     } as WorkExperience;
-    
+
     return (
       current.companyName !== initialExpWithId.companyName ||
       current.jobTitle !== initialExpWithId.jobTitle ||
@@ -148,10 +148,12 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
 
 
   const validateCompanyName = (value: string) => {
+    if (value && value.length > 100) {
+      return "Company name must not exceed 100 characters";
+    }
     if (value && !/^[a-zA-Z0-9\s.,&'-]+$/.test(value)) {
       return "Invalid characters in company name";
     }
-
     if (value && !/[a-zA-Z]/.test(value)) {
       return "Company name must include at least one letter";
     }
@@ -159,29 +161,42 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
   };
 
   const validateJobTitle = (value: string) => {
+    if (value && value.length > 100) {
+      return "Job title must not exceed 100 characters";
+    }
     if (value && !/^[a-zA-Z0-9\s./-]+$/.test(value)) {
       return "Invalid characters in job title";
     }
-    // Ensure job title is not numbers-only; require at least one letter
     if (value && !/[a-zA-Z]/.test(value)) {
       return "Job title must contain at least one letter";
     }
     return "";
   };
-
+  const validateDescription = (value: string) => {
+    // Strip HTML tags from the rich text value so the limit reflects
+    // visible characters rather than markup.
+    const plainText = value ? value.replace(/<[^>]*>/g, "") : "";
+    if (plainText.length > 500) {
+      return "Description must not exceed 500 characters";
+    }
+    return "";
+  };
   const validateDateRange = (startDate: string, endDate: string) => {
+    const currentYear = new Date().getFullYear();
+
     if (startDate) {
-      const startParts = startDate.split("-");
-      const startYearNum = parseInt(startParts[0], 10);
+      const startYearNum = parseInt(startDate.split("-")[0], 10);
       if (startYearNum < 1960) {
-        return "Start date must be 1960 or later";
+        return "Start date must be later than 1960";
       }
     }
     if (endDate) {
-      const endParts = endDate.split("-");
-      const endYearNum = parseInt(endParts[0], 10);
+      const endYearNum = parseInt(endDate.split("-")[0], 10);
       if (endYearNum < 1960) {
-        return "End date must be 1960 or later";
+        return "End date must be later than 1960";
+      }
+      if (endYearNum > currentYear) {
+        return "End date cannot be later than the current year";
       }
     }
     if (startDate && endDate) {
@@ -190,6 +205,12 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
       }
     }
     return "";
+  };
+  const getCurrentMonthStr = (): string => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    return `${year}-${month}`;
   };
 
   const handleJobRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -224,7 +245,7 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
   ) => {
     const index = workExperiences.findIndex(exp => exp.id === id);
     if (index === -1) return;
-    
+
     const updated = [...workExperiences];
     const sanitizeMonthInput = (val: string) => {
       if (!val) return "";
@@ -232,18 +253,31 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
       if (cleaned.includes("-")) {
         return cleaned.slice(0, 7);
       }
-
       return cleaned.slice(0, 4);
     };
 
     let sanitizedVal: string | undefined;
+
     if ((field === "startDate" || field === "endDate") && typeof value === "string") {
       sanitizedVal = sanitizeMonthInput(value);
       updated[index] = { ...updated[index], [field]: sanitizedVal };
+    } else if (field === "companyName" && typeof value === "string") {
+      updated[index] = { ...updated[index], [field]: value.slice(0, 100) };
+    } else if (field === "jobTitle" && typeof value === "string") {
+      updated[index] = { ...updated[index], [field]: value.slice(0, 100) };
+    } else if (field === "description" && typeof value === "string") {
+      // Clamp on the plain-text length, but keep the original (HTML) value
+      // up to the point where the visible character count hits 500.
+      let clamped = value;
+      const plainLength = value.replace(/<[^>]*>/g, "").length;
+      if (plainLength > 500) {
+        clamped = value.slice(0, 500);
+      }
+      updated[index] = { ...updated[index], [field]: clamped };
     } else {
       updated[index] = { ...updated[index], [field]: value };
     }
-    
+
     if (field === "currentlyWorking" && value === true) {
       updated[index].endDate = "";
       setErrors((prevErrors) => {
@@ -258,22 +292,23 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
     const updatedExp = updated[index];
 
     if (field === "companyName" && typeof value === "string") {
-      const error = validateCompanyName(value);
+      const error = validateCompanyName(updatedExp.companyName);
       setErrors((prev) => ({ ...prev, [`exp-${id}-companyName`]: error }));
     } else if (field === "jobTitle" && typeof value === "string") {
-      const error = validateJobTitle(value);
+      const error = validateJobTitle(updatedExp.jobTitle);
       setErrors((prev) => ({ ...prev, [`exp-${id}-jobTitle`]: error }));
+    } else if (field === "description" && typeof value === "string") {
+      const error = validateDescription(updatedExp.description);
+      setErrors((prev) => ({ ...prev, [`exp-${id}-description`]: error }));
     } else if (
       (field === "startDate" || field === "endDate") &&
       typeof value === "string"
     ) {
-      // If user typed manual year (no hyphen) require exactly 4 digits
       if (sanitizedVal !== undefined) {
         if (!sanitizedVal.includes("-") && sanitizedVal.length !== 4) {
           const which = field === "startDate" ? `exp-${id}-startDate` : `exp-${id}-endDate`;
           setErrors((prev) => ({ ...prev, [which]: "Enter 4-digit year (YYYY)" }));
         } else {
-          // clear individual field error if present
           const which = field === "startDate" ? `exp-${id}-startDate` : `exp-${id}-endDate`;
           setErrors((prev) => {
             const updatedErr = { ...prev };
@@ -290,19 +325,19 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
 
   const handleSaveExperience = async (exp: WorkExperience) => {
     const isNew = !exp.experience_id;
-    
+
     if (!getExperienceChangedStatus(exp) && !isNew) {
       setExperienceFeedback(prev => ({ ...prev, [exp.id]: "No changes to save." }));
       setTimeout(() => setExperienceFeedback(prev => { const updated = { ...prev }; delete updated[exp.id]; return updated; }), 3000);
       return;
     }
-    
+
     if (!exp.companyName || !exp.jobTitle) {
       setExperienceFeedback(prev => ({ ...prev, [exp.id]: "Company Name and Job Title are required to save." }));
       setTimeout(() => setExperienceFeedback(prev => { const updated = { ...prev }; delete updated[exp.id]; return updated; }), 3000);
       return;
     }
-    
+
     const index = workExperiences.findIndex((e) => e.id === exp.id);
     const prefix = `exp-${exp.id}`;
 
@@ -315,7 +350,7 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
     try {
       let response: any;
       let feedbackMessage = "";
-      
+
       const experiencePayload = {
         company_name: exp.companyName || "",
         job_title: exp.jobTitle || "",
@@ -329,25 +364,25 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
       };
 
       if (isNew) {
-        const postPayload = { 
-          job_role: jobRole, 
-          experiences: [experiencePayload] 
+        const postPayload = {
+          job_role: jobRole,
+          experiences: [experiencePayload]
         };
         response = await saveExperienceDetails(userId, token, postPayload);
-        
+
         const newExperienceId = response?.experiences?.[0]?.experience_id;
 
         if (newExperienceId) {
           const updatedExp = { ...exp, experience_id: newExperienceId };
           setWorkExperiences(workExperiences.map((e) => (e.id === exp.id ? updatedExp : e)));
-          
+
           const exists = initialDataRef.current.workExperiences.some(e => e.id === exp.id);
-          const nextWorkExperiences = exists 
+          const nextWorkExperiences = exists
             ? initialDataRef.current.workExperiences.map(e => e.id === exp.id ? updatedExp : e)
             : [...initialDataRef.current.workExperiences, updatedExp];
 
-          initialDataRef.current = { 
-            ...initialDataRef.current, 
+          initialDataRef.current = {
+            ...initialDataRef.current,
             workExperiences: nextWorkExperiences
           };
           feedbackMessage = "Saved successfully!";
@@ -371,33 +406,33 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
         Object.keys(experiencePayload).forEach(key => {
           const apiField = key as keyof typeof experiencePayload;
           const localField = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase()) as keyof WET;
-          
+
           if (experiencePayload[apiField] !== (initial as any)[localField]) {
             minimalPayload[apiField] = experiencePayload[apiField];
           }
         });
-        
+
         if (Object.keys(minimalPayload).length > 0) {
           await updateExperienceDetails(userId, token, exp.experience_id as number, minimalPayload);
 
           const exists = initialDataRef.current.workExperiences.some(e => e.id === exp.id);
-          const nextWorkExperiences = exists 
+          const nextWorkExperiences = exists
             ? initialDataRef.current.workExperiences.map(e => e.id === exp.id ? exp : e)
             : [...initialDataRef.current.workExperiences, exp];
 
-          initialDataRef.current = { 
-            ...initialDataRef.current, 
+          initialDataRef.current = {
+            ...initialDataRef.current,
             workExperiences: nextWorkExperiences
           };
           feedbackMessage = "Updated successfully!";
         }
       }
-    
+
       setExperienceFeedback(prev => ({ ...prev, [exp.id]: feedbackMessage }));
-      
+
       // Hide save button after successful save
       setHiddenSaveIds(prev => new Set([...prev, exp.id]));
-      
+
       setTimeout(() => {
         setExperienceFeedback(prev => { const updated = { ...prev }; delete updated[exp.id]; return updated; });
         setHiddenSaveIds(prev => {
@@ -455,7 +490,7 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
 
     const updatedExperiences = workExperiences.filter(e => e.id !== id);
     setWorkExperiences(updatedExperiences);
-    
+
     initialDataRef.current = {
       ...initialDataRef.current,
       workExperiences: initialDataRef.current.workExperiences.filter(e => e.id !== id)
@@ -474,9 +509,9 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
     const initialExp = initialDataRef.current.workExperiences.find(e => e.id === id);
     if (!initialExp) return;
 
-    const updated = workExperiences.map(exp => 
-      exp.id === id ? { 
-        ...exp, 
+    const updated = workExperiences.map(exp =>
+      exp.id === id ? {
+        ...exp,
         companyName: initialExp.companyName || "",
         jobTitle: initialExp.jobTitle || "",
         employmentType: initialExp.employmentType || "",
@@ -489,7 +524,7 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
       } : exp
     );
     setWorkExperiences(updated);
-    
+
     setErrors((prev) => {
       const newErrors = { ...prev };
       Object.keys(newErrors).forEach((key) => {
@@ -506,15 +541,15 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
     const updatedExperiences = workExperiences.map((exp) =>
       exp.id === id ? { ...exp, enabled } : exp
     );
-    
+
     setWorkExperiences(updatedExperiences);
-    
+
     // Also update the data through onChange
     onChange({
       ...data,
       workExperiences: updatedExperiences.map(exp => ({
-        ...exp, 
-        experience_id: undefined, 
+        ...exp,
+        experience_id: undefined,
         isExpanded: exp.isExpanded
       })) as WET[],
     });
@@ -531,9 +566,8 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
     return (
       <FormSection
         key={experience.id}
-        title={`Work Experience ${
-          workExperiences.length > 1 ? index + 1 : ""
-        }`}
+        title={`Work Experience ${workExperiences.length > 1 ? index + 1 : ""
+          }`}
         showToggle={true}
         enabled={experience.enabled !== undefined ? experience.enabled : true}
         onToggle={(enabled) => toggleWorkExperience(experience.id, enabled)}
@@ -552,6 +586,7 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
           value={experience.companyName}
           onChange={(v) => updateWorkExperience(experience.id, "companyName", v)}
           error={errors[`exp-${experience.id}-companyName`]}
+          maxLength={100}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -561,6 +596,7 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
             value={experience.jobTitle}
             onChange={(v) => updateWorkExperience(experience.id, "jobTitle", v)}
             error={errors[`exp-${experience.id}-jobTitle`]}
+            maxLength={100}
           />
           <FormSelect
             label="Employment Type"
@@ -599,6 +635,7 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
               onChange={(v) => updateWorkExperience(experience.id, "startDate", v)}
               type="month"
               min="1960-01"
+              max={getCurrentMonthStr()}
               error={errors[`exp-${experience.id}-startDate`]}
             />
           </div>
@@ -611,6 +648,7 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
               type="month"
               disabled={experience.currentlyWorking}
               min="1960-01"
+              max={getCurrentMonthStr()}
               error={errors[`exp-${experience.id}-endDate`]}
             />
           </div>
@@ -648,13 +686,20 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
             placeholder="Provide Description / Projects of your Work"
             rows={4}
           />
+          <div className="flex items-center justify-between mt-1">
+            {errors[`exp-${experience.id}-description`] ? (
+              <p className="text-xs text-red-500">{errors[`exp-${experience.id}-description`]}</p>
+            ) : <span />}
+            <span className="text-xs text-gray-400">
+              {experience.description ? experience.description.replace(/<[^>]*>/g, "").length : 0}/500
+            </span>
+          </div>
         </div>
 
         <div className='flex items-center justify-end gap-2 mt-8 pt-4 border-t border-gray-200'>
           {experienceFeedback[experience.id] && (
-            <span className={`text-xs px-2 py-1 rounded-full ${
-              experienceFeedback[experience.id].includes("successfully") ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-            }`}>
+            <span className={`text-xs px-2 py-1 rounded-full ${experienceFeedback[experience.id].includes("successfully") ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+              }`}>
               {experienceFeedback[experience.id]}
             </span>
           )}
@@ -677,7 +722,7 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
 
   return (
     <div className="flex flex-col gap-5">
-      
+
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
         <div className="flex items-center justify-between px-4 sm:px-5 md:px-6 py-3 md:py-4 border-b border-gray-200">
           <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">
@@ -685,9 +730,8 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
           </h3>
           <div className="flex gap-2 items-center">
             {jobRoleFeedback && (
-              <span className={`text-xs px-2 py-1 rounded-full ${
-                jobRoleFeedback.includes("successfully") ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-              }`}>
+              <span className={`text-xs px-2 py-1 rounded-full ${jobRoleFeedback.includes("successfully") ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                }`}>
                 {jobRoleFeedback}
               </span>
             )}
@@ -709,9 +753,8 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
               className="w-6 h-6 flex items-center justify-center rounded-full border-2 border-gray-600 hover:bg-gray-100 transition-colors"
             >
               <ChevronDown
-                className={`w-3 h-3 text-gray-600 transition-transform cursor-pointer ${
-                  !jobRoleExpanded ? "rotate-180" : ""
-                }`}
+                className={`w-3 h-3 text-gray-600 transition-transform cursor-pointer ${!jobRoleExpanded ? "rotate-180" : ""
+                  }`}
                 strokeWidth={2.5}
               />
             </button>
