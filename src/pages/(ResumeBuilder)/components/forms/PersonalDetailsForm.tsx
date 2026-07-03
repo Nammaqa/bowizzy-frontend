@@ -131,7 +131,6 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
     city: data.city || "",
     pincode: data.pincode || "",
     nationality: data.nationality || "",
-    passportNumber: data.passportNumber || "",
   });
   const initialCareerObjective = useRef<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -275,7 +274,9 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
     return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
   };
 
-  const hasCareerObjectiveInput = getPlainText(data.aboutCareerObjective ?? "").length > 0;
+  const careerObjectiveLength = getPlainText(data.aboutCareerObjective ?? "").length;
+  const hasCareerObjectiveInput = careerObjectiveLength > 0;
+  const isCareerObjectiveTooLong = careerObjectiveLength > 500;
 
   const handleEnhanceCareerObjective = async () => {
     if (!hasCareerObjectiveInput) return;
@@ -383,8 +384,6 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
       changedFields.push("pincode");
     if (data.nationality !== initialLocation.current.nationality)
       changedFields.push("nationality");
-    if (data.passportNumber !== initialLocation.current.passportNumber)
-      changedFields.push("passportNumber");
 
     setChangedLocationFields(changedFields);
     setLocationChanged(changedFields.length > 0);
@@ -456,8 +455,21 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
         break;
 
       case "address":
-        if (value && value.trim().length < 5) {
-          error = "Address is too short";
+        if (value) {
+          if (value.trim().length > 250) {
+            error = "Address cannot exceed 250 characters";
+          } else if (!/[A-Za-z]/.test(value) || !/\d/.test(value)) {
+            error = "Address must include at least one letter and one number";
+          }
+        }
+        break;
+
+      case "aboutCareerObjective":
+        if (value) {
+          const plainText = getPlainText(value);
+          if (plainText.length > 500) {
+            error = "Career objective cannot exceed 500 characters";
+          }
         }
         break;
 
@@ -497,25 +509,9 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
       return;
     }
 
-    if (field === "passportNumber" && typeof newValue === "string") {
-      const upperValue = newValue.toUpperCase();
-      if (!/^[A-Z0-9]*$/.test(upperValue)) {
-        setErrors((prev) => ({ ...prev, [field]: "Only uppercase letters and numbers allowed" }));
-        return;
-      }
-      if (upperValue.length > 8) return;
-      newValue = upperValue;
-      // If the value doesn't contain both a letter and a digit, show error
-      if (!/(?=.*[A-Z])(?=.*\d)/.test(upperValue)) {
-        setErrors((prev) => ({ ...prev, [field]: "Must contain at least one letter and one number" }));
-      } else {
-        setErrors((prev) => ({ ...prev, [field]: "" }));
-      }
-    }
-
     if (field === "nationality" && typeof newValue === "string") {
       if (!/^[a-zA-Z\s]*$/.test(newValue)) return;
-      if (newValue.length > 30) return;
+      if (newValue.length > 50) return;
     }
 
     console.log("Updating field:", field, "with value:", newValue);
@@ -721,8 +717,7 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
         state: data.state,
         city: data.city,
         pincode: data.pincode,
-        nationality: data.nationality,
-        passportNumber: data.passportNumber,
+        nationality: data.nationality
       };
 
       setLocationChanged(false);
@@ -753,7 +748,6 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
       city: initialLocation.current.city,
       pincode: initialLocation.current.pincode,
       nationality: initialLocation.current.nationality,
-      passportNumber: initialLocation.current.passportNumber,
     });
     setLocationChanged(false);
     setChangedLocationFields([]);
@@ -763,6 +757,18 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
   const handleUpdateCareerObjective = async () => {
     if (!personalDetailsId) {
       setCareerObjectiveFeedback("Unable to save: Missing personal details ID");
+      setTimeout(() => setCareerObjectiveFeedback(""), 3000);
+      return;
+    }
+
+    if (errors.aboutCareerObjective) {
+      setCareerObjectiveFeedback("Fix career objective errors before saving");
+      setTimeout(() => setCareerObjectiveFeedback(""), 3000);
+      return;
+    }
+
+    if (isCareerObjectiveTooLong) {
+      setCareerObjectiveFeedback("Career objective cannot exceed 500 characters");
       setTimeout(() => setCareerObjectiveFeedback(""), 3000);
       return;
     }
@@ -1243,10 +1249,16 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
               <button
                 type="button"
                 onClick={handleEnhanceCareerObjective}
-                disabled={!hasCareerObjectiveInput || isEnhancing}
-                title={!hasCareerObjectiveInput ? "Add some text to enable AI enhancement" : "Enhance with AI"}
+                disabled={!hasCareerObjectiveInput || isEnhancing || isCareerObjectiveTooLong}
+                title={
+                  !hasCareerObjectiveInput
+                    ? "Add some text to enable AI enhancement"
+                    : isCareerObjectiveTooLong
+                    ? "Reduce career objective to 500 characters or less"
+                    : "Enhance with AI"
+                }
                 className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
-            ${hasCareerObjectiveInput && !isEnhancing
+            ${hasCareerObjectiveInput && !isEnhancing && !isCareerObjectiveTooLong
                     ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-sm hover:from-violet-600 hover:to-purple-700 cursor-pointer"
                     : "bg-gray-100 text-gray-400 cursor-not-allowed"
                   }`}
@@ -1270,6 +1282,14 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
               placeholder="Provide Career Objective"
               rows={6}
             />
+            <div className="mt-2 flex items-center justify-between gap-3 flex-wrap">
+              <p className="text-xs text-gray-500">
+                {careerObjectiveLength}/500 characters
+              </p>
+              {errors.aboutCareerObjective && (
+                <p className="text-xs text-red-600">{errors.aboutCareerObjective}</p>
+              )}
+            </div>
 
             {/* Error */}
             {enhanceError && (

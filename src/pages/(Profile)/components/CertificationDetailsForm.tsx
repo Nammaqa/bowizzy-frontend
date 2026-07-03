@@ -165,8 +165,11 @@ export default function CertificationDetailsForm({
     return "";
   };
 
+  const getPlainTextFromHtml = (value: string) =>
+    value.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").trim();
+
   const validateDescription = (value: string) => {
-    const text = value.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").trim();
+    const text = getPlainTextFromHtml(value);
     if (text.length > CERTIFICATE_DESCRIPTION_MAX_LENGTH) {
       return `Description cannot exceed ${CERTIFICATE_DESCRIPTION_MAX_LENGTH} characters`;
     }
@@ -195,12 +198,27 @@ export default function CertificationDetailsForm({
   };
 
   const getMaxCertificateDate = (): string => {
-    const now = new Date();
-    now.setFullYear(now.getFullYear() - 1);
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+    return getTodayDate();
+  };
+
+  const blockManualDateTyping = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const allowedKeys = [
+      "Tab",
+      "Shift",
+      "Escape",
+      "Enter",
+      "ArrowUp",
+      "ArrowDown",
+      "ArrowLeft",
+      "ArrowRight",
+      "Home",
+      "End",
+      "PageUp",
+      "PageDown",
+    ];
+    if (!allowedKeys.includes(e.key)) {
+      e.preventDefault();
+    }
   };
 
   const validateDateValue = (value: string) => {
@@ -737,8 +755,10 @@ export default function CertificationDetailsForm({
                         handleCertificateChange(index, "date", e.target.value)
                       }
                       placeholder="Select Month and Year"
+                      onKeyDown={blockManualDateTyping}
+                      onPaste={(e) => e.preventDefault()}
                       className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm pr-8"
-                      min="1961-01-01"
+                      min="1960-01-01"
                       max={getMaxCertificateDate()}
                     />
                   </div>
@@ -752,9 +772,14 @@ export default function CertificationDetailsForm({
 
               {/* Description */}
               <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                  Description
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                    Description
+                  </label>
+                  <span className="text-[10px] sm:text-xs text-gray-400">
+                    {getPlainTextFromHtml(certificate.description).length}/{CERTIFICATE_DESCRIPTION_MAX_LENGTH}
+                  </span>
+                </div>
                 <RichTextEditor
                   value={certificate.description}
                   onChange={(value) =>
