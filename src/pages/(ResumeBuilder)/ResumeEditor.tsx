@@ -1036,6 +1036,7 @@ export const ResumeEditor: React.FC = () => {
         autoShowPdfPreview={true}
         onPreviewComplete={() => setPreviewLoading(false)}
         onSaveAndExit={handleSaveAndExit}
+        onSaveAndDownloadComplete={() => navigate("/ResumeBuilder")}
         primaryColor={primaryColor}
         fontFamily={fontFamily}
       />

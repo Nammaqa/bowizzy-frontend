@@ -145,7 +145,17 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
         .designer-rich ol { list-style: decimal; }
         .designer-rich li { margin: 0.2rem 0; }
         .designer-rich a { color: var(--designer-accent); text-decoration: underline; }
-        .designer-rich strong, .designer-rich b { color: var(--designer-ink); font-weight: 800; }
+        .designer-rich strong, .designer-rich b {
+          display: inline;
+          padding: 0.05em 0.28em;
+          border-radius: 0.32em;
+          background: color-mix(in srgb, var(--designer-accent) 72%, #111827);
+          color: #f8fafc;
+          font-weight: 800;
+          box-decoration-break: clone;
+          -webkit-box-decoration-break: clone;
+          text-shadow: 0 1px 1px rgba(0,0,0,0.24);
+        }
         .designer-hover {
           transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
         }
