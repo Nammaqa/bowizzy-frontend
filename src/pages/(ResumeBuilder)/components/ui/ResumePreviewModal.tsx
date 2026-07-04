@@ -53,6 +53,7 @@ interface ResumePreviewModalProps {
   autoShowPdfPreview?: boolean;
   onPreviewComplete?: () => void;
   onSaveAndExit?: () => Promise<void>;
+  onSaveAndDownloadComplete?: () => void;
   userId?: string;
   token?: string;
   resumeTemplateId?: string | null;
@@ -536,6 +537,7 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
   autoShowPdfPreview = false,
   onPreviewComplete,
   onSaveAndExit,
+  onSaveAndDownloadComplete,
   userId,
   token,
   resumeTemplateId,
@@ -906,7 +908,10 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
       downloadPdfBlob(finalBlob, finalName);
       setShowNameDialog(false);
       setShowDownloadDialog(false);
-      onClose();
+      onSaveAndDownloadComplete?.();
+      if (!onSaveAndDownloadComplete) {
+        onClose();
+      }
     } catch (err) {
       console.error('Error:', err);
       alert('Failed to save and download PDF. See console for details.');

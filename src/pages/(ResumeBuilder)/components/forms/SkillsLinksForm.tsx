@@ -21,6 +21,7 @@ import {
   updateTechnicalSummary,
 } from "@/services/skillsLinksService";
 import enhanceTechnicalSummary from "@/utils/enhanceTechnicalSummary";
+import api from "@/api";
 
 interface SkillsLinksFormProps {
   data: SkillsLinksDetails;
@@ -66,6 +67,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
   const [hiddenSaveIds, setHiddenSaveIds] = useState<Set<string>>(new Set());
 
   const [isEnhancingSummary, setIsEnhancingSummary] = useState(false);
+  const [isEnhanceUsed, setIsEnhanceUsed] = useState(false);
   const [enhanceSummaryError, setEnhanceSummaryError] = useState("");
   const [enhancedSummaryVersions, setEnhancedSummaryVersions] = useState<{
     atsFriendly: string;
@@ -96,6 +98,19 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
     initialLinksRef.current = { ...data.links };
     initialTechnicalSummaryRef.current = data.technicalSummary;
   }, []);
+
+  // Check if Enhance with AI has been used
+  useEffect(() => {
+    if (userId && token) {
+      api.get(`/users/${userId}/check-enhance-used`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(res => {
+        setIsEnhanceUsed(res.data.is_enhance_used);
+      })
+      .catch(err => console.error("Error checking enhance status:", err));
+    }
+  }, [userId, token]);
 
   // Check Skill changes
   useEffect(() => {
@@ -683,24 +698,39 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
     setEnhanceSummaryError("");
     setEnhancedSummaryVersions(null);
     try {
+      // 1. Check if user can use enhance feature
+      const checkRes = await api.get(`/users/${userId}/check-enhance-used`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (checkRes.data && checkRes.data.canUse === false) {
+        throw new Error(checkRes.data.message || "You have reached your limit for AI enhancement.");
+      }
+
       const skillNames = data.skills
         .filter((s) => s.enabled && s.skillName)
         .map((s) => s.skillName);
+      // 2. Call the AI service
       const result = await enhanceTechnicalSummary(
         data.technicalSummary,
         skillNames
       );
+
+      // 3. Mark as used
+      await api.post(`/users/${userId}/mark-enhance-used`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setIsEnhanceUsed(true);
+
       setEnhancedSummaryVersions(result);
     } catch (err: any) {
       setEnhanceSummaryError(
-        err.message || "Failed to enhance. Please try again."
+        err.response?.data?.message || err.message || "Failed to enhance. Please try again."
       );
     } finally {
       setIsEnhancingSummary(false);
     }
   };
 
-  // ✅ UPDATED: Apply version as individual bullet <div> elements
   const handleApplySummaryVersion = (type: "atsFriendly" | "informative") => {
     if (!enhancedSummaryVersions) return;
     const html = enhancedSummaryVersions[type]
@@ -978,15 +1008,17 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
           <button
             type="button"
             onClick={handleEnhanceTechnicalSummary}
-            disabled={!hasTechnicalSummaryInput || isEnhancingSummary}
+            disabled={!hasTechnicalSummaryInput || isEnhancingSummary || isEnhanceUsed}
             title={
-              !hasTechnicalSummaryInput
+              isEnhanceUsed
+                ? "You have already used the AI enhancement feature"
+                : !hasTechnicalSummaryInput
                 ? "Add some text to enable AI enhancement"
                 : "Enhance with AI"
             }
             className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
               ${
-                hasTechnicalSummaryInput && !isEnhancingSummary
+                hasTechnicalSummaryInput && !isEnhancingSummary && !isEnhanceUsed
                   ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-sm hover:from-violet-600 hover:to-purple-700 cursor-pointer"
                   : "bg-gray-100 text-gray-400 cursor-not-allowed"
               }`}

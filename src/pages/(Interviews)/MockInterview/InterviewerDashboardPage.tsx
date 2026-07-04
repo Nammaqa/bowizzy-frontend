@@ -138,8 +138,16 @@ const getMeetingLink = (interview: any) =>
   interview?.online_meeting_link ||
   interview?.meeting?.link;
 
+const getInterviewMode = (interview: any) =>
+  interview?.interview_type ||
+  interview?.interviewType ||
+  interview?.interview_mode ||
+  interview?.interviewMode ||
+  interview?.mode ||
+  "mock interview";
+
 const isOnlineInterview = (interview: any) =>
-  String(interview?.interview_type || interview?.mode || "").toLowerCase() === "online";
+  String(getInterviewMode(interview)).toLowerCase() === "online";
 
 const getInterviewEndDate = (interview: any) => {
   const dateValue =
@@ -478,11 +486,16 @@ const InterviewerDashboardPage = () => {
                         Confirmed bookings where you are the candidate or interviewer.
                       </p>
                     </div>
-                    {loadingInterviews && (
-                      <span className="text-sm font-semibold text-[#F26D3A]">
-                        Loading...
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <span className="rounded-full bg-[#F2F2F2] px-3 py-1 text-xs font-bold text-[#666666]">
+                        {upcomingAcceptedInterviews.length}
                       </span>
-                    )}
+                      {loadingInterviews && (
+                        <span className="text-sm font-semibold text-[#F26D3A]">
+                          Loading...
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {!loadingInterviews && upcomingAcceptedInterviews.length === 0 && (
@@ -588,11 +601,16 @@ const InterviewerDashboardPage = () => {
                         Available interviews
                       </h2>
                     </div>
-                    {loadingInterviews && (
-                      <span className="text-sm font-semibold text-[#F26D3A]">
-                        Loading...
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <span className="rounded-full bg-[#F2F2F2] px-3 py-1 text-xs font-bold text-[#666666]">
+                        {activeAvailableInterviews.length}
                       </span>
-                    )}
+                      {loadingInterviews && (
+                        <span className="text-sm font-semibold text-[#F26D3A]">
+                          Loading...
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {interviewsError && (
@@ -629,7 +647,7 @@ const InterviewerDashboardPage = () => {
                             </div>
                             <div className="flex flex-wrap items-center gap-2">
                               <span className="rounded-full bg-[#FFF0E3] px-3 py-1 text-xs font-bold capitalize text-[#F26D3A]">
-                                {interview?.interview_type || interview?.mode || "mock interview"}
+                                {getInterviewMode(interview)}
                               </span>
                               <button
                                 onClick={() => {
@@ -692,6 +710,9 @@ const InterviewerDashboardPage = () => {
                               </p>
                             </div>
                             <div className="flex flex-wrap items-center gap-2">
+                              <span className="rounded-full bg-white px-3 py-1.5 text-xs font-bold capitalize text-[#666666] ring-1 ring-[#E8E8E8]">
+                                {getInterviewMode(interview)}
+                              </span>
                               {interview?.resume_url ? (
                                 <a
                                   href={interview.resume_url}
@@ -867,6 +888,14 @@ const InterviewerDashboardPage = () => {
                   </p>
                   <p className="mt-2 text-xl font-bold text-[#2F2F2F]">
                     {selectedInterview?.experience_months ?? 0} months
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-[#EFEFEF] bg-[#FAFAFA] p-4 sm:col-span-2">
+                  <p className="text-xs font-semibold uppercase text-[#777777]">
+                    Mode
+                  </p>
+                  <p className="mt-2 text-xl font-bold capitalize text-[#2F2F2F]">
+                    {getInterviewMode(selectedInterview)}
                   </p>
                 </div>
               </div>

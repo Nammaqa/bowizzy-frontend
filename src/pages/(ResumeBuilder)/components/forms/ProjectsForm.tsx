@@ -15,6 +15,7 @@ import {
   deleteProject,
 } from "@/services/projectService";
 import { enhanceRolesResponsibilities } from "@/utils/enhanceRolesResponsibilities";
+import api from "@/api";
 
 interface ProjectsFormProps {
   data: Project[];
@@ -54,6 +55,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
   const [hiddenSaveIds, setHiddenSaveIds] = useState<Set<string>>(new Set());
 
   const [enhancingProjectId, setEnhancingProjectId] = useState<string | null>(null);
+  const [isEnhanceUsed, setIsEnhanceUsed] = useState(false);
   const [enhanceRolesError, setEnhanceRolesError] = useState<Record<string, string>>({});
   const [enhancedRolesVersions, setEnhancedRolesVersions] = useState<Record<string, { precise: string; technical: string }>>({});
 
@@ -68,6 +70,19 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
       }
     });
   }, [data]);
+
+  // Check if Enhance with AI has been used
+  useEffect(() => {
+    if (userId && token) {
+      api.get(`/users/${userId}/check-enhance-used`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(res => {
+        setIsEnhanceUsed(res.data.is_enhance_used);
+      })
+      .catch(err => console.error("Error checking enhance status:", err));
+    }
+  }, [userId, token]);
 
   // Check if a specific project has changes
   const getProjectChangedStatus = (current: Project): boolean => {
@@ -552,15 +567,31 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
     setEnhanceRolesError((prev) => ({ ...prev, [project.id]: "" }));
     setEnhancedRolesVersions((prev) => { const u = { ...prev }; delete u[project.id]; return u; });
     try {
+      // 1. Check if user can use enhance feature
+      const checkRes = await api.get(`/users/${userId}/check-enhance-used`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (checkRes.data && checkRes.data.canUse === false) {
+        throw new Error(checkRes.data.message || "You have reached your limit for AI enhancement.");
+      }
+
+      // 2. Call the AI service
       const result = await enhanceRolesResponsibilities(
         project.rolesResponsibilities,
         project.projectTitle,
         project.projectType,
         project.description
       );
+
+      // 3. Mark as used
+      await api.post(`/users/${userId}/mark-enhance-used`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setIsEnhanceUsed(true);
+
       setEnhancedRolesVersions((prev) => ({ ...prev, [project.id]: result }));
     } catch (err: any) {
-      setEnhanceRolesError((prev) => ({ ...prev, [project.id]: err.message || "Failed to enhance. Please try again." }));
+      setEnhanceRolesError((prev) => ({ ...prev, [project.id]: err.response?.data?.message || err.message || "Failed to enhance. Please try again." }));
     } finally {
       setEnhancingProjectId(null);
     }
@@ -702,10 +733,16 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
                   <button
                     type="button"
                     onClick={() => handleEnhanceRoles(project)}
-                    disabled={!getPlainText(project.rolesResponsibilities ?? "").length || enhancingProjectId === project.id}
-                    title={!getPlainText(project.rolesResponsibilities ?? "").length ? "Add some text to enable AI enhancement" : "Enhance with AI"}
+                    disabled={!getPlainText(project.rolesResponsibilities ?? "").length || enhancingProjectId === project.id || isEnhanceUsed}
+                    title={
+                      isEnhanceUsed
+                        ? "You have already used the AI enhancement feature"
+                        : !getPlainText(project.rolesResponsibilities ?? "").length 
+                        ? "Add some text to enable AI enhancement" 
+                        : "Enhance with AI"
+                    }
                     className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
-                      ${getPlainText(project.rolesResponsibilities ?? "").length && enhancingProjectId !== project.id
+                      ${getPlainText(project.rolesResponsibilities ?? "").length && enhancingProjectId !== project.id && !isEnhanceUsed
                         ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-sm hover:from-violet-600 hover:to-purple-700 cursor-pointer"
                         : "bg-gray-100 text-gray-400 cursor-not-allowed"
                       }`}

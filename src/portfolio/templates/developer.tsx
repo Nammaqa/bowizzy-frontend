@@ -602,7 +602,17 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
         .rich-html-content ul { list-style-type: disc; }
         .rich-html-content ol { list-style-type: decimal; }
         .rich-html-content li { margin: 0.15em 0; }
-        .rich-html-content strong, .rich-html-content b { font-weight: 600; color: var(--text-secondary); }
+        .rich-html-content strong, .rich-html-content b {
+          display: inline;
+          padding: 0.05em 0.28em;
+          border-radius: 0.32em;
+          background: color-mix(in srgb, var(--accent) 72%, #111827);
+          color: #f8fafc;
+          font-weight: 700;
+          box-decoration-break: clone;
+          -webkit-box-decoration-break: clone;
+          text-shadow: 0 1px 1px rgba(0,0,0,0.24);
+        }
         .rich-html-content em, .rich-html-content i { font-style: italic; }
         .rich-html-content a { color: var(--accent-2); text-decoration: underline; }
         .rich-html-content div { margin: 0; }

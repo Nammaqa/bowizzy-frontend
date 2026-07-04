@@ -16,6 +16,7 @@ import { updatePersonalDetails } from "@/services/personalService";
 import { filterResumeData, getEnabledSkills, getEnabledWorkExperiences, getEnabledProjects } from "@/utils/filterResumeData";
 import { enhanceCareerObjective } from "@/utils/enhancecareerobjective";
 import { fetchCountries, fetchStates, fetchCities } from "@/services/locationService";
+import api from "@/api";
 interface PersonalDetailsFormProps {
   data: PersonalDetails;
   fullResumeData: any;
@@ -112,6 +113,7 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
   const [loadingCities, setLoadingCities] = useState(false);
 
   const [isEnhancing, setIsEnhancing] = useState(false);
+  const [isEnhanceUsed, setIsEnhanceUsed] = useState(false);
   const [enhanceError, setEnhanceError] = useState("");
   const [enhancedVersions, setEnhancedVersions] = useState<{ professional: string; elaborate: string } | null>(null);
 
@@ -260,6 +262,19 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
       .finally(() => setLoadingCities(false));
   }, [data.state, data.country, countryOptions, stateOptions]);
 
+  // Check if Enhance with AI has been used
+  useEffect(() => {
+    if (userId && token) {
+      api.get(`/users/${userId}/check-enhance-used`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(res => {
+        setIsEnhanceUsed(res.data.is_enhance_used);
+      })
+      .catch(err => console.error("Error checking enhance status:", err));
+    }
+  }, [userId, token]);
+
 
   // useEffect(() => {
   //   // In your component:
@@ -284,15 +299,31 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
     setEnhanceError("");
     setEnhancedVersions(null);
     try {
+      // 1. Check if user can use enhance feature
+      const checkRes = await api.get(`/users/${userId}/check-enhance-used`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (checkRes.data && checkRes.data.canUse === false) {
+        throw new Error(checkRes.data.message || "You have reached your limit for AI enhancement.");
+      }
+
+      // 2. Call the AI service
       const result = await enhanceCareerObjective(
         data.aboutCareerObjective,
         skillNames,
         experiences,
         projects
       );
+
+      // 3. Mark as used
+      await api.post(`/users/${userId}/mark-enhance-used`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setIsEnhanceUsed(true);
+
       setEnhancedVersions(result);
     } catch (err: any) {
-      setEnhanceError(err.message || "Failed to enhance. Please try again.");
+      setEnhanceError(err.response?.data?.message || err.message || "Failed to enhance. Please try again.");
     } finally {
       setIsEnhancing(false);
     }
@@ -1249,16 +1280,18 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
               <button
                 type="button"
                 onClick={handleEnhanceCareerObjective}
-                disabled={!hasCareerObjectiveInput || isEnhancing || isCareerObjectiveTooLong}
+                disabled={!hasCareerObjectiveInput || isEnhancing || isCareerObjectiveTooLong || isEnhanceUsed}
                 title={
-                  !hasCareerObjectiveInput
+                  isEnhanceUsed
+                    ? "You have already used the AI enhancement feature"
+                    : !hasCareerObjectiveInput
                     ? "Add some text to enable AI enhancement"
                     : isCareerObjectiveTooLong
                     ? "Reduce career objective to 500 characters or less"
                     : "Enhance with AI"
                 }
                 className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
-            ${hasCareerObjectiveInput && !isEnhancing && !isCareerObjectiveTooLong
+            ${hasCareerObjectiveInput && !isEnhancing && !isCareerObjectiveTooLong && !isEnhanceUsed
                     ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-sm hover:from-violet-600 hover:to-purple-700 cursor-pointer"
                     : "bg-gray-100 text-gray-400 cursor-not-allowed"
                   }`}
