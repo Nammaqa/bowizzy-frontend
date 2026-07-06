@@ -29,6 +29,7 @@ interface SkillsLinksFormProps {
   userId: string;
   token: string;
   technicalSummaryId?: number | null;
+  disableAiEnhance?: boolean;
 }
 
 const skillLevels = [
@@ -44,6 +45,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
   userId,
   token,
   technicalSummaryId: initialTechnicalSummaryId,
+  disableAiEnhance = false,
 }) => {
   const [skillsCollapsed, setSkillsCollapsed] = useState(false);
   const [linksCollapsed, setLinksCollapsed] = useState(false);
@@ -693,7 +695,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
     getPlainText(data.technicalSummary ?? "").length > 0;
 
   const handleEnhanceTechnicalSummary = async () => {
-    if (!hasTechnicalSummaryInput) return;
+    if (disableAiEnhance || !hasTechnicalSummaryInput) return;
     setIsEnhancingSummary(true);
     setEnhanceSummaryError("");
     setEnhancedSummaryVersions(null);
@@ -1008,9 +1010,11 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
           <button
             type="button"
             onClick={handleEnhanceTechnicalSummary}
-            disabled={!hasTechnicalSummaryInput || isEnhancingSummary || isEnhanceUsed}
+            disabled={disableAiEnhance || !hasTechnicalSummaryInput || isEnhancingSummary || isEnhanceUsed}
             title={
-              isEnhanceUsed
+              disableAiEnhance
+                ? "AI enhancement is disabled for this template"
+                : isEnhanceUsed
                 ? "You have already used the AI enhancement feature"
                 : !hasTechnicalSummaryInput
                 ? "Add some text to enable AI enhancement"
@@ -1018,7 +1022,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
             }
             className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
               ${
-                hasTechnicalSummaryInput && !isEnhancingSummary && !isEnhanceUsed
+                !disableAiEnhance && hasTechnicalSummaryInput && !isEnhancingSummary && !isEnhanceUsed
                   ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-sm hover:from-violet-600 hover:to-purple-700 cursor-pointer"
                   : "bg-gray-100 text-gray-400 cursor-not-allowed"
               }`}
@@ -1030,6 +1034,11 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
             )}
             {isEnhancingSummary ? "Enhancing..." : "Enhance with AI"}
           </button>
+          {disableAiEnhance && (
+            <span className="text-xs font-medium text-gray-500">
+             Enhance with AI not supported in this template
+            </span>
+          )}
         </div>
 
         <div className="flex flex-col gap-1 mt-4">

@@ -25,6 +25,7 @@ interface PersonalDetailsFormProps {
   token: string;
   personalDetailsId: string | null;
   supportsPhoto?: boolean;
+  disableAiEnhance?: boolean;
 }
 
 const genders = [
@@ -83,6 +84,7 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
   token,
   personalDetailsId,
   supportsPhoto = true,
+  disableAiEnhance = false,
 }) => {
   const [personalInfoCollapsed, setPersonalInfoCollapsed] = useState(false);
   const [languagesCollapsed, setLanguagesCollapsed] = useState(false);
@@ -294,7 +296,7 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
   const isCareerObjectiveTooLong = careerObjectiveLength > 500;
 
   const handleEnhanceCareerObjective = async () => {
-    if (!hasCareerObjectiveInput) return;
+    if (disableAiEnhance || !hasCareerObjectiveInput) return;
     setIsEnhancing(true);
     setEnhanceError("");
     setEnhancedVersions(null);
@@ -1280,9 +1282,11 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
               <button
                 type="button"
                 onClick={handleEnhanceCareerObjective}
-                disabled={!hasCareerObjectiveInput || isEnhancing || isCareerObjectiveTooLong || isEnhanceUsed}
+                disabled={disableAiEnhance || !hasCareerObjectiveInput || isEnhancing || isCareerObjectiveTooLong || isEnhanceUsed}
                 title={
-                  isEnhanceUsed
+                  disableAiEnhance
+                    ? "AI enhancement is disabled for this template"
+                    : isEnhanceUsed
                     ? "You have already used the AI enhancement feature"
                     : !hasCareerObjectiveInput
                     ? "Add some text to enable AI enhancement"
@@ -1291,7 +1295,7 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
                     : "Enhance with AI"
                 }
                 className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
-            ${hasCareerObjectiveInput && !isEnhancing && !isCareerObjectiveTooLong && !isEnhanceUsed
+            ${!disableAiEnhance && hasCareerObjectiveInput && !isEnhancing && !isCareerObjectiveTooLong && !isEnhanceUsed
                     ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-sm hover:from-violet-600 hover:to-purple-700 cursor-pointer"
                     : "bg-gray-100 text-gray-400 cursor-not-allowed"
                   }`}
@@ -1302,6 +1306,11 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
                 }
                 {isEnhancing ? "Enhancing..." : "Enhance with AI"}
               </button>
+              {disableAiEnhance && (
+                <span className="text-xs font-medium text-gray-500">
+                 Enahance with AI not supported in this template
+                </span>
+              )}
             </div>
 
             <RichTextEditor

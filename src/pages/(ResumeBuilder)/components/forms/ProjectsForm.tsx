@@ -22,6 +22,7 @@ interface ProjectsFormProps {
   onChange: (data: Project[]) => void;
   userId: string;
   token: string;
+  disableAiEnhance?: boolean;
 }
 
 const projectTypes = [
@@ -38,6 +39,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
   onChange,
   userId,
   token,
+  disableAiEnhance = false,
 }) => {
   // Collapse state for each project
   const [collapsedStates, setCollapsedStates] = useState<{
@@ -77,10 +79,10 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
       api.get(`/users/${userId}/check-enhance-used`, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      .then(res => {
-        setIsEnhanceUsed(res.data.is_enhance_used);
-      })
-      .catch(err => console.error("Error checking enhance status:", err));
+        .then(res => {
+          setIsEnhanceUsed(res.data.is_enhance_used);
+        })
+        .catch(err => console.error("Error checking enhance status:", err));
     }
   }, [userId, token]);
 
@@ -561,6 +563,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
   };
 
   const handleEnhanceRoles = async (project: Project) => {
+    if (disableAiEnhance) return;
     const hasInput = getPlainText(project.rolesResponsibilities ?? "").length > 0;
     if (!hasInput) return;
     setEnhancingProjectId(project.id);
@@ -733,16 +736,18 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
                   <button
                     type="button"
                     onClick={() => handleEnhanceRoles(project)}
-                    disabled={!getPlainText(project.rolesResponsibilities ?? "").length || enhancingProjectId === project.id || isEnhanceUsed}
+                    disabled={disableAiEnhance || !getPlainText(project.rolesResponsibilities ?? "").length || enhancingProjectId === project.id || isEnhanceUsed}
                     title={
-                      isEnhanceUsed
-                        ? "You have already used the AI enhancement feature"
-                        : !getPlainText(project.rolesResponsibilities ?? "").length 
-                        ? "Add some text to enable AI enhancement" 
-                        : "Enhance with AI"
+                      disableAiEnhance
+                        ? "AI enhancement is disabled for this template"
+                        : isEnhanceUsed
+                          ? "You have already used the AI enhancement feature"
+                          : !getPlainText(project.rolesResponsibilities ?? "").length
+                            ? "Add some text to enable AI enhancement"
+                            : "Enhance with AI"
                     }
                     className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
-                      ${getPlainText(project.rolesResponsibilities ?? "").length && enhancingProjectId !== project.id && !isEnhanceUsed
+                      ${!disableAiEnhance && getPlainText(project.rolesResponsibilities ?? "").length && enhancingProjectId !== project.id && !isEnhanceUsed
                         ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-sm hover:from-violet-600 hover:to-purple-700 cursor-pointer"
                         : "bg-gray-100 text-gray-400 cursor-not-allowed"
                       }`}
@@ -753,6 +758,11 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
                     }
                     {enhancingProjectId === project.id ? "Enhancing..." : "Enhance with AI"}
                   </button>
+                  {disableAiEnhance && (
+                    <span className="text-xs font-medium text-gray-500">
+                      Enahance with AI not supported in this template
+                    </span>
+                  )}
                 </div>
                 <RichTextEditor
                   value={project.rolesResponsibilities}

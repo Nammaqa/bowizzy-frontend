@@ -10,6 +10,7 @@ import Home from "./pages/Home";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
 import WelcomeBonusManager from "./components/WelcomeBonusManager";
 import {
   Sidebar,
@@ -428,6 +429,14 @@ function App() {
     {
       path: "signup",
       Component: () => <Register />,
+    },
+    {
+      path: "forgot-password",
+      Component: () => (
+        <PublicOnlyRoute>
+          <ForgotPassword />
+        </PublicOnlyRoute>
+      ),
     },
     {
       path: "dashboard",

@@ -306,6 +306,7 @@ export const ResumeEditor: React.FC = () => {
   const formScrollRef = useRef<HTMLDivElement>(null);
   const { markers, totalPages } = usePageMarkers(previewContentRef, [resumeData, selectedTemplate]);
   const DisplayComponent = selectedTemplate?.displayComponent || selectedTemplate?.component;
+  const disableAiEnhance = templateId === "template11";
   // Pagination UI disabled by default to avoid triggering heavy rendering.
   // To re-enable pagination, set the initial state to `true` and uncomment
   // the Paginate toggle in the preview pane below.
@@ -724,6 +725,7 @@ export const ResumeEditor: React.FC = () => {
             token={token}
             personalDetailsId={personalDetailsId}
             supportsPhoto={selectedTemplate?.supportsPhoto ?? false}
+            disableAiEnhance={disableAiEnhance}
           />
         );
       case 1:
@@ -759,6 +761,7 @@ export const ResumeEditor: React.FC = () => {
             onChange={updateProjectsData}
             userId={userId}
             token={token}
+            disableAiEnhance={disableAiEnhance}
           />
         );
       case 4:
@@ -769,6 +772,7 @@ export const ResumeEditor: React.FC = () => {
             userId={userId}
             token={token}
             technicalSummaryId={technicalSummaryId}
+            disableAiEnhance={disableAiEnhance}
           />
         );
       case 5:
