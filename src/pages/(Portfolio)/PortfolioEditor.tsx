@@ -661,6 +661,11 @@ export default function PortfolioEditor() {
       return;
     }
 
+    if (skills.some((skill) => !/^[A-Za-z ]+$/.test(skill.trim()) || skill.trim().length === 0)) {
+      alert("Each skill may only contain letters and spaces.");
+      return;
+    }
+
     if (skills.some((skill) => skill.trim().length > 59)) {
       alert("Each skill must be 59 characters or less.");
       return;

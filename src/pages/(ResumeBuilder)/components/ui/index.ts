@@ -6,3 +6,4 @@ export { FormSection } from "./FormSection";
 export { AddButton } from "./AddButton";
 export { ToggleSwitch } from "./ToggleSwitch";
 export { default as RichTextEditor } from "./RichTextEditor";
+export { default as ReorderableListEditor } from "./ReorderableListEditor";

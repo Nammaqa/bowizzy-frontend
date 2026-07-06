@@ -6,6 +6,7 @@ import {
   FormTextarea,
   FormSection,
   ToggleSwitch,
+  ReorderableListEditor,
 } from "@/pages/(ResumeBuilder)/components/ui";
 import { X, Save, Sparkles, Loader2 } from "lucide-react";
 import RichTextEditor from "@/pages/(ResumeBuilder)/components/ui/RichTextEditor";
@@ -1043,7 +1044,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
 
         <div className="flex flex-col gap-1 mt-4">
           <label className="font-medium">Technical Summary</label>
-          <RichTextEditor
+          <ReorderableListEditor
             placeholder="Provide Technical Summary"
             value={data.technicalSummary}
             onChange={(v) => {
@@ -1056,7 +1057,6 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
                 return next;
               });
             }}
-            rows={5}
           />
           {errors.technicalSummary && (
             <p className="mt-1 text-xs text-red-500">

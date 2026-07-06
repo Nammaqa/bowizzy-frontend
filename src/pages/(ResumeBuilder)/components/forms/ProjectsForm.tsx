@@ -6,6 +6,7 @@ import {
   FormTextarea,
   FormSection,
   AddButton,
+  ReorderableListEditor,
 } from "@/pages/(ResumeBuilder)/components/ui";
 import RichTextEditor from "@/pages/(ResumeBuilder)/components/ui/RichTextEditor";
 import { Save, Sparkles, Loader2, X } from "lucide-react";
@@ -764,7 +765,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
                     </span>
                   )}
                 </div>
-                <RichTextEditor
+                <ReorderableListEditor
                   value={project.rolesResponsibilities}
                   onChange={(v) => {
                     updateProject(project.id, "rolesResponsibilities", v);
@@ -773,7 +774,6 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
                     }
                   }}
                   placeholder="Provide your roles & responsibilities..."
-                  rows={4}
                 />
                 {errors[`project-${project.id}-rolesResponsibilities`] && (
                   <p className="mt-1 text-xs text-red-500">

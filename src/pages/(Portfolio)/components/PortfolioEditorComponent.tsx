@@ -176,6 +176,7 @@ export default function PortfolioEditorComponent({
   importSuccess = false,
 }: PortfolioEditorComponentProps) {
   const [newSkill, setNewSkill] = useState("");
+  const [skillError, setSkillError] = useState("");
   const [removingProfileImage, setRemovingProfileImage] = useState(false);
   const [removingCv, setRemovingCv] = useState(false);
   const [removingCaseStudyImageIndex, setRemovingCaseStudyImageIndex] = useState<number | null>(null);
@@ -266,7 +267,8 @@ export default function PortfolioEditorComponent({
   const nameMax = 50;
   const descMax = 300;
   const linkMax = 100;
-  const skillMax = 59;
+  const skillMax = 50;
+  const skillPattern = /^[A-Za-z ]+$/;
   const stepTitleMax = 100;
   const stepDescriptionMax = 250;
   const caseStudyTitleMax = 50;
@@ -415,17 +417,22 @@ export default function PortfolioEditorComponent({
     e.preventDefault();
     const trimmed = newSkill.trim();
     if (!trimmed) return;
+    if (!skillPattern.test(trimmed)) {
+      setSkillError("Skills can only contain letters and spaces.");
+      return;
+    }
     if (trimmed.length > skillMax) {
-      alert(`Skill must be ${skillMax} characters or less.`);
+      setSkillError(`Skill must be ${skillMax} characters or less.`);
       return;
     }
     const normalized = trimmed.toLowerCase();
     if (skills.map((s) => s.trim().toLowerCase()).includes(normalized)) {
-      alert("Skills must not repeat.");
+      setSkillError("Skills must not repeat.");
       return;
     }
     setSkills([...skills, trimmed]);
     setNewSkill("");
+    setSkillError("");
   };
 
   const handleRemoveSkill = (skillName: string) => {
@@ -969,7 +976,11 @@ export default function PortfolioEditorComponent({
           <input
             type="text"
             value={newSkill}
-            onChange={(e) => setNewSkill(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value.replace(/[^A-Za-z ]/g, "");
+              setNewSkill(val);
+              if (skillError) setSkillError("");
+            }}
             placeholder="e.g. JavaScript, UI Design, AWS"
             maxLength={skillMax}
             className="flex-1 text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
@@ -982,6 +993,9 @@ export default function PortfolioEditorComponent({
             Add
           </button>
         </form>
+        {skillError && (
+          <p className="text-xs text-red-600 mt-2">{skillError}</p>
+        )}
         <div className="flex flex-wrap gap-2 pt-1">
           {skills.length === 0 ? (
             <span className="text-xs text-gray-400">No skills added yet.</span>
