@@ -64,6 +64,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#444',
     marginTop: 6,
+    textAlign: 'justify',
   },
   linkText: {
     fontSize: 9,
@@ -95,6 +96,7 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontWeight: 'normal',
     marginBottom: 4,
+    textAlign: 'justify',
   }
 });
 
@@ -317,10 +319,10 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
 
           {/* Career Objective */}
           {personal.aboutCareerObjective && personal.aboutCareerObjective.trim() !== '' && (
-            <View style={{ marginBottom: 12 }}>
+            <View style={{ marginBottom: 12 }} minPresenceAhead={60}>
               <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>CAREER OBJECTIVE</Text>
               <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 6 }} />
-              <Text style={{ fontSize: 11, color: '#000000', fontFamily: pdfFontFamily, lineHeight: 1.6 }}>
+              <Text style={{ fontSize: 11, color: '#000000', fontFamily: pdfFontFamily, lineHeight: 1.6, textAlign: 'justify' }}>
                 {htmlToPlainText(personal.aboutCareerObjective)}
               </Text>
             </View>
@@ -329,10 +331,12 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
           {/* Experience */}
           {experience.workExperiences.filter((w: any) => w.enabled).length > 0 && (
             <View style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>EXPERIENCE</Text>
-              <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
+              <View minPresenceAhead={90}>
+                <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>EXPERIENCE</Text>
+                <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
+              </View>
               {experience.workExperiences.filter((w: any) => w.enabled).map((w: any, i: number) => (
-                <View key={i} style={{ marginBottom: 12 }}>
+                <View key={i} style={{ marginBottom: 12 }} wrap={false}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
                     <Text style={{ fontSize: 12, fontFamily: pdfFontFamilyBold, color: '#111827', flex: 1, marginRight: 8 }}>{w.companyName}</Text>
                     <Text style={{ fontSize: 11, color: '#111827', fontFamily: pdfFontFamilyBold, textAlign: 'right' }}>
@@ -356,8 +360,10 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
           {/* Education */}
           {(education.higherEducation.some(edu => edu.enabled) || education.preUniversityEnabled || education.sslcEnabled) && (
             <View style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>EDUCATION</Text>
-              <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
+              <View minPresenceAhead={70}>
+                <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>EDUCATION</Text>
+                <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
+              </View>
 
               {education.higherEducation.some(edu => edu.enabled) && (
                 <>
@@ -373,7 +379,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
                     const bKey = parseYearKey(b.endYear || b.startYear || '');
                     return aKey - bKey;
                   }).map((edu: any, idx: number) => (
-                    <View key={idx} style={{ marginBottom: 8 }}>
+                    <View key={idx} style={{ marginBottom: 8 }} wrap={false}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{edu.instituteName}</Text>
                         <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>
@@ -395,7 +401,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
 
               {/* Pre University */}
               {education.preUniversityEnabled && (
-                <View style={{ marginBottom: 8 }}>
+                <View style={{ marginBottom: 8 }} wrap={false}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
                       <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
@@ -413,7 +419,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
 
               {/* SSLC */}
               {education.sslcEnabled && (
-                <View style={{ marginBottom: 8 }}>
+                <View style={{ marginBottom: 8 }} wrap={false}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{education.sslc.instituteName || 'SSLC'}</Text>
                       <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.sslc)}</Text>
@@ -434,10 +440,12 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
           {/* Projects */}
           {projects && projects.filter((p: any) => p.enabled).length > 0 && (
             <View style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>PROJECTS</Text>
-              <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
+              <View minPresenceAhead={100}>
+                <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>PROJECTS</Text>
+                <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
+              </View>
               {projects.filter((p: any) => p.enabled).map((proj: any, idx: number) => (
-                <View key={idx} style={{ marginBottom: 12 }}>
+                <View key={idx} style={{ marginBottom: 12 }} wrap={false}>
                   {/* Title + dates */}
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 3 }}>
                     <Text style={{ fontSize: 12, fontFamily: pdfFontFamilyBold, color: '#111827', flex: 1, marginRight: 8 }}>{proj.projectTitle}</Text>
@@ -472,16 +480,18 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
           {/* Certifications */}
           {certifications.filter((c: any) => c.enabled).length > 0 && (
             <View style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>TECHNICAL CERTIFICATIONS</Text>
-              <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
+              <View minPresenceAhead={60}>
+                <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>TECHNICAL CERTIFICATIONS</Text>
+                <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
+              </View>
               {certifications.filter((c: any) => c.enabled).map((cert: any, idx: number) => (
-                <View key={idx} style={{ marginBottom: 8 }}>
+                <View key={idx} style={{ marginBottom: 8 }} wrap={false}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{cert.certificateTitle}</Text>
                     <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>{cert.date}</Text>
                   </View>
                   {cert.description ? (
-                    <Text style={{ fontSize: 11, color: '#000000', fontFamily: pdfFontFamily, marginTop: 3 }}>
+                    <Text style={{ color: '#000000', fontFamily: pdfFontFamily, marginTop: 3, textAlign: 'justify' }}>
                       {htmlToPlainText(cert.description)}
                     </Text>
                   ) : null}
@@ -494,12 +504,10 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
           {skillsLinks.technicalSummaryEnabled &&
             skillsLinks.technicalSummary &&
             skillsLinks.technicalSummary.replace(/<[^>]*>/g, '').trim() !== '' && (
-              <View style={{ marginBottom: 12 }}>
+              <View style={{ marginBottom: 12 }} minPresenceAhead={60}>
                 <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>TECHNICAL SUMMARY</Text>
                 <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
-                <Text style={{ fontSize: 11, color: '#000000', fontFamily: pdfFontFamily, lineHeight: 1.6 }}>
-                  {htmlToPlainText(skillsLinks.technicalSummary)}
-                </Text>
+                {renderBulletedParagraph(skillsLinks.technicalSummary)}
               </View>
             )}
 

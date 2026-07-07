@@ -27,6 +27,7 @@ import {
 import Bowizzy from "@/assets/bowizzy.png";
 import {
   Box,
+  Coins,
   Crown,
   FileArchive,
   LayoutDashboard,
@@ -65,7 +66,7 @@ import InterviewComplete from "./pages/(InterviewPrep)/VideoPractise/Components/
 import InterviewReview from "./pages/(InterviewPrep)/VideoPractise/Components/InterviewReview";
 import TemplateSelection from "./pages/(ResumeBuilder)/TemplateSelection";
 import ResumeEditor from "./pages/(ResumeBuilder)/ResumeEditor";
-import Premium from "./pages/Premium";
+import Credits from "./pages/Credits";
 import AiResumeLanding from "./pages/AiResumeLanding";
 import AIBuilder from "./pages/(AIResumeBuilder)/AiBuilder";
 import Terms from "./pages/terms";
@@ -353,6 +354,19 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
 
           <SidebarFooter className="mt-auto mb-4">
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  className="p-5 flex items-center"
+                >
+                  <a href="/credits">
+                    <Coins color="#3B3B3B" size={16} />
+                    <span className="ml-4" style={{ fontSize: "14px" }}>
+                      Credits
+                    </span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
@@ -760,11 +774,11 @@ function App() {
       )
     },
     {
-      path: "premium",
+      path: "credits",
       Component: () => (
         <ProtectedRoute>
           <LayoutWrapper>
-            <Premium />
+            <Credits />
           </LayoutWrapper>
         </ProtectedRoute>
       )

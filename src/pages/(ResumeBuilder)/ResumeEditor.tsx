@@ -26,6 +26,7 @@ import {
   getTechnicalSummary,
 } from "@/services/skillsLinksService";
 import { getResumeTemplateById, uploadResume } from "@/services/resumeServices";
+import api from "@/api";
 
 // Import print styles
 import "@/styles/print.css";
@@ -301,6 +302,8 @@ export const ResumeEditor: React.FC = () => {
   const [technicalSummaryId, setTechnicalSummaryId] = useState<number | null>(
     null
   );
+  const [enhanceStatus, setEnhanceStatus] = useState<{isBonus_enhance_used: boolean; enhance_usage_left: number} | null>(null);
+  const [redeemingEnhance, setRedeemingEnhance] = useState(false);
 
   const previewContentRef = useRef<HTMLDivElement>(null);
   const formScrollRef = useRef<HTMLDivElement>(null);
@@ -603,6 +606,43 @@ export const ResumeEditor: React.FC = () => {
     }
   }, [userId, token, fetchAllData, importReady]);
 
+  const fetchEnhanceStatus = useCallback(async (currentUserId: string, currentToken: string) => {
+    try {
+      const response = await api.get(`/users/${currentUserId}/check-enhance-used`, {
+        headers: { Authorization: `Bearer ${currentToken}` }
+      });
+      if (response.data) {
+        setEnhanceStatus({
+          isBonus_enhance_used: response.data.isBonus_enhance_used,
+          enhance_usage_left: response.data.enhance_usage_left
+        });
+      }
+    } catch (err) {
+      console.error("Failed to fetch enhance status:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (userId && token) {
+      fetchEnhanceStatus(userId, token);
+    }
+  }, [userId, token, fetchEnhanceStatus]);
+
+  const handleRedeemEnhance = async () => {
+    if (!userId || !token) return;
+    setRedeemingEnhance(true);
+    try {
+      await api.post(`/users/${userId}/redeem-enhance-with-bonus`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      await fetchEnhanceStatus(userId, token);
+    } catch (err) {
+      console.error("Failed to redeem enhance with bonus:", err);
+    } finally {
+      setRedeemingEnhance(false);
+    }
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (fontDropdownRef.current && !fontDropdownRef.current.contains(event.target as Node)) {
@@ -726,6 +766,9 @@ export const ResumeEditor: React.FC = () => {
             personalDetailsId={personalDetailsId}
             supportsPhoto={selectedTemplate?.supportsPhoto ?? false}
             disableAiEnhance={disableAiEnhance}
+            enhanceStatus={enhanceStatus}
+            onRedeemEnhance={handleRedeemEnhance}
+            redeemingEnhance={redeemingEnhance}
           />
         );
       case 1:
@@ -762,6 +805,9 @@ export const ResumeEditor: React.FC = () => {
             userId={userId}
             token={token}
             disableAiEnhance={disableAiEnhance}
+            enhanceStatus={enhanceStatus}
+            onRedeemEnhance={handleRedeemEnhance}
+            redeemingEnhance={redeemingEnhance}
           />
         );
       case 4:
@@ -773,6 +819,9 @@ export const ResumeEditor: React.FC = () => {
             token={token}
             technicalSummaryId={technicalSummaryId}
             disableAiEnhance={disableAiEnhance}
+            enhanceStatus={enhanceStatus}
+            onRedeemEnhance={handleRedeemEnhance}
+            redeemingEnhance={redeemingEnhance}
           />
         );
       case 5:

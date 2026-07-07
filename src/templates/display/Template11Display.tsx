@@ -46,7 +46,6 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
       return aKey - bKey;
     });
   }, [education.higherEducation]);
-  console.log('skill links', skillsLinks)
   const getYear = (s?: string) => (s ? s.split('-')[0] : '');
 
   const degreeMap: Record<string, string> = {
@@ -142,9 +141,35 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
 
     return items;
   }, [personal, skillsLinks]);
-  console.log("edu", education.preUniversityEnabled, education.preUniversity.instituteName)
   return (
     <div className="w-[210mm] bg-white relative" style={{ minHeight: '297mm', fontFamily: fontFamily, }}>
+      {/* Scoped styles: justify paragraphs and bullet points inside rich-text (dangerouslySetInnerHTML) blocks */}
+      <style>{`
+        .t11-justify {
+          text-align: justify;
+          text-justify: inter-word;
+        }
+        .t11-justify p,
+        .t11-justify li,
+        .t11-justify div {
+          text-align: justify;
+          text-justify: inter-word;
+        }
+        .t11-justify ul,
+        .t11-justify ol {
+          margin: 0;
+          padding-left: 18px;
+        }
+        .t11-justify li {
+          margin-bottom: 2px;
+        }
+        /* Avoid ugly justify rag on the very last line of a block */
+        .t11-justify p:last-child,
+        .t11-justify li:last-child {
+          text-align-last: left;
+        }
+      `}</style>
+
       {/* Tiled Watermark Pattern — 4 cols × 6 rows */}
       <div style={{
         position: 'absolute',
@@ -205,7 +230,11 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
             <section style={{ marginBottom: 22 }}>
               <h2 style={{ fontSize: 13, fontWeight: 700, color: primaryColor, letterSpacing: 1.2, marginBottom: 8 }}>CAREER OBJECTIVE</h2>
               <div style={{ height: 1, background: '#333', width: '100%', marginBottom: 12 }} />
-              <div style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', lineHeight: 1.6 }} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(personal.aboutCareerObjective || '') }} />
+              <div
+                className="t11-justify"
+                style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', lineHeight: 1.6, textAlign: 'justify' }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(personal.aboutCareerObjective || '') }}
+              />
             </section>
           )}
 
@@ -236,7 +265,9 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                     {exp.location && <div style={{ fontSize: 11, fontWeight: 700, color: '#000000' }}>{exp.location}</div>}
                   </div>
                   {exp.description && (
-                    <div style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', lineHeight: 1.6 }}
+                    <div
+                      className="t11-justify"
+                      style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', lineHeight: 1.6, textAlign: 'justify' }}
                       dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(exp.description || '') }}
                     />
                   )}
@@ -360,11 +391,13 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                     {/* Description */}
                     {proj.description && (
                       <div
+                        className="t11-justify"
                         style={{
                           fontSize: 11,
                           color: '#000000',
                           fontWeight: 'normal',
                           lineHeight: 1.6,
+                          textAlign: 'justify',
                         }}
                         dangerouslySetInnerHTML={{
                           __html: DOMPurify.sanitize(proj.description),
@@ -381,11 +414,15 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                           >
                             Role:{' '}
                           </span>
-                          <span
+                          <div
+                            className="t11-justify"
                             style={{
                               fontSize: 11,
                               color: '#000000',
                               fontWeight: 'normal',
+                              lineHeight: 1.6,
+                              textAlign: 'justify',
+                              display: 'inline',
                             }}
                             dangerouslySetInnerHTML={{
                               __html: DOMPurify.sanitize(proj.rolesResponsibilities),
@@ -410,7 +447,11 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                     <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{cert.date}</div>
                   </div>
                   {cert.description && (
-                    <div style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', marginTop: 4 }} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(cert.description) }} />
+                    <div
+                      className="t11-justify"
+                      style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', marginTop: 4, textAlign: 'justify' }}
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(cert.description) }}
+                    />
                   )}
                 </div>
               ))}
@@ -427,7 +468,8 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                 </h2>
                 <div style={{ height: 1, background: '#333', width: '100%', marginBottom: 12 }} />
                 <div
-                  style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', lineHeight: 1.6 }}
+                  className="t11-justify"
+                  style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', lineHeight: 1.6, textAlign: 'justify' }}
                   dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(skillsLinks.technicalSummary) }}
                 />
               </section>
