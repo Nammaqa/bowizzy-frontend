@@ -636,6 +636,7 @@ export const ResumeEditor: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       await fetchEnhanceStatus(userId, token);
+      window.dispatchEvent(new CustomEvent("credits:refresh", { detail: { reason: "redeem_enhance" } }));
     } catch (err) {
       console.error("Failed to redeem enhance with bonus:", err);
     } finally {

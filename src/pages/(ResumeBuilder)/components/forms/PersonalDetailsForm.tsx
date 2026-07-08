@@ -121,7 +121,7 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
   const [loadingCities, setLoadingCities] = useState(false);
 
   const [isEnhancing, setIsEnhancing] = useState(false);
-  const cannotEnhance = enhanceStatus ? (enhanceStatus.enhance_usage_left === 0 && enhanceStatus.isBonus_enhance_used) : false;
+  const cannotEnhance = enhanceStatus ? enhanceStatus.enhance_usage_left <= 0 : false;
   const [enhanceError, setEnhanceError] = useState("");
   const [enhancedVersions, setEnhancedVersions] = useState<{ professional: string; elaborate: string } | null>(null);
 

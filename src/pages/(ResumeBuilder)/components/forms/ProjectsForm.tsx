@@ -64,7 +64,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
   const [hiddenSaveIds, setHiddenSaveIds] = useState<Set<string>>(new Set());
 
   const [enhancingProjectId, setEnhancingProjectId] = useState<string | null>(null);
-  const cannotEnhance = enhanceStatus ? (enhanceStatus.enhance_usage_left === 0 && enhanceStatus.isBonus_enhance_used) : false;
+  const cannotEnhance = enhanceStatus ? enhanceStatus.enhance_usage_left <= 0 : false;
   const [enhanceRolesError, setEnhanceRolesError] = useState<Record<string, string>>({});
   const [enhancedRolesVersions, setEnhancedRolesVersions] = useState<Record<string, { precise: string; technical: string }>>({});
 

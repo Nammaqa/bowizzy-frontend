@@ -33,27 +33,37 @@ export default function DashNav({ heading, zindex }: { heading: string; zindex?:
     const dropdownRef = useRef<HTMLDivElement | null>(null);
 
     // ── fetch profile (single source of truth for profile + credits) ───────────
-    useEffect(() => {
-        const loadProfile = async () => {
-            try {
-                const userData = JSON.parse(localStorage.getItem('user') || 'null');
-                const token = userData?.token;
-                if (!token) return;
+    const loadProfile = useCallback(async () => {
+        try {
+            const userData = JSON.parse(localStorage.getItem('user') || 'null');
+            const token = userData?.token;
+            if (!token) return;
 
-                setProfileLoading(true);
-                const resp = await api.get('/personal-details/profile-data', {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                const data = resp?.data ?? resp;
-                if (data) setProfileData(data);
-            } catch (err) {
-                console.warn('Failed to load profile data', err);
-            } finally {
-                setProfileLoading(false);
-            }
-        };
-        loadProfile();
+            setProfileLoading(true);
+            const resp = await api.get('/personal-details/profile-data', {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = resp?.data ?? resp;
+            if (data) setProfileData(data);
+        } catch (err) {
+            console.warn('Failed to load profile data', err);
+        } finally {
+            setProfileLoading(false);
+        }
     }, []);
+
+    useEffect(() => {
+        loadProfile();
+    }, [loadProfile]);
+
+    useEffect(() => {
+        const handleCreditsRefresh = () => {
+            loadProfile();
+        };
+
+        window.addEventListener('credits:refresh', handleCreditsRefresh);
+        return () => window.removeEventListener('credits:refresh', handleCreditsRefresh);
+    }, [loadProfile]);
 
     // ── close dropdown on outside click ───────────────────────────────────────
     useEffect(() => {

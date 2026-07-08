@@ -76,7 +76,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
   const [hiddenSaveIds, setHiddenSaveIds] = useState<Set<string>>(new Set());
 
   const [isEnhancingSummary, setIsEnhancingSummary] = useState(false);
-  const cannotEnhance = enhanceStatus ? (enhanceStatus.enhance_usage_left === 0 && enhanceStatus.isBonus_enhance_used) : false;
+  const cannotEnhance = enhanceStatus ? enhanceStatus.enhance_usage_left <= 0 : false;
   const [enhanceSummaryError, setEnhanceSummaryError] = useState("");
   const [enhancedSummaryVersions, setEnhancedSummaryVersions] = useState<{
     atsFriendly: string;
