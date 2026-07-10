@@ -26,8 +26,10 @@ interface PersonalDetailsFormProps {
   personalDetailsId: string | null;
   supportsPhoto?: boolean;
   disableAiEnhance?: boolean;
-  enhanceStatus?: { isBonus_enhance_used: boolean; enhance_usage_left: number } | null;
+  enhanceStatus?: { isBonus_enhance_used: boolean; enhance_usage_left: number; purchased_credits?: number | string } | null;
   onRedeemEnhance?: () => void;
+  onRedeemEnhanceWithPurchasedCredits?: () => void;
+  onEnhanceStatusChange?: (status: { isBonus_enhance_used: boolean; enhance_usage_left: number; purchased_credits?: number | string }) => void;
   redeemingEnhance?: boolean;
 }
 
@@ -90,6 +92,8 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
   disableAiEnhance = false,
   enhanceStatus,
   onRedeemEnhance,
+  onRedeemEnhanceWithPurchasedCredits,
+  onEnhanceStatusChange,
   redeemingEnhance = false,
 }) => {
   const [personalInfoCollapsed, setPersonalInfoCollapsed] = useState(false);
@@ -316,10 +320,13 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
       await api.post(`/users/${userId}/mark-enhance-used`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      // Optionally notify parent to refresh status
-      if (onRedeemEnhance && !enhanceStatus?.isBonus_enhance_used) {
-         // This is handled via redeem actually, but just let ResumeEditor refresh it.
-      }
+
+      const nextUsageLeft = Math.max((enhanceStatus?.enhance_usage_left ?? 0) - 1, 0);
+      onEnhanceStatusChange?.({
+        isBonus_enhance_used: enhanceStatus?.isBonus_enhance_used ?? false,
+        enhance_usage_left: nextUsageLeft,
+        purchased_credits: enhanceStatus?.purchased_credits ?? 0,
+      });
 
       setEnhancedVersions(result);
     } catch (err: any) {
@@ -1316,6 +1323,15 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
                         className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 py-1.5 rounded-full transition disabled:opacity-50"
                       >
                         {redeemingEnhance ? 'Redeeming...' : 'Redeem with Bonus'}
+                      </button>
+                    )}
+                    {enhanceStatus.enhance_usage_left === 0 && enhanceStatus.isBonus_enhance_used && (
+                      <button
+                        onClick={onRedeemEnhanceWithPurchasedCredits}
+                        disabled={redeemingEnhance}
+                        className="bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold px-3 py-1.5 rounded-full transition disabled:opacity-50"
+                      >
+                        {redeemingEnhance ? 'Redeeming...' : 'Redeem using purchased credits'}
                       </button>
                     )}
                   </div>

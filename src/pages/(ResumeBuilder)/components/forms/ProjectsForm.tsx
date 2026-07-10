@@ -24,8 +24,10 @@ interface ProjectsFormProps {
   userId: string;
   token: string;
   disableAiEnhance?: boolean;
-  enhanceStatus?: { isBonus_enhance_used: boolean; enhance_usage_left: number } | null;
+  enhanceStatus?: { isBonus_enhance_used: boolean; enhance_usage_left: number; purchased_credits?: number | string } | null;
   onRedeemEnhance?: () => void;
+  onRedeemEnhanceWithPurchasedCredits?: () => void;
+  onEnhanceStatusChange?: (status: { isBonus_enhance_used: boolean; enhance_usage_left: number; purchased_credits?: number | string }) => void;
   redeemingEnhance?: boolean;
 }
 
@@ -46,6 +48,8 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
   disableAiEnhance = false,
   enhanceStatus,
   onRedeemEnhance,
+  onRedeemEnhanceWithPurchasedCredits,
+  onEnhanceStatusChange,
   redeemingEnhance = false,
 }) => {
   // Collapse state for each project
@@ -577,6 +581,13 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
         headers: { Authorization: `Bearer ${token}` }
       });
 
+      const nextUsageLeft = Math.max((enhanceStatus?.enhance_usage_left ?? 0) - 1, 0);
+      onEnhanceStatusChange?.({
+        isBonus_enhance_used: enhanceStatus?.isBonus_enhance_used ?? false,
+        enhance_usage_left: nextUsageLeft,
+        purchased_credits: enhanceStatus?.purchased_credits ?? 0,
+      });
+
       setEnhancedRolesVersions((prev) => ({ ...prev, [project.id]: result }));
     } catch (err: any) {
       setEnhanceRolesError((prev) => ({ ...prev, [project.id]: err.response?.data?.message || err.message || "Failed to enhance. Please try again." }));
@@ -756,6 +767,15 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
                             className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 py-1.5 rounded-full transition disabled:opacity-50"
                           >
                             {redeemingEnhance ? 'Redeeming...' : 'Redeem with Bonus'}
+                          </button>
+                        )}
+                        {enhanceStatus.enhance_usage_left === 0 && enhanceStatus.isBonus_enhance_used && (
+                          <button
+                            onClick={onRedeemEnhanceWithPurchasedCredits}
+                            disabled={redeemingEnhance}
+                            className="bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold px-3 py-1.5 rounded-full transition disabled:opacity-50"
+                          >
+                            {redeemingEnhance ? 'Redeeming...' : 'Redeem using purchased credits'}
                           </button>
                         )}
                       </div>
