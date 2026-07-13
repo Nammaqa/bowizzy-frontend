@@ -8,6 +8,7 @@ import {
   AddButton,
   ReorderableListEditor,
 } from "@/pages/(ResumeBuilder)/components/ui";
+import api from "@/api";
 import RichTextEditor from "@/pages/(ResumeBuilder)/components/ui/RichTextEditor";
 import { Save, Sparkles, Loader2, X } from "lucide-react";
 import {
@@ -16,7 +17,6 @@ import {
   deleteProject,
 } from "@/services/projectService";
 import { enhanceRolesResponsibilities } from "@/utils/enhanceRolesResponsibilities";
-import api from "@/api";
 
 interface ProjectsFormProps {
   data: Project[];
@@ -24,6 +24,11 @@ interface ProjectsFormProps {
   userId: string;
   token: string;
   disableAiEnhance?: boolean;
+  enhanceStatus?: { isBonus_enhance_used: boolean; enhance_usage_left: number; purchased_credits?: number | string } | null;
+  onRedeemEnhance?: () => void;
+  onRedeemEnhanceWithPurchasedCredits?: () => void;
+  onEnhanceStatusChange?: (status: { isBonus_enhance_used: boolean; enhance_usage_left: number; purchased_credits?: number | string }) => void;
+  redeemingEnhance?: boolean;
 }
 
 const projectTypes = [
@@ -41,6 +46,11 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
   userId,
   token,
   disableAiEnhance = false,
+  enhanceStatus,
+  onRedeemEnhance,
+  onRedeemEnhanceWithPurchasedCredits,
+  onEnhanceStatusChange,
+  redeemingEnhance = false,
 }) => {
   // Collapse state for each project
   const [collapsedStates, setCollapsedStates] = useState<{
@@ -58,7 +68,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
   const [hiddenSaveIds, setHiddenSaveIds] = useState<Set<string>>(new Set());
 
   const [enhancingProjectId, setEnhancingProjectId] = useState<string | null>(null);
-  const [isEnhanceUsed, setIsEnhanceUsed] = useState(false);
+  const cannotEnhance = enhanceStatus ? enhanceStatus.enhance_usage_left <= 0 : false;
   const [enhanceRolesError, setEnhanceRolesError] = useState<Record<string, string>>({});
   const [enhancedRolesVersions, setEnhancedRolesVersions] = useState<Record<string, { precise: string; technical: string }>>({});
 
@@ -73,19 +83,6 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
       }
     });
   }, [data]);
-
-  // Check if Enhance with AI has been used
-  useEffect(() => {
-    if (userId && token) {
-      api.get(`/users/${userId}/check-enhance-used`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-        .then(res => {
-          setIsEnhanceUsed(res.data.is_enhance_used);
-        })
-        .catch(err => console.error("Error checking enhance status:", err));
-    }
-  }, [userId, token]);
 
   // Check if a specific project has changes
   const getProjectChangedStatus = (current: Project): boolean => {
@@ -571,14 +568,6 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
     setEnhanceRolesError((prev) => ({ ...prev, [project.id]: "" }));
     setEnhancedRolesVersions((prev) => { const u = { ...prev }; delete u[project.id]; return u; });
     try {
-      // 1. Check if user can use enhance feature
-      const checkRes = await api.get(`/users/${userId}/check-enhance-used`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (checkRes.data && checkRes.data.canUse === false) {
-        throw new Error(checkRes.data.message || "You have reached your limit for AI enhancement.");
-      }
-
       // 2. Call the AI service
       const result = await enhanceRolesResponsibilities(
         project.rolesResponsibilities,
@@ -591,7 +580,13 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
       await api.post(`/users/${userId}/mark-enhance-used`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setIsEnhanceUsed(true);
+
+      const nextUsageLeft = Math.max((enhanceStatus?.enhance_usage_left ?? 0) - 1, 0);
+      onEnhanceStatusChange?.({
+        isBonus_enhance_used: enhanceStatus?.isBonus_enhance_used ?? false,
+        enhance_usage_left: nextUsageLeft,
+        purchased_credits: enhanceStatus?.purchased_credits ?? 0,
+      });
 
       setEnhancedRolesVersions((prev) => ({ ...prev, [project.id]: result }));
     } catch (err: any) {
@@ -734,31 +729,58 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
                   <label className="font-medium">Roles & Responsibilities</label>
-                  <button
-                    type="button"
-                    onClick={() => handleEnhanceRoles(project)}
-                    disabled={disableAiEnhance || !getPlainText(project.rolesResponsibilities ?? "").length || enhancingProjectId === project.id || isEnhanceUsed}
-                    title={
-                      disableAiEnhance
-                        ? "AI enhancement is disabled for this template"
-                        : isEnhanceUsed
-                          ? "You have already used the AI enhancement feature"
-                          : !getPlainText(project.rolesResponsibilities ?? "").length
-                            ? "Add some text to enable AI enhancement"
-                            : "Enhance with AI"
-                    }
-                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
-                      ${!disableAiEnhance && getPlainText(project.rolesResponsibilities ?? "").length && enhancingProjectId !== project.id && !isEnhanceUsed
-                        ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-sm hover:from-violet-600 hover:to-purple-700 cursor-pointer"
-                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                      }`}
-                  >
-                    {enhancingProjectId === project.id
-                      ? <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />
-                      : <Sparkles className="w-4 h-4" strokeWidth={2} />
-                    }
-                    {enhancingProjectId === project.id ? "Enhancing..." : "Enhance with AI"}
-                  </button>
+                  <div className="flex items-center gap-4">
+                    <button
+                      type="button"
+                      onClick={() => handleEnhanceRoles(project)}
+                      disabled={disableAiEnhance || !getPlainText(project.rolesResponsibilities ?? "").length || enhancingProjectId === project.id || cannotEnhance}
+                      title={
+                        disableAiEnhance
+                          ? "AI enhancement is disabled for this template"
+                          : cannotEnhance
+                            ? "You have already used the AI enhancement feature"
+                            : !getPlainText(project.rolesResponsibilities ?? "").length
+                              ? "Add some text to enable AI enhancement"
+                              : "Enhance with AI"
+                      }
+                      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
+                        ${!disableAiEnhance && getPlainText(project.rolesResponsibilities ?? "").length && enhancingProjectId !== project.id && !cannotEnhance
+                          ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-sm hover:from-violet-600 hover:to-purple-700 cursor-pointer"
+                          : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        }`}
+                    >
+                      {enhancingProjectId === project.id
+                        ? <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />
+                        : <Sparkles className="w-4 h-4" strokeWidth={2} />
+                      }
+                      {enhancingProjectId === project.id ? "Enhancing..." : "Enhance with AI"}
+                    </button>
+                    {enhanceStatus && !disableAiEnhance && (
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm text-gray-600 font-medium">
+                          <span className="text-orange-600 font-bold">{enhanceStatus.enhance_usage_left}</span> left
+                        </span>
+                        {enhanceStatus.enhance_usage_left === 0 && !enhanceStatus.isBonus_enhance_used && (
+                          <button
+                            onClick={onRedeemEnhance}
+                            disabled={redeemingEnhance}
+                            className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 py-1.5 rounded-full transition disabled:opacity-50"
+                          >
+                            {redeemingEnhance ? 'Redeeming...' : 'Redeem with Bonus'}
+                          </button>
+                        )}
+                        {enhanceStatus.enhance_usage_left === 0 && enhanceStatus.isBonus_enhance_used && (
+                          <button
+                            onClick={onRedeemEnhanceWithPurchasedCredits}
+                            disabled={redeemingEnhance}
+                            className="bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold px-3 py-1.5 rounded-full transition disabled:opacity-50"
+                          >
+                            {redeemingEnhance ? 'Redeeming...' : 'Redeem using purchased credits'}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   {disableAiEnhance && (
                     <span className="text-xs font-medium text-gray-500">
                       Enahance with AI not supported in this template
@@ -769,10 +791,9 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
                   value={project.rolesResponsibilities}
                   onChange={(v) => {
                     updateProject(project.id, "rolesResponsibilities", v);
-                    if (enhancedRolesVersions[project.id]) {
-                      setEnhancedRolesVersions((prev) => { const u = { ...prev }; delete u[project.id]; return u; });
-                    }
-                  }}
+                    setEnhancedRolesVersions((prev) => { const u = { ...prev }; delete u[project.id]; return u; });
+                  }
+                  }
                   placeholder="Provide your roles & responsibilities..."
                 />
                 {errors[`project-${project.id}-rolesResponsibilities`] && (

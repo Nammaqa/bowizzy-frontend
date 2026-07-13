@@ -6,7 +6,7 @@ import { useLocation } from "react-router-dom";
 import { Check, Heart, Eye } from "lucide-react";
 import * as subscriptionService from "@/services/subscriptionService";
 import { Lock, Crown } from "lucide-react";
-import Premium from "@/pages/Premium";
+import Credits from "@/pages/Credits";
 import { getSubscriptionByUserId } from "@/services/subscriptionService";
 
 // Import preview images for templates 12-20
@@ -56,6 +56,7 @@ export default function TemplateSelection() {
   const [preSelectedTemplates, setPreSelectedTemplates] = useState<string[]>([]);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState<any>(null);
+  const [showCreditsModal, setShowCreditsModal] = useState(false);
 
   const PAID_EXTRA_TEMPLATE_IDS = ["template9", "template10"];
   const EXTRA_PRICE = 100;
@@ -143,7 +144,7 @@ export default function TemplateSelection() {
         const q = new URLSearchParams();
         q.set("pendingTemplates", JSON.stringify(numericPayload));
         q.set("from", "template-selection");
-        navigate(`/premium?${q.toString()}`);
+        navigate(`/credits?${q.toString()}`);
         return;
       }
 
@@ -174,7 +175,7 @@ export default function TemplateSelection() {
         const q = new URLSearchParams();
         q.set("plan", cameFromPlan);
         q.set("saved", "true");
-        navigate(`/premium?${q.toString()}`);
+        navigate(`/credits?${q.toString()}`);
         return;
       }
     } catch (err: any) {
@@ -341,7 +342,7 @@ export default function TemplateSelection() {
                   </div>
                   <div>
                     <button
-                      onClick={() => navigate("/premium")}
+                      onClick={() => navigate("/credits")}
                       className="px-3 py-2 bg-orange-500 text-white rounded-md text-sm"
                     >
                       Choose Plan
@@ -426,7 +427,7 @@ export default function TemplateSelection() {
                             onClick={(e) => {
                               e.stopPropagation();
                               e.preventDefault();
-                              setShowPremiumModal(true);
+                              setShowCreditsModal(true);
                             }}
                             className="px-5 py-2 bg-white text-[#1A1A43] rounded-lg font-semibold text-sm hover:bg-gray-100 transition-colors cursor-pointer"
                           >
@@ -582,15 +583,15 @@ export default function TemplateSelection() {
             </div>
           </div>
 
-          {/* Premium Modal */}
-          {showPremiumModal && (
+          {/* Credits Modal */}
+          {showCreditsModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center">
               <div
                 className="absolute inset-0 bg-black/60"
-                onClick={() => setShowPremiumModal(false)}
+                onClick={() => setShowCreditsModal(false)}
               />
               <div className="relative z-10 p-4 w-full max-w-4xl">
-                <Premium modal onClose={() => setShowPremiumModal(false)} />
+                <Credits modal onClose={() => setShowCreditsModal(false)} />
               </div>
             </div>
           )}

@@ -31,6 +31,11 @@ interface SkillsLinksFormProps {
   token: string;
   technicalSummaryId?: number | null;
   disableAiEnhance?: boolean;
+  enhanceStatus?: { isBonus_enhance_used: boolean; enhance_usage_left: number; purchased_credits?: number | string } | null;
+  onRedeemEnhance?: () => void;
+  onRedeemEnhanceWithPurchasedCredits?: () => void;
+  onEnhanceStatusChange?: (status: { isBonus_enhance_used: boolean; enhance_usage_left: number; purchased_credits?: number | string }) => void;
+  redeemingEnhance?: boolean;
 }
 
 const skillLevels = [
@@ -47,6 +52,11 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
   token,
   technicalSummaryId: initialTechnicalSummaryId,
   disableAiEnhance = false,
+  enhanceStatus,
+  onRedeemEnhance,
+  onRedeemEnhanceWithPurchasedCredits,
+  onEnhanceStatusChange,
+  redeemingEnhance = false,
 }) => {
   const [skillsCollapsed, setSkillsCollapsed] = useState(false);
   const [linksCollapsed, setLinksCollapsed] = useState(false);
@@ -70,7 +80,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
   const [hiddenSaveIds, setHiddenSaveIds] = useState<Set<string>>(new Set());
 
   const [isEnhancingSummary, setIsEnhancingSummary] = useState(false);
-  const [isEnhanceUsed, setIsEnhanceUsed] = useState(false);
+  const cannotEnhance = enhanceStatus ? enhanceStatus.enhance_usage_left <= 0 : false;
   const [enhanceSummaryError, setEnhanceSummaryError] = useState("");
   const [enhancedSummaryVersions, setEnhancedSummaryVersions] = useState<{
     atsFriendly: string;
@@ -101,19 +111,6 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
     initialLinksRef.current = { ...data.links };
     initialTechnicalSummaryRef.current = data.technicalSummary;
   }, []);
-
-  // Check if Enhance with AI has been used
-  useEffect(() => {
-    if (userId && token) {
-      api.get(`/users/${userId}/check-enhance-used`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      .then(res => {
-        setIsEnhanceUsed(res.data.is_enhance_used);
-      })
-      .catch(err => console.error("Error checking enhance status:", err));
-    }
-  }, [userId, token]);
 
   // Check Skill changes
   useEffect(() => {
@@ -696,19 +693,11 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
     getPlainText(data.technicalSummary ?? "").length > 0;
 
   const handleEnhanceTechnicalSummary = async () => {
-    if (disableAiEnhance || !hasTechnicalSummaryInput) return;
+    if (disableAiEnhance || !hasTechnicalSummaryInput || cannotEnhance) return;
     setIsEnhancingSummary(true);
     setEnhanceSummaryError("");
     setEnhancedSummaryVersions(null);
     try {
-      // 1. Check if user can use enhance feature
-      const checkRes = await api.get(`/users/${userId}/check-enhance-used`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (checkRes.data && checkRes.data.canUse === false) {
-        throw new Error(checkRes.data.message || "You have reached your limit for AI enhancement.");
-      }
-
       const skillNames = data.skills
         .filter((s) => s.enabled && s.skillName)
         .map((s) => s.skillName);
@@ -722,7 +711,13 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
       await api.post(`/users/${userId}/mark-enhance-used`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setIsEnhanceUsed(true);
+
+      const nextUsageLeft = Math.max((enhanceStatus?.enhance_usage_left ?? 0) - 1, 0);
+      onEnhanceStatusChange?.({
+        isBonus_enhance_used: enhanceStatus?.isBonus_enhance_used ?? false,
+        enhance_usage_left: nextUsageLeft,
+        purchased_credits: enhanceStatus?.purchased_credits ?? 0,
+      });
 
       setEnhancedSummaryVersions(result);
     } catch (err: any) {
@@ -925,45 +920,6 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
               />
             </div>
           </div>
-
-          {/* <div className="flex flex-col gap-1 mt-4">
-            <label className="font-medium">Portfolio Description</label>
-            <RichTextEditor
-              placeholder="Provide Portfolio Description..."
-              value={data.links.portfolioDescription}
-              onChange={(v) => updateLink("portfolioDescription", v)}
-              rows={3}
-            />
-          </div> */}
-
-          {/* Publication */}
-          {/* <div className="flex items-center gap-3">
-            <div className="flex-1">
-              <FormInput
-                label="Publication URL"
-                placeholder="Enter Publication URL..."
-                value={data.links.publicationUrl}
-                onChange={(v) => updateLink("publicationUrl", v)}
-                error={errors[`link-publicationUrl`]}
-              />
-            </div>
-            <div className="mt-5">
-              <ToggleSwitch
-                enabled={data.links.publicationEnabled}
-                onChange={(v) => updateLink("publicationEnabled", v)}
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1 mt-4">
-            <label className="font-medium">Publication Description</label>
-            <RichTextEditor
-              placeholder="Provide Publication Description..."
-              value={data.links.publicationDescription}
-              onChange={(v) => updateLink("publicationDescription", v)}
-              rows={3}
-            />
-          </div> */}
         </div>
 
         <div className="flex items-center justify-end gap-2 mt-8 pt-4 border-t border-gray-200">
@@ -1006,16 +962,15 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
           setTechnicalSummaryCollapsed(!technicalSummaryCollapsed)
         }
       >
-        <div className="flex items-center justify-start gap-2 mb-4">
-          {/* AI Enhance button */}
+        <div className="flex items-center justify-start gap-4 mb-4">
           <button
             type="button"
             onClick={handleEnhanceTechnicalSummary}
-            disabled={disableAiEnhance || !hasTechnicalSummaryInput || isEnhancingSummary || isEnhanceUsed}
+            disabled={disableAiEnhance || !hasTechnicalSummaryInput || isEnhancingSummary || cannotEnhance}
             title={
               disableAiEnhance
                 ? "AI enhancement is disabled for this template"
-                : isEnhanceUsed
+                : cannotEnhance
                 ? "You have already used the AI enhancement feature"
                 : !hasTechnicalSummaryInput
                 ? "Add some text to enable AI enhancement"
@@ -1023,7 +978,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
             }
             className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
               ${
-                !disableAiEnhance && hasTechnicalSummaryInput && !isEnhancingSummary && !isEnhanceUsed
+                !disableAiEnhance && hasTechnicalSummaryInput && !isEnhancingSummary && !cannotEnhance
                   ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-sm hover:from-violet-600 hover:to-purple-700 cursor-pointer"
                   : "bg-gray-100 text-gray-400 cursor-not-allowed"
               }`}
@@ -1035,6 +990,31 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
             )}
             {isEnhancingSummary ? "Enhancing..." : "Enhance with AI"}
           </button>
+          {enhanceStatus && !disableAiEnhance && (
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-600 font-medium">
+                <span className="text-orange-600 font-bold">{enhanceStatus.enhance_usage_left}</span> left
+              </span>
+              {enhanceStatus.enhance_usage_left === 0 && !enhanceStatus.isBonus_enhance_used && (
+                <button
+                  onClick={onRedeemEnhance}
+                  disabled={redeemingEnhance}
+                  className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 py-1.5 rounded-full transition disabled:opacity-50"
+                >
+                  {redeemingEnhance ? 'Redeeming...' : 'Redeem with Bonus'}
+                </button>
+              )}
+              {enhanceStatus.enhance_usage_left === 0 && enhanceStatus.isBonus_enhance_used && (
+                <button
+                  onClick={onRedeemEnhanceWithPurchasedCredits}
+                  disabled={redeemingEnhance}
+                  className="bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold px-3 py-1.5 rounded-full transition disabled:opacity-50"
+                >
+                  {redeemingEnhance ? 'Redeeming...' : 'Redeem using purchased credits'}
+                </button>
+              )}
+            </div>
+          )}
           {disableAiEnhance && (
             <span className="text-xs font-medium text-gray-500">
              Enhance with AI not supported in this template

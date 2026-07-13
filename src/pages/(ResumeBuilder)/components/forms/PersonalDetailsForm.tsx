@@ -26,6 +26,11 @@ interface PersonalDetailsFormProps {
   personalDetailsId: string | null;
   supportsPhoto?: boolean;
   disableAiEnhance?: boolean;
+  enhanceStatus?: { isBonus_enhance_used: boolean; enhance_usage_left: number; purchased_credits?: number | string } | null;
+  onRedeemEnhance?: () => void;
+  onRedeemEnhanceWithPurchasedCredits?: () => void;
+  onEnhanceStatusChange?: (status: { isBonus_enhance_used: boolean; enhance_usage_left: number; purchased_credits?: number | string }) => void;
+  redeemingEnhance?: boolean;
 }
 
 const genders = [
@@ -85,6 +90,11 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
   personalDetailsId,
   supportsPhoto = true,
   disableAiEnhance = false,
+  enhanceStatus,
+  onRedeemEnhance,
+  onRedeemEnhanceWithPurchasedCredits,
+  onEnhanceStatusChange,
+  redeemingEnhance = false,
 }) => {
   const [personalInfoCollapsed, setPersonalInfoCollapsed] = useState(false);
   const [languagesCollapsed, setLanguagesCollapsed] = useState(false);
@@ -115,7 +125,7 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
   const [loadingCities, setLoadingCities] = useState(false);
 
   const [isEnhancing, setIsEnhancing] = useState(false);
-  const [isEnhanceUsed, setIsEnhanceUsed] = useState(false);
+  const cannotEnhance = enhanceStatus ? enhanceStatus.enhance_usage_left <= 0 : false;
   const [enhanceError, setEnhanceError] = useState("");
   const [enhancedVersions, setEnhancedVersions] = useState<{ professional: string; elaborate: string } | null>(null);
 
@@ -264,18 +274,7 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
       .finally(() => setLoadingCities(false));
   }, [data.state, data.country, countryOptions, stateOptions]);
 
-  // Check if Enhance with AI has been used
-  useEffect(() => {
-    if (userId && token) {
-      api.get(`/users/${userId}/check-enhance-used`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      .then(res => {
-        setIsEnhanceUsed(res.data.is_enhance_used);
-      })
-      .catch(err => console.error("Error checking enhance status:", err));
-    }
-  }, [userId, token]);
+
 
 
   // useEffect(() => {
@@ -321,7 +320,13 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
       await api.post(`/users/${userId}/mark-enhance-used`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setIsEnhanceUsed(true);
+
+      const nextUsageLeft = Math.max((enhanceStatus?.enhance_usage_left ?? 0) - 1, 0);
+      onEnhanceStatusChange?.({
+        isBonus_enhance_used: enhanceStatus?.isBonus_enhance_used ?? false,
+        enhance_usage_left: nextUsageLeft,
+        purchased_credits: enhanceStatus?.purchased_credits ?? 0,
+      });
 
       setEnhancedVersions(result);
     } catch (err: any) {
@@ -1278,37 +1283,63 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
         {!careerObjectiveCollapsed && (
           <div className="p-4">
             <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
-              {/* AI Enhance button */}
-              <button
-                type="button"
-                onClick={handleEnhanceCareerObjective}
-                disabled={disableAiEnhance || !hasCareerObjectiveInput || isEnhancing || isCareerObjectiveTooLong || isEnhanceUsed}
-                title={
-                  disableAiEnhance
-                    ? "AI enhancement is disabled for this template"
-                    : isEnhanceUsed
-                    ? "You have already used the AI enhancement feature"
-                    : !hasCareerObjectiveInput
-                    ? "Add some text to enable AI enhancement"
-                    : isCareerObjectiveTooLong
-                    ? "Reduce career objective to 500 characters or less"
-                    : "Enhance with AI"
-                }
-                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
-            ${!disableAiEnhance && hasCareerObjectiveInput && !isEnhancing && !isCareerObjectiveTooLong && !isEnhanceUsed
-                    ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-sm hover:from-violet-600 hover:to-purple-700 cursor-pointer"
-                    : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  }`}
-              >
-                {isEnhancing
-                  ? <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />
-                  : <Sparkles className="w-4 h-4" strokeWidth={2} />
-                }
-                {isEnhancing ? "Enhancing..." : "Enhance with AI"}
-              </button>
+              <div className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={handleEnhanceCareerObjective}
+                  disabled={disableAiEnhance || !hasCareerObjectiveInput || isEnhancing || isCareerObjectiveTooLong || cannotEnhance}
+                  title={
+                    disableAiEnhance
+                      ? "AI enhancement is disabled for this template"
+                      : cannotEnhance
+                      ? "You have already used the AI enhancement feature"
+                      : !hasCareerObjectiveInput
+                      ? "Add some text to enable AI enhancement"
+                      : isCareerObjectiveTooLong
+                      ? "Reduce career objective to 500 characters or less"
+                      : "Enhance with AI"
+                  }
+                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
+              ${!disableAiEnhance && hasCareerObjectiveInput && !isEnhancing && !isCareerObjectiveTooLong && !cannotEnhance
+                      ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-sm hover:from-violet-600 hover:to-purple-700 cursor-pointer"
+                      : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    }`}
+                >
+                  {isEnhancing
+                    ? <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />
+                    : <Sparkles className="w-4 h-4" strokeWidth={2} />
+                  }
+                  {isEnhancing ? "Enhancing..." : "Enhance with AI"}
+                </button>
+                {enhanceStatus && !disableAiEnhance && (
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-gray-600 font-medium">
+                      <span className="text-orange-600 font-bold">{enhanceStatus.enhance_usage_left}</span> left
+                    </span>
+                    {enhanceStatus.enhance_usage_left === 0 && !enhanceStatus.isBonus_enhance_used && (
+                      <button
+                        onClick={onRedeemEnhance}
+                        disabled={redeemingEnhance}
+                        className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 py-1.5 rounded-full transition disabled:opacity-50"
+                      >
+                        {redeemingEnhance ? 'Redeeming...' : 'Redeem with Bonus'}
+                      </button>
+                    )}
+                    {enhanceStatus.enhance_usage_left === 0 && enhanceStatus.isBonus_enhance_used && (
+                      <button
+                        onClick={onRedeemEnhanceWithPurchasedCredits}
+                        disabled={redeemingEnhance}
+                        className="bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold px-3 py-1.5 rounded-full transition disabled:opacity-50"
+                      >
+                        {redeemingEnhance ? 'Redeeming...' : 'Redeem using purchased credits'}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
               {disableAiEnhance && (
                 <span className="text-xs font-medium text-gray-500">
-                 Enahance with AI not supported in this template
+                 Enhance with AI not supported in this template
                 </span>
               )}
             </div>

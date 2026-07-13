@@ -26,6 +26,7 @@ import {
   getTechnicalSummary,
 } from "@/services/skillsLinksService";
 import { getResumeTemplateById, uploadResume } from "@/services/resumeServices";
+import api from "@/api";
 
 // Import print styles
 import "@/styles/print.css";
@@ -301,6 +302,11 @@ export const ResumeEditor: React.FC = () => {
   const [technicalSummaryId, setTechnicalSummaryId] = useState<number | null>(
     null
   );
+  const [enhanceStatus, setEnhanceStatus] = useState<{isBonus_enhance_used: boolean; enhance_usage_left: number; purchased_credits?: number | string} | null>(null);
+  const [purchasedCreditsBalance, setPurchasedCreditsBalance] = useState<number>(0);
+  const [redeemingEnhance, setRedeemingEnhance] = useState(false);
+  const [showPurchasedCreditsModal, setShowPurchasedCreditsModal] = useState(false);
+  const [selectedPurchasedCredits, setSelectedPurchasedCredits] = useState(1);
 
   const previewContentRef = useRef<HTMLDivElement>(null);
   const formScrollRef = useRef<HTMLDivElement>(null);
@@ -603,6 +609,84 @@ export const ResumeEditor: React.FC = () => {
     }
   }, [userId, token, fetchAllData, importReady]);
 
+  const fetchEnhanceStatus = useCallback(async (currentUserId: string, currentToken: string) => {
+    try {
+      const [enhanceResponse, profileResponse] = await Promise.all([
+        api.get(`/users/${currentUserId}/check-enhance-used`, {
+          headers: { Authorization: `Bearer ${currentToken}` }
+        }),
+        api.get('/personal-details/profile-data', {
+          headers: { Authorization: `Bearer ${currentToken}` }
+        })
+      ]);
+
+      if (enhanceResponse.data) {
+        setEnhanceStatus({
+          isBonus_enhance_used: enhanceResponse.data.isBonus_enhance_used,
+          enhance_usage_left: enhanceResponse.data.enhance_usage_left,
+          purchased_credits: enhanceResponse.data.purchased_credits ?? enhanceResponse.data.purchasedCredits ?? enhanceResponse.data.purchased_credits_balance ?? 0,
+        });
+      }
+
+      const profileData = profileResponse?.data ?? profileResponse;
+      const profilePurchasedCredits = Number(profileData?.purchased_credits ?? profileData?.credits ?? 0);
+      setPurchasedCreditsBalance(Number.isFinite(profilePurchasedCredits) ? profilePurchasedCredits : 0);
+    } catch (err) {
+      console.error("Failed to fetch enhance status:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (userId && token) {
+      fetchEnhanceStatus(userId, token);
+    }
+  }, [userId, token, fetchEnhanceStatus]);
+
+  const handleRedeemEnhance = async () => {
+    if (!userId || !token) return;
+    setRedeemingEnhance(true);
+    try {
+      await api.post(`/users/${userId}/redeem-enhance-with-bonus`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      await fetchEnhanceStatus(userId, token);
+      window.dispatchEvent(new CustomEvent("credits:refresh", { detail: { reason: "redeem_enhance" } }));
+    } catch (err) {
+      console.error("Failed to redeem enhance with bonus:", err);
+    } finally {
+      setRedeemingEnhance(false);
+    }
+  };
+
+  const handleRedeemEnhanceWithPurchasedCredits = () => {
+    if (!userId || !token) return;
+
+    const purchasedCredits = Number(purchasedCreditsBalance || enhanceStatus?.purchased_credits || 0);
+    const maxCredits = Math.min(50, Math.max(1, Math.floor(purchasedCredits || 1)));
+    setSelectedPurchasedCredits(maxCredits);
+    setShowPurchasedCreditsModal(true);
+  };
+
+  const confirmPurchasedCreditRedeem = async () => {
+    if (!userId || !token) return;
+
+    setRedeemingEnhance(true);
+    try {
+      await api.post(`/users/${userId}/redeem-enhance-with-purchased-credits`, {
+        credits: selectedPurchasedCredits,
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setShowPurchasedCreditsModal(false);
+      await fetchEnhanceStatus(userId, token);
+      window.dispatchEvent(new CustomEvent("credits:refresh", { detail: { reason: "redeem_enhance_purchased" } }));
+    } catch (err) {
+      console.error("Failed to redeem enhance with purchased credits:", err);
+    } finally {
+      setRedeemingEnhance(false);
+    }
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (fontDropdownRef.current && !fontDropdownRef.current.contains(event.target as Node)) {
@@ -726,6 +810,11 @@ export const ResumeEditor: React.FC = () => {
             personalDetailsId={personalDetailsId}
             supportsPhoto={selectedTemplate?.supportsPhoto ?? false}
             disableAiEnhance={disableAiEnhance}
+            enhanceStatus={enhanceStatus}
+            onRedeemEnhance={handleRedeemEnhance}
+            onRedeemEnhanceWithPurchasedCredits={handleRedeemEnhanceWithPurchasedCredits}
+            onEnhanceStatusChange={setEnhanceStatus}
+            redeemingEnhance={redeemingEnhance}
           />
         );
       case 1:
@@ -762,6 +851,11 @@ export const ResumeEditor: React.FC = () => {
             userId={userId}
             token={token}
             disableAiEnhance={disableAiEnhance}
+            enhanceStatus={enhanceStatus}
+            onRedeemEnhance={handleRedeemEnhance}
+            onRedeemEnhanceWithPurchasedCredits={handleRedeemEnhanceWithPurchasedCredits}
+            onEnhanceStatusChange={setEnhanceStatus}
+            redeemingEnhance={redeemingEnhance}
           />
         );
       case 4:
@@ -773,6 +867,11 @@ export const ResumeEditor: React.FC = () => {
             token={token}
             technicalSummaryId={technicalSummaryId}
             disableAiEnhance={disableAiEnhance}
+            enhanceStatus={enhanceStatus}
+            onRedeemEnhance={handleRedeemEnhance}
+            onRedeemEnhanceWithPurchasedCredits={handleRedeemEnhanceWithPurchasedCredits}
+            onEnhanceStatusChange={setEnhanceStatus}
+            redeemingEnhance={redeemingEnhance}
           />
         );
       case 5:
@@ -1044,6 +1143,54 @@ export const ResumeEditor: React.FC = () => {
         primaryColor={primaryColor}
         fontFamily={fontFamily}
       />
+
+      {showPurchasedCreditsModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-gray-900">Redeem with purchased credits</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Choose how many purchased credits to use for this enhancement. The amount is capped at 50.
+            </p>
+
+            <div className="mt-6">
+              <div className="flex items-center justify-between text-sm font-medium text-gray-700">
+                <span>Credits to use</span>
+                <span className="text-orange-600">{selectedPurchasedCredits}</span>
+              </div>
+              <input
+                type="range"
+                min={1}
+                max={Math.min(50, Math.max(1, Number(purchasedCreditsBalance || enhanceStatus?.purchased_credits || 0)))}
+                value={selectedPurchasedCredits}
+                onChange={(e) => setSelectedPurchasedCredits(Number(e.target.value))}
+                className="mt-3 h-2 w-full cursor-pointer appearance-none rounded-full bg-orange-100 accent-orange-500"
+              />
+              <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
+                <span>1</span>
+                <span>Max {Math.min(50, Math.max(1, Number(purchasedCreditsBalance || enhanceStatus?.purchased_credits || 0)))}</span>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowPurchasedCreditsModal(false)}
+                className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmPurchasedCreditRedeem}
+                disabled={redeemingEnhance}
+                className="rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {redeemingEnhance ? "Redeeming..." : "Redeem"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
