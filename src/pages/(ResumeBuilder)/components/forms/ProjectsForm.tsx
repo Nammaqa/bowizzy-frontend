@@ -599,12 +599,16 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
   const handleApplyRolesVersion = (projectId: string, type: "precise" | "technical") => {
     const versions = enhancedRolesVersions[projectId];
     if (!versions) return;
-    // Convert bullet plain text to HTML list items
-    const html = versions[type]
+    const listItems = versions[type]
       .split("\n")
       .filter((line) => line.trim())
-      .map((line) => `<div>${line.trim()}</div>`)
+      .map((line) => {
+        // Remove any leading bullets, dashes, asterisks, numbering or repeated bullet characters
+        const cleaned = line.replace(/^[\s\u2022\u2023\u25E6\u2023\u25AA\u25CF\-\*0-9\.\)]+/, "").trim();
+        return `<li>${cleaned}</li>`;
+      })
       .join("");
+    const html = `<ul style="list-style-type: disc; padding-left: 1.25rem; margin-top: 0.5rem; margin-bottom: 0.5rem;">${listItems}</ul>`;
     updateProject(projectId, "rolesResponsibilities", html);
     setEnhancedRolesVersions((prev) => { const u = { ...prev }; delete u[projectId]; return u; });
     setEnhanceRolesError((prev) => ({ ...prev, [projectId]: "" }));
