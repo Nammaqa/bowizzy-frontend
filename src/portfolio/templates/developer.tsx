@@ -272,7 +272,6 @@ function HeroWithImage({ data, scrollTo }: { data: PortfolioData; scrollTo: (id:
           <h1 className="anim-2 text-4xl @sm:text-5xl font-semibold mb-4"
             style={{ letterSpacing: "-1.5px", lineHeight: 1.1, color: "var(--text-primary)" }}>
             {data.portfolioName || "Anonymous Developer"}
-            <span className="cursor-blink inline-block w-0.5 h-9 ml-1 rounded align-middle" style={{ background: "var(--accent-2)" }} />
           </h1>
           {data.tagline && (
             <p className="anim-2 text-sm font-medium mb-3" style={{ color: "var(--accent-2)" }}>{data.tagline}</p>
@@ -375,7 +374,6 @@ function HeroWithoutImage({ data, scrollTo }: { data: PortfolioData; scrollTo: (
       <h1 className="anim-2 font-semibold mb-3"
         style={{ fontSize: "clamp(2.4rem, 7vw, 4.5rem)", letterSpacing: "-2px", lineHeight: 1.05, color: "var(--text-primary)" }}>
         {data.portfolioName || "Anonymous Developer"}
-        <span className="cursor-blink inline-block w-0.5 h-10 ml-1 rounded align-middle" style={{ background: "var(--accent-2)" }} />
       </h1>
 
       {data.tagline && (

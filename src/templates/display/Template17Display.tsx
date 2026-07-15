@@ -74,7 +74,7 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
           <div style={{ color: '#000', fontSize: 11 }}>
             {personal.email && <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}><FiMail style={{ color: '#000' }} /><a href={`mailto:${personal.email}`} style={{ color: '#000', textDecoration: 'none' }}>{personal.email}</a></div>}
             {personal.mobileNumber && <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}><FiPhone style={{ color: '#000' }} /><a href={`tel:${personal.mobileNumber}`} style={{ color: '#000', textDecoration: 'none' }}>{personal.mobileNumber}</a></div>}
-            {(personal.address || personal.city || personal.state) && <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}><FiMapPin style={{ color: '#000', scale: 2 }} /><div>{[personal.address, personal.city, personal.state, personal.pincode].filter(Boolean).join(', ')}</div></div>}
+            {(personal.address || personal.city || personal.state) && <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}><FiMapPin style={{ color: '#000' }} /><div>{[personal.address, personal.city, personal.state, personal.pincode].filter(Boolean).join(', ')}</div></div>}
             {linkedinUrl && <div style={{ marginTop: 8, display: 'flex', alignItems: 'flex-start', gap: 8, minWidth: 0 }}><FiLinkedin style={{ marginTop: 2, color: '#000', scale: 1, flexShrink: 0 }} /><a href={linkedinUrl} target="_blank" rel="noreferrer" style={{ color: '#000', textDecoration: 'none', wordBreak: 'break-word', overflow: 'hidden', fontSize: 10 }}>{linkedinUrl}</a></div>}
             {githubUrl && <div style={{ marginTop: 8, display: 'flex', alignItems: 'flex-start', gap: 8, minWidth: 0 }}><FiGithub style={{ marginTop: 2, color: '#000', flexShrink: 0 }} /><a href={githubUrl} target="_blank" rel="noreferrer" style={{ color: '#000', textDecoration: 'none', wordBreak: 'break-word', overflow: 'hidden', fontSize: 10 }}>{githubUrl}</a></div>}
             {portfolioUrl && <div style={{ marginTop: 8, display: 'flex', alignItems: 'flex-start', gap: 8, minWidth: 0 }}><FiGlobe style={{ marginTop: 2, color: '#000', flexShrink: 0 }} /><a href={portfolioUrl} target="_blank" rel="noreferrer" style={{ color: '#000', textDecoration: 'none', wordBreak: 'break-word', overflow: 'hidden', fontSize: 10 }}>{portfolioUrl}</a></div>}
@@ -144,9 +144,9 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
               <div style={{ marginTop: 8 }}>
                 {experience.workExperiences.filter((w: any) => w.enabled).map((w: any, i: number) => (
                   <div key={i} style={{ marginBottom: 12 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <div style={{ fontWeight: 700, fontSize: 12 }}>{w.companyName}</div>
-                      <div style={{ color: '#000', fontSize: 11 }}>{formatMonthYear(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYear(w.endDate)}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', alignItems: 'flex-start' }}>
+                      <div style={{ fontWeight: 700, fontSize: 12, flex: 1, wordBreak: 'break-word' }}>{w.companyName}</div>
+                      <div style={{ color: '#000', fontSize: 11, flexShrink: 0, textAlign: 'right' }}>{formatMonthYear(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYear(w.endDate)}</div>
                     </div>
                     <div style={{ color: '#000', marginTop: 6, fontSize: 11 }}>{w.jobTitle}{w.location ? ` — ${w.location}` : ''}</div>
                     {w.description && <div style={{ marginTop: 6, paddingLeft: 10 }}>{htmlToLines(w.description).map((ln, idx) => <div key={idx} style={{ marginTop: 6, fontSize: 11 }}>• {ln}</div>)}</div>}
@@ -165,9 +165,9 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
               <div style={{ marginTop: 8 }}>
                 {projects.filter((p: any) => p.enabled).map((p: any, i: number) => (
                   <div key={i} style={{ marginBottom: 12 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <div style={{ fontWeight: 700, fontSize: 12 }}>{p.projectTitle}</div>
-                      <div style={{ color: '#000', fontSize: 11 }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', alignItems: 'flex-start' }}>
+                      <div style={{ fontWeight: 700, fontSize: 12, flex: 1, wordBreak: 'break-word' }}>{p.projectTitle}</div>
+                      <div style={{ color: '#000', fontSize: 11, flexShrink: 0, textAlign: 'right' }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</div>
                     </div>
                     {p.description && <div style={{ color: '#000', marginTop: 6, fontSize: 11 }}>{DOMPurify.sanitize(p.description).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim()}</div>}
                     {p.rolesResponsibilities && <div style={{ marginTop: 6, paddingLeft: 10 }}>{htmlToLines(p.rolesResponsibilities).map((ln, idx) => <div key={idx} style={{ marginTop: 6, fontSize: 11 }}>• {ln}</div>)}</div>}
@@ -185,9 +185,9 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
             <div style={{ marginTop: 8 }}>
               {education.higherEducation.filter(edu => edu.enabled).reverse().map((edu: any, i: number) => (
                 <div key={i} style={{ marginBottom: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ fontWeight: 700, fontSize: 12 }}>{edu.instituteName}</div>
-                    <div style={{ color: '#000', fontSize: 11 }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', alignItems: 'flex-start' }}>
+                    <div style={{ fontWeight: 700, fontSize: 12, flex: 1, wordBreak: 'break-word' }}>{edu.instituteName}</div>
+                    <div style={{ color: '#000', fontSize: 11, flexShrink: 0, textAlign: 'right' }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}</div>
                   </div>
                   <div style={{ color: '#000', marginTop: 4, fontSize: 11 }}>
                     {edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}
@@ -201,9 +201,9 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
 
               {education.preUniversityEnabled && (
                 <div style={{ marginBottom: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ fontWeight: 700, fontSize: 12 }}>{education.preUniversity.instituteName || 'Pre University'}</div>
-                    <div style={{ color: '#000', fontSize: 11 }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', alignItems: 'flex-start' }}>
+                    <div style={{ fontWeight: 700, fontSize: 12, flex: 1, wordBreak: 'break-word' }}>{education.preUniversity.instituteName || 'Pre University'}</div>
+                    <div style={{ color: '#000', fontSize: 11, flexShrink: 0, textAlign: 'right' }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
                   </div>
                   <div style={{ color: '#000', marginTop: 4, fontSize: 11 }}>
                     Pre University (12th Standard)
@@ -216,9 +216,9 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
 
               {education.sslcEnabled && (
                 <div style={{ marginBottom: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ fontWeight: 700, fontSize: 12 }}>{education.sslc.instituteName || 'SSLC'}</div>
-                    <div style={{ color: '#000', fontSize: 11 }}>{formatResumeEducationDateRange(education.sslc)}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', alignItems: 'flex-start' }}>
+                    <div style={{ fontWeight: 700, fontSize: 12, flex: 1, wordBreak: 'break-word' }}>{education.sslc.instituteName || 'SSLC'}</div>
+                    <div style={{ color: '#000', fontSize: 11, flexShrink: 0, textAlign: 'right' }}>{formatResumeEducationDateRange(education.sslc)}</div>
                   </div>
                   <div style={{ color: '#000', marginTop: 4, fontSize: 11 }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</div>
                   {education.sslc.resultFormat && education.sslc.result && (<div style={{ marginTop: 6, color: '#444', fontWeight: 700, fontSize: 11 }}>{education.sslc.resultFormat}: {education.sslc.result}</div>)}
@@ -235,9 +235,9 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
             </div>
             <div style={{ marginTop: 8, color: '#444' }}>
               {(certifications || []).filter((c: any) => c.enabled && c.certificateTitle).map((c: any, i: number) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 11 }}>
-                  <div>{c.certificateTitle}{c.providedBy ? ` — ${c.providedBy}` : ''}</div>
-                  {c.date && <div>{formatMonthYear(c.date)}</div>}
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 11, gap: '16px', alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1, wordBreak: 'break-word' }}>{c.certificateTitle}{c.providedBy ? ` — ${c.providedBy}` : ''}</div>
+                  {c.date && <div style={{ flexShrink: 0, textAlign: 'right' }}>{formatMonthYear(c.date)}</div>}
                 </div>
               ))}
             </div>

@@ -210,9 +210,9 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
               <View style={{ marginTop: 8 }}>
                 {experience.workExperiences.filter((w: any) => w.enabled).map((w: any, i: number) => (
                   <View key={i} style={{ marginBottom: 10 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold }}>{w.companyName}</Text>
-                      <Text style={{ fontSize: 10, color: '#000' }}>{formatMonthYear(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYear(w.endDate)}</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, flex: 1, paddingRight: 16 }}>{w.companyName}</Text>
+                      <Text style={{ fontSize: 10, color: '#000', flexShrink: 0, textAlign: 'right' }}>{formatMonthYear(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYear(w.endDate)}</Text>
                     </View>
                     <Text style={{ marginTop: 6, fontSize: 9, color: '#000' }}>{w.jobTitle}{w.location ? ` — ${w.location}` : ''}</Text>
                     {w.description && <View style={{ marginTop: 6, paddingLeft: 10 }}>{htmlToPlainText(w.description).split('\n').filter(Boolean).map((line, idx) => <Text key={idx} style={{ fontSize: 9, color: '#444', marginTop: 6 }}>• {line}</Text>)}</View>}
@@ -229,9 +229,9 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
               <View style={{ marginTop: 8 }}>
                 {projects.filter((p: any) => p.enabled).map((p: any, i: number) => (
                   <View key={i} style={{ marginBottom: 10 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold }}>{p.projectTitle}</Text>
-                      <Text style={{ fontSize: 10, color: '#000' }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, flex: 1, paddingRight: 16 }}>{p.projectTitle}</Text>
+                      <Text style={{ fontSize: 10, color: '#000', flexShrink: 0, textAlign: 'right' }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</Text>
                     </View>
                     {p.description && <Text style={{ marginTop: 6, fontSize: 9, color: '#000' }}>{htmlToPlainText(p.description)}</Text>}
                     {p.rolesResponsibilities && <View style={{ marginTop: 6, paddingLeft: 10 }}>{htmlToPlainText(p.rolesResponsibilities).split('\n').filter(Boolean).map((line, idx) => <Text key={idx} style={{ fontSize: 9, color: '#444', marginTop: 6 }}>• {line}</Text>)}</View>}
@@ -248,9 +248,9 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
               <View style={{ marginTop: 8 }}>
                 {education.higherEducation.filter(edu => edu.enabled).reverse().map((edu: any, i: number) => (
                   <View key={i} style={{ marginBottom: 10 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold }}>{edu.instituteName}</Text>
-                      <Text style={{ fontSize: 9, color: '#000' }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, flex: 1, paddingRight: 16 }}>{edu.instituteName}</Text>
+                      <Text style={{ fontSize: 9, color: '#000', flexShrink: 0, textAlign: 'right' }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}</Text>
                     </View>
                     <Text style={{ marginTop: 4, fontSize: 9, color: '#000' }}>
                       {edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}
@@ -265,9 +265,9 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
                 {/* Pre University */}
                 {education.preUniversityEnabled && (
                   <View style={{ marginBottom: 10 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
-                      <Text style={{ fontSize: 9, color: '#000' }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, flex: 1, paddingRight: 16 }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
+                      <Text style={{ fontSize: 9, color: '#000', flexShrink: 0, textAlign: 'right' }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
                     </View>
                     <Text style={{ marginTop: 4, fontSize: 9, color: '#000' }}>
                       Pre University (12th Standard)
@@ -283,9 +283,9 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
                 {/* SSLC */}
                 {education.sslcEnabled && (
                   <View style={{ marginBottom: 10 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold }}>{education.sslc.instituteName || 'SSLC'}</Text>
-                      <Text style={{ fontSize: 9, color: '#000' }}>{formatResumeEducationDateRange(education.sslc)}</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, flex: 1, paddingRight: 16 }}>{education.sslc.instituteName || 'SSLC'}</Text>
+                      <Text style={{ fontSize: 9, color: '#000', flexShrink: 0, textAlign: 'right' }}>{formatResumeEducationDateRange(education.sslc)}</Text>
                     </View>
                     <Text style={{ marginTop: 4, fontSize: 9, color: '#000' }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</Text>
                     {education.sslc.resultFormat && education.sslc.result && (
@@ -304,9 +304,9 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
               <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
               <View style={{ marginTop: 8 }}>
                 {(certifications || []).filter((c: any) => c.enabled && c.certificateTitle).map((c: any, i: number) => (
-                  <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <Text style={{ fontSize: 9, width: '75%' }}>{c.certificateTitle}{c.providedBy ? ` — ${c.providedBy}` : ''}</Text>
-                    {c.date && <Text style={{ fontSize: 9, textAlign: 'right', width: '25%' }}>{formatMonthYear(c.date)}</Text>}
+                  <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6, alignItems: 'flex-start' }}>
+                    <Text style={{ fontSize: 9, flex: 1, paddingRight: 16 }}>{c.certificateTitle}{c.providedBy ? ` — ${c.providedBy}` : ''}</Text>
+                    {c.date && <Text style={{ fontSize: 9, flexShrink: 0, textAlign: 'right' }}>{formatMonthYear(c.date)}</Text>}
                   </View>
                 ))}
               </View>
