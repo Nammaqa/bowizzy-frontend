@@ -434,29 +434,32 @@ const CandidateReviewsPage = () => {
               </div>
             </div>
           </div>
-          {error && (
-            <p className="mt-4 rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-600">
-              {error}
-            </p>
-          )}
+          {/* success banner stays here; error moved to footer above submit button */}
           {success && (
             <p className="mt-4 rounded-2xl bg-green-50 p-3 text-sm font-semibold text-green-700">
               {success}
             </p>
           )}
-          <div className="sticky bottom-0 mt-4 flex flex-col gap-3 border-t border-[#EFEFEF] bg-white py-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-[#777777]">
-              All ratings, comments, and final recommendation are required.
-            </p>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={submitting || loading}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#F26D3A] px-5 py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#e35f2f] disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              <Star size={16} />
-              {submitting ? "Submitting..." : "Submit feedback"}
-            </button>
+          <div className="sticky bottom-0 mt-4 flex flex-col gap-3 border-t border-[#EFEFEF] bg-white py-4">
+            {error && (
+              <p className="w-full rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-600">
+                {error}
+              </p>
+            )}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-[#777777]">
+                All ratings, comments, and final recommendation are required.
+              </p>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={submitting || loading}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#F26D3A] px-5 py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#e35f2f] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                <Star size={16} />
+                {submitting ? "Submitting..." : "Submit feedback"}
+              </button>
+            </div>
           </div>
         </section>
       </div>

@@ -63,7 +63,7 @@ export default function CertificationDetailsForm({
           certificateType: c.certificateType || "",
           certificateTitle: c.certificateTitle || "",
           certificateProvidedBy: c.certificateProvidedBy || "",
-          date: c.date || "",
+          date: c.date ? c.date.substring(0, 7) : "",
           description: c.description || "",
           uploadedFile: null,
           uploadedFileName: c.uploadedFileName || "",
@@ -189,16 +189,21 @@ export default function CertificationDetailsForm({
     return "";
   };
 
-  const getTodayDate = (): string => {
+  const getCurrentMonth = (): string => {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+    return `${year}-${month}`;
   };
 
-  const getMaxCertificateDate = (): string => {
-    return getTodayDate();
+  const getMaxCertificateMonth = (): string => {
+    return getCurrentMonth();
+  };
+
+  const normalizeMonthToDate = (val: string): string => {
+    if (!val) return "";
+    if (/^\d{4}-\d{2}$/.test(val)) return `${val}-01`;
+    return val;
   };
 
   const blockManualDateTyping = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -223,18 +228,17 @@ export default function CertificationDetailsForm({
 
   const validateDateValue = (value: string) => {
     if (!value || value === "") return "";
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return "Please select a valid date";
-    const [y, m, d] = value.split("-");
+    if (!/^\d{4}-\d{2}$/.test(value)) return "Please select a valid month (YYYY-MM)";
+    const [y, m] = value.split("-");
     if (y.length !== 4) return "Year must be 4 digits";
     const yearNum = parseInt(y, 10);
     const monthNum = parseInt(m, 10);
-    const dayNum = parseInt(d, 10);
     if (isNaN(monthNum) || monthNum < 1 || monthNum > 12) return "Invalid month";
-    if (isNaN(dayNum) || dayNum < 1 || dayNum > 31) return "Invalid day";
-    if (yearNum <= MIN_CERTIFICATE_YEAR || yearNum >= new Date().getFullYear()) {
-      return `Year must be greater than ${MIN_CERTIFICATE_YEAR} and less than the current year`;
+    const currentYear = new Date().getFullYear();
+    if (isNaN(yearNum) || yearNum < MIN_CERTIFICATE_YEAR || yearNum > currentYear) {
+      return `Year must be between ${MIN_CERTIFICATE_YEAR} and ${currentYear}`;
     }
-    if (value > getTodayDate()) return "Cannot select a future date";
+    if (value > getMaxCertificateMonth()) return "Cannot select a future month";
     return "";
   };
 
@@ -277,7 +281,7 @@ export default function CertificationDetailsForm({
       certificateType: initial?.certificateType || "",
       certificateTitle: initial?.certificateTitle || "",
       certificateProvidedBy: initial?.certificateProvidedBy || "",
-      date: initial?.date || "",
+      date: initial?.date ? initial.date.substring(0, 7) : "",
       description: initial?.description || "",
       uploadedFile: null,
       uploadedFileName:
@@ -498,7 +502,7 @@ export default function CertificationDetailsForm({
     formDataToSend.append("certificate_type", cert.certificateType || "");
     formDataToSend.append("certificate_title", cert.certificateTitle || "");
     formDataToSend.append("certificate_provided_by", cert.certificateProvidedBy || "");
-    formDataToSend.append("date", cert.date || "");
+    formDataToSend.append("date", normalizeMonthToDate(cert.date || ""));
     formDataToSend.append("description", cert.description || "");
 
     if (cert.uploadedFile && changes.includes("fileUpload")) {
@@ -749,7 +753,7 @@ export default function CertificationDetailsForm({
                   </label>
                   <div className="relative">
                     <input
-                      type="date"
+                      type="month"
                       value={certificate.date}
                       onChange={(e) =>
                         handleCertificateChange(index, "date", e.target.value)
@@ -758,8 +762,8 @@ export default function CertificationDetailsForm({
                       onKeyDown={blockManualDateTyping}
                       onPaste={(e) => e.preventDefault()}
                       className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm pr-8"
-                      min="1960-01-01"
-                      max={getMaxCertificateDate()}
+                      min={`${MIN_CERTIFICATE_YEAR}-01`}
+                      max={getMaxCertificateMonth()}
                     />
                   </div>
                   {errors[`cert-${index}-date`] && (

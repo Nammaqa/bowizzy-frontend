@@ -328,6 +328,24 @@ const InterviewerDashboardPage = () => {
       return;
     }
 
+    // Prevent accepting another interview at the same start date/time
+    try {
+      const newStart = getInterviewStartDate(interview);
+      if (newStart) {
+        const conflict = acceptedInterviews.some((ai) => {
+          const aiStart = getInterviewStartDate(ai);
+          return aiStart && aiStart.getTime() === newStart.getTime() && getInterviewId(ai) !== interviewId;
+        });
+        if (conflict) {
+          setAcceptError("You already have an accepted interview at this date/time. Please choose a different slot.");
+          return;
+        }
+      }
+    } catch (err) {
+      // if anything goes wrong with conflict check, continue and let API handle server-side validation
+      console.warn("Conflict check failed:", err);
+    }
+
     try {
       setAcceptError("");
       setAcceptingInterviewId(interviewId);
