@@ -369,6 +369,26 @@ export default function AIBuilder() {
     } catch (err) { console.error("Failed to start session", err); }
   };
 
+  // ── JD mode completion — bypasses the interview Q&A entirely ──────────────
+
+  const handleJdComplete = async (data: Record<string, unknown>) => {
+    if (!currentSessionId) return;
+    const sessionId = currentSessionId;
+    try {
+      await startAiSession(sessionId, token);
+    } catch (err) { console.error("Failed to mark JD session as started", err); }
+    setChatSessions((prev) =>
+      prev.map((s) =>
+        s.id === sessionId ? { ...s, started: true, infoJson: data } : s
+      )
+    );
+    setCompletedSessions((prev) => ({ ...prev, [sessionId]: true }));
+    await appendBotMessage(
+      sessionId,
+      "Great! I've tailored your resume content to match the job description you provided. You can now choose a template and download your resume."
+    );
+  };
+
   // ── Send ──────────────────────────────────────────────────────────────────
 
   const handleSend = async () => {
@@ -590,6 +610,7 @@ export default function AIBuilder() {
               onSend={handleSend}
               onFileUpload={handleFileUpload}
               onStart={handleStart}
+              onJdComplete={handleJdComplete}
               token={token}
               activeChips={activeChipState?.chips}
               onChipDelete={handleChipDelete}

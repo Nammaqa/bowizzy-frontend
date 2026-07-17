@@ -9,6 +9,7 @@ import type { ChatSession } from "./types";
 import { aiTemplateRegistry } from './templates/aiTemplateRegistry';
 import { mapInfoJsonToResumeData } from './mapInfoJsonToResumeData';
 import DataChips, { type DataChip } from "./DataChips";
+import JdResumeFlow from "./JdResumeFlow";
 import api from "@/api";
 
 // ── AI Resume Payment constants ────────────────────────────────────────────────
@@ -396,6 +397,7 @@ interface ChatBoxProps {
   onSend: () => void;
   onFileUpload: (file: File) => void;
   onStart: () => void;
+  onJdComplete: (data: any) => void;
   token: string;
   // Chip props — only present when a chip-question is active
   activeChips?: DataChip[];
@@ -415,6 +417,7 @@ export default function ChatBox({
   onSend,
   onFileUpload,
   onStart,
+  onJdComplete,
   token,
   activeChips,
   onChipDelete,
@@ -453,7 +456,9 @@ export default function ChatBox({
             onModeChange={onModeChange}
             onFileUpload={() => fileInputRef.current?.click()}
             onStart={onStart}
+            onJdComplete={onJdComplete}
             token={token}
+            sessionId={session?.id}
           />
         ) : (
           <div className="max-w-2xl mx-auto space-y-4">
@@ -581,13 +586,17 @@ function PreStartState({
   onModeChange,
   onFileUpload,
   onStart,
+  onJdComplete,
   token,
+  sessionId,
 }: {
   mode: "jd" | "non-jd";
   onModeChange: (m: "jd" | "non-jd") => void;
   onFileUpload: () => void;
   onStart: () => void;
+  onJdComplete: (data: any) => void;
   token: string;
+  sessionId?: string;
 }) {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
@@ -604,7 +613,10 @@ function PreStartState({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full min-h-[60vh] text-center px-4 py-16 gap-6">
+    <div
+      className={`flex flex-col items-center h-full min-h-[60vh] text-center px-4 gap-6 ${mode === "jd" ? "justify-start pt-10 pb-16" : "justify-center py-16"
+        }`}
+    >
       {/* Icon + heading */}
       <div>
         <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center mb-4 mx-auto">
@@ -614,7 +626,9 @@ function PreStartState({
           Let's build your resume
         </h2>
         <p className="text-sm text-gray-400 max-w-xs leading-relaxed">
-          Choose a mode, then hit Start Payment to begin.
+          {mode === "jd"
+            ? "Paste a job description below and we'll tailor your resume to match it."
+            : "Choose a mode, then hit Start Payment to begin."}
         </p>
       </div>
 
@@ -642,7 +656,7 @@ function PreStartState({
         )}
       </div>
 
-      {/* Start Payment button */}
+      {/* Start Payment button / JD flow */}
       {
         mode !== "jd" ? (
           <button
@@ -652,13 +666,10 @@ function PreStartState({
             <Lock className="w-4 h-4" />
             Start Payment
           </button>
+        ) : sessionId ? (
+          <JdResumeFlow sessionId={sessionId} token={token} onComplete={onJdComplete} />
         ) : (
-          <button
-            disabled
-            className="px-8 py-2.5 rounded-xl bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 active:scale-95 transition disabled:opacity-50"
-          >
-            Coming Soon
-          </button>
+          <p className="text-xs text-gray-400">Loading session...</p>
         )
       }
 
