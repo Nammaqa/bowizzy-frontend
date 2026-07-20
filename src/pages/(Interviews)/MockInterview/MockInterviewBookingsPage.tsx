@@ -128,6 +128,7 @@ const MockInterviewBookingsPage = () => {
   const [error, setError]           = useState("");
   const [cancellingId, setCancellingId] = useState<string | number | null>(null);
   const [activeTab, setActiveTab]   = useState<Tab>("upcoming");
+  const [cancelConfirmationBooking, setCancelConfirmationBooking] = useState<MockInterviewBooking | null>(null);
 
   const getAuthUser = () => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -137,7 +138,7 @@ const MockInterviewBookingsPage = () => {
   const loadBookings = async () => {
     try {
       const { userId, token } = getAuthUser();
-      if (!userId || !token) { setError("Please login again to view bookings."); return; }
+      if (!userId || !token) { setError("Please login again to view your bookings."); return; }
       setLoading(true);
       setError("");
       const response = await getMockInterviewBookings(userId, token);
@@ -151,12 +152,34 @@ const MockInterviewBookingsPage = () => {
 
   useEffect(() => { loadBookings(); }, []);
 
+  const openCancelConfirmation = (booking: MockInterviewBooking) => {
+    setCancelConfirmationBooking(booking);
+  };
+
   const handleCancel = async (booking: MockInterviewBooking) => {
     const id = getBookingId(booking);
     if (!id) return;
+    setCancelConfirmationBooking(booking);
+  };
+
+  const closeCancelConfirmation = () => {
+    setCancelConfirmationBooking(null);
+  };
+
+  const confirmCancellation = async () => {
+    if (!cancelConfirmationBooking) return;
+    const booking = cancelConfirmationBooking;
+    setCancelConfirmationBooking(null);
+
+    const id = getBookingId(booking);
+    if (!id) return;
+
     try {
       const { userId, token } = getAuthUser();
-      if (!userId || !token) { setError("Please login again to cancel bookings."); return; }
+      if (!userId || !token) {
+        setError("Please login again to cancel bookings.");
+        return;
+      }
       setCancellingId(id);
       await cancelMockInterviewBooking(userId, token, id);
       await loadBookings();
@@ -314,7 +337,7 @@ const MockInterviewBookingsPage = () => {
               )}
               {!isCancelled && (
                 <button
-                  onClick={() => handleCancel(booking)}
+                  onClick={() => openCancelConfirmation(booking)}
                   disabled={cancellingId === id}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-500 shadow-sm hover:bg-red-50 transition disabled:opacity-50"
                 >
@@ -444,6 +467,46 @@ const MockInterviewBookingsPage = () => {
           </div>
         )}
       </div>
+
+      {cancelConfirmationBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="relative w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+            <button
+              type="button"
+              onClick={closeCancelConfirmation}
+              className="absolute right-4 top-4 rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+            >
+              ✕
+            </button>
+            <div className="text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-100 text-red-600">
+                <XCircle size={28} />
+              </div>
+              <h2 className="mt-5 text-xl font-bold text-[#1f1f1f]">Confirm cancellation</h2>
+              <p className="mt-3 text-sm leading-6 text-gray-500">
+                Are you sure you want to cancel this interview? This action cannot be undone.
+              </p>
+            </div>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={closeCancelConfirmation}
+                className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                Keep interview
+              </button>
+              <button
+                type="button"
+                onClick={confirmCancellation}
+                disabled={cancellingId !== null}
+                className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {cancellingId ? "Cancelling…" : "Yes, cancel it"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
