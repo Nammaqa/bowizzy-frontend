@@ -75,6 +75,31 @@ function generateExplosionCoins(count: number): ExplosionCoin[] {
     });
 }
 
+// ── Coins that fan out all around the BOWIZZY text ─────────────────────────────
+interface HaloCoin {
+    id: number;
+    angle: number;
+    distance: number;
+    size: number;
+    delay: number;
+    duration: number;
+    rotations: number;
+}
+
+function generateHaloCoins(count: number): HaloCoin[] {
+    return Array.from({ length: count }, (_, i) => ({
+        id: i,
+        // Even 360° spread with a little jitter so the ring doesn't look mechanical
+        angle: (360 / count) * i + (Math.random() - 0.5) * 26,
+        // Min radius keeps them clear of the wordmark itself
+        distance: 145 + Math.random() * 200,
+        size: 14 + Math.random() * 22,
+        delay: Math.random() * 0.3,
+        duration: 0.8 + Math.random() * 0.6,
+        rotations: 2 + Math.random() * 5,
+    }));
+}
+
 // ── Bow + Arrow launch intro ────────────────────────────────────────────────────
 type IntroPhase = 'draw' | 'fire' | 'hit' | 'reveal';
 
@@ -170,6 +195,7 @@ function WelcomeBonusModal({
     const [coins] = useState(() => generateCoins(40));
     const [burstCoins] = useState(() => generateBurstCoins(22));
     const [explosionCoins] = useState(() => generateExplosionCoins(34));
+    const [haloCoins] = useState(() => generateHaloCoins(46));
     const [claiming, setClaiming] = useState(false);
     const [claimed, setClaimed] = useState(false);
     const [phase, setPhase] = useState<IntroPhase>('draw');
@@ -359,6 +385,36 @@ function WelcomeBonusModal({
                             )}
                         </div>
 
+                        {/* ── Coins fanning out all around the text ── */}
+                        {phase === 'hit' && (
+                            <div style={{ position: 'absolute', left: '50%', top: '50%', width: 0, height: 0, zIndex: 5 }}>
+                                {haloCoins.map((c) => {
+                                    const rad = (c.angle * Math.PI) / 180;
+                                    const tx = Math.cos(rad) * c.distance;
+                                    const ty = Math.sin(rad) * c.distance;
+                                    return (
+                                        <div
+                                            key={c.id}
+                                            style={{
+                                                position: 'absolute',
+                                                width: `${c.size}px`,
+                                                height: `${c.size}px`,
+                                                left: `-${c.size / 2}px`,
+                                                top: `-${c.size / 2}px`,
+                                                animation: `haloCoin ${c.duration}s ${c.delay}s cubic-bezier(0.16, 0.9, 0.3, 1) both`,
+                                                '--tx': `${tx}px`,
+                                                '--ty': `${ty}px`,
+                                                '--rot': `${c.rotations * 360}deg`,
+                                                filter: 'drop-shadow(0 2px 8px rgba(255,200,0,0.7))',
+                                            } as React.CSSProperties}
+                                        >
+                                            <img src={coinSvg} alt="" style={{ width: '100%', height: '100%' }} />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+
                         {/* ── BOWIZZY text flies out of the box to screen center ── */}
                         {phase === 'hit' && (
                             <div
@@ -368,13 +424,15 @@ function WelcomeBonusModal({
                                     top: '50%',
                                     zIndex: 6,
                                     whiteSpace: 'nowrap',
+                                    textAlign: 'center',
                                     fontFamily: '"Syne", "Clash Display", sans-serif',
                                     fontWeight: 900,
                                     fontSize: 'clamp(34px, 9vw, 66px)',
                                     letterSpacing: '-1px',
                                     lineHeight: 1,
+                                    transformOrigin: 'center center',
                                     filter: 'drop-shadow(0 6px 22px rgba(0,0,0,0.6))',
-                                    animation: 'textToCenter 0.9s cubic-bezier(0.18, 0.9, 0.3, 1.15) 0.15s both',
+                                    animation: 'textPop 0.75s cubic-bezier(0.18, 0.9, 0.3, 1.15) 0.15s both',
                                 }}
                             >
                                 <span style={{ color: '#FF8C00' }}>BO</span>
@@ -786,11 +844,16 @@ function WelcomeBonusModal({
                     70%  { opacity: 1; }
                     100% { transform: translate(var(--tx), calc(var(--ty) + 140px)) rotate(var(--rot)) scale(0.7); opacity: 0; }
                 }
-                @keyframes textToCenter {
-                    0%   { transform: translate(-50%, -50%) translate(min(34vw, 210px), 20px) scale(0.15) rotate(-8deg); opacity: 0; }
-                    30%  { opacity: 1; }
-                    70%  { transform: translate(-50%, -50%) translate(0, -6px) scale(1.12) rotate(2deg); opacity: 1; }
-                    100% { transform: translate(-50%, -50%) translate(0, 0) scale(1) rotate(0deg); opacity: 1; }
+                @keyframes haloCoin {
+                    0%   { transform: translate(0, 0) rotate(0deg) scale(0.15); opacity: 0; }
+                    20%  { opacity: 1; }
+                    100% { transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(1); opacity: 1; }
+                }
+                @keyframes textPop {
+                    0%   { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
+                    45%  { opacity: 1; }
+                    65%  { transform: translate(-50%, -50%) scale(1.14); opacity: 1; }
+                    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
                 }
                 @keyframes introFadeOut {
                     from { opacity: 1; }
