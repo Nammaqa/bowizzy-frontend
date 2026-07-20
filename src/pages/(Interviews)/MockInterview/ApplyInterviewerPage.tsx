@@ -136,15 +136,23 @@ const ApplyInterviewerPage = () => {
     if (form.account_holder_name.trim().length > 50) {
       return "Account holder name must be 50 characters or less.";
     }
+    if (!form.account_number.trim()) return "Account number is required.";
     if (!/^\d{1,20}$/.test(form.account_number)) {
       return "Account number should contain digits only and be 20 digits or less.";
+    }
+    if (!form.confirm_account_number.trim()) {
+      return "Confirm account number is required.";
     }
     if (form.account_number !== form.confirm_account_number) {
       return "Account numbers do not match.";
     }
+    if (!form.ifsc_code.trim()) {
+      return "IFSC code is required.";
+    }
     if (!ifscRegex.test(form.ifsc_code)) {
       return "Enter a valid IFSC code.";
     }
+    if (!form.account_type) return "Account type is required.";
     if (!form.branch_name.trim()) return "Branch name is required.";
     if (!alphabetWithSpacesRegex.test(form.branch_name.trim())) {
       return "Branch name should contain alphabets only.";
@@ -264,11 +272,12 @@ const ApplyInterviewerPage = () => {
               Submit your bank details for interviewer verification. Once submitted, your
               status moves to pending approval.
             </p>
+            <p className="mt-3 text-sm font-medium text-[#F26D3A]">All fields are mandatory.</p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="text-sm font-semibold text-[#3A3A3A]">Bank name</label>
+              <label className="text-sm font-semibold text-[#3A3A3A]">Bank name <span className="text-red-500">*</span></label>
               <input
                 value={form.bank_name}
                 onChange={(event) => updateField("bank_name", event.target.value)}
@@ -283,7 +292,7 @@ const ApplyInterviewerPage = () => {
 
             <div>
               <label className="text-sm font-semibold text-[#3A3A3A]">
-                Account holder name
+                Account holder name <span className="text-red-500">*</span>
               </label>
               <input
                 value={form.account_holder_name}
@@ -298,7 +307,7 @@ const ApplyInterviewerPage = () => {
             </div>
 
             <div>
-              <label className="text-sm font-semibold text-[#3A3A3A]">Account number</label>
+              <label className="text-sm font-semibold text-[#3A3A3A]">Account number <span className="text-red-500">*</span></label>
               <input
                 value={form.account_number}
                 onChange={(event) =>
@@ -316,7 +325,7 @@ const ApplyInterviewerPage = () => {
 
             <div>
               <label className="text-sm font-semibold text-[#3A3A3A]">
-                Confirm account number
+                Confirm account number <span className="text-red-500">*</span>
               </label>
               <input
                 value={form.confirm_account_number}
@@ -334,7 +343,7 @@ const ApplyInterviewerPage = () => {
             </div>
 
             <div>
-              <label className="text-sm font-semibold text-[#3A3A3A]">IFSC code</label>
+              <label className="text-sm font-semibold text-[#3A3A3A]">IFSC code <span className="text-red-500">*</span></label>
               <input
                 value={form.ifsc_code}
                 onChange={(event) => updateField("ifsc_code", event.target.value)}
@@ -348,7 +357,7 @@ const ApplyInterviewerPage = () => {
             </div>
 
             <div>
-              <label className="text-sm font-semibold text-[#3A3A3A]">Account type</label>
+              <label className="text-sm font-semibold text-[#3A3A3A]">Account type <span className="text-red-500">*</span></label>
               <select
                 value={form.account_type}
                 onChange={(event) => updateField("account_type", event.target.value)}
@@ -363,7 +372,7 @@ const ApplyInterviewerPage = () => {
             </div>
 
             <div className="sm:col-span-2">
-              <label className="text-sm font-semibold text-[#3A3A3A]">Branch name</label>
+              <label className="text-sm font-semibold text-[#3A3A3A]">Branch name <span className="text-red-500">*</span></label>
               <input
                 value={form.branch_name}
                 onChange={(event) => updateField("branch_name", event.target.value)}
