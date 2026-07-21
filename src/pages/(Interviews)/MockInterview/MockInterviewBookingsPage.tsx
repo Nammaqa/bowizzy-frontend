@@ -97,6 +97,32 @@ const isCancelledByUser = (b: MockInterviewBooking, userId?: string | number): b
   return false;
 };
 
+const parseDateSafe = (dateStr: any) => {
+  if (!dateStr) return null;
+  let s = String(dateStr).trim();
+  // Normalize SQL/ISO-like timestamps to valid Date input
+  if (s.includes(" ") && !s.includes("T")) {
+    s = s.replace(" ", "T");
+  }
+  // Treat bare date-time strings without timezone as UTC
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(s)) {
+    s += "Z";
+  }
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+};
+
+const canCancelCandidateBooking = (b: MockInterviewBooking) => {
+  const v =
+    b?.start_time_utc || b?.startTimeUtc || b?.start_time || b?.startTime ||
+    b?.scheduled_time || b?.scheduledTime;
+  if (!v) return true;
+  const startTime = parseDateSafe(v);
+  if (!startTime) return false;
+  const oneHourBeforeStart = new Date(startTime.getTime() - 60 * 60 * 1000);
+  return new Date() < oneHourBeforeStart;
+};
+
 // ---------------------------------------------------------------------------
 // Status config — drives badge colour + left-border accent
 // ---------------------------------------------------------------------------
@@ -335,7 +361,7 @@ const MockInterviewBookingsPage = () => {
                   Join meeting
                 </a>
               )}
-              {!isCancelled && (
+              {!isCancelled && canCancelCandidateBooking(booking) && (
                 <button
                   onClick={() => openCancelConfirmation(booking)}
                   disabled={cancellingId === id}

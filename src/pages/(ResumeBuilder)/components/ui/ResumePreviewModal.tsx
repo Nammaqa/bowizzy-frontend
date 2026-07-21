@@ -12,7 +12,7 @@ const CREDIT_VALUE = 0.5; // 1 credit = ₹0.5
 const CGST_RATE = 0.09;
 const SGST_RATE = 0.09;
 
-import { Lock, Tag, Sparkles, ChevronDown, ChevronUp, Info } from "lucide-react";
+import { Lock, Tag, Sparkles, ChevronDown, ChevronUp, Info, Unlock } from "lucide-react";
 import { X, Download, Eye } from "lucide-react";
 import type { ResumeData } from "@/types/resume";
 import { getTemplateById } from "@/templates/templateRegistry";
@@ -275,7 +275,7 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
             </button>
             <div className="flex items-center gap-3 mb-1">
               <div className="w-10 h-10 rounded-2xl bg-orange-500/20 border border-orange-400/30 flex items-center justify-center">
-                <Lock className="w-5 h-5 text-orange-400" />
+                <Unlock className="w-5 h-5 text-orange-400" />
               </div>
               <div>
                 <h2 className="text-white font-semibold text-base leading-tight">Unlock Premium Resume</h2>

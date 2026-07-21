@@ -231,6 +231,7 @@ const InterviewerDashboardPage = () => {
   const [cancellingInterviewId, setCancellingInterviewId] = useState<
     string | number | null
   >(null);
+  const [interviewToCancel, setInterviewToCancel] = useState<any>(null);
   const [error, setError] = useState("");
   const [interviewsError, setInterviewsError] = useState("");
   const [acceptError, setAcceptError] = useState("");
@@ -591,7 +592,7 @@ const InterviewerDashboardPage = () => {
                                 {canCancel && (
                                   <button
                                     type="button"
-                                    onClick={() => handleCancelInterview(interview)}
+                                    onClick={() => setInterviewToCancel(interview)}
                                     disabled={cancellingInterviewId === interviewId}
                                     className="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 ring-1 ring-red-200 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-70"
                                   >
@@ -1019,6 +1020,36 @@ const InterviewerDashboardPage = () => {
                   Interview accepted
                 </span>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancellation Modal */}
+      {interviewToCancel && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.45)" }}
+        >
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl p-6">
+            <h3 className="text-lg font-bold text-[#2F2F2F] mb-2">Cancel Interview?</h3>
+            <p className="text-sm text-[#666666] mb-6">Are you sure you want to cancel this interview?</p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setInterviewToCancel(null)}
+                className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition cursor-pointer"
+              >
+                No, keep it
+              </button>
+              <button
+                onClick={() => {
+                  handleCancelInterview(interviewToCancel);
+                  setInterviewToCancel(null);
+                }}
+                className="px-4 py-2 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition cursor-pointer"
+              >
+                Yes, cancel
+              </button>
             </div>
           </div>
         </div>
