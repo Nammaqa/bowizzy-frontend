@@ -76,7 +76,7 @@ const formatYear = (s?: string) => {
 const formatEducationDateRange = (edu: any) => {
   const start = formatYear(edu?.startYear || edu?.startDate || '');
   const end = formatYear(edu?.endYear || edu?.yearOfPassing || '');
-  if (start && end) return `${start} — ${end}`;
+  if (start && end) return `${start} - ${end}`;
   return start || end || '';
 };
 
@@ -244,7 +244,7 @@ const Template18PDF: React.FC<Template18PDFProps> = ({ data, primaryColor = '#11
               <View style={{ marginTop: 8 }}>
                 {education.higherEducation.filter(edu => edu.enabled).reverse().map((edu: any, i: number) => (
                   <View key={i} style={{ marginBottom: 10 }}>
-                    <Text style={{ marginTop: 6, color: '#000', fontWeight: 700 }}>{edu.instituteName}{edu.universityBoard ? ` — ${edu.universityBoard}` : ''}</Text>
+                    <Text style={{ marginTop: 6, color: '#000', fontWeight: 700 }}>{edu.instituteName}{edu.universityBoard ? ` - ${edu.universityBoard}` : ''}</Text>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
                       <Text style={{ fontSize: 11, color: '#000' }}>{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</Text>
                       <Text style={{ fontSize: 11, color: '#000' }}>
@@ -260,7 +260,7 @@ const Template18PDF: React.FC<Template18PDFProps> = ({ data, primaryColor = '#11
                   <View style={{ marginBottom: 10 }}>
                     <Text style={{ marginTop: 6, color: '#000', fontWeight: 700 }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-                      <Text style={{ fontSize: 11, color: '#000' }}>Pre University (12th Standard){education.preUniversity.boardType ? ` — ${education.preUniversity.boardType}` : ''}{education.preUniversity.subjectStream ? ` (${education.preUniversity.subjectStream})` : ''}</Text>
+                      <Text style={{ fontSize: 11, color: '#000' }}>Pre University (12th Standard){education.preUniversity.boardType ? ` - ${education.preUniversity.boardType}` : ''}{education.preUniversity.subjectStream ? ` (${education.preUniversity.subjectStream})` : ''}</Text>
                       <Text style={{ fontSize: 11, color: '#000' }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
                     </View>
                     {education.preUniversity.resultFormat && education.preUniversity.result && (<Text style={{ fontSize: 10, color: '#444', marginTop: 4 }}>{education.preUniversity.resultFormat}: {education.preUniversity.result}</Text>)}
@@ -272,7 +272,7 @@ const Template18PDF: React.FC<Template18PDFProps> = ({ data, primaryColor = '#11
                   <View style={{ marginBottom: 10 }}>
                     <Text style={{ marginTop: 6, color: '#000', fontWeight: 700 }}>{education.sslc.instituteName || 'SSLC'}</Text>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-                      <Text style={{ fontSize: 11, color: '#000' }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</Text>
+                      <Text style={{ fontSize: 11, color: '#000' }}>SSLC (10th Standard){education.sslc.boardType ? ` - ${education.sslc.boardType}` : ''}</Text>
                       <Text style={{ fontSize: 11, color: '#000' }}>{formatResumeEducationDateRange(education.sslc)}</Text>
                     </View>
                     {education.sslc.resultFormat && education.sslc.result && (<Text style={{ fontSize: 10, color: '#444', marginTop: 4 }}>{education.sslc.resultFormat}: {education.sslc.result}</Text>)}
@@ -308,7 +308,7 @@ const Template18PDF: React.FC<Template18PDFProps> = ({ data, primaryColor = '#11
                       <Text style={{ width: 12 }}>•</Text>
                       <Text style={{ flex: 1, color: '#444' }}>
                         <Text style={{ color: '#000' }}>{c.certificateTitle}</Text>
-                        {c.providedBy ? ` — ${c.providedBy}` : ''}
+                        {c.providedBy ? ` - ${c.providedBy}` : ''}
                       </Text>
                     </View>
                     <Text style={{ fontSize: 10, color: '#000' }}>{c.date ? formatYear(c.date) : ''}</Text>
@@ -320,7 +320,7 @@ const Template18PDF: React.FC<Template18PDFProps> = ({ data, primaryColor = '#11
         </View>
 
         {/* Footer */}
-        <View style={{
+        {/* <View style={{
           position: 'absolute',
           left: 0,
           right: 0,
@@ -335,7 +335,7 @@ const Template18PDF: React.FC<Template18PDFProps> = ({ data, primaryColor = '#11
         }} fixed>
           <Text style={{ color: '#B0B0B0', fontSize: 10, letterSpacing: 0.5 }}>bowizzy.com</Text>
           <Text style={{ color: '#B0B0B0', fontSize: 10, letterSpacing: 0.5 }}>Powered by Wizzybox</Text>
-        </View>
+        </View> */}
       </Page>
     </Document>
   );

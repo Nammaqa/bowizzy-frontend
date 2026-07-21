@@ -315,9 +315,9 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
 
         </View>
         {/* Footer */}
-        <View style={{
+        {/* <View style={{
           position: 'absolute',
-          left: 0,
+          left: 220,
           right: 0,
           bottom: 12,
           paddingHorizontal: 36,
@@ -328,9 +328,9 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
           fontSize: 10,
           color: '#B0B0B0',
         }} fixed>
-          <Text style={{ color: '#B0B0B0', fontSize: 10, letterSpacing: 0.5 }}>bowizzy.com</Text>
-          <Text style={{ color: '#B0B0B0', fontSize: 10, letterSpacing: 0.5 }}>Powered by Wizzybox</Text>
-        </View>
+          <Text style={{ color: '#B0B0B0', fontSize: 7, letterSpacing: 0.5 }}>bowizzy.com</Text>
+          <Text style={{ color: '#B0B0B0', fontSize: 7, letterSpacing: 0.5 }}>Powered by Wizzybox</Text>
+        </View> */}
       </Page>
     </Document>
   );

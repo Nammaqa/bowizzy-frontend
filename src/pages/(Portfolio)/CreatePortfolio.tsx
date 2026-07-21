@@ -56,9 +56,11 @@ function loadRazorpayScript(): Promise<boolean> {
 
 function SuccessModal({
   portfolioName,
+  portfolioId,
   onClose,
 }: {
   portfolioName: string;
+  portfolioId: string | number | null;
   onClose: () => void;
 }) {
   const navigate = useNavigate();
@@ -83,16 +85,22 @@ function SuccessModal({
           </p>
           <div className="flex flex-col gap-2">
             <button
-              onClick={() => navigate("/portfolio/list")}
+              onClick={() => {
+                if (portfolioId) {
+                  navigate(`/portfolio/editor/${portfolioId}`);
+                } else {
+                  navigate("/portfolio/list");
+                }
+              }}
               className="w-full py-3 rounded-xl bg-gradient-to-r from-violet-600 to-violet-500 text-white font-semibold text-sm hover:from-violet-700 hover:to-violet-600 transition cursor-pointer"
             >
-              View My Portfolios
+              Go to Editor
             </button>
             <button
-              onClick={onClose}
+              onClick={() => navigate("/portfolio/list")}
               className="w-full py-2.5 rounded-xl border border-gray-200 text-gray-500 text-sm font-medium hover:bg-gray-50 transition cursor-pointer"
             >
-              Stay Here
+              View My Portfolios
             </button>
           </div>
         </div>
@@ -110,6 +118,7 @@ export default function CreatePortfolio() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [createdPortfolioId, setCreatedPortfolioId] = useState<string | number | null>(null);
   const [nameError, setNameError] = useState("");
 
   // Credit discount state
@@ -229,7 +238,7 @@ export default function CreatePortfolio() {
     // TODO: Call backend API to create the portfolio project
     console.log('orderid ', orderId)
     const userData = JSON.parse(localStorage.getItem("user") || "null");
-    await api.post('/portfolio/create-portfolio', {
+    const response = await api.post('/portfolio/create-portfolio', {
       name: portfolioName,
       portfolio_name: portfolioName,
       description: portfolioDescription,
@@ -239,7 +248,7 @@ export default function CreatePortfolio() {
       razorpay_signature: signature,
       credits_used: useCredits ? selectedCredits : 0,
     }, { headers: { Authorization: `Bearer ${userData.token}` } });
-    return true;
+    return response.data;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -295,9 +304,11 @@ export default function CreatePortfolio() {
         handler: async (response: any) => {
           try {
             console.log('response from razorpay ', response)
-            await createPortfolioProject(order_id, response.razorpay_payment_id, response.razorpay_signature
+            const result = await createPortfolioProject(order_id, response.razorpay_payment_id, response.razorpay_signature
             );
             window.dispatchEvent(new CustomEvent("credits:refresh"));
+            const pid = result?.portfolio_id || result?.id || result?.data?.portfolio_id || result?.portfolio?.portfolio_id || null;
+            setCreatedPortfolioId(pid);
             setSuccess(true);
           } catch {
             setError(
@@ -332,6 +343,7 @@ export default function CreatePortfolio() {
       {success && (
         <SuccessModal
           portfolioName={portfolioName}
+          portfolioId={createdPortfolioId}
           onClose={() => setSuccess(false)}
         />
       )}

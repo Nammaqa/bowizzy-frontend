@@ -231,7 +231,7 @@ const Template14PDF: React.FC<Template14PDFProps> = ({ data, primaryColor = '#11
         </>)}
 
         {/* Footer */}
-        <View style={{
+        {/* <View style={{
           position: 'absolute',
           left: 0,
           right: 0,
@@ -246,7 +246,7 @@ const Template14PDF: React.FC<Template14PDFProps> = ({ data, primaryColor = '#11
         }} fixed>
           <Text style={{ color: '#B0B0B0', fontSize: 10, letterSpacing: 0.5 }}>bowizzy.com</Text>
           <Text style={{ color: '#B0B0B0', fontSize: 10, letterSpacing: 0.5 }}>Powered by Wizzybox</Text>
-        </View>
+        </View> */}
       </Page>
     </Document>
   );
