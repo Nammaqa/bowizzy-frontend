@@ -46,6 +46,142 @@ function generateBurstCoins(count: number): BurstCoin[] {
     }));
 }
 
+// ── Explosion coin type (for the BOWIZZY box blast) ─────────────────────────────
+interface ExplosionCoin {
+    id: number;
+    angle: number;
+    distance: number;
+    size: number;
+    delay: number;
+    duration: number;
+    rotations: number;
+    arcHeight: number;
+}
+
+function generateExplosionCoins(count: number): ExplosionCoin[] {
+    return Array.from({ length: count }, (_, i) => {
+        // Bias the spread toward an upward/outward fountain
+        const angle = -90 + (Math.random() - 0.5) * 300;
+        return {
+            id: i,
+            angle,
+            distance: 120 + Math.random() * 160,
+            size: 16 + Math.random() * 20,
+            delay: Math.random() * 0.12,
+            duration: 0.9 + Math.random() * 0.7,
+            rotations: 2 + Math.random() * 5,
+            arcHeight: 60 + Math.random() * 120,
+        };
+    });
+}
+
+// ── Coins that fan out all around the BOWIZZY text ─────────────────────────────
+interface HaloCoin {
+    id: number;
+    angle: number;
+    distance: number;
+    size: number;
+    delay: number;
+    duration: number;
+    rotations: number;
+}
+
+function generateHaloCoins(count: number): HaloCoin[] {
+    return Array.from({ length: count }, (_, i) => ({
+        id: i,
+        // Even 360° spread with a little jitter so the ring doesn't look mechanical
+        angle: (360 / count) * i + (Math.random() - 0.5) * 26,
+        // Min radius keeps them clear of the wordmark itself
+        distance: 145 + Math.random() * 200,
+        size: 14 + Math.random() * 22,
+        delay: Math.random() * 0.3,
+        duration: 0.8 + Math.random() * 0.6,
+        rotations: 2 + Math.random() * 5,
+    }));
+}
+
+// ── Bow + Arrow launch intro ────────────────────────────────────────────────────
+type IntroPhase = 'draw' | 'fire' | 'hit' | 'reveal';
+
+function BowAndArrow({ phase }: { phase: IntroPhase }) {
+    const fired = phase === 'fire' || phase === 'hit';
+    return (
+        <div
+            style={{
+                position: 'absolute',
+                left: '6%',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                opacity: fired ? 0 : 1,
+                transition: 'opacity 0.45s ease 0.15s',
+                zIndex: 4,
+            }}
+        >
+            <svg width="130" height="200" viewBox="-40 -100 130 200" style={{ overflow: 'visible' }}>
+                {/* Bow limb */}
+                <path
+                    d="M 0 -85 Q 62 0 0 85"
+                    fill="none"
+                    stroke="url(#bowGrad)"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                    style={{ filter: 'drop-shadow(0 0 6px rgba(255,150,0,0.5))' }}
+                />
+                {/* Bow string — drawn back to the nock while aiming, snaps straight on fire */}
+                <polyline
+                    points={fired ? '0,-85 0,0 0,85' : '0,-85 -26,0 0,85'}
+                    fill="none"
+                    stroke="rgba(255,255,255,0.85)"
+                    strokeWidth="2"
+                    style={{ transition: 'all 0.08s ease-out' }}
+                />
+                <defs>
+                    <linearGradient id="bowGrad" x1="0" y1="-85" x2="0" y2="85" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stopColor="#8a5a2b" />
+                        <stop offset="50%" stopColor="#d98a3d" />
+                        <stop offset="100%" stopColor="#8a5a2b" />
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
+    );
+}
+
+function ArrowInFlight({ phase }: { phase: IntroPhase }) {
+    // The arrow sits nocked while aiming, then flies across on 'fire' and embeds into the box centre on 'hit'
+    const fired = phase === 'fire' || phase === 'hit';
+    return (
+        <div
+            style={{
+                position: 'absolute',
+                left: 'calc(6% + 40px)',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                zIndex: 5,
+                // arrowhead ends at the box centre (box is right:7%, 160px wide → centre = 93% − 80px; tip sits 128px into the shaft)
+                animation: fired ? 'arrowFly 0.55s cubic-bezier(0.4, 0, 0.5, 1) forwards' : undefined,
+                // Only fade out once the box has burst, not while the arrow is still visible in the box
+                opacity: phase === 'hit' ? 0 : 1,
+                transition: 'opacity 0.2s ease 0.45s',
+            }}
+        >
+            <div style={{ animation: phase === 'draw' ? 'arrowNock 0.5s ease-in-out infinite alternate' : undefined }}>
+                <svg width="150" height="24" viewBox="0 0 150 24" style={{ overflow: 'visible', display: 'block' }}>
+                    {/* Shaft */}
+                    <line x1="6" y1="12" x2="128" y2="12" stroke="#c9a24b" strokeWidth="3" strokeLinecap="round" />
+                    {/* Arrowhead */}
+                    <path d="M 128 12 L 112 5 L 116 12 L 112 19 Z" fill="#f0f0f0" stroke="#bbb" strokeWidth="0.5" />
+                    {/* Fletching */}
+                    <path d="M 6 12 L 20 4 L 26 8 L 14 12 Z" fill="#ff8a3d" />
+                    <path d="M 6 12 L 20 20 L 26 16 L 14 12 Z" fill="#4ab8ff" />
+                    <path d="M 14 12 L 26 6 L 30 9 L 20 12 Z" fill="#ffb020" />
+                    <path d="M 14 12 L 26 18 L 30 15 L 20 12 Z" fill="#7fd0ff" />
+                </svg>
+            </div>
+        </div>
+    );
+}
+
 // ── Welcome Bonus Modal ────────────────────────────────────────────────────────
 function WelcomeBonusModal({
     name,
@@ -58,8 +194,21 @@ function WelcomeBonusModal({
 }) {
     const [coins] = useState(() => generateCoins(40));
     const [burstCoins] = useState(() => generateBurstCoins(22));
+    const [explosionCoins] = useState(() => generateExplosionCoins(34));
+    const [haloCoins] = useState(() => generateHaloCoins(46));
     const [claiming, setClaiming] = useState(false);
     const [claimed, setClaimed] = useState(false);
+    const [phase, setPhase] = useState<IntroPhase>('draw');
+
+    // Drive the cinematic intro: aim → fire → impact → reveal
+    useEffect(() => {
+        const timers = [
+            setTimeout(() => setPhase('fire'), 1100),
+            setTimeout(() => setPhase('hit'), 1650),
+            setTimeout(() => setPhase('reveal'), 3100),
+        ];
+        return () => timers.forEach(clearTimeout);
+    }, []);
 
     const handleClaim = async () => {
         setClaiming(true);
@@ -83,11 +232,219 @@ function WelcomeBonusModal({
                     backdropFilter: 'blur(8px)',
                     animation: 'backdropIn 0.4s ease forwards',
                 }}
-                onClick={onDismiss}
+                onClick={phase === 'reveal' ? onDismiss : undefined}
             />
 
+            {/* ══════════════ CINEMATIC BOW-AND-ARROW INTRO ══════════════ */}
+            {phase !== 'reveal' && (
+                <div
+                    className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden"
+                    style={{ zIndex: 20, animation: phase === 'hit' ? 'introFadeOut 0.5s ease 0.95s forwards' : undefined }}
+                >
+                    <div
+                        style={{
+                            position: 'relative',
+                            width: 'min(94vw, 620px)',
+                            height: '340px',
+                        }}
+                    >
+                        {/* Bow (fades once the arrow is loosed) */}
+                        <BowAndArrow phase={phase} />
+
+                        {/* Arrow in flight */}
+                        <ArrowInFlight phase={phase} />
+
+                        {/* ── Gift box target ── */}
+                        <div
+                            style={{
+                                position: 'absolute',
+                                right: '7%',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                width: '160px',
+                                height: '160px',
+                                zIndex: 3,
+                            }}
+                        >
+                            {/* Lid — pops off on impact */}
+                            <div
+                                style={{
+                                    position: 'absolute',
+                                    left: '50%',
+                                    top: '0',
+                                    transform: 'translateX(-50%)',
+                                    zIndex: 2,
+                                    animation: phase === 'hit' ? 'lidPop 0.7s cubic-bezier(0.25, 0.8, 0.4, 1) forwards' : undefined,
+                                }}
+                            >
+                                <svg width="170" height="96" viewBox="0 0 170 96" style={{ overflow: 'visible', display: 'block', filter: 'drop-shadow(0 6px 10px rgba(0,0,0,0.4))' }}>
+                                    {/* Bow loops */}
+                                    <ellipse cx="70" cy="26" rx="20" ry="14" fill="url(#giftRibbonLid)" transform="rotate(-22 70 26)" />
+                                    <ellipse cx="100" cy="26" rx="20" ry="14" fill="url(#giftRibbonLid)" transform="rotate(22 100 26)" />
+                                    <circle cx="85" cy="28" r="9" fill="#FFD24d" stroke="#e0a000" strokeWidth="1" />
+                                    {/* Lid body */}
+                                    <rect x="16" y="40" width="138" height="42" rx="7" fill="url(#giftLidGrad)" stroke="rgba(0,0,0,0.15)" strokeWidth="1" />
+                                    {/* Ribbon across lid */}
+                                    <rect x="72" y="40" width="26" height="42" fill="url(#giftRibbonLid)" />
+                                    <defs>
+                                        <linearGradient id="giftLidGrad" x1="0" y1="40" x2="0" y2="82" gradientUnits="userSpaceOnUse">
+                                            <stop offset="0%" stopColor="#ff6b85" />
+                                            <stop offset="100%" stopColor="#e0395f" />
+                                        </linearGradient>
+                                        <linearGradient id="giftRibbonLid" x1="0" y1="0" x2="0" y2="82" gradientUnits="userSpaceOnUse">
+                                            <stop offset="0%" stopColor="#FFE566" />
+                                            <stop offset="100%" stopColor="#FFB020" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                            </div>
+
+                            {/* Box body — shakes then bursts on impact */}
+                            <div
+                                style={{
+                                    position: 'absolute',
+                                    left: '50%',
+                                    bottom: '0',
+                                    transform: 'translateX(-50%)',
+                                    zIndex: 1,
+                                    animation:
+                                        phase === 'hit'
+                                            ? 'giftBurst 0.55s cubic-bezier(0.36, 0, 0.66, -0.4) 0.05s forwards'
+                                            : 'giftIdle 2.4s ease-in-out infinite',
+                                }}
+                            >
+                                <svg width="150" height="112" viewBox="0 0 150 112" style={{ display: 'block', filter: 'drop-shadow(0 16px 30px rgba(0,0,0,0.5))' }}>
+                                    {/* Box body */}
+                                    <rect x="15" y="6" width="120" height="102" rx="7" fill="url(#giftBodyGrad)" />
+                                    {/* Inner shadow lip */}
+                                    <rect x="15" y="6" width="120" height="10" rx="5" fill="rgba(0,0,0,0.18)" />
+                                    {/* Vertical ribbon */}
+                                    <rect x="62" y="6" width="26" height="102" fill="url(#giftRibbonBody)" />
+                                    <defs>
+                                        <linearGradient id="giftBodyGrad" x1="0" y1="6" x2="0" y2="108" gradientUnits="userSpaceOnUse">
+                                            <stop offset="0%" stopColor="#ff4d6d" />
+                                            <stop offset="100%" stopColor="#c9184a" />
+                                        </linearGradient>
+                                        <linearGradient id="giftRibbonBody" x1="0" y1="6" x2="0" y2="108" gradientUnits="userSpaceOnUse">
+                                            <stop offset="0%" stopColor="#FFD24d" />
+                                            <stop offset="100%" stopColor="#FF9e00" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                            </div>
+
+                            {/* Impact flash */}
+                            {phase === 'hit' && (
+                                <>
+                                    <div style={{
+                                        position: 'absolute', left: '50%', top: '50%',
+                                        width: '30px', height: '30px', marginLeft: '-15px', marginTop: '-15px',
+                                        borderRadius: '50%',
+                                        background: 'radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(255,200,0,0.6) 40%, transparent 70%)',
+                                        animation: 'impactFlash 0.5s ease-out forwards',
+                                    }} />
+                                    <div style={{
+                                        position: 'absolute', left: '50%', top: '50%',
+                                        width: '60px', height: '60px', marginLeft: '-30px', marginTop: '-30px',
+                                        borderRadius: '50%',
+                                        border: '3px solid rgba(255,215,0,0.8)',
+                                        animation: 'impactRing 0.6s ease-out forwards',
+                                    }} />
+                                </>
+                            )}
+
+                            {/* ── Coin explosion from the box ── */}
+                            {phase === 'hit' && (
+                                <div style={{ position: 'absolute', left: '50%', top: '50%', width: 0, height: 0, zIndex: 2 }}>
+                                    {explosionCoins.map((c) => {
+                                        const rad = (c.angle * Math.PI) / 180;
+                                        const tx = Math.cos(rad) * c.distance;
+                                        const ty = Math.sin(rad) * c.distance;
+                                        return (
+                                            <div
+                                                key={c.id}
+                                                style={{
+                                                    position: 'absolute',
+                                                    width: `${c.size}px`,
+                                                    height: `${c.size}px`,
+                                                    left: `-${c.size / 2}px`,
+                                                    top: `-${c.size / 2}px`,
+                                                    animation: `explodeCoin ${c.duration}s ${c.delay}s cubic-bezier(0.2, 0.7, 0.4, 1) both`,
+                                                    '--tx': `${tx}px`,
+                                                    '--ty': `${ty}px`,
+                                                    '--arc': `-${c.arcHeight}px`,
+                                                    '--rot': `${c.rotations * 360}deg`,
+                                                    filter: 'drop-shadow(0 2px 6px rgba(255,200,0,0.7))',
+                                                } as React.CSSProperties}
+                                            >
+                                                <img src={coinSvg} alt="" style={{ width: '100%', height: '100%' }} />
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* ── Coins fanning out all around the text ── */}
+                        {phase === 'hit' && (
+                            <div style={{ position: 'absolute', left: '50%', top: '50%', width: 0, height: 0, zIndex: 5 }}>
+                                {haloCoins.map((c) => {
+                                    const rad = (c.angle * Math.PI) / 180;
+                                    const tx = Math.cos(rad) * c.distance;
+                                    const ty = Math.sin(rad) * c.distance;
+                                    return (
+                                        <div
+                                            key={c.id}
+                                            style={{
+                                                position: 'absolute',
+                                                width: `${c.size}px`,
+                                                height: `${c.size}px`,
+                                                left: `-${c.size / 2}px`,
+                                                top: `-${c.size / 2}px`,
+                                                animation: `haloCoin ${c.duration}s ${c.delay}s cubic-bezier(0.16, 0.9, 0.3, 1) both`,
+                                                '--tx': `${tx}px`,
+                                                '--ty': `${ty}px`,
+                                                '--rot': `${c.rotations * 360}deg`,
+                                                filter: 'drop-shadow(0 2px 8px rgba(255,200,0,0.7))',
+                                            } as React.CSSProperties}
+                                        >
+                                            <img src={coinSvg} alt="" style={{ width: '100%', height: '100%' }} />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {/* ── BOWIZZY text flies out of the box to screen center ── */}
+                        {phase === 'hit' && (
+                            <div
+                                style={{
+                                    position: 'absolute',
+                                    left: '50%',
+                                    top: '50%',
+                                    zIndex: 6,
+                                    whiteSpace: 'nowrap',
+                                    textAlign: 'center',
+                                    fontFamily: '"Syne", "Clash Display", sans-serif',
+                                    fontWeight: 900,
+                                    fontSize: 'clamp(34px, 9vw, 66px)',
+                                    letterSpacing: '-1px',
+                                    lineHeight: 1,
+                                    transformOrigin: 'center center',
+                                    filter: 'drop-shadow(0 6px 22px rgba(0,0,0,0.6))',
+                                    animation: 'textPop 0.75s cubic-bezier(0.18, 0.9, 0.3, 1.15) 0.15s both',
+                                }}
+                            >
+                                <span style={{ color: '#FF8C00' }}>BO</span>
+                                <span style={{ color: '#5CC8FF' }}>WIZZY</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* Ambient light beams */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ opacity: phase === 'reveal' ? 1 : 0, transition: 'opacity 0.4s ease' }}>
                 {[...Array(6)].map((_, i) => (
                     <div key={i} style={{
                         position: 'absolute',
@@ -104,7 +461,7 @@ function WelcomeBonusModal({
             </div>
 
             {/* Falling coin rain */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ opacity: phase === 'reveal' ? 1 : 0, transition: 'opacity 0.4s ease' }}>
                 {coins.map((coin) => (
                     <div
                         key={coin.id}
@@ -124,6 +481,7 @@ function WelcomeBonusModal({
             </div>
 
             {/* Modal card */}
+            {phase === 'reveal' && (
             <div
                 className="relative z-10 w-full max-w-sm overflow-visible"
                 style={{ animation: 'modalPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards' }}
@@ -439,6 +797,7 @@ function WelcomeBonusModal({
                     </div>
                 </div>
             </div>
+            )}
 
             {/* Global keyframes */}
             <style>{`
@@ -447,6 +806,58 @@ function WelcomeBonusModal({
                 @keyframes backdropIn {
                     from { opacity: 0; }
                     to   { opacity: 1; }
+                }
+                @keyframes arrowNock {
+                    from { transform: translateX(0); }
+                    to   { transform: translateX(-4px); }
+                }
+                @keyframes arrowFly {
+                    0%   { left: calc(6% + 40px); }
+                    100% { left: calc(93% - 208px); }
+                }
+                @keyframes giftIdle {
+                    0%, 100% { transform: translateX(-50%) translateY(0) scale(1); }
+                    50%      { transform: translateX(-50%) translateY(-5px) scale(1.02); }
+                }
+                @keyframes giftBurst {
+                    0%   { transform: translateX(-50%) scale(1) rotate(0deg); }
+                    18%  { transform: translateX(-50%) scale(1.16) rotate(-3deg); filter: brightness(1.8); }
+                    38%  { transform: translateX(-50%) scale(0.9) rotate(3deg); }
+                    100% { transform: translateX(-50%) scale(1.35) rotate(0deg); opacity: 0; filter: brightness(2.6); }
+                }
+                @keyframes lidPop {
+                    0%   { transform: translateX(-50%) translateY(0) rotate(0deg); }
+                    30%  { transform: translateX(-40%) translateY(-46px) rotate(-10deg); }
+                    100% { transform: translateX(-30%) translateY(-170px) rotate(-34deg); opacity: 0; }
+                }
+                @keyframes impactFlash {
+                    0%   { transform: scale(0.4); opacity: 1; }
+                    100% { transform: scale(6);  opacity: 0; }
+                }
+                @keyframes impactRing {
+                    0%   { transform: scale(0.3); opacity: 0.9; }
+                    100% { transform: scale(4);   opacity: 0; }
+                }
+                @keyframes explodeCoin {
+                    0%   { transform: translate(0, 0) rotate(0deg) scale(0.4); opacity: 1; }
+                    15%  { opacity: 1; transform: translate(calc(var(--tx) * 0.2), calc(var(--ty) * 0.2 + var(--arc) * 0.4)) rotate(calc(var(--rot) * 0.2)) scale(1); }
+                    70%  { opacity: 1; }
+                    100% { transform: translate(var(--tx), calc(var(--ty) + 140px)) rotate(var(--rot)) scale(0.7); opacity: 0; }
+                }
+                @keyframes haloCoin {
+                    0%   { transform: translate(0, 0) rotate(0deg) scale(0.15); opacity: 0; }
+                    20%  { opacity: 1; }
+                    100% { transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(1); opacity: 1; }
+                }
+                @keyframes textPop {
+                    0%   { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
+                    45%  { opacity: 1; }
+                    65%  { transform: translate(-50%, -50%) scale(1.14); opacity: 1; }
+                    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+                }
+                @keyframes introFadeOut {
+                    from { opacity: 1; }
+                    to   { opacity: 0; }
                 }
                 @keyframes coinFall {
                     0%   { transform: translateY(-60px) rotate(0deg); opacity: 0.9; }
