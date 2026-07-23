@@ -161,7 +161,7 @@ const careerMap = [
   {
     href: "/profile",
     icon: <User color="#3B3B3B" size={16} />,
-    label: "Profile 1",
+    label: "Profile 2",
   },
   {
     href: "/ResumeBuilder",
