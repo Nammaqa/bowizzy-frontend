@@ -285,6 +285,14 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
         delete newErrors[`exp-${id}-endDate`];
         return newErrors;
       });
+
+      // Only one experience can be "Currently Working" at a time —
+      // uncheck it on every other experience.
+      updated.forEach((exp, i) => {
+        if (i !== index && exp.currentlyWorking) {
+          updated[i] = { ...exp, currentlyWorking: false };
+        }
+      });
     }
 
     setWorkExperiences(updated);
