@@ -468,7 +468,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       const regex = /^[a-zA-Z0-9\s.,&'\-()]+$/;
       if (!regex.test(val)) return "Invalid institution name";
       if (!/[a-zA-Z]/.test(val)) return "Institution name must include a letter";
-      if (val.length > 50) return "Max 50 characters allowed";
+      if (val.length > 100) return "Max 100 characters allowed";
       if (val.split(/\s+/).some((word) => word.length > 15))
         return "Each word must be 15 characters or less";
       return "";
@@ -568,8 +568,8 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       if (endYearNum < 1960) return "End year must be 1960 or later";
     }
 
-    if (startYear && endYear && endYear < startYear) {
-      return "End year cannot be before start year";
+    if (startYear && endYear && endYear <= startYear) {
+      return "End date must be after start date";
     }
 
     return "";
