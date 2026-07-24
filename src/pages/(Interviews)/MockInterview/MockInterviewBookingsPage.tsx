@@ -1,5 +1,6 @@
 import DashNav from "@/components/dashnav/dashnav";
 import {
+  ArrowLeft,
   CalendarDays,
   CheckCircle2,
   Clock,
@@ -389,9 +390,19 @@ const MockInterviewBookingsPage = () => {
 
         {/* ── Page header ──────────────────────────────────────────────── */}
         <div className="mb-4 flex items-center justify-between gap-4 rounded-2xl bg-white px-5 py-4 shadow-sm border border-gray-100">
-          <div>
-            <h1 className="text-base font-bold text-[#1f1f1f]">Your Bookings</h1>
-            <p className="mt-0.5 text-xs text-gray-400">Track status, timing, resume &amp; meeting links</p>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-gray-50"
+              aria-label="Go back"
+            >
+              <ArrowLeft size={16} />
+            </button>
+            <div>
+              <h1 className="text-base font-bold text-[#1f1f1f]">Your Bookings</h1>
+              <p className="mt-0.5 text-xs text-gray-400">Track status, timing, resume &amp; meeting links</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <button
