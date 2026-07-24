@@ -568,8 +568,13 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       if (endYearNum < 1960) return "End year must be 1960 or later";
     }
 
-    if (startYear && endYear && endYear <= startYear) {
-      return "End date must be after start date";
+    if (startYear && endYear) {
+      if (startYear === endYear) {
+        return "Start date and end date should not be the same";
+      }
+      if (endYear < startYear) {
+        return "End date must be after start date";
+      }
     }
 
     return "";

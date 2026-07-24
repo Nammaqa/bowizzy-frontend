@@ -333,7 +333,7 @@ export default function Profile() {
   }`}
 >
   <Upload size={16} className="sm:w-[18px] sm:h-[18px] flex-shrink-0" />
-  <span className="whitespace-nowrap hidden sm:inline">Upload Resume (PDF/Word)</span>
+  <span className="whitespace-nowrap hidden sm:inline">Upload Resume (PDF)</span>
   <span className="whitespace-nowrap sm:hidden">Upload Resume</span>
 </button>
                   </div>

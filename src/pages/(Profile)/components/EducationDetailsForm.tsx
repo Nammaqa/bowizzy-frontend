@@ -440,7 +440,10 @@ export default function EducationDetailsForm({
   // Helper function to validate date range
   const validateDateRange = (startDate: string, endDate: string) => {
     if (startDate && endDate) {
-      if (endDate <= startDate) {
+      if (startDate === endDate) {
+        return "Start date and end date should not be the same";
+      }
+      if (endDate < startDate) {
         return "End date must be after start date";
       }
     }

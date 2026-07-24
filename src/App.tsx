@@ -210,7 +210,6 @@ const bowizzy = [
   //   label: "Feedback",
   // },
 ];
-
 function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -218,6 +217,16 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
     location.pathname.startsWith("/interviews") ||
     location.pathname.startsWith("/interview-prep")
   );
+
+  // Keep the Interviews submenu open automatically when navigating into it
+  useEffect(() => {
+    if (
+      location.pathname.startsWith("/interviews") ||
+      location.pathname.startsWith("/interview-prep")
+    ) {
+      setIsInterviewsOpen(true);
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem("user"));
@@ -236,6 +245,10 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
 
   const isPortfolioEditor = location.pathname.includes("/portfolio/editor/");
 
+  // exact match for leaf routes, prefix match for section roots like /interviews
+  const isActivePath = (href: string) =>
+    location.pathname === href || location.pathname.startsWith(href + "/");
+
   return (
     <SidebarProvider>
       <WelcomeBonusManager />
@@ -251,7 +264,11 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem key={"Dashboard"}>
-                  <SidebarMenuButton asChild className="p-5 flex items-center">
+                  <SidebarMenuButton
+                    asChild
+                    className="p-5 flex items-center"
+                    isActive={isActivePath("/dashboard")}
+                  >
                     <a href={"/dashboard"}>
                       <LayoutDashboard color="#3B3B3B" size={16} />
                       <span className="ml-4" style={{ fontSize: "14px" }}>
@@ -272,17 +289,10 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
                   <SidebarMenuButton
                     asChild
                     className="p-5 flex items-center"
+                    isActive={isActivePath(item.href)}
                     key={item.label + idx}
                   >
-                    <a
-                      href={item.href}
-                    // onClick={(e) => {
-                    //   if ((item as any).comingSoon) {
-                    //     e.preventDefault();
-                    //     alert("Coming Soon!");
-                    //   }
-                    // }}
-                    >
+                    <a href={item.href}>
                       {item.icon}
                       <span className="ml-4" style={{ fontSize: "14px" }}>
                         {item.label}
@@ -293,6 +303,10 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     className="p-5 flex items-center justify-between"
+                    isActive={
+                      location.pathname.startsWith("/interviews") ||
+                      location.pathname.startsWith("/interview-prep")
+                    }
                     onClick={() => setIsInterviewsOpen((isOpen) => !isOpen)}
                   >
                     <span className="flex items-center">
@@ -315,6 +329,7 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
                           asChild
                           key={item.label}
                           className="h-9 px-3 text-[#3B3B3B]"
+                          isActive={isActivePath(item.href)}
                         >
                           <a href={item.href}>
                             <span style={{ fontSize: "13px" }}>{item.label}</span>
@@ -328,36 +343,13 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          {/*
-          <SidebarGroup>
-            <SidebarGroupLabel className="p-5">Bowizzy</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {bowizzy.map((item, idx) => (
-                  <SidebarMenuButton
-                    asChild
-                    className="p-5 flex items-center"
-                    key={item.label + idx}
-                  >
-                    <a href={item.href}>
-                      {item.icon}
-                      <span className="ml-4" style={{ fontSize: "14px" }}>
-                        {item.label}
-                      </span>
-                    </a>
-                  </SidebarMenuButton>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-          */}
-
           <SidebarFooter className="mt-auto mb-4">
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
                   className="p-5 flex items-center"
+                  isActive={isActivePath("/credits")}
                 >
                   <a href="/credits">
                     <Coins color="#3B3B3B" size={16} />
@@ -371,6 +363,7 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
                 <SidebarMenuButton
                   asChild
                   className="p-5 flex items-center"
+                  isActive={isActivePath("/settings")}
                 >
                   <a href="/settings">
                     <SettingsIcon color="#3B3B3B" size={16} />
@@ -406,7 +399,7 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
-
+  
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
