@@ -173,21 +173,6 @@ export default function SkillsLinksDetailsForm({
     if (isDuplicate) {
       return "Skill name already exists";
     }
-    if (!/^[A-Za-z\s]+$/.test(trimmedValue)) {
-      return "Skill must contain only letters and spaces";
-    }
-    return "";
-  };
-
-  // Handler for validating URLs
-  const validateUrl = (value: string, type: string) => {
-    if (!value) return "";
-
-    if (value.length > 100) {
-      return `${type} URL must be at most 100 characters`;
-    }
-
-    const urlPattern =
       /^(https?:\/\/)?([\w\-]+(\.[\w\-]+)+)([\w\-\.,@?^=%&:/~\+#]*[\w\-@?^=%&/~\+#])?$/i;
 
     if (!urlPattern.test(value)) {
