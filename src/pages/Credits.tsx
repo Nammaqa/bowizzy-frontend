@@ -22,8 +22,11 @@ interface CreditPack {
 const CREDIT_PACKS: CreditPack[] = [
   { amount: 50, base: 50, bonusPct: 10, popular: false },
   { amount: 100, base: 100, bonusPct: 10, popular: true },
-  { amount: 250, base: 250, bonusPct: 15, popular: false },
+  { amount: 250, base: 250, bonusPct: 10, popular: false },
 ];
+
+const calculateBonusCredits = (pack: CreditPack) => Math.round((pack.amount * pack.bonusPct) / 100);
+const calculateTotalCredits = (pack: CreditPack) => pack.base + calculateBonusCredits(pack);
 
 const CONFETTI_COLORS = ["#F97316", "#F59E0B", "#10B981", "#38BDF8", "#EC4899"];
 
@@ -223,8 +226,8 @@ export default function Credits({ modal = false, onClose }: CreditsProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
         {CREDIT_PACKS.map((pack) => {
-          const bonus = Math.round((pack.base * pack.bonusPct) / 100);
-          const total = pack.base + bonus;
+          const bonus = calculateBonusCredits(pack);
+          const total = calculateTotalCredits(pack);
           const isSelected = selectedPack === pack.amount;
 
           return (
@@ -288,8 +291,8 @@ export default function Credits({ modal = false, onClose }: CreditsProps) {
     </div>
   );
 
-  const successBonus = purchasedPack ? Math.round((purchasedPack.base * purchasedPack.bonusPct) / 100) : 0;
-  const successTotal = purchasedPack ? purchasedPack.base + successBonus : 0;
+  const successBonus = purchasedPack ? calculateBonusCredits(purchasedPack) : 0;
+  const successTotal = purchasedPack ? calculateTotalCredits(purchasedPack) : 0;
 
   const successOverlay = showSuccess && (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
