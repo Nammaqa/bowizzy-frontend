@@ -71,6 +71,8 @@ Generate exactly TWO enhanced versions:
 1. "precise" - Bullet-point style, concise action verbs, each point under 15 words. Max 4 bullets. No fluff. Focuses on what was done.
 2. "technical" - Detailed technical breakdown highlighting tools, technologies, methodologies, and impact. Max 5 bullets, each 15-25 words.
 
+STRICT LENGTH LIMIT: Each version MUST NOT exceed 500 characters in total, counting all of its bullets together including the bullet characters, spaces, punctuation and line breaks. Count the characters of every version before responding, and if a version is longer than 500 characters, shorten or drop bullets until it fits. A version longer than 500 characters is invalid.
+
 IMPORTANT: Format both as plain text using "• " as the bullet character separated by \\n (escaped newline, NOT a real line break).
 Respond ONLY with a valid JSON object in this exact format (no markdown, no explanation, no code fences):
 {"precise":"• point one\\n• point two\\n• point three","technical":"• point one\\n• point two\\n• point three"}`;
@@ -81,7 +83,7 @@ Respond ONLY with a valid JSON object in this exact format (no markdown, no expl
 Project Context:
 ${context}
 
-Generate two enhanced versions as specified.`;
+Generate two enhanced versions as specified. Remember: each version must total 500 characters or fewer across all of its bullets.`;
 
   const fetchWithRetry = async (retries = 3, delayMs = 1000) => {
     for (let i = 0; i < retries; i++) {
