@@ -45,6 +45,8 @@ Generate exactly TWO enhanced versions:
 
 Both versions must naturally incorporate the provided skills.
 Each version MUST have exactly 6 bullet points. No more, no less.
+
+STRICT LENGTH LIMIT: Each version MUST NOT exceed 500 characters in total, counting all 6 bullets together including the bullet characters, spaces, punctuation and line breaks. That means roughly 70-78 characters per bullet. Count the characters of every version before responding, and if a version is longer than 500 characters, shorten the bullets until it fits (keep all 6 bullets). A version longer than 500 characters is invalid.
 Respond ONLY with a valid JSON object in this exact format (no markdown, no explanation, no code fences):
 {
   "atsFriendly": "• point 1\n• point 2\n• point 3\n• point 4\n• point 5\n• point 6",
@@ -57,7 +59,7 @@ Respond ONLY with a valid JSON object in this exact format (no markdown, no expl
 Resume Context:
 ${skillsContext}
 
-Generate two enhanced versions as specified.`;
+Generate two enhanced versions as specified. Remember: each version must total 500 characters or fewer across its 6 bullets.`;
 
   const fetchWithRetry = async (retries = 3, delayMs = 1000) => {
     for (let i = 0; i < retries; i++) {
