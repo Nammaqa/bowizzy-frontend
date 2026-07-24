@@ -56,7 +56,13 @@ const PERSONAL_DETAIL_FIELDS = [
   "dateOfBirth",
 ];
 
-const CURRENT_LOCATION_FIELDS = ["address", "pincode", "nationality"];
+const CURRENT_LOCATION_FIELDS = ["address", "city", "pincode", "nationality"];
+
+const MAX_ADDRESS_LENGTH = 250;
+const MAX_CITY_LENGTH = 60;
+
+// Sentinel for the "Other" city choice — never stored as an actual city name.
+const OTHER_CITY = "__other__";
 
 interface PersonalDetailsFormProps {
   onNext: (data: any) => void;
@@ -111,6 +117,7 @@ export default function PersonalDetailsForm({
   const [loadingCountries, setLoadingCountries] = useState(false);
   const [loadingStates, setLoadingStates] = useState(false);
   const [loadingCities, setLoadingCities] = useState(false);
+  const [isCustomCity, setIsCustomCity] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [hasAttemptedProceed, setHasAttemptedProceed] = useState(false);
 
@@ -214,6 +221,15 @@ export default function PersonalDetailsForm({
       setFormData((prev) => ({ ...prev, city: "" }));
     }
   }, [formData.state, formData.country, countryOptions, stateOptions]);
+
+  // A saved city that isn't in the fetched list was typed via "Other" — show it in the free-text field.
+  useEffect(() => {
+    if (isCustomCity || loadingCities) return;
+    if (!formData.city || cityOptions.length === 0) return;
+    if (!cityOptions.some((city) => city.name === formData.city)) {
+      setIsCustomCity(true);
+    }
+  }, [cityOptions, loadingCities, formData.city, isCustomCity]);
   const [newLanguage, setNewLanguage] = useState("");
   const [personalDetailsExpanded, setPersonalDetailsExpanded] = useState(true);
   const initialPersonalDetails = useRef({
@@ -385,10 +401,20 @@ export default function PersonalDetailsForm({
         break;
 
       case "address":
-        if (value.length > 250) {
+        if (!trimmedValue) {
+          error = "Address is required";
+        } else if (value.length > MAX_ADDRESS_LENGTH) {
           error = "Maximum 250 characters allowed";
-        } else if (trimmedValue && !/(?=.*[A-Za-z])(?=.*\d)/.test(trimmedValue)) {
-          error = "Address must include both letters and numbers";
+        }
+        break;
+
+      case "city":
+        if (!trimmedValue) {
+          error = "City is required";
+        } else if (value.length > MAX_CITY_LENGTH) {
+          error = "Maximum 60 characters allowed";
+        } else if (!/^[A-Za-z\s.'-]+$/.test(trimmedValue)) {
+          error = "Only letters allowed";
         }
         break;
 
@@ -461,7 +487,7 @@ export default function PersonalDetailsForm({
       if (value.length > 250) return;
     }
     else if (name === "address") {
-      if (value.length > 250) return;
+      if (value.length > MAX_ADDRESS_LENGTH) return;
     }
 
     setFormData((prev) => ({ ...prev, [name]: newValue }));
@@ -470,6 +496,32 @@ export default function PersonalDetailsForm({
       error = validateField(name, newValue);
     }
     setErrors((prev) => ({ ...prev, [name]: error }));
+  };
+
+  const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+
+    // "Other" swaps the dropdown for a free-text field the user fills in themselves.
+    if (value === OTHER_CITY) {
+      setIsCustomCity(true);
+      setFormData((prev) => ({ ...prev, city: "" }));
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next.city;
+        return next;
+      });
+      return;
+    }
+
+    setIsCustomCity(false);
+    setFormData((prev) => ({ ...prev, city: value }));
+    setErrors((prev) => ({ ...prev, city: validateField("city", value) }));
+  };
+
+  const handleCustomCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.slice(0, MAX_CITY_LENGTH);
+    setFormData((prev) => ({ ...prev, city: value }));
+    setErrors((prev) => ({ ...prev, city: validateField("city", value) }));
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1459,9 +1511,9 @@ export default function PersonalDetailsForm({
                     name="address"
                     value={formData.address}
                     onChange={handleInputChange}
-                    placeholder="Enter your address (must include letters & numbers)"
+                    placeholder="Enter your address"
                     rows={3}
-                    maxLength={250}
+                    maxLength={MAX_ADDRESS_LENGTH}
                     className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-xs sm:text-sm resize-none ${errors.address
                       ? "border-red-500 focus:ring-red-400"
                       : "border-gray-300 focus:ring-orange-400"
@@ -1521,18 +1573,45 @@ export default function PersonalDetailsForm({
                   <div className="relative">
                     <select
                       name="city"
-                      value={formData.city}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
+                      value={isCustomCity ? OTHER_CITY : formData.city}
+                      onChange={handleCityChange}
+                      aria-required="true"
+                      aria-invalid={!!errors.city}
+                      className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8 ${errors.city
+                        ? "border-red-500 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-orange-400"
+                        }`}
                       disabled={loadingCities || !formData.state}
                     >
                       <option value="">{loadingCities ? "Loading..." : "Select City"}</option>
                       {cityOptions.map((city) => (
                         <option key={city.name} value={city.name}>{city.name}</option>
                       ))}
+                      <option value={OTHER_CITY}>Other</option>
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
+
+                  {isCustomCity && (
+                    <input
+                      type="text"
+                      value={formData.city}
+                      onChange={handleCustomCityChange}
+                      maxLength={MAX_CITY_LENGTH}
+                      placeholder="Enter your city"
+                      autoFocus
+                      aria-required="true"
+                      aria-invalid={!!errors.city}
+                      className={`mt-2 w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-xs sm:text-sm ${errors.city
+                        ? "border-red-500 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-orange-400"
+                        }`}
+                    />
+                  )}
+
+                  {errors.city && (
+                    <p className="mt-1 text-xs text-red-500">{errors.city}</p>
+                  )}
                 </div>
 
                 <div>
