@@ -77,8 +77,9 @@ export default function Register() {
     setErrors((prev) => ({ ...prev, [field]: message }));
   };
 
-  const sanitizeName = (value) => value.replace(/[^A-Za-z\s]/g, "");
+  const sanitizeName = (value) => value.replace(/[^A-Za-z\s]/g, "").replace(/^\s+/, "");
   const sanitizePhone = (value) => value.replace(/\D/g, "").slice(0, 10);
+  const isBlank = (value) => !value || value.trim() === "";
 
   const extractLinkedinUsername = (value) => {
     if (!value) return "";
@@ -189,6 +190,11 @@ export default function Register() {
     e.preventDefault();
     setFormError("");
 
+    if (isBlank(firstName)) return setFormError("Please enter your first name.");
+    if (isBlank(lastName)) return setFormError("Please enter your last name.");
+    if (isBlank(phoneNumber)) return setFormError("Please enter your phone number.");
+    if (isBlank(email)) return setFormError("Please enter your email address.");
+    if (isBlank(linkedinUsername)) return setFormError("Please enter your LinkedIn username.");
     if (!emailVerified) return setFormError("Please verify your email address before signing up.");
 
     if (!agree) return setFormError("You must agree to the terms.");
@@ -318,11 +324,13 @@ export default function Register() {
                         setFieldError("firstName", "Only letters allowed");
                       } else if (raw.length > 32) {
                         setFieldError("firstName", "Max 32 characters");
+                      } else if (isBlank(raw)) {
+                        setFieldError("firstName", "First name is required");
                       } else {
                         setFieldError("firstName", "");
                       }
-                      const val = sanitizeName(raw);
-                      setFirstName(val.slice(0, 32));
+                      const val = sanitizeName(raw).slice(0, 32);
+                      setFirstName(val);
                     }}
                     className="mt-2 w-full px-4 py-3 border rounded-lg"
                   />
@@ -345,8 +353,8 @@ export default function Register() {
                       } else {
                         setFieldError("middleName", "");
                       }
-                      const val = sanitizeName(raw);
-                      setMiddleName(val.slice(0, 32));
+                      const val = sanitizeName(raw).slice(0, 32);
+                      setMiddleName(val);
                     }}
                     className="mt-2 w-full px-4 py-3 border rounded-lg"
                   />
@@ -366,11 +374,13 @@ export default function Register() {
                         setFieldError("lastName", "Only letters allowed");
                       } else if (raw.length > 32) {
                         setFieldError("lastName", "Max 32 characters");
+                      } else if (isBlank(raw)) {
+                        setFieldError("lastName", "Last name is required");
                       } else {
                         setFieldError("lastName", "");
                       }
-                      const val = sanitizeName(raw);
-                      setLastName(val.slice(0, 32));
+                      const val = sanitizeName(raw).slice(0, 32);
+                      setLastName(val);
                     }}
                     className="mt-2 w-full px-4 py-3 border rounded-lg"
                   />
@@ -433,7 +443,7 @@ export default function Register() {
                       maxLength={150}
                       disabled={emailVerified}
                       onChange={(e) => {
-                        const val = e.target.value;
+                        const val = e.target.value.trimStart();
                         setEmail(val);
                         if (errors.email) setFieldError("email", "");
 
