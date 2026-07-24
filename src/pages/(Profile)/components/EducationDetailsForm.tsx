@@ -599,7 +599,7 @@ export default function EducationDetailsForm({
     const { name, value } = e.target;
     let finalValue = value;
     if (name === "institutionName") {
-      finalValue = sanitizeAlphabetInput(value);
+      finalValue = sanitizeInstitutionNameInput(value);
     }
     if (name === "result" && sslcData.resultFormat === "Grade") {
       finalValue = value.toUpperCase();
@@ -637,7 +637,8 @@ export default function EducationDetailsForm({
     const { name, value } = e.target;
     let finalValue = value;
     if (name === "institutionName") {
-      finalValue = sanitizeAlphabetInput(value);
+        finalValue = sanitizeInstitutionNameInput(value);   // ✅ caps at 100
+
     }
     if (name === "result" && puData.resultFormat === "Grade") {
       finalValue = value.toUpperCase();
