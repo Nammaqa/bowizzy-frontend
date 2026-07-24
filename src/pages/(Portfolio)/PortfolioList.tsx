@@ -280,7 +280,7 @@ export default function PortfolioList() {
     <div className="flex flex-col min-h-screen bg-gray-50">
       <DashNav heading="My Portfolios" />
 
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-8">
+      <main className="flex-1 w-full max-w-7xl px-6 py-8">
         <button
           onClick={() => navigate("/portfolio")}
           className="inline-flex items-center gap-2 mb-5 text-sm font-semibold text-gray-600 hover:text-violet-600 transition cursor-pointer"
