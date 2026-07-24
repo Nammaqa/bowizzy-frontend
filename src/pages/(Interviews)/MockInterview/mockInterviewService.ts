@@ -20,6 +20,7 @@ export type CreateMockInterviewBookingPayload = {
   skills?: string;
   experience_months?: number;
   meeting_link?: string;
+  purchased_credits_used?: number;
 };
 
 export type VerifyMockInterviewPaymentPayload = {
