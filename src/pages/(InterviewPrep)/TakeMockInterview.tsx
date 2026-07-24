@@ -312,11 +312,11 @@ const TakeMockInterview = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen font-['Baloo_2']">
+    <div className="flex flex-col h-screen font-['Baloo_2'] overflow-hidden">
       <DashNav heading="Take Mock Interview" />
 
-      <div className="flex-1 max-h-screen overflow-auto bg-[#F0F0F0] p-2 sm:p-4 lg:p-6">
-        <div className="w-full mx-auto">
+      <div className="flex-1 overflow-auto bg-[#F0F0F0] p-2 sm:p-4 lg:p-6">
+        <div className="w-full mx-auto min-w-0">
           {hasBankDetails === null ? (
             <div className="p-4 text-center text-gray-500">Checking verification...</div>
           ) : hasBankDetails ? (

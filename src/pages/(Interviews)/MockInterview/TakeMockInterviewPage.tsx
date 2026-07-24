@@ -5,6 +5,7 @@ import { uploadToCloudinary } from "@/utils/uploadToCloudinary";
 import { ArrowLeft, CalendarDays, CheckCircle2, Clock, FileText, IndianRupee, Plus, Upload, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "@/api";
 import { fallbackSkills, jobRoleGroups } from "./mockInterviewOptions";
 import {
   createMockInterviewBooking,
@@ -251,6 +252,9 @@ const TakeMockInterviewPage = () => {
   const [bookedSlots, setBookedSlots] = useState<any[]>([]);
   const [loadingBookedSlots, setLoadingBookedSlots] = useState(false);
   const [bookedSlotsError, setBookedSlotsError] = useState("");
+  const [purchasedCredits, setPurchasedCredits] = useState<number>(0);
+  const [creditsLoading, setCreditsLoading] = useState(true);
+  const [usePurchasedCredits, setUsePurchasedCredits] = useState(true);
 
   const selectedRole = role === "Other" ? customRole.trim() : role;
   const experiencePayload = {
@@ -258,6 +262,12 @@ const TakeMockInterviewPage = () => {
     months: experienceMonthsValue,
     totalMonths: experienceYearsValue * 12 + experienceMonthsValue,
   };
+  const shouldUsePurchasedCredits = purchasedCredits > 0 && usePurchasedCredits;
+  const purchasedCreditsToUse = shouldUsePurchasedCredits
+    ? Math.min(purchasedCredits, price)
+    : 0;
+  const finalPriceINR = Math.max(0, price - purchasedCreditsToUse);
+
   const minimumBookableTime = useMemo(() => {
     const date = new Date();
     date.setHours(date.getHours() + 5);
@@ -358,6 +368,36 @@ const TakeMockInterviewPage = () => {
 
     guardInterviewerAccess();
   }, [navigate]);
+
+  useEffect(() => {
+    const loadCredits = async () => {
+      try {
+        const { userId, token } = getAuthUser();
+        if (!userId || !token) {
+          setPurchasedCredits(0);
+          return;
+        }
+
+        const resp = await api.get("/personal-details/profile-data", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const profileData = resp?.data?.data ?? resp?.data ?? {};
+        const purchased = Number(
+          profileData?.purchased_credits ??
+          profileData?.purchasedCredits ??
+          resp?.data?.purchased_credits ??
+          resp?.data?.purchasedCredits ??
+          0
+        );
+        setPurchasedCredits(Number.isFinite(purchased) && purchased > 0 ? Math.floor(purchased) : 0);
+      } catch {
+        setPurchasedCredits(0);
+      } finally {
+        setCreditsLoading(false);
+      }
+    };
+    loadCredits();
+  }, []);
 
   useEffect(() => {
     const loadSavedResumes = async () => {
@@ -517,16 +557,27 @@ const TakeMockInterviewPage = () => {
       }
 
       const { start_time_utc, end_time_utc } = getBookingDateTime();
-      const bookingResponse = await createMockInterviewBooking(userId, token, {
+      const payload = {
         start_time_utc,
         end_time_utc,
         interview_type: mode.toLowerCase() as "online" | "offline",
-        amount: price,
+        amount: finalPriceINR,
         skills: selectedSkills.join(", "),
         resume_url: selectedResume?.url || undefined,
         experience_months: experiencePayload.totalMonths,
         job_role: selectedRole,
-      });
+        purchased_credits_used: purchasedCreditsToUse,
+      };
+
+      if (finalPriceINR <= 0) {
+        const bookingResponse = await createMockInterviewBooking(userId, token, payload);
+        window.dispatchEvent(new CustomEvent("credits:refresh"));
+        setConfirmed(true);
+        navigate("/interviews/mock-interview/bookings");
+        return;
+      }
+
+      const bookingResponse = await createMockInterviewBooking(userId, token, payload);
 
       const booking = bookingResponse?.booking || bookingResponse?.data || bookingResponse;
       const mockInterviewId =
@@ -545,7 +596,7 @@ const TakeMockInterviewPage = () => {
         orderData?.orderId ||
         orderData?.razorpay_order_id ||
         booking?.razorpay_order_id;
-      const orderAmount = Number(orderData?.amount || Math.round(price * 100));
+      const orderAmount = Number(orderData?.amount || Math.round(finalPriceINR * 100));
       const razorKey =
         orderData?.key || orderData?.key_id || import.meta.env.VITE_RAZORPAY_KEY_ID || "";
 
@@ -557,7 +608,7 @@ const TakeMockInterviewPage = () => {
 
       const options = {
         key: razorKey,
-        amount: orderAmount < 1000 ? Math.round(price * 100) : orderAmount,
+        amount: orderAmount < 1000 ? Math.round(finalPriceINR * 100) : orderAmount,
         currency: "INR",
         name: "Bowizzy",
         description: "Mock Interview Booking",
@@ -639,8 +690,8 @@ const TakeMockInterviewPage = () => {
           Back to mock interview
         </button>
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-          <div className="space-y-5">
+        <div className="grid gap-6 lg:grid-cols-[1fr_360px] items-start">
+          <div className="space-y-5 min-w-0">
             <section className="rounded-3xl bg-white p-6 shadow-sm">
               <h1 className="text-2xl font-bold text-[#2F2F2F]">Book your mock interview</h1>
               <p className="mt-2 text-sm leading-6 text-[#666666]">
@@ -1059,13 +1110,53 @@ const TakeMockInterviewPage = () => {
 
             <div className="my-6 h-px bg-[#E8E8E8]" />
 
-            <div className="flex items-center justify-between">
-              <span className="text-base font-semibold text-[#3A3A3A]">Amount</span>
-              <span className="inline-flex items-center text-2xl font-bold text-[#2F2F2F]">
-                <IndianRupee size={20} />
-                {price}
-              </span>
+            <div className="rounded-2xl border border-gray-100 p-4 mb-5 shadow-sm">
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-800">Use purchased credits</p>
+                  <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+                    {creditsLoading
+                      ? "Loading credits…"
+                      : purchasedCredits > 0
+                      ? `You have ${purchasedCredits} purchased credit${
+                          purchasedCredits !== 1 ? "s" : ""
+                        } remaining. Apply them first.`
+                      : "You don't have any purchased credits left."}
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={purchasedCredits > 0 ? usePurchasedCredits : false}
+                    onChange={(e) => setUsePurchasedCredits(e.target.checked)}
+                    disabled={creditsLoading || purchasedCredits === 0}
+                  />
+                  <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-[#F26D3A] transition-colors" />
+                  <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${usePurchasedCredits && purchasedCredits > 0 ? "translate-x-5" : "translate-x-0"}`} />
+                </label>
+              </div>
             </div>
+
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-base font-semibold text-[#3A3A3A]">Amount</span>
+              <div className="flex items-center gap-2">
+                {shouldUsePurchasedCredits && purchasedCreditsToUse > 0 && (
+                  <span className="text-sm font-bold text-gray-400 line-through">₹{price}</span>
+                )}
+                <span className="inline-flex items-center text-2xl font-bold text-[#2F2F2F]">
+                  <IndianRupee size={20} />
+                  {finalPriceINR}
+                </span>
+              </div>
+            </div>
+
+            {shouldUsePurchasedCredits && purchasedCreditsToUse > 0 && (
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-sm font-medium text-emerald-600">Credit Discount</span>
+                <span className="text-sm font-bold text-emerald-600">- ₹{purchasedCreditsToUse}</span>
+              </div>
+            )}
 
             <button
               disabled={!canConfirm}
