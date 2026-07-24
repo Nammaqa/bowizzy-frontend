@@ -2,6 +2,7 @@ import DashNav from "@/components/dashnav/dashnav";
 import { getExperienceByUserId } from "@/services/experienceService";
 import { getSkillsByUserId } from "@/services/skillsLinksService";
 import {
+  ArrowLeft,
   Briefcase,
   Clock3,
   Eye,
@@ -473,6 +474,14 @@ const InterviewerDashboardPage = () => {
       <DashNav heading="Interviewer Dashboard" />
 
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+        <button
+          onClick={() => navigate("/interviews/mock-interview")}
+          className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-[#F26D3A]"
+        >
+          <ArrowLeft size={16} />
+          Back to mock interview
+        </button>
+
         {loading ? (
           <div className="rounded-3xl bg-white p-8 text-center text-[#777777] shadow-sm">
             Validating interviewer status...

@@ -28,9 +28,9 @@ function generateCoins(count: number): CoinParticle[] {
     return Array.from({ length: count }, (_, i) => ({
         id: i,
         x: Math.random() * 100,
-        delay: Math.random() * 1.4,
-        duration: 1.8 + Math.random() * 1.6,
-        size: 18 + Math.random() * 16,
+        delay: Math.random() * 2.4,
+        duration: 1.6 + Math.random() * 1.8,
+        size: 14 + Math.random() * 24,
     }));
 }
 
@@ -38,10 +38,10 @@ function generateBurstCoins(count: number): BurstCoin[] {
     return Array.from({ length: count }, (_, i) => ({
         id: i,
         angle: (360 / count) * i + (Math.random() - 0.5) * 20,
-        distance: 90 + Math.random() * 90,
-        size: 14 + Math.random() * 18,
-        delay: Math.random() * 0.18,
-        duration: 0.7 + Math.random() * 0.5,
+        distance: 80 + Math.random() * 140,
+        size: 12 + Math.random() * 22,
+        delay: Math.random() * 0.24,
+        duration: 0.7 + Math.random() * 0.6,
         rotations: 2 + Math.random() * 4,
     }));
 }
@@ -61,16 +61,16 @@ interface ExplosionCoin {
 function generateExplosionCoins(count: number): ExplosionCoin[] {
     return Array.from({ length: count }, (_, i) => {
         // Bias the spread toward an upward/outward fountain
-        const angle = -90 + (Math.random() - 0.5) * 300;
+        const angle = -90 + (Math.random() - 0.5) * 320;
         return {
             id: i,
             angle,
-            distance: 120 + Math.random() * 160,
-            size: 16 + Math.random() * 20,
-            delay: Math.random() * 0.12,
-            duration: 0.9 + Math.random() * 0.7,
+            distance: 110 + Math.random() * 260,
+            size: 14 + Math.random() * 26,
+            delay: Math.random() * 0.22,
+            duration: 0.9 + Math.random() * 0.9,
             rotations: 2 + Math.random() * 5,
-            arcHeight: 60 + Math.random() * 120,
+            arcHeight: 60 + Math.random() * 180,
         };
     });
 }
@@ -90,12 +90,12 @@ function generateHaloCoins(count: number): HaloCoin[] {
     return Array.from({ length: count }, (_, i) => ({
         id: i,
         // Even 360° spread with a little jitter so the ring doesn't look mechanical
-        angle: (360 / count) * i + (Math.random() - 0.5) * 26,
+        angle: (360 / count) * i + (Math.random() - 0.5) * 30,
         // Min radius keeps them clear of the wordmark itself
-        distance: 145 + Math.random() * 200,
-        size: 14 + Math.random() * 22,
-        delay: Math.random() * 0.3,
-        duration: 0.8 + Math.random() * 0.6,
+        distance: 150 + Math.random() * 260,
+        size: 12 + Math.random() * 26,
+        delay: Math.random() * 0.42,
+        duration: 0.8 + Math.random() * 0.7,
         rotations: 2 + Math.random() * 5,
     }));
 }
@@ -158,7 +158,7 @@ function ArrowInFlight({ phase }: { phase: IntroPhase }) {
                 top: '50%',
                 transform: 'translateY(-50%)',
                 zIndex: 5,
-                // arrowhead ends at the box centre (box is right:7%, 160px wide → centre = 93% − 80px; tip sits 128px into the shaft)
+                // arrowhead ends at the box centre (box is centred at 50%; the tip sits 128px into the shaft)
                 animation: fired ? 'arrowFly 0.55s cubic-bezier(0.4, 0, 0.5, 1) forwards' : undefined,
                 // Only fade out once the box has burst, not while the arrow is still visible in the box
                 opacity: phase === 'hit' ? 0 : 1,
@@ -192,10 +192,10 @@ function WelcomeBonusModal({
     onClaim: () => Promise<void>;
     onDismiss: () => void;
 }) {
-    const [coins] = useState(() => generateCoins(40));
-    const [burstCoins] = useState(() => generateBurstCoins(22));
-    const [explosionCoins] = useState(() => generateExplosionCoins(34));
-    const [haloCoins] = useState(() => generateHaloCoins(46));
+    const [coins] = useState(() => generateCoins(75));
+    const [burstCoins] = useState(() => generateBurstCoins(44));
+    const [explosionCoins] = useState(() => generateExplosionCoins(70));
+    const [haloCoins] = useState(() => generateHaloCoins(80));
     const [claiming, setClaiming] = useState(false);
     const [claimed, setClaimed] = useState(false);
     const [phase, setPhase] = useState<IntroPhase>('draw');
@@ -241,26 +241,20 @@ function WelcomeBonusModal({
                     className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden"
                     style={{ zIndex: 20, animation: phase === 'hit' ? 'introFadeOut 0.5s ease 0.95s forwards' : undefined }}
                 >
-                    <div
-                        style={{
-                            position: 'relative',
-                            width: 'min(94vw, 620px)',
-                            height: '340px',
-                        }}
-                    >
+                    <div className="wb-intro-stage">
                         {/* Bow (fades once the arrow is loosed) */}
                         <BowAndArrow phase={phase} />
 
                         {/* Arrow in flight */}
                         <ArrowInFlight phase={phase} />
 
-                        {/* ── Gift box target ── */}
+                        {/* ── Gift box target — dead centre, so the burst + wordmark pop in the middle ── */}
                         <div
                             style={{
                                 position: 'absolute',
-                                right: '7%',
+                                left: '50%',
                                 top: '50%',
-                                transform: 'translateY(-50%)',
+                                transform: 'translate(-50%, -50%)',
                                 width: '160px',
                                 height: '160px',
                                 zIndex: 3,
@@ -427,7 +421,7 @@ function WelcomeBonusModal({
                                     textAlign: 'center',
                                     fontFamily: '"Syne", "Clash Display", sans-serif',
                                     fontWeight: 900,
-                                    fontSize: 'clamp(34px, 9vw, 66px)',
+                                    fontSize: '62px',
                                     letterSpacing: '-1px',
                                     lineHeight: 1,
                                     transformOrigin: 'center center',
@@ -460,8 +454,14 @@ function WelcomeBonusModal({
                 ))}
             </div>
 
-            {/* Falling coin rain */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ opacity: phase === 'reveal' ? 1 : 0, transition: 'opacity 0.4s ease' }}>
+            {/* Falling coin rain — starts the moment the box bursts and carries into the reveal */}
+            <div
+                className="absolute inset-0 pointer-events-none overflow-hidden"
+                style={{
+                    opacity: phase === 'hit' || phase === 'reveal' ? 1 : 0,
+                    transition: 'opacity 0.4s ease',
+                }}
+            >
                 {coins.map((coin) => (
                     <div
                         key={coin.id}
@@ -807,13 +807,27 @@ function WelcomeBonusModal({
                     from { opacity: 0; }
                     to   { opacity: 1; }
                 }
+                /* Fixed-size stage so the bow, arrow and box keep their geometry;
+                   it is scaled down as a whole on smaller screens instead of reflowing. */
+                .wb-intro-stage {
+                    position: relative;
+                    width: 620px;
+                    height: 340px;
+                    transform-origin: center center;
+                }
+                @media (max-width: 680px) {
+                    .wb-intro-stage { transform: scale(0.72); }
+                }
+                @media (max-width: 480px) {
+                    .wb-intro-stage { transform: scale(0.55); }
+                }
                 @keyframes arrowNock {
                     from { transform: translateX(0); }
                     to   { transform: translateX(-4px); }
                 }
                 @keyframes arrowFly {
                     0%   { left: calc(6% + 40px); }
-                    100% { left: calc(93% - 208px); }
+                    100% { left: calc(50% - 128px); }
                 }
                 @keyframes giftIdle {
                     0%, 100% { transform: translateX(-50%) translateY(0) scale(1); }
