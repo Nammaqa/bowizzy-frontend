@@ -1060,17 +1060,6 @@ export default function ExperienceDetailsForm({
                 Job Role <span className="text-red-500">*</span>
               </h3>
               <div className="flex gap-2 items-center">
-                {jobRoleChanged && (
-                  <button
-                    type="button"
-                    onClick={handleSaveJobRole}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-md text-sm font-medium shadow-sm hover:from-orange-500 hover:to-orange-600 transition cursor-pointer"
-                    aria-label="Save job role changes"
-                  >
-                    <Save className="w-4 h-4" strokeWidth={2} />
-                    Save
-                  </button>
-                )}
                 <button
                   type="button"
                   onClick={() => setJobRoleExpanded(!jobRoleExpanded)}
@@ -1198,6 +1187,20 @@ export default function ExperienceDetailsForm({
                     )}
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 mt-8 pt-4 border-t border-gray-200">
+                  {jobRoleChanged && (
+                    <button
+                      type="button"
+                      onClick={handleSaveJobRole}
+                      className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-md text-sm font-medium shadow-sm hover:from-orange-500 hover:to-orange-600 transition cursor-pointer"
+                      aria-label="Save job role changes"
+                    >
+                      <Save className="w-4 h-4" strokeWidth={2} />
+                      Save
+                    </button>
+                  )}
                 </div>
               </div>
             )}
