@@ -14,6 +14,110 @@ const MIN_EXPERIENCE_MONTH = "1960-01";
 const MAX_COMPANY_NAME_LENGTH = 100;
 const MAX_JOB_TITLE_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 500;
+const MAX_JOB_ROLE_LENGTH = 100;
+
+// Sentinel value for the "Other" choice — never stored as an actual job role.
+const OTHER_JOB_ROLE = "__other__";
+
+const JOB_ROLE_GROUPS: { label: string; roles: string[] }[] = [
+  {
+    label: "Software Engineering",
+    roles: [
+      "Software Engineer",
+      "Software Developer",
+      "Senior Software Engineer",
+      "Full Stack Developer",
+      "Frontend Developer",
+      "Backend Developer",
+      "Mobile App Developer",
+      "iOS Developer",
+      "Android Developer",
+      "Embedded Systems Engineer",
+    ],
+  },
+  {
+    label: "Data & AI",
+    roles: [
+      "Data Scientist",
+      "Data Analyst",
+      "Data Engineer",
+      "Machine Learning Engineer",
+      "AI Engineer",
+      "Deep Learning Engineer",
+      "NLP Engineer",
+      "Business Intelligence Analyst",
+    ],
+  },
+  {
+    label: "Infrastructure & DevOps",
+    roles: [
+      "DevOps Engineer",
+      "Site Reliability Engineer",
+      "Cloud Engineer",
+      "Cloud Architect",
+      "System Administrator",
+      "Network Engineer",
+      "Database Administrator",
+      "Platform Engineer",
+    ],
+  },
+  {
+    label: "Security",
+    roles: [
+      "Security Analyst",
+      "Cybersecurity Engineer",
+      "Penetration Tester",
+      "Security Architect",
+      "SOC Analyst",
+    ],
+  },
+  {
+    label: "Quality Assurance",
+    roles: [
+      "QA Engineer",
+      "Test Engineer",
+      "Automation Test Engineer",
+      "Performance Test Engineer",
+      "SDET",
+    ],
+  },
+  {
+    label: "Design",
+    roles: [
+      "UI/UX Designer",
+      "Product Designer",
+      "Graphic Designer",
+      "Interaction Designer",
+    ],
+  },
+  {
+    label: "Product & Management",
+    roles: [
+      "Product Manager",
+      "Technical Lead",
+      "Engineering Manager",
+      "Solution Architect",
+      "IT Manager",
+      "Scrum Master",
+      "Project Manager",
+      "Project Coordinator",
+    ],
+  },
+  {
+    label: "Business & Analytics",
+    roles: [
+      "Business Analyst",
+      "Systems Analyst",
+      "ERP Consultant",
+      "Salesforce Developer",
+    ],
+  },
+];
+
+const PREDEFINED_JOB_ROLES = new Set(JOB_ROLE_GROUPS.flatMap((group) => group.roles));
+
+// Anything saved that isn't one of the listed roles is treated as a custom entry.
+const isCustomRoleValue = (value: string) => !!value.trim() && !PREDEFINED_JOB_ROLES.has(value);
 
 interface ExperienceDetailsFormProps {
   onNext: (data: any) => void;
@@ -50,6 +154,9 @@ export default function ExperienceDetailsForm({
   hideJobRole = false,
 }: ExperienceDetailsFormProps) {
   const [jobRole, setJobRole] = useState(initialData.jobRole || "");
+  const [isCustomJobRole, setIsCustomJobRole] = useState(() =>
+    isCustomRoleValue(initialData.jobRole || "")
+  );
   const [jobRoleExpanded, setJobRoleExpanded] = useState(true);
   const [experienceLevel, setExperienceLevel] = useState(initialData.experienceLevel || "experienced");
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -120,6 +227,7 @@ export default function ExperienceDetailsForm({
 
             if (fetched.length > 0) {
               setJobRole(fetchedJobRole);
+              setIsCustomJobRole(isCustomRoleValue(fetchedJobRole));
               setWorkExperiences(fetched);
               fetched.forEach((exp) => {
                 initialExperiencesRef.current[exp.id] = { ...exp };
@@ -300,8 +408,31 @@ export default function ExperienceDetailsForm({
     return val;
   };
 
+  const validateCustomJobRole = (value: string) => {
+    if (!value.trim()) return "Job role is required";
+    if (value.length > MAX_JOB_ROLE_LENGTH) return "Max 100 characters allowed";
+    if (!/^[a-zA-Z0-9\s./&'-]+$/.test(value)) return "Invalid job role";
+    if (!/[a-zA-Z]/.test(value)) return "Job role must contain at least one letter";
+    return "";
+  };
+
   const handleJobRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
+
+    // "Other" swaps the dropdown for a free-text field the user fills in themselves.
+    if (val === OTHER_JOB_ROLE) {
+      setIsCustomJobRole(true);
+      setJobRole("");
+      setJobRoleFeedback("");
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next.jobRole;
+        return next;
+      });
+      return;
+    }
+
+    setIsCustomJobRole(false);
     setJobRole(val);
     if (val.trim()) {
       setErrors((prev) => {
@@ -313,7 +444,22 @@ export default function ExperienceDetailsForm({
     }
   };
 
+  const handleCustomJobRoleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = clampTextValue(e.target.value, MAX_JOB_ROLE_LENGTH);
+    setJobRole(val);
+    setJobRoleFeedback("");
+    setErrors((prev) => ({ ...prev, jobRole: validateCustomJobRole(val) }));
+  };
+
   const handleSaveJobRole = async () => {
+    if (isCustomJobRole) {
+      const customError = validateCustomJobRole(jobRole);
+      if (customError) {
+        setErrors((prev) => ({ ...prev, jobRole: customError }));
+        return;
+      }
+    }
+
     if (!jobRoleChanged) {
       setJobRoleFeedback("No changes to save.");
       setTimeout(() => setJobRoleFeedback(""), 3000);
@@ -346,6 +492,14 @@ export default function ExperienceDetailsForm({
 
     if (field === "currentlyWorking" && finalValue === true) {
       updated[index].endDate = "";
+
+      // Only one experience can be the current one — untick it everywhere else.
+      updated.forEach((exp, i) => {
+        if (i !== index && exp.currentlyWorking) {
+          updated[i] = { ...exp, currentlyWorking: false };
+        }
+      });
+
       setErrors((prevErrors) => {
         const newErrors = { ...prevErrors };
         delete newErrors[`exp-${index}-endDate`];
@@ -1097,7 +1251,7 @@ export default function ExperienceDetailsForm({
                   </label>
                   <div className="relative">
                     <select
-                      value={jobRole}
+                      value={isCustomJobRole ? OTHER_JOB_ROLE : jobRole}
                       onChange={handleJobRoleChange}
                       aria-required="true"
                       aria-invalid={!!errors.jobRole}
@@ -1107,86 +1261,45 @@ export default function ExperienceDetailsForm({
                         } text-xs sm:text-sm appearance-none bg-white pr-8`}
                     >
                       <option value="">Select Job Role</option>
-                      <optgroup label="Software Engineering">
-                        <option value="Software Engineer">Software Engineer</option>
-                        <option value="Software Developer">Software Developer</option>
-                        <option value="Senior Software Engineer">Senior Software Engineer</option>
-                        <option value="Full Stack Developer">Full Stack Developer</option>
-                        <option value="Frontend Developer">Frontend Developer</option>
-                        <option value="Backend Developer">Backend Developer</option>
-                        <option value="Mobile App Developer">Mobile App Developer</option>
-                        <option value="iOS Developer">iOS Developer</option>
-                        <option value="Android Developer">Android Developer</option>
-                        <option value="Embedded Systems Engineer">Embedded Systems Engineer</option>
-                      </optgroup>
-                      <optgroup label="Data & AI">
-                        <option value="Data Scientist">Data Scientist</option>
-                        <option value="Data Analyst">Data Analyst</option>
-                        <option value="Data Engineer">Data Engineer</option>
-                        <option value="Machine Learning Engineer">Machine Learning Engineer</option>
-                        <option value="AI Engineer">AI Engineer</option>
-                        <option value="Deep Learning Engineer">Deep Learning Engineer</option>
-                        <option value="NLP Engineer">NLP Engineer</option>
-                        <option value="Business Intelligence Analyst">Business Intelligence Analyst</option>
-                      </optgroup>
-                      <optgroup label="Infrastructure & DevOps">
-                        <option value="DevOps Engineer">DevOps Engineer</option>
-                        <option value="Site Reliability Engineer">Site Reliability Engineer</option>
-                        <option value="Cloud Engineer">Cloud Engineer</option>
-                        <option value="Cloud Architect">Cloud Architect</option>
-                        <option value="System Administrator">System Administrator</option>
-                        <option value="Network Engineer">Network Engineer</option>
-                        <option value="Database Administrator">Database Administrator</option>
-                        <option value="Platform Engineer">Platform Engineer</option>
-                      </optgroup>
-                      <optgroup label="Security">
-                        <option value="Security Analyst">Security Analyst</option>
-                        <option value="Cybersecurity Engineer">Cybersecurity Engineer</option>
-                        <option value="Penetration Tester">Penetration Tester</option>
-                        <option value="Security Architect">Security Architect</option>
-                        <option value="SOC Analyst">SOC Analyst</option>
-                      </optgroup>
-                      <optgroup label="Quality Assurance">
-                        <option value="QA Engineer">QA Engineer</option>
-                        <option value="Test Engineer">Test Engineer</option>
-                        <option value="Automation Test Engineer">Automation Test Engineer</option>
-                        <option value="Performance Test Engineer">Performance Test Engineer</option>
-                        <option value="SDET">SDET</option>
-                      </optgroup>
-                      <optgroup label="Design">
-                        <option value="UI/UX Designer">UI/UX Designer</option>
-                        <option value="Product Designer">Product Designer</option>
-                        <option value="Graphic Designer">Graphic Designer</option>
-                        <option value="Interaction Designer">Interaction Designer</option>
-                      </optgroup>
-                      <optgroup label="Product & Management">
-                        <option value="Product Manager">Product Manager</option>
-                        <option value="Technical Lead">Technical Lead</option>
-                        <option value="Engineering Manager">Engineering Manager</option>
-                        <option value="Solution Architect">Solution Architect</option>
-                        <option value="IT Manager">IT Manager</option>
-                        <option value="Scrum Master">Scrum Master</option>
-                        <option value="Project Manager">Project Manager</option>
-                        <option value="Project Coordinator">Project Coordinator</option>
-                      </optgroup>
-                      <optgroup label="Business & Analytics">
-                        <option value="Business Analyst">Business Analyst</option>
-                        <option value="Systems Analyst">Systems Analyst</option>
-                        <option value="ERP Consultant">ERP Consultant</option>
-                        <option value="Salesforce Developer">Salesforce Developer</option>
-                      </optgroup>
-                      <optgroup label="Other">
-                        <option value="Technical Writer">Technical Writer</option>
-                        <option value="Support Engineer">Support Engineer</option>
-                        <option value="IT Consultant">IT Consultant</option>
-                        <option value="Research Engineer">Research Engineer</option>
-                      </optgroup>
+                      {JOB_ROLE_GROUPS.map((group) => (
+                        <optgroup key={group.label} label={group.label}>
+                          {group.roles.map((role) => (
+                            <option key={role} value={role}>
+                              {role}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                      <option value={OTHER_JOB_ROLE}>Other</option>
                     </select>
-                    {errors.jobRole && (
-                      <p className="mt-1 text-xs text-red-500">{errors.jobRole}</p>
-                    )}
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
+
+                  {isCustomJobRole && (
+                    <div className="mt-3">
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
+                        Enter your job role <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={jobRole}
+                        onChange={handleCustomJobRoleChange}
+                        maxLength={MAX_JOB_ROLE_LENGTH}
+                        placeholder="Type your job role"
+                        autoFocus
+                        aria-required="true"
+                        aria-invalid={!!errors.jobRole}
+                        className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none text-xs sm:text-sm ${errors.jobRole
+                            ? "border-red-300 ring-2 ring-red-100"
+                            : "border-gray-300 focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+                          }`}
+                      />
+                    </div>
+                  )}
+
+                  {errors.jobRole && (
+                    <p className="mt-1 text-xs text-red-500">{errors.jobRole}</p>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-end gap-2 mt-8 pt-4 border-t border-gray-200">
