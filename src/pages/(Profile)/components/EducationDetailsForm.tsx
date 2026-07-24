@@ -397,8 +397,8 @@ export default function EducationDetailsForm({
   // Helper function to validate institution/board names
   const validateInstitutionName = (value: string) => {
     if (!value || !value.trim()) return "Institution name is required";
-    if (value.length > 50) {
-      return "Max 50 characters allowed";
+    if (value.length > 100) {
+      return "Max 100 characters allowed";
     }
     if (!LETTERS_ONLY_REGEX.test(value)) {
       return "Only letters allowed";
@@ -420,6 +420,9 @@ export default function EducationDetailsForm({
   const sanitizeAlphabetInput = (value: string) =>
     value.replace(/[^A-Za-z\s]/g, "").slice(0, 50);
 
+  const sanitizeInstitutionNameInput = (value: string) =>
+    value.replace(/[^A-Za-z\s]/g, "").slice(0, 100);
+
   const validateYearOfPassing = (value: string, label = "Year of Passing") => {
     if (!value) return "";
     const error = validateMonthFormat(value);
@@ -437,8 +440,8 @@ export default function EducationDetailsForm({
   // Helper function to validate date range
   const validateDateRange = (startDate: string, endDate: string) => {
     if (startDate && endDate) {
-      if (endDate < startDate) {
-        return "End date cannot be before start date";
+      if (endDate <= startDate) {
+        return "End date must be after start date";
       }
     }
     return "";
@@ -681,10 +684,11 @@ export default function EducationDetailsForm({
     if (
       typeof value === "string" &&
       (field === "fieldOfStudy" ||
-        field === "institutionName" ||
         field === "universityBoard")
     ) {
       finalValue = sanitizeAlphabetInput(value);
+    } else if (typeof value === "string" && field === "institutionName") {
+      finalValue = sanitizeInstitutionNameInput(value);
     }
     if (field === "result" && typeof value === "string" && currentList[index]?.resultFormat === "Grade") {
       finalValue = value.toUpperCase();
@@ -1683,7 +1687,7 @@ export default function EducationDetailsForm({
                   onChange={(e) =>
                     handleChange("institutionName", e.target.value)
                   }
-                  maxLength={50}
+                  maxLength={100}
                   placeholder="Enter Institution Name"
                   className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${errors[`${prefix}-institutionName`]
                     ? "border-red-500 focus:ring-red-400"
@@ -1968,7 +1972,7 @@ export default function EducationDetailsForm({
                     name="institutionName"
                     value={sslcData.institutionName}
                     onChange={handleSslcChange}
-                    maxLength={50}
+                    maxLength={100}
                     placeholder="Enter Institute Name"
                     className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${errors["sslc-institutionName"]
                       ? "border-red-500 focus:ring-red-400"
@@ -2143,7 +2147,7 @@ export default function EducationDetailsForm({
                     name="institutionName"
                     value={puData.institutionName}
                     onChange={handlePuChange}
-                    maxLength={50}
+                    maxLength={100}
                     placeholder="Enter Institute Name"
                     className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${errors["pu-institutionName"]
                       ? "border-red-500 focus:ring-red-400"

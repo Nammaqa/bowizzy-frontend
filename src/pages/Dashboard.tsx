@@ -716,7 +716,7 @@ export default function Dashboard() {
               </p>
               <div className="flex gap-2">
                 <button
-                  onClick={() => window.open('https://nammaqa.com', '_blank', 'noopener,noreferrer')}
+                  onClick={() => window.open('https://whatsapp.com/channel/0029VaBY9Vl6GcGDnAzEQY1N', '_blank', 'noopener,noreferrer')}
                   aria-label="Join NammaQA Community (opens in new tab)"
                   className="px-4 py-1.5 rounded-lg text-white text-sm font-medium"
                   style={{ background: gradientColor }}
