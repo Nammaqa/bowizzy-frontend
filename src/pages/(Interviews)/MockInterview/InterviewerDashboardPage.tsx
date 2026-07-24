@@ -2,8 +2,10 @@ import DashNav from "@/components/dashnav/dashnav";
 import { getExperienceByUserId } from "@/services/experienceService";
 import { getSkillsByUserId } from "@/services/skillsLinksService";
 import {
+  AlertCircle,
   ArrowLeft,
   Briefcase,
+  CheckCircle2,
   Clock3,
   Eye,
   FileText,
@@ -233,6 +235,10 @@ const InterviewerDashboardPage = () => {
     string | number | null
   >(null);
   const [interviewToCancel, setInterviewToCancel] = useState<any>(null);
+  const [cancelStatus, setCancelStatus] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
   const [error, setError] = useState("");
   const [interviewsError, setInterviewsError] = useState("");
   const [acceptError, setAcceptError] = useState("");
@@ -410,6 +416,10 @@ const InterviewerDashboardPage = () => {
 
     if (!interviewId || !userId || !token) {
       setAcceptError("Unable to cancel this interview. Please login again.");
+      setCancelStatus({
+        type: "error",
+        message: "Unable to cancel this interview. Please login again.",
+      });
       return;
     }
 
@@ -428,12 +438,17 @@ const InterviewerDashboardPage = () => {
       setSelectedInterview((currentInterview: any) =>
         getInterviewId(currentInterview) === interviewId ? null : currentInterview
       );
+      setCancelStatus({
+        type: "success",
+        message: "The interview has been cancelled and removed from your schedule.",
+      });
     } catch (error: any) {
-      setAcceptError(
+      const message =
         error?.response?.data?.message ||
         error?.message ||
-        "Unable to cancel interview right now."
-      );
+        "Unable to cancel interview right now.";
+      setAcceptError(message);
+      setCancelStatus({ type: "error", message });
     } finally {
       setCancellingInterviewId(null);
     }
@@ -1060,6 +1075,48 @@ const InterviewerDashboardPage = () => {
                 Yes, cancel
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancellation result popup */}
+      {cancelStatus && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.45)" }}
+          onClick={() => setCancelStatus(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div
+              className={`mx-auto inline-flex rounded-full p-3 ${cancelStatus.type === "success"
+                ? "bg-green-50 text-green-600"
+                : "bg-red-50 text-red-600"
+                }`}
+            >
+              {cancelStatus.type === "success" ? (
+                <CheckCircle2 size={32} />
+              ) : (
+                <AlertCircle size={32} />
+              )}
+            </div>
+            <h3 className="mt-4 text-lg font-bold text-[#2F2F2F]">
+              {cancelStatus.type === "success"
+                ? "Interview cancelled"
+                : "Cancellation failed"}
+            </h3>
+            <p className="mt-2 text-sm text-[#666666]">{cancelStatus.message}</p>
+            <button
+              onClick={() => setCancelStatus(null)}
+              className={`mt-6 w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition cursor-pointer ${cancelStatus.type === "success"
+                ? "bg-green-600 hover:bg-green-700"
+                : "bg-red-600 hover:bg-red-700"
+                }`}
+            >
+              Done
+            </button>
           </div>
         </div>
       )}
