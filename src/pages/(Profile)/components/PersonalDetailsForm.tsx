@@ -1315,18 +1315,6 @@ export default function PersonalDetailsForm({
               Communication Language <span className="text-red-500">*</span>
             </h3>
             <div className="flex gap-2 items-center">
-              {languagesChanged && (
-                <button
-                  type="button"
-                  onClick={handleUpdateLanguages}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-md text-sm font-medium shadow-sm hover:from-orange-500 hover:to-orange-600 transition cursor-pointer"
-                  aria-pressed="false"
-                  aria-label="Save language changes"
-                >
-                  <Save className="w-4 h-4" strokeWidth={2} />
-                  Save
-                </button>
-              )}
               <button
                 type="button"
                 onClick={() => setLanguagesExpanded(!languagesExpanded)}
@@ -1408,6 +1396,21 @@ export default function PersonalDetailsForm({
                   </div>
                 )}
               </div>
+
+              <div className="flex items-center justify-end gap-2 mt-8 pt-4 border-t border-gray-200">
+                {languagesChanged && (
+                  <button
+                    type="button"
+                    onClick={handleUpdateLanguages}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-md text-sm font-medium shadow-sm hover:from-orange-500 hover:to-orange-600 transition cursor-pointer"
+                    aria-pressed="false"
+                    aria-label="Save language changes"
+                  >
+                    <Save className="w-4 h-4" strokeWidth={2} />
+                    Save
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -1418,18 +1421,6 @@ export default function PersonalDetailsForm({
               Current Location
             </h3>
             <div className="flex gap-2 items-center">
-              {locationChanged && (
-                <button
-                  type="button"
-                  onClick={handleUpdateLocation}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-md text-sm font-medium shadow-sm hover:from-orange-500 hover:to-orange-600 transition cursor-pointer"
-                  aria-pressed="false"
-                  aria-label="Save location changes"
-                >
-                  <Save className="w-4 h-4" strokeWidth={2} />
-                  Save
-                </button>
-              )}
               <button
                 type="button"
                 onClick={() =>
@@ -1588,6 +1579,21 @@ export default function PersonalDetailsForm({
                     <p className="mt-1 text-xs text-red-500">{errors.nationality}</p>
                   )}
                 </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 mt-8 pt-4 border-t border-gray-200">
+                {locationChanged && (
+                  <button
+                    type="button"
+                    onClick={handleUpdateLocation}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-md text-sm font-medium shadow-sm hover:from-orange-500 hover:to-orange-600 transition cursor-pointer"
+                    aria-pressed="false"
+                    aria-label="Save location changes"
+                  >
+                    <Save className="w-4 h-4" strokeWidth={2} />
+                    Save
+                  </button>
+                )}
               </div>
             </div>
           )}
