@@ -565,20 +565,42 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
           <div className="grid grid-cols-1 @lg:grid-cols-[1fr_auto] gap-7 items-center">
             <div>
               <p className="text-xs font-extrabold uppercase mb-4" style={{ color: accent }}>
-                Contact
+                Contact & Profiles
               </p>
               <h2 className="text-4xl @md:text-6xl font-extrabold leading-none">
                 Let's build something with taste.
               </h2>
+              <p className="mt-4 text-sm leading-7" style={{ color: muted, maxWidth: 560 }}>
+                Reach out via email or connect through my professional profiles for design, process, and project details.
+              </p>
             </div>
-            <a
-              href={`mailto:${data.email || "hello@example.com"}`}
-              className="designer-hover inline-flex items-center justify-center gap-2 px-6 py-4 text-sm font-extrabold no-underline"
-              style={{ background: accent, color: "#ffffff", borderRadius: 8 }}
-            >
-              <Mail className="w-4 h-4" />
-              Get in touch
-            </a>
+            <div className="flex flex-col items-start gap-4">
+              <a
+                href={`mailto:${data.email || "hello@example.com"}`}
+                className="designer-hover inline-flex items-center justify-center gap-2 px-6 py-4 text-sm font-extrabold no-underline"
+                style={{ background: accent, color: "#ffffff", borderRadius: 8 }}
+              >
+                <Mail className="w-4 h-4" />
+                Get in touch
+              </a>
+              {socialLinks.length > 0 && (
+                <div className="flex flex-wrap items-center gap-3">
+                  {socialLinks.map(({ href, label, icon: Icon }) => (
+                    <a
+                      key={label}
+                      href={href}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={label}
+                      className="designer-hover h-11 w-11 border inline-flex items-center justify-center no-underline"
+                      style={{ color: ink, borderColor: line, background: panel, borderRadius: 8 }}
+                    >
+                      <Icon className="w-4 h-4" />
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </section>
       </section>
