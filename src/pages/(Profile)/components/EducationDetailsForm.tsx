@@ -167,27 +167,26 @@ export default function EducationDetailsForm({
   const [submitError, setSubmitError] = useState("");
 
   // SSLC Data
-  const [sslcData, setSslcData] = useState({
-    institutionName: initialData.sslc?.institutionName || "",
-    boardType: initialData.sslc?.boardType || "",
-    resultFormat: initialData.sslc?.resultFormat || "",
-    yearOfPassing: initialData.sslc?.yearOfPassing || "",
-    result: initialData.sslc?.result || "",
-    education_id: initialData.sslc?.education_id || null,
+  const getEducationStateFromData = (data: any) => ({
+    sslcData: {
+      institutionName: data.sslc?.institutionName || "",
+      boardType: data.sslc?.boardType || "",
+      resultFormat: data.sslc?.resultFormat || "",
+      yearOfPassing: data.sslc?.yearOfPassing || "",
+      result: data.sslc?.result || "",
+      education_id: data.sslc?.education_id || null,
+    },
+    puData: {
+      institutionName: data.pu?.institutionName || "",
+      boardType: data.pu?.boardType || "",
+      yearOfPassing: data.pu?.yearOfPassing || "",
+      resultFormat: data.pu?.resultFormat || "",
+      subjectStream: data.pu?.subjectStream || "",
+      result: data.pu?.result || "",
+      education_id: data.pu?.education_id || null,
+    },
   });
 
-  // PU Data
-  const [puData, setPuData] = useState({
-    institutionName: initialData.pu?.institutionName || "",
-    boardType: initialData.pu?.boardType || "",
-    yearOfPassing: initialData.pu?.yearOfPassing || "",
-    resultFormat: initialData.pu?.resultFormat || "",
-    subjectStream: initialData.pu?.subjectStream || "",
-    result: initialData.pu?.result || "",
-    education_id: initialData.pu?.education_id || null,
-  });
-
-  // Helper to initialize lists, ensuring at least one Higher Education card exists
   const getInitialHigherEducations = (data: any) => {
     const higherEdus = data.higherEducations || [];
     const extraEdus = data.extraEducations || [];
@@ -223,6 +222,10 @@ export default function EducationDetailsForm({
   const getInitialExpanded = (array: HigherEducation[]) =>
     array.reduce((acc, edu) => ({ ...acc, [edu.id]: true }), {});
 
+  const [sslcData, setSslcData] = useState(
+    getEducationStateFromData(initialData).sslcData
+  );
+  const [puData, setPuData] = useState(getEducationStateFromData(initialData).puData);
   const [higherEducations, setHigherEducations] =
     useState<HigherEducation[]>(initialHigherEdu);
   const [extraEducations, setExtraEducations] =
@@ -263,18 +266,49 @@ export default function EducationDetailsForm({
   const initialHigher = useRef<Record<string, HigherEducation>>({});
   const initialExtra = useRef<Record<string, HigherEducation>>({});
 
-  // Initialize refs for higher and extra educations on mount
-  useEffect(() => {
-    [...initialHigherEdu, ...initialExtraEdu].forEach((edu) => {
+  const syncEducationStateFromInitialData = (data: any) => {
+    const nextState = getEducationStateFromData(data);
+    setSslcData(nextState.sslcData);
+    setPuData(nextState.puData);
+
+    const nextEducations = getInitialHigherEducations(data);
+    const nextHigherEdu = nextEducations.slice(0, 1);
+    const nextExtraEdu = nextEducations.slice(1);
+
+    setHigherEducations(nextHigherEdu);
+    setExtraEducations(nextExtraEdu);
+    setHigherExpanded(getInitialExpanded(nextHigherEdu));
+    setExtraExpanded(getInitialExpanded(nextExtraEdu));
+
+    setSslcChanged(false);
+    setPuChanged(false);
+    setHigherChanges({});
+    setExtraChanges({});
+    setSslcFeedback("");
+    setPuFeedback("");
+    setHigherFeedback({});
+    setExtraFeedback({});
+
+    initialSslc.current = nextState.sslcData;
+    initialPu.current = nextState.puData;
+    initialHigher.current = {};
+    initialExtra.current = {};
+
+    [...nextHigherEdu, ...nextExtraEdu].forEach((edu) => {
       if (edu.id) {
-        if (initialHigherEdu.some((e) => e.id === edu.id)) {
+        if (nextHigherEdu.some((e) => e.id === edu.id)) {
           initialHigher.current[edu.id] = { ...edu };
         } else {
           initialExtra.current[edu.id] = { ...edu };
         }
       }
     });
-  }, []);
+  };
+
+  // Initialize refs for higher and extra educations on mount
+  useEffect(() => {
+    syncEducationStateFromInitialData(initialData);
+  }, [initialData]);
 
   // Check SSLC changes
   useEffect(() => {
