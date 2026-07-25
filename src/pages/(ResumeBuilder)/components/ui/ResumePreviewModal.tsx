@@ -29,6 +29,8 @@ interface UserProfileData {
   image: string;
   isWelcomeBonusRedeemed: boolean;
   credits: number;
+  purchased_credits?: number;
+  purchasedCredits?: number;
   coupon_code: string;
 }
 
@@ -40,6 +42,8 @@ interface PriceBreakdown {
   cgst: number;
   sgst: number;
   totalTax: number;
+  priceWithTax?: number;
+  purchasedCreditsApplied?: number;
   finalPrice: number;
 }
 
@@ -65,14 +69,15 @@ interface ResumePreviewModalProps {
 }
 
 // ─── Price Breakdown Calculator ───────────────────────────────────────────────
-function calculatePriceBreakdown(basePrice: number, creditsApplied: number): PriceBreakdown {
+function calculatePriceBreakdown(basePrice: number, creditsApplied: number, purchasedCreditsApplied: number = 0): PriceBreakdown {
   const creditDiscount = creditsApplied * CREDIT_VALUE;
   const priceAfterCredits = Math.max(0, basePrice - creditDiscount);
   const cgst = parseFloat((priceAfterCredits * CGST_RATE).toFixed(2));
   const sgst = parseFloat((priceAfterCredits * SGST_RATE).toFixed(2));
   const totalTax = cgst + sgst;
-  const finalPrice = parseFloat((priceAfterCredits + totalTax).toFixed(2));
-  return { basePrice, creditsApplied, creditDiscount, priceAfterCredits, cgst, sgst, totalTax, finalPrice };
+  const priceWithTax = parseFloat((priceAfterCredits + totalTax).toFixed(2));
+  const finalPrice = Math.max(0, parseFloat((priceWithTax - purchasedCreditsApplied).toFixed(2)));
+  return { basePrice, creditsApplied, creditDiscount, priceAfterCredits, cgst, sgst, totalTax, priceWithTax, purchasedCreditsApplied, finalPrice };
 }
 
 // ─── Payment Breakdown Modal ──────────────────────────────────────────────────
@@ -99,6 +104,7 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [creditsToApply, setCreditsToApply] = useState(0);
   const [useCredits, setUseCredits] = useState(false);
+  const [usePurchasedCredits, setUsePurchasedCredits] = useState(false);
   const [payLoading, setPayLoading] = useState(false);
   const [showBreakdown, setShowBreakdown] = useState(true);
 
@@ -131,9 +137,20 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
     }
   }, [useCredits, userProfile]);
 
-  const availableCredits = userProfile?.credits ?? 0;
-  const maxApplicable = Math.min(availableCredits, MAX_CREDITS_APPLICABLE);
-  const breakdown = calculatePriceBreakdown(RESUME_AMOUNT, creditsToApply);
+  useEffect(() => {
+    if (usePurchasedCredits) {
+      setUseCredits(false);
+      setCreditsToApply(0);
+    }
+  }, [usePurchasedCredits]);
+
+  const availableBonusCredits = userProfile?.credits ?? 0;
+  const availablePurchasedCredits = userProfile?.purchased_credits ?? userProfile?.purchasedCredits ?? 0;
+  const maxApplicable = Math.min(availableBonusCredits, MAX_CREDITS_APPLICABLE);
+  
+  const baseBreakdown = calculatePriceBreakdown(RESUME_AMOUNT, useCredits ? creditsToApply : 0, 0);
+  const purchasedCreditsToApply = usePurchasedCredits ? Math.min(availablePurchasedCredits, baseBreakdown.priceWithTax || baseBreakdown.finalPrice) : 0;
+  const breakdown = calculatePriceBreakdown(RESUME_AMOUNT, useCredits ? creditsToApply : 0, purchasedCreditsToApply);
 
   const handlePay = async () => {
     setPayLoading(true);
@@ -154,7 +171,7 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
       const authToken = token || userData?.token;
 
       // Ensure creditsToApply respects the maximum (10 or available, whichever is less)
-      const finalCreditsToApply = useCredits ? Math.min(creditsToApply, Math.min(availableCredits, MAX_CREDITS_APPLICABLE)) : 0;
+      const finalCreditsToApply = useCredits ? Math.min(creditsToApply, Math.min(availableBonusCredits, MAX_CREDITS_APPLICABLE)) : 0;
 
       const createResp = await api.post(
         '/payment/create-order',
@@ -163,6 +180,8 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
           credits_applied: finalCreditsToApply,
           base_price: breakdown.basePrice,
           credit_discount: breakdown.creditDiscount,
+          purchased_credits_used: usePurchasedCredits ? purchasedCreditsToApply : 0,
+          bonus_credits_used: usePurchasedCredits ? 0 : finalCreditsToApply,
           cgst: breakdown.cgst,
           sgst: breakdown.sgst,
           plan_type: 'RESUME_NON_AI',
@@ -173,6 +192,13 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
       );
 
       const orderData = createResp?.data ?? createResp;
+      
+      if (breakdown.finalPrice <= 0 || orderData?.message === "Payment successful" || orderData?.status === "success") {
+         onPaymentSuccess();
+         onClose();
+         return;
+      }
+      
       const orderId = orderData?.id || orderData?.order_id || orderData?.orderId || orderData?.razorpay_order_id;
       const razorKey = orderData?.key || orderData?.key_id || import.meta.env.VITE_RAZORPAY_KEY_ID || '';
       // Amount in paise
@@ -206,7 +232,9 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-                credits_applied: useCredits ? creditsToApply : 0,
+                credits_applied: finalCreditsToApply,
+                purchased_credits_used: usePurchasedCredits ? purchasedCreditsToApply : 0,
+                bonus_credits_used: usePurchasedCredits ? 0 : finalCreditsToApply,
               },
               authToken ? { headers: { Authorization: `Bearer ${authToken}` } } : undefined
             );
@@ -291,77 +319,131 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
                 <div className="w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
                 <span className="text-sm text-orange-600">Loading your credits...</span>
               </div>
-            ) : availableCredits > 0 ? (
-              <div
-                className="rounded-2xl overflow-hidden border transition-all duration-200"
-                style={{
-                  borderColor: useCredits ? '#F97316' : '#e5e7eb',
-                  background: useCredits ? 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)' : '#fafafa',
-                }}
-              >
-                <div className="p-4">
-                  <div className="flex items-center justify-between">
+            ) : (
+              <div className="flex flex-col gap-3">
+                {/* Purchased Credits Section */}
+                <div
+                  className="rounded-2xl overflow-hidden border transition-all duration-200"
+                  style={{
+                    borderColor: usePurchasedCredits ? '#F97316' : '#e5e7eb',
+                    background: usePurchasedCredits ? 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)' : '#fafafa',
+                    opacity: availablePurchasedCredits > 0 ? 1 : 0.7,
+                  }}
+                >
+                  <div className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <div
                         className="w-9 h-9 rounded-xl flex items-center justify-center"
-                        style={{ background: useCredits ? '#F97316' : '#f3f4f6' }}
+                        style={{ background: usePurchasedCredits ? '#F97316' : '#f3f4f6' }}
                       >
-                        <Sparkles className={`w-4 h-4 ${useCredits ? 'text-white' : 'text-gray-400'}`} />
+                        <Sparkles className={`w-4 h-4 ${usePurchasedCredits ? 'text-white' : 'text-gray-400'}`} />
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-gray-800">
-                          You have <span className="text-orange-500">{availableCredits} credits</span>
+                          Use <span className="text-orange-500">purchased credits</span>
                         </p>
-                        <p className="text-xs text-gray-500">1 credit = ₹{CREDIT_VALUE} · Max {MAX_CREDITS_APPLICABLE} applicable</p>
+                        <p className="text-xs text-gray-500">
+                          {availablePurchasedCredits > 0
+                            ? `You have ${availablePurchasedCredits} purchased credit${availablePurchasedCredits !== 1 ? 's' : ''}`
+                            : "You don't have any purchased credits left."}
+                        </p>
                       </div>
                     </div>
-                    {/* Toggle */}
                     <button
-                      onClick={() => setUseCredits(v => !v)}
-                      className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${useCredits ? 'bg-orange-500' : 'bg-gray-300'}`}
+                      onClick={() => {
+                        if (availablePurchasedCredits > 0) {
+                          setUsePurchasedCredits(v => !v);
+                        }
+                      }}
+                      disabled={availablePurchasedCredits === 0}
+                      className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${usePurchasedCredits ? 'bg-orange-500' : 'bg-gray-300'} ${availablePurchasedCredits === 0 ? 'cursor-not-allowed opacity-50' : ''}`}
                       style={{
-                        boxShadow: useCredits ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : 'inset 0 1px 3px rgba(0,0,0,0.1)',
+                        boxShadow: usePurchasedCredits ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : 'inset 0 1px 3px rgba(0,0,0,0.1)',
                       }}
                     >
                       <span
-                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-250 pointer-events-none ${useCredits ? 'translate-x-6' : 'translate-x-0'}`}
+                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-250 pointer-events-none ${usePurchasedCredits ? 'translate-x-6' : 'translate-x-0'}`}
                       />
                     </button>
                   </div>
+                </div>
 
-                  {/* Credit slider */}
-                  {useCredits && (
-                    <div className="mt-4 pt-4 border-t border-orange-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-medium text-gray-600">Credits to apply</span>
-                        <span className="text-sm font-bold text-orange-600">
-                          {creditsToApply} credits → −₹{(creditsToApply * CREDIT_VALUE).toFixed(2)}
-                        </span>
-                      </div>
-                      <input
-                        type="range"
-                        min={0}
-                        max={maxApplicable}
-                        value={creditsToApply}
-                        onChange={e => setCreditsToApply(Number(e.target.value))}
-                        className="w-full h-2 rounded-full appearance-none cursor-pointer"
-                        style={{
-                          background: `linear-gradient(to right, #F97316 0%, #F97316 ${(creditsToApply / maxApplicable) * 100}%, #e5e7eb ${(creditsToApply / maxApplicable) * 100}%, #e5e7eb 100%)`,
-                          accentColor: '#F97316',
-                        }}
-                      />
-                      <div className="flex justify-between mt-1">
-                        <span className="text-xs text-gray-400">0</span>
-                        <span className="text-xs text-gray-400">{maxApplicable}</span>
+                {/* Bonus Credits Section */}
+                {!usePurchasedCredits && (
+                  availableBonusCredits > 0 ? (
+                    <div
+                      className="rounded-2xl overflow-hidden border transition-all duration-200"
+                      style={{
+                        borderColor: useCredits ? '#F97316' : '#e5e7eb',
+                        background: useCredits ? 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)' : '#fafafa',
+                      }}
+                    >
+                      <div className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <div
+                              className="w-9 h-9 rounded-xl flex items-center justify-center"
+                              style={{ background: useCredits ? '#F97316' : '#f3f4f6' }}
+                            >
+                              <Sparkles className={`w-4 h-4 ${useCredits ? 'text-white' : 'text-gray-400'}`} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-800">
+                                You have <span className="text-orange-500">{availableBonusCredits} bonus credits</span>
+                              </p>
+                              <p className="text-xs text-gray-500">1 credit = ₹{CREDIT_VALUE} · Max {MAX_CREDITS_APPLICABLE} applicable</p>
+                            </div>
+                          </div>
+                          {/* Toggle */}
+                          <button
+                            onClick={() => setUseCredits(v => !v)}
+                            className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${useCredits ? 'bg-orange-500' : 'bg-gray-300'}`}
+                            style={{
+                              boxShadow: useCredits ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : 'inset 0 1px 3px rgba(0,0,0,0.1)',
+                            }}
+                          >
+                            <span
+                              className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-250 pointer-events-none ${useCredits ? 'translate-x-6' : 'translate-x-0'}`}
+                            />
+                          </button>
+                        </div>
+
+                        {/* Credit slider */}
+                        {useCredits && (
+                          <div className="mt-4 pt-4 border-t border-orange-200">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-medium text-gray-600">Credits to apply</span>
+                              <span className="text-sm font-bold text-orange-600">
+                                {creditsToApply} credits → −₹{(creditsToApply * CREDIT_VALUE).toFixed(2)}
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min={0}
+                              max={maxApplicable}
+                              value={creditsToApply}
+                              onChange={e => setCreditsToApply(Number(e.target.value))}
+                              className="w-full h-2 rounded-full appearance-none cursor-pointer"
+                              style={{
+                                background: `linear-gradient(to right, #F97316 0%, #F97316 ${(maxApplicable > 0 ? (creditsToApply / maxApplicable) * 100 : 0)}%, #e5e7eb ${(maxApplicable > 0 ? (creditsToApply / maxApplicable) * 100 : 0)}%, #e5e7eb 100%)`,
+                                accentColor: '#F97316',
+                              }}
+                            />
+                            <div className="flex justify-between mt-1">
+                              <span className="text-xs text-gray-400">0</span>
+                              <span className="text-xs text-gray-400">{maxApplicable}</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2.5 p-3.5 rounded-2xl bg-gray-50 border border-gray-100">
-                <Info className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                <span className="text-sm text-gray-500">You have no credits available.</span>
+                  ) : (
+                    <div className="flex items-center gap-2.5 p-3.5 rounded-2xl bg-gray-50 border border-gray-100">
+                      <Info className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <span className="text-sm text-gray-500">You have no bonus credits available.</span>
+                    </div>
+                  )
+                )}
               </div>
             )}
 
@@ -428,6 +510,16 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
                       strike: false,
                       muted: true,
                     },
+                    ...(breakdown.purchasedCreditsApplied && breakdown.purchasedCreditsApplied > 0
+                      ? [{
+                        label: 'Purchased Credits Applied',
+                        value: `−₹${breakdown.purchasedCreditsApplied.toFixed(2)}`,
+                        sub: null,
+                        highlight: true,
+                        strike: false,
+                        bold: true,
+                      }]
+                      : []),
                   ].map((row, idx) => (
                     <div key={idx} className="flex items-center justify-between py-1.5">
                       <span
