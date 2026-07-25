@@ -405,6 +405,8 @@ interface ChatBoxProps {
   onChipUndo?: (id: string) => void;
   // ID of the message that should render chips below it
   chipMessageId?: string | null;
+  // Re-opens the mode guidelines pop-up
+  onShowGuide?: () => void;
 }
 
 export default function ChatBox({
@@ -423,6 +425,7 @@ export default function ChatBox({
   onChipDelete,
   onChipUndo,
   chipMessageId,
+  onShowGuide,
 }: ChatBoxProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -459,6 +462,7 @@ export default function ChatBox({
             onJdComplete={onJdComplete}
             token={token}
             sessionId={session?.id}
+            onShowGuide={onShowGuide}
           />
         ) : (
           <div className="max-w-2xl mx-auto space-y-4">
@@ -589,6 +593,7 @@ function PreStartState({
   onJdComplete,
   token,
   sessionId,
+  onShowGuide,
 }: {
   mode: "jd" | "non-jd";
   onModeChange: (m: "jd" | "non-jd") => void;
@@ -597,6 +602,7 @@ function PreStartState({
   onJdComplete: (data: any) => void;
   token: string;
   sessionId?: string;
+  onShowGuide?: () => void;
 }) {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
@@ -653,6 +659,15 @@ function PreStartState({
           <span className="text-xs text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full font-medium">
             Tailored to job description
           </span>
+        )}
+        {onShowGuide && (
+          <button
+            onClick={onShowGuide}
+            className="flex items-center gap-1 text-xs text-gray-400 hover:text-orange-500 transition"
+          >
+            <Info className="w-3.5 h-3.5" />
+            How {mode === "jd" ? "JD Mode" : "AI Mode"} works
+          </button>
         )}
       </div>
 

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import DashNav from "@/components/dashnav/dashnav";
 import ChatList from "./Chatlist";
 import ChatBox from "./Chatbox";
+import ModeInfoModal from "./ModeInfoModal";
 import type { DataChip } from "./DataChips";
 
 import type { ChatSession, ChatMessage } from "./types";
@@ -90,6 +91,8 @@ export default function AIBuilder() {
   const [questionIndex, setQuestionIndex] = useState<Record<string, number>>({});
   const [chatAnswers, setChatAnswers] = useState<Record<string, SessionAnswers>>({});
   const [chipStates, setChipStates] = useState<Record<string, ChipState>>({});
+  // Guidelines pop-up — shown on entry, on every new chat, and on mode switch
+  const [infoModalMode, setInfoModalMode] = useState<"jd" | "non-jd" | null>("non-jd");
 
   // ── Fetch sessions ────────────────────────────────────────────────────────
 
@@ -304,6 +307,7 @@ export default function AIBuilder() {
       setChatSessions((prev) => [enriched, ...prev]);
       setCurrentSessionId(enriched.id);
       setSidebarOpen(false);
+      setInfoModalMode(mode);
     } catch (err) { console.error("Failed to create session", err); }
   };
 
@@ -334,6 +338,7 @@ export default function AIBuilder() {
 
   const handleModeChange = (newMode: "jd" | "non-jd") => {
     setMode(newMode);
+    if (newMode !== mode) setInfoModalMode(newMode);
     setChatSessions((prev) =>
       prev.map((s) => s.id === currentSessionId ? { ...s, mode: newMode } : s)
     );
@@ -575,6 +580,8 @@ export default function AIBuilder() {
     <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
       <DashNav heading="AI Resume Builder" />
 
+      <ModeInfoModal mode={infoModalMode} onClose={() => setInfoModalMode(null)} />
+
       <div className="flex flex-1 overflow-hidden relative">
         <ChatList
           sessions={chatSessions}
@@ -616,6 +623,7 @@ export default function AIBuilder() {
               onChipDelete={handleChipDelete}
               onChipUndo={handleChipUndo}
               chipMessageId={activeChipState?.messageId ?? null}
+              onShowGuide={() => setInfoModalMode(mode)}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center p-6 bg-white">
