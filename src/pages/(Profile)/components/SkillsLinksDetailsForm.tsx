@@ -173,8 +173,8 @@ export default function SkillsLinksDetailsForm({
     if (isDuplicate) {
       return "Skill name already exists";
     }
-    if (!/^[A-Za-z\s]+$/.test(trimmedValue)) {
-      return "Skill must contain only letters and spaces";
+    if (/^\d+$/.test(trimmedValue)) {
+      return "Skill cannot be only numbers";
     }
     return "";
   };
