@@ -110,6 +110,14 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
     return start || end || '';
   };
 
+  // Always show both start and end for a degree when both exist (no single-date collapse).
+  const formatHigherEducationRange = (edu: any) => {
+    const start = formatResumeEducationMonthYear(edu?.startYear || edu?.startDate || '');
+    const end = formatResumeEducationMonthYear(edu?.endYear || edu?.yearOfPassing || edu?.endDate || '');
+    if (start && end) return `${start} - ${end}`;
+    return start || end || '';
+  };
+
   const htmlToLines = (s?: string) => {
     if (!s) return [] as string[];
     try {
@@ -287,7 +295,7 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                     <div key={idx} style={{ marginBottom: 10 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
                         <div style={{ fontSize: 11, fontWeight: 700, color: '#000000', flex: 1, marginRight: 8 }}>{edu.instituteName}</div>
-          <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear)} - Present` : formatResumeEducationDateRange(edu)}</div>
+          <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear)} - Present` : formatHigherEducationRange(edu)}</div>
                       </div>
                       <div style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', marginTop: 4 }}>
                           {getFullDegreeName(edu.degree)}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}
@@ -436,11 +444,11 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
           )}
 
           {/* Certifications Section */}
-          {certifications.filter(c => c.enabled).length > 0 && (
+          {certifications.filter(c => c.enabled && c.certificateTitle && c.certificateTitle.trim()).length > 0 && (
             <section style={{ marginBottom: 22 }}>
               <h2 style={{ fontSize: 13, fontWeight: 700, color: primaryColor, letterSpacing: 1.2, marginBottom: 8 }}>TECHNICAL CERTIFICATIONS</h2>
               <div style={{ height: 1, background: '#333', width: '100%', marginBottom: 12 }} />
-              {certifications.filter(c => c.enabled).map((cert, idx) => (
+              {certifications.filter(c => c.enabled && c.certificateTitle && c.certificateTitle.trim()).map((cert, idx) => (
                 <div key={idx} style={{ marginBottom: 10 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#000000', flex: 1, marginRight: 8 }}>{cert.certificateTitle}</div>
