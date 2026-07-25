@@ -661,25 +661,6 @@ export default function PortfolioEditor() {
       return;
     }
 
-    if (skills.some((skill) => !/^[A-Za-z ]+$/.test(skill.trim()) || skill.trim().length === 0)) {
-      alert("Each skill may only contain letters and spaces.");
-      return;
-    }
-
-    if (skills.some((skill) => skill.trim().length > 59)) {
-      alert("Each skill must be 59 characters or less.");
-      return;
-    }
-
-    const normalizedSkillNames = skills.map((skill) => skill.trim().toLowerCase()).filter(Boolean);
-    const duplicateSkillFound = normalizedSkillNames.some(
-      (skill, index) => normalizedSkillNames.indexOf(skill) !== index
-    );
-    if (duplicateSkillFound) {
-      alert("Skills must not repeat.");
-      return;
-    }
-
     const invalidStep = designProcess.find(
       (step) => step.title.trim().length > 100 || step.description.trim().length > 250
     );
@@ -750,16 +731,12 @@ export default function PortfolioEditor() {
     }
 
     const normalizedExperiences = experiences.map(normalizeExperience);
-    const invalidProjectText = projects.find((project) => {
-      return (
-        !plainTextRegex.test(project.title || "") ||
-        !plainTextRegex.test(project.tech || "") ||
-        (project.tech || "").length > 30
-      );
-    });
+    const invalidProjectText = projects.find(
+      (project) => !plainTextRegex.test(project.title || "")
+    );
 
     if (invalidProjectText) {
-      alert("Project title and tech stack can only contain letters, numbers, and spaces. Tech stack must be 30 characters or less.");
+      alert("Project title can only contain letters, numbers, and spaces.");
       return;
     }
 

@@ -55,7 +55,7 @@ const timeSlots = [
 ];
 
 const experienceYears = Array.from({ length: 21 }, (_, index) => index);
-const experienceMonths = Array.from({ length: 13 }, (_, index) => index);
+const experienceMonths = Array.from({ length: 12 }, (_, index) => index);
 
 const getProfileSkills = () => {
   const possibleKeys = ["profileData", "resumeData", "user"];
