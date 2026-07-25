@@ -281,6 +281,14 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
     return start || end || '';
   };
 
+  // Always show both start and end for a degree when both exist (no single-date collapse).
+  const formatHigherEducationRange = (edu: any) => {
+    const start = formatResumeEducationMonthYear(edu?.startYear || edu?.startDate || '');
+    const end = formatResumeEducationMonthYear(edu?.endYear || edu?.yearOfPassing || edu?.endDate || '');
+    if (start && end) return `${start} - ${end}`;
+    return start || end || '';
+  };
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -383,7 +391,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{edu.instituteName}</Text>
                         <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>
-                              {edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}
+                              {edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatHigherEducationRange(edu)}
                         </Text>
                       </View>
                       <Text style={{ fontSize: 11, color: '#000000', fontFamily: pdfFontFamily, marginTop: 3 }}>
@@ -478,13 +486,13 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
           )}
 
           {/* Certifications */}
-          {certifications.filter((c: any) => c.enabled).length > 0 && (
+          {certifications.filter((c: any) => c.enabled && c.certificateTitle && c.certificateTitle.trim()).length > 0 && (
             <View style={{ marginBottom: 12 }}>
               <View minPresenceAhead={60}>
                 <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>TECHNICAL CERTIFICATIONS</Text>
                 <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
               </View>
-              {certifications.filter((c: any) => c.enabled).map((cert: any, idx: number) => (
+              {certifications.filter((c: any) => c.enabled && c.certificateTitle && c.certificateTitle.trim()).map((cert: any, idx: number) => (
                 <View key={idx} style={{ marginBottom: 8 }} wrap={false}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{cert.certificateTitle}</Text>
