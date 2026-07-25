@@ -1229,7 +1229,7 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
               />
             </div>
 
-            <div className="mt-4">
+            {/* <div className="mt-4">
               <FormInput
                 label="Passport Number"
                 placeholder="Enter Passport Number (must include letters & numbers)"
@@ -1237,7 +1237,7 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
                 onChange={(v) => updateField("passportNumber", v)}
                 error={errors.passportNumber}
               />
-            </div>
+            </div> */}
 
             {/* Save/Reset section moved to bottom */}
             <div className="flex items-center justify-end gap-2 mt-8 pt-4 border-t border-gray-200">

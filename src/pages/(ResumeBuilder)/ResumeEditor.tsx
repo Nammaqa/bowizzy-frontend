@@ -118,6 +118,8 @@ const mapEducationApiToLocal = (apiData: any[]) => {
       };
       educationData.preUniversityEnabled = true;
     } else if (item.education_type === "higher") {
+      const currentlyPursuing = item.currently_pursuing ?? item.currently_working_here ?? false;
+
       higherEducations.push({
         id: localId,
         education_id: item.education_id,
@@ -126,12 +128,12 @@ const mapEducationApiToLocal = (apiData: any[]) => {
         instituteName: item.institution_name || "",
         universityBoard: item.university_name || "",
         startYear: item.start_year || "",
-        endYear: item.end_year || "",
+        endYear: currentlyPursuing ? "" : item.end_year || "",
         resultFormat: item.result_format
           ? item.result_format.charAt(0).toUpperCase() + item.result_format.slice(1)
           : "",
         result: item.result?.toString() || "",
-        currentlyPursuing: item.currently_working_here || false,
+        currentlyPursuing,
         enabled: true,
       });
     }

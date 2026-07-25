@@ -266,12 +266,16 @@ export default function CreatePortfolio() {
   };
 
   const validate = () => {
+    setError(null);
+
     if (!portfolioName.trim()) {
       setNameError("Portfolio name is required.");
+      setError("Portfolio name is required.");
       return false;
     }
     if (portfolioName.trim().length < 3) {
       setNameError("Name must be at least 3 characters.");
+      setError("Name must be at least 3 characters.");
       return false;
     }
     setNameError("");
@@ -918,12 +922,7 @@ export default function CreatePortfolio() {
           <button
             type="submit"
             id="portfolio-pay-submit-btn"
-            disabled={
-              processing ||
-              !portfolioName.trim() ||
-              !portfolioType ||
-              (useCredits && !hasEnoughBonusCredits && bonusCredits > 0)
-            }
+            disabled={processing}
             className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-gradient-to-r from-violet-600 to-violet-500 text-white font-bold text-sm hover:from-violet-700 hover:to-violet-600 transition disabled:opacity-60 disabled:cursor-not-allowed shadow-md shadow-violet-200 cursor-pointer"
           >
             {processing ? (
