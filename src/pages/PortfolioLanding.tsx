@@ -190,7 +190,7 @@ export default function PortfolioLanding() {
               Ready to build your portfolio?
             </h2>
             <p className="text-sm text-white/80 mb-6 max-w-md mx-auto">
-              Unlock your portfolio for just <strong className="text-white">{price}</strong> — or use your Bowizzy credits. No subscription, no recurring fee.
+              Unlock your portfolio for just ₹ <strong className="text-white">{price}</strong> — or use your Bowizzy credits. No subscription, no recurring fee.
             </p>
             <button
               id="portfolio-cta-bottom-btn"
