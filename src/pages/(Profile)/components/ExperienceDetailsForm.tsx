@@ -127,6 +127,7 @@ interface ExperienceDetailsFormProps {
   token: string;
   hideHeader?: boolean;
   hideJobRole?: boolean;
+  isOptional?: boolean;
 }
 
 interface WorkExperience {
@@ -152,6 +153,7 @@ export default function ExperienceDetailsForm({
   token,
   hideHeader = false,
   hideJobRole = false,
+  isOptional = false,
 }: ExperienceDetailsFormProps) {
   const [jobRole, setJobRole] = useState(initialData.jobRole || "");
   const [isCustomJobRole, setIsCustomJobRole] = useState(() =>
@@ -801,13 +803,13 @@ export default function ExperienceDetailsForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!hideJobRole && !jobRole.trim()) {
+    if (!hideJobRole && !isOptional && !jobRole.trim()) {
       setSubmitError("Job Role is required before proceeding.");
       setJobRoleExpanded(true);
       return;
     }
 
-    if (experienceLevel === "intern" || experienceLevel === "experienced") {
+    if (!isOptional && (experienceLevel === "intern" || experienceLevel === "experienced")) {
       const validationErrors: Record<string, string> = {};
 
       workExperiences.forEach((exp, index) => {
@@ -826,12 +828,12 @@ export default function ExperienceDetailsForm({
       }
     }
 
-    if (Object.values(errors).some((err) => err.length > 0)) {
+    if (!isOptional && Object.values(errors).some((err) => err.length > 0)) {
       setSubmitError("Please fix validation errors before proceeding.");
       return;
     }
 
-    if (hasUnsavedChanges && (experienceLevel === "intern" || experienceLevel === "experienced")) {
+    if (!isOptional && hasUnsavedChanges && (experienceLevel === "intern" || experienceLevel === "experienced")) {
       let message = "Please save your changes before proceeding:\n\n";
       if (jobRoleChanged) message += "• Job Role (unsaved changes)\n";
       workExperiences.forEach((exp, index) => {
@@ -843,13 +845,13 @@ export default function ExperienceDetailsForm({
         setSubmitError(message);
         return;
       }
-    } else if (jobRoleChanged) {
+    } else if (!isOptional && jobRoleChanged) {
       setSubmitError("Please save your Job Role changes before proceeding.");
       return;
     }
 
     let validExperiences: WorkExperience[] = [];
-    if (experienceLevel === "intern" || experienceLevel === "experienced") {
+    if (!isOptional && (experienceLevel === "intern" || experienceLevel === "experienced")) {
       validExperiences = workExperiences.filter((exp) => exp.companyName || exp.experience_id);
     }
 
@@ -1041,7 +1043,7 @@ export default function ExperienceDetailsForm({
                   min={MIN_EXPERIENCE_MONTH}
                   onKeyDown={(e) => e.preventDefault()}
                   onPaste={(e) => e.preventDefault()}
-                  required
+                  required={!isOptional}
                   placeholder="Select Start Date"
                   className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm pr-8 ${errors[`exp-${index}-startDate`]
                       ? "border-red-500 focus:ring-red-400"
@@ -1066,7 +1068,7 @@ export default function ExperienceDetailsForm({
                   min={MIN_EXPERIENCE_MONTH}
                   onKeyDown={(e) => e.preventDefault()}
                   onPaste={(e) => e.preventDefault()}
-                  required={!experience.currentlyWorking}
+                  required={!isOptional && !experience.currentlyWorking}
                   placeholder="Select End Date"
                   disabled={experience.currentlyWorking}
                   className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm pr-8 disabled:bg-gray-100 ${errors[`exp-${index}-endDate`]
@@ -1211,7 +1213,7 @@ export default function ExperienceDetailsForm({
           <div className="bg-white border border-gray-200 rounded-xl mb-4 md:mb-5 overflow-hidden">
             <div className="flex items-center justify-between px-4 sm:px-5 md:px-6 py-3 md:py-4 border-b border-gray-200">
               <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">
-                Job Role <span className="text-red-500">*</span>
+                Job Role{!isOptional ? <span className="text-red-500"> *</span> : ""}
               </h3>
               <div className="flex gap-2 items-center">
                 <button
@@ -1241,13 +1243,18 @@ export default function ExperienceDetailsForm({
 
             {jobRoleExpanded && (
               <div className="p-4 sm:p-5 md:p-6">
+                {isOptional && (
+                  <p className="text-xs sm:text-sm text-amber-600 mb-4">
+                    This section is optional because you selected “Currently Pursuing” in education. You can update it later if you want.
+                  </p>
+                )}
                 <p className="text-xs sm:text-sm text-gray-600 mb-4">
                   We'll use your job role to tailor resumes, prep, and interviews for you. Make
                   sure it's entered correctly so everything matches.
                 </p>
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                    Job Role <span className="text-red-500">*</span>
+                    Job Role{!isOptional ? <span className="text-red-500"> *</span> : ""}
                   </label>
                   <div className="relative">
                     <select
@@ -1287,7 +1294,7 @@ export default function ExperienceDetailsForm({
                         maxLength={MAX_JOB_ROLE_LENGTH}
                         placeholder="Type your job role"
                         autoFocus
-                        aria-required="true"
+                        aria-required={!isOptional}
                         aria-invalid={!!errors.jobRole}
                         className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none text-xs sm:text-sm ${errors.jobRole
                             ? "border-red-300 ring-2 ring-red-100"
