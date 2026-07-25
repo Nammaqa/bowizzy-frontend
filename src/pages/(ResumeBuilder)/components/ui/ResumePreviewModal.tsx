@@ -1188,8 +1188,19 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                     <div className="relative w-full h-full">
                       <iframe
                         src={pdfUrl ? (pdfUrl.includes('docs.google.com') ? pdfUrl : `${pdfUrl}#toolbar=0`) : ''}
-                        className="w-full h-full border-none"
+                        className="w-full h-full border-none pointer-events-none"
                         title="Resume PDF Preview"
+                      />
+                      {/* Browser PDF viewers isolate their context menu from React.
+                          This shield keeps pointer input out of the viewer so its
+                          Save/Print/Rotate menu cannot be opened. */}
+                      <div
+                        className="absolute inset-0 z-[5]"
+                        aria-hidden="true"
+                        onContextMenu={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                        }}
                       />
                       {/* Overlay to hide Google Docs Viewer "open in new tab" toolbar on mobile */}
                       {pdfUrl && pdfUrl.includes('docs.google.com') && (
