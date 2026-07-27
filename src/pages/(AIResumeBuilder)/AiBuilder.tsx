@@ -91,6 +91,7 @@ export default function AIBuilder() {
   const [questionIndex, setQuestionIndex] = useState<Record<string, number>>({});
   const [chatAnswers, setChatAnswers] = useState<Record<string, SessionAnswers>>({});
   const [chipStates, setChipStates] = useState<Record<string, ChipState>>({});
+  const [paidJdSessions, setPaidJdSessions] = useState<Record<string, boolean>>({});
   // Guidelines pop-up — shown on entry, on every new chat, and on mode switch
   const [infoModalMode, setInfoModalMode] = useState<"jd" | "non-jd" | null>("non-jd");
 
@@ -100,16 +101,26 @@ export default function AIBuilder() {
     async function fetchSessions() {
       try {
         const sessions = await getAiSessions(token);
+        const newPaidSessions: Record<string, boolean> = {};
+        
         setChatSessions(
-          sessions.map((s) => ({
-            ...s,
-            id: String(s.id),
-            messages: s.messages || [],
-            started: s.started ?? false,
-            createdAt: s.createdAt,
-            infoJson: s.infoJson || null,
-          }))
+          sessions.map((s) => {
+            if (s.is_paid) {
+              newPaidSessions[String(s.id)] = true;
+            }
+            return {
+              ...s,
+              id: String(s.id),
+              messages: s.messages || [],
+              started: s.started || (s.mode === "jd" && !!s.infoJson),
+              is_paid: s.is_paid ?? false,
+              createdAt: s.createdAt,
+              infoJson: s.infoJson || null,
+              jd_text: s.jd_text || "",
+            };
+          })
         );
+        setPaidJdSessions(newPaidSessions);
       } catch (err) {
         console.error("Failed to fetch sessions", err);
       }
@@ -319,7 +330,7 @@ export default function AIBuilder() {
     try {
       const chats = await getSessionChats(id, token);
       setChatSessions((prev) =>
-        prev.map((s) => s.id === id ? { ...s, messages: chats, started: chats?.length > 0 } : s)
+        prev.map((s) => s.id === id ? { ...s, messages: chats, started: chats?.length > 0 || (s.mode === "jd" && !!s.infoJson) } : s)
       );
     } catch (err) { console.error("Failed to fetch session chats", err); }
   };
@@ -337,6 +348,9 @@ export default function AIBuilder() {
   };
 
   const handleModeChange = (newMode: "jd" | "non-jd") => {
+    if (currentSessionId && paidJdSessions[currentSessionId]) {
+      return;
+    }
     setMode(newMode);
     if (newMode !== mode) setInfoModalMode(newMode);
     setChatSessions((prev) =>
@@ -624,6 +638,8 @@ export default function AIBuilder() {
               onChipUndo={handleChipUndo}
               chipMessageId={activeChipState?.messageId ?? null}
               onShowGuide={() => setInfoModalMode(mode)}
+              isJdPaid={!!paidJdSessions[currentSession.id]}
+              onJdPaymentSuccess={() => setPaidJdSessions(prev => ({ ...prev, [currentSession.id]: true }))}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center p-6 bg-white">
