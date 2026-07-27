@@ -346,6 +346,12 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
       return;
     }
 
+    if (exp.companyName && !exp.currentlyWorking && !exp.endDate) {
+      setExperienceFeedback(prev => ({ ...prev, [exp.id]: "End date is required." }));
+      setTimeout(() => setExperienceFeedback(prev => { const updated = { ...prev }; delete updated[exp.id]; return updated; }), 3000);
+      return;
+    }
+
     const index = workExperiences.findIndex((e) => e.id === exp.id);
     const prefix = `exp-${exp.id}`;
 
@@ -734,7 +740,7 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
         <div className="flex items-center justify-between px-4 sm:px-5 md:px-6 py-3 md:py-4 border-b border-gray-200">
           <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">
-            Job Role<span className="text-red-500">*</span>
+            Job Role
           </h3>
           <div className="flex gap-2 items-center">
             <button
