@@ -137,14 +137,6 @@ const getStatusConfig = (status: string) => {
   return                            { badge: "bg-orange-50 text-[#F26D3A]",      border: "border-l-[#F26D3A]"   };
 };
 
-const getPaymentConfig = (status: string) => {
-  const s = status.toLowerCase();
-  if (s.includes("paid") || s.includes("complete")) return "bg-emerald-50 text-emerald-700";
-  if (s.includes("cancel"))  return "bg-red-50 text-red-500";
-  if (s.includes("pending")) return "bg-amber-50 text-amber-700";
-  return "bg-gray-100 text-gray-500";
-};
-
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -262,10 +254,8 @@ const MockInterviewBookingsPage = () => {
         : !isCancelled && booking.interviewer_id == null
           ? "Waiting to be accepted"
           : rawStatus;
-    const paymentStatus = booking.payment_status || "pending";
     const feedbackGiven = isInterviewerFeedbackGiven(booking);
     const { badge: statusBadge, border } = getStatusConfig(displayStatus);
-    const payBadge     = getPaymentConfig(paymentStatus);
 
     return (
       <div
@@ -284,9 +274,6 @@ const MockInterviewBookingsPage = () => {
             </h2>
             <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold capitalize ${statusBadge}`}>
               {displayStatus}
-            </span>
-            <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold capitalize ${payBadge}`}>
-              Payment: {paymentStatus}
             </span>
             <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[11px] font-semibold capitalize text-gray-500">
               {booking.interview_type || "online"}

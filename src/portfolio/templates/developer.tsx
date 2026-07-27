@@ -269,7 +269,7 @@ function HeroWithImage({ data, scrollTo }: { data: PortfolioData; scrollTo: (id:
           <div className="anim-1 mb-5 flex justify-center @md:justify-start">
             <StatusBadge />
           </div>
-          <h1 className="anim-2 text-4xl @sm:text-5xl font-semibold mb-4"
+          <h1 className="anim-2 portfolio-text-wrap text-4xl @sm:text-5xl font-semibold mb-4"
             style={{ letterSpacing: "-1.5px", lineHeight: 1.1, color: "var(--text-primary)" }}>
             {data.portfolioName || "Anonymous Developer"}
           </h1>
@@ -371,7 +371,7 @@ function HeroWithoutImage({ data, scrollTo }: { data: PortfolioData; scrollTo: (
       </div>
 
       {/* Name — large editorial */}
-      <h1 className="anim-2 font-semibold mb-3"
+      <h1 className="anim-2 portfolio-text-wrap font-semibold mb-3"
         style={{ fontSize: "clamp(2.4rem, 7vw, 4.5rem)", letterSpacing: "-2px", lineHeight: 1.05, color: "var(--text-primary)" }}>
         {data.portfolioName || "Anonymous Developer"}
       </h1>
@@ -551,6 +551,11 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
           min-width: 0;
         }
         .portfolio-text-wrap,
+        .portfolio-root h1,
+        .portfolio-root h2,
+        .portfolio-root h3,
+        .portfolio-root p,
+        .skill-chip,
         .rich-html-content,
         .rich-html-content * {
           overflow-wrap: anywhere;
@@ -626,12 +631,12 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
         }}
       >
         {/* Logo */}
-        <div className="text-base font-semibold tracking-tight flex-shrink-0" style={{ color: "var(--text-primary)" }}>
+        <div className="text-base font-semibold tracking-tight min-w-0 max-w-[40%] truncate" style={{ color: "var(--text-primary)" }}>
           {data.portfolioName}
         </div>
 
         {/* Desktop nav */}
-        <div className="hidden @md:flex items-center gap-7">
+        <div className="hidden @md:flex items-center gap-7 flex-shrink-0">
           {navItems.map(({ id, label }) => (
             <button key={id} onClick={() => scrollTo(id)}
               className="nav-btn text-xs tracking-wide transition-colors duration-200 capitalize"
@@ -643,7 +648,7 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
           ))}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-shrink-0">
           {/* Hire me */}
           <button onClick={() => scrollTo("contact")}
             className="hidden @sm:block text-xs px-4 py-2 rounded-lg text-white transition-all duration-200 hover:scale-105"
