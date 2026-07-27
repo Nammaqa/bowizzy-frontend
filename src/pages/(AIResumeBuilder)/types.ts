@@ -12,5 +12,7 @@ export interface ChatSession {
   mode: "jd" | "non-jd";
   createdAt: string;
   started?: boolean;
+  is_paid?: boolean;
   infoJson?: any;
+  jd_text?: string;
 }

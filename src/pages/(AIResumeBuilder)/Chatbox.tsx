@@ -62,9 +62,11 @@ interface AiPaymentModalProps {
   onClose: () => void;
   onPaymentSuccess: () => void;
   token: string;
+  sessionId?: string;
+  mode?: "jd" | "non-jd";
 }
 
-const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaymentSuccess, token }) => {
+const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaymentSuccess, token, sessionId, mode }) => {
   const [userProfile, setUserProfile] = useState<UserProfileData | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [creditsToApply, setCreditsToApply] = useState(0);
@@ -126,7 +128,8 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
           credit_discount: breakdown.creditDiscount,
           cgst: breakdown.cgst,
           sgst: breakdown.sgst,
-          plan_type: 'AI_RESUME',
+          plan_type: mode === 'jd' ? 'jd' : 'non-jd',
+          session_id: sessionId,
         },
         authToken ? { headers: { Authorization: `Bearer ${authToken}` } } : undefined
       );
@@ -170,6 +173,8 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
                 razorpay_signature: response.razorpay_signature,
                 credits_applied: finalCreditsToApply,
                 purchased_credits_used: purchasedCreditsToUse,
+                session_id: sessionId,
+                plan_type: mode === 'jd' ? 'jd' : 'non-jd',
               },
               authToken ? { headers: { Authorization: `Bearer ${authToken}` } } : undefined
             );
@@ -467,6 +472,9 @@ interface ChatBoxProps {
   chipMessageId?: string | null;
   // Re-opens the mode guidelines pop-up
   onShowGuide?: () => void;
+  isJdPaid?: boolean;
+  onJdPaymentSuccess?: () => void;
+  initialJdText?: string;
 }
 
 export default function ChatBox({
@@ -486,6 +494,9 @@ export default function ChatBox({
   onChipUndo,
   chipMessageId,
   onShowGuide,
+  isJdPaid,
+  onJdPaymentSuccess,
+  initialJdText,
 }: ChatBoxProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -515,6 +526,7 @@ export default function ChatBox({
       <div className="flex-1 overflow-y-auto px-4 py-6">
         {!started ? (
           <PreStartState
+            key={session?.id || 'new-session'}
             mode={mode}
             onModeChange={onModeChange}
             onFileUpload={() => fileInputRef.current?.click()}
@@ -523,6 +535,9 @@ export default function ChatBox({
             token={token}
             sessionId={session?.id}
             onShowGuide={onShowGuide}
+            isJdPaid={isJdPaid}
+            onJdPaymentSuccess={onJdPaymentSuccess}
+            initialJdText={initialJdText}
           />
         ) : (
           <div className="max-w-2xl mx-auto space-y-4">
@@ -654,6 +669,9 @@ function PreStartState({
   token,
   sessionId,
   onShowGuide,
+  isJdPaid,
+  onJdPaymentSuccess,
+  initialJdText,
 }: {
   mode: "jd" | "non-jd";
   onModeChange: (m: "jd" | "non-jd") => void;
@@ -663,19 +681,23 @@ function PreStartState({
   token: string;
   sessionId?: string;
   onShowGuide?: () => void;
+  isJdPaid?: boolean;
+  onJdPaymentSuccess?: () => void;
+  initialJdText?: string;
 }) {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   const handleStartClick = () => {
-    if (mode === "non-jd") {
-      setShowPaymentModal(true);
-    }
+    setShowPaymentModal(true);
   };
 
   const handlePaymentSuccess = () => {
     setShowPaymentModal(false);
-    onStart();
-    // setTimeout(() => window.location.reload(), 800);
+    if (mode === "jd") {
+      onJdPaymentSuccess?.();
+    } else {
+      onStart();
+    }
   };
 
   return (
@@ -705,11 +727,12 @@ function PreStartState({
           {(["non-jd", "jd"] as const).map((m) => (
             <button
               key={m}
-              onClick={() => onModeChange(m)}
+              onClick={() => { if (!isJdPaid) onModeChange(m); }}
+              disabled={isJdPaid}
               className={`text-xs px-4 py-1.5 rounded-md font-medium transition ${mode === m
                 ? "bg-white text-gray-800 shadow-sm"
                 : "text-gray-500 hover:text-gray-700"
-                }`}
+                } ${isJdPaid ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               {m === "jd" ? "JD Mode" : "AI Mode"}
             </button>
@@ -733,7 +756,7 @@ function PreStartState({
 
       {/* Start Payment button / JD flow */}
       {
-        mode !== "jd" ? (
+        !isJdPaid ? (
           <button
             onClick={handleStartClick}
             className="flex items-center gap-2 px-8 py-2.5 rounded-xl bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 active:scale-95 transition"
@@ -741,10 +764,19 @@ function PreStartState({
             <Lock className="w-4 h-4" />
             Start Payment
           </button>
-        ) : sessionId ? (
-          <JdResumeFlow sessionId={sessionId} token={token} onComplete={onJdComplete} />
+        ) : mode === "jd" ? (
+          sessionId ? (
+            <JdResumeFlow sessionId={sessionId} token={token} onComplete={onJdComplete} initialJdText={initialJdText} />
+          ) : (
+            <p className="text-xs text-gray-400">Loading session...</p>
+          )
         ) : (
-          <p className="text-xs text-gray-400">Loading session...</p>
+          <button
+            onClick={onStart}
+            className="flex items-center gap-2 px-8 py-2.5 rounded-xl bg-green-500 text-white text-sm font-medium hover:bg-green-600 active:scale-95 transition"
+          >
+            Start Resume Builder
+          </button>
         )
       }
 
@@ -754,6 +786,8 @@ function PreStartState({
         onClose={() => setShowPaymentModal(false)}
         onPaymentSuccess={handlePaymentSuccess}
         token={token}
+        sessionId={sessionId}
+        mode={mode}
       />
     </div>
   );
