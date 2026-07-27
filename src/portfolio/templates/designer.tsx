@@ -441,18 +441,28 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
                   style={{ borderColor: line, background: panelStrong, borderRadius: 8 }}
                 >
                   <div
-                    className="h-56 relative designer-cover-grid border-b"
+                    className="h-56 relative overflow-hidden designer-cover-grid border-b"
                     style={{
                       borderColor: line,
                       backgroundColor: index % 2 ? ink : accent,
                     }}
                   >
-                    <div className="absolute inset-5 grid grid-cols-6 grid-rows-4 gap-3">
-                      <span className="col-span-4 row-span-2" style={{ background: "rgba(255,255,255,0.72)", borderRadius: 8 }} />
-                      <span className="col-span-2 row-span-2" style={{ background: accentTwo, borderRadius: 8 }} />
-                      <span className="col-span-2 row-span-2" style={{ background: "rgba(255,255,255,0.32)", borderRadius: 8 }} />
-                      <span className="col-span-4 row-span-2" style={{ background: "rgba(255,255,255,0.18)", borderRadius: 8 }} />
-                    </div>
+                    {project.imageUrl ? (
+                      <img
+                        src={project.imageUrl}
+                        alt={project.title || "Project cover"}
+                        className="absolute inset-0 h-full w-full object-cover"
+                        draggable={false}
+                        onDragStart={(event) => event.preventDefault()}
+                      />
+                    ) : (
+                      <div className="absolute inset-5 grid grid-cols-6 grid-rows-4 gap-3">
+                        <span className="col-span-4 row-span-2" style={{ background: "rgba(255,255,255,0.72)", borderRadius: 8 }} />
+                        <span className="col-span-2 row-span-2" style={{ background: accentTwo, borderRadius: 8 }} />
+                        <span className="col-span-2 row-span-2" style={{ background: "rgba(255,255,255,0.32)", borderRadius: 8 }} />
+                        <span className="col-span-4 row-span-2" style={{ background: "rgba(255,255,255,0.18)", borderRadius: 8 }} />
+                      </div>
+                    )}
                   </div>
                   <div className="p-5 @md:p-6">
                     <div className="flex items-start justify-between gap-4 mb-4">
