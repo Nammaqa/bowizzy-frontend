@@ -102,7 +102,7 @@ function StatusBadge() {
         <span className="ping-anim absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
         <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
       </span>
-      Available for new opportunities
+      {/* Available for new opportunities */}
     </div>
   );
 }

@@ -55,7 +55,7 @@ const features = [
 ];
 
 const steps = [
-  { step: "1", label: `Pay ₹${import.meta.env.VITE_BASE_PORTFOLIO_PRICE} or use credits`, sub: "One-time unlock — no hidden charges" },
+  { step: "1", label: `Pay ₹${price} or use credits`, sub: "One-time unlock — no hidden charges" },
   { step: "2", label: "Fill in your details", sub: "Projects, skills, bio & more" },
   { step: "3", label: "Pick a template", sub: "Dozens of premium designs to choose from" },
   { step: "4", label: "Publish & share", sub: "Go live with a unique URL instantly" },
