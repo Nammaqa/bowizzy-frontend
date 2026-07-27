@@ -355,7 +355,7 @@ export default function DashNav({ heading, zindex }: { heading: string; zindex?:
                                                         {isCopied ? (
                                                             <><Check size={16} />Copied</>
                                                         ) : (
-                                                            <div className="flex items-center justify-center gap-2"><Copy size={16} /><span>Share URL</span></div>
+                                                            <div className="flex items-center justify-center gap-2"><Copy size={16} /><span>Copy URL</span></div>
                                                         )}
                                                     </button>
                                                 </div>

@@ -29,7 +29,13 @@ export interface PortfolioData {
     link: string;
     role: string;
   }>;
-  projects: Array<{ title: string; description: string; link: string; tech: string }>;
+  projects: Array<{
+    title: string;
+    description: string;
+    link: string;
+    tech: string;
+    imageUrl?: string; // Optional project cover image
+  }>;
   experiences: Array<{ role: string; company: string; startDate?: string; endDate?: string; duration: string; details: string }>;
   skills: string[];
 }
@@ -221,6 +227,20 @@ function ProjectCard({ proj, index }: { proj: PortfolioData["projects"][0]; inde
       <div className="project-accent absolute top-0 left-0 right-0 h-0.5 transition-all duration-300"
         style={{ background: "linear-gradient(90deg, var(--accent), var(--accent-2))", transform: "scaleX(0)", transformOrigin: "left" }}
       />
+      {proj.imageUrl && (
+        <div
+          className="w-full h-36 rounded-xl overflow-hidden mb-4"
+          style={{ border: "0.5px solid var(--card-border)", background: "var(--accent-soft)" }}
+        >
+          <img
+            src={proj.imageUrl}
+            alt={proj.title || "Project cover"}
+            className="w-full h-full object-cover"
+            draggable={false}
+            onDragStart={(event) => event.preventDefault()}
+          />
+        </div>
+      )}
       <div className="flex items-start justify-between mb-3">
         <div
           className="w-9 h-9 rounded-lg flex items-center justify-center"

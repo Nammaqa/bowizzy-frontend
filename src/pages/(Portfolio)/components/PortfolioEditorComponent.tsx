@@ -31,6 +31,9 @@ interface Project {
   description: string;
   link: string;
   tech: string;
+  imageUrl?: string;
+  imagePublicId?: string;
+  imageDeleteToken?: string | null;
 }
 
 interface Experience {
@@ -106,6 +109,8 @@ export interface PortfolioEditorComponentProps {
 
   projects: Project[];
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
+  onProjectImageUploaded?: (index: number, asset: UploadedAsset) => Promise<void>;
+  onProjectImageRemoved?: (index: number) => Promise<void>;
   experiences: Experience[];
   setExperiences: React.Dispatch<React.SetStateAction<Experience[]>>;
   skills: string[];
@@ -162,6 +167,8 @@ export default function PortfolioEditorComponent({
   onCaseStudyImageRemoved,
   projects,
   setProjects,
+  onProjectImageUploaded,
+  onProjectImageRemoved,
   experiences,
   setExperiences,
   skills,
@@ -179,6 +186,8 @@ export default function PortfolioEditorComponent({
   const [removingProfileImage, setRemovingProfileImage] = useState(false);
   const [removingCv, setRemovingCv] = useState(false);
   const [removingCaseStudyImageIndex, setRemovingCaseStudyImageIndex] = useState<number | null>(null);
+  const [removingProjectImageIndex, setRemovingProjectImageIndex] = useState<number | null>(null);
+  const [uploadingProjectImageIndex, setUploadingProjectImageIndex] = useState<number | null>(null);
 
   // Block drag and drop into text fields in the portfolio editor
   useEffect(() => {
@@ -380,13 +389,29 @@ export default function PortfolioEditorComponent({
 
   // Projects helpers
   const handleAddProject = () => {
-    setProjects([...projects, { title: "", description: "", link: "", tech: "" }]);
+    setProjects([...projects, { title: "", description: "", link: "", tech: "", imageUrl: "" }]);
   };
 
   const handleUpdateProject = (index: number, field: keyof Project, val: string) => {
     const updated = [...projects];
     updated[index] = { ...updated[index], [field]: val };
     setProjects(updated);
+  };
+
+  const removeProjectImage = async (index: number) => {
+    try {
+      setRemovingProjectImageIndex(index);
+      if (onProjectImageRemoved) {
+        await onProjectImageRemoved(index);
+      } else {
+        handleUpdateProject(index, "imageUrl", "");
+      }
+    } catch (err) {
+      console.error("Project image removal failed", err);
+      alert("Unable to remove project image right now.");
+    } finally {
+      setRemovingProjectImageIndex(null);
+    }
   };
 
   const handleRemoveProject = (index: number) => {
@@ -1302,18 +1327,81 @@ export default function PortfolioEditorComponent({
                   />
                 </div>
 
-                <div>
-                  <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
-                    Demo or Repository URL
-                  </label>
-                  <input
-                    type="url"
-                    value={p.link}
-                    onChange={(e) => handleUpdateProject(idx, "link", e.target.value)}
-                    maxLength={linkMax}
-                    placeholder="https://..."
-                    className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
+                      Demo or Repository URL
+                    </label>
+                    <input
+                      type="url"
+                      value={p.link}
+                      onChange={(e) => handleUpdateProject(idx, "link", e.target.value)}
+                      maxLength={linkMax}
+                      placeholder="https://..."
+                      className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
+                      Project Image
+                    </label>
+                    {p.imageUrl && (
+                      <div className="rounded-lg border border-gray-200 p-2">
+                        <img
+                          src={p.imageUrl}
+                          alt={p.title || "Project cover"}
+                          className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeProjectImage(idx)}
+                          disabled={removingProjectImageIndex === idx}
+                          className="mt-2 inline-flex items-center gap-1 rounded-lg border border-red-100 bg-red-50 px-2 py-1 text-[11px] font-bold text-red-600 transition hover:bg-red-100 disabled:opacity-60"
+                        >
+                          {removingProjectImageIndex === idx ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                          Remove
+                        </button>
+                      </div>
+                    )}
+                    {!p.imageUrl && (
+                      <>
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp"
+                          disabled={uploadingProjectImageIndex === idx}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (!isValidImageFile(file)) {
+                              e.target.value = "";
+                              return;
+                            }
+                            try {
+                              setUploadingProjectImageIndex(idx);
+                              const result = await uploadToCloudinary(file);
+                              if (onProjectImageUploaded) {
+                                await onProjectImageUploaded(idx, result);
+                              } else {
+                                handleUpdateProject(idx, "imageUrl", result.url);
+                              }
+                            } catch (err) {
+                              console.error("Project image upload failed", err);
+                              alert("Unable to upload project image right now.");
+                            } finally {
+                              setUploadingProjectImageIndex(null);
+                              e.target.value = "";
+                            }
+                          }}
+                          className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 disabled:opacity-60"
+                        />
+                        {uploadingProjectImageIndex === idx && (
+                          <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-violet-600">
+                            <Loader2 className="w-3 h-3 animate-spin" /> Uploading…
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

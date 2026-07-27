@@ -12,6 +12,9 @@ interface Project {
   description: string;
   link: string;
   tech: string;
+  imageUrl?: string;
+  imagePublicId?: string;
+  imageDeleteToken?: string | null;
 }
 
 interface Experience {
@@ -323,6 +326,7 @@ export default function PortfolioEditor() {
             description: proj.description || proj.roles_responsibilities || "",
             link: "",
             tech: "",
+            imageUrl: "",
           };
         });
         if (mappedProjs.length > 0) {
@@ -631,6 +635,49 @@ export default function PortfolioEditor() {
     setCaseStudies(updatedCaseStudies);
   };
 
+  const handleProjectImageUploaded = async (index: number, asset: UploadedAsset) => {
+    const updatedProjects = projects.map((project, projectIndex) =>
+      projectIndex === index
+        ? {
+            ...project,
+            imageUrl: asset.url,
+            imagePublicId: asset.publicId || "",
+            imageDeleteToken: asset.deleteToken || null,
+          }
+        : project
+    );
+
+    await pushPortfolioJson({ projects: updatedProjects });
+    setProjects(updatedProjects);
+  };
+
+  const handleProjectImageRemoved = async (index: number) => {
+    const target = projects[index];
+    if (!target) return;
+
+    const deleted = await deleteCloudinaryAsset(
+      target.imageUrl || "",
+      target.imageDeleteToken || null,
+      target.imagePublicId || "",
+      "image"
+    );
+    if (!deleted) throw new Error("Unable to delete project image from Cloudinary.");
+
+    const updatedProjects = projects.map((project, projectIndex) =>
+      projectIndex === index
+        ? {
+            ...project,
+            imageUrl: "",
+            imagePublicId: "",
+            imageDeleteToken: null,
+          }
+        : project
+    );
+
+    await pushPortfolioJson({ projects: updatedProjects });
+    setProjects(updatedProjects);
+  };
+
   // Submit and Save Portfolio
   const handleSave = async () => {
     if (!portfolioName.trim()) {
@@ -923,6 +970,8 @@ export default function PortfolioEditor() {
             onCaseStudyImageRemoved={handleCaseStudyImageRemoved}
             projects={projects}
             setProjects={setProjects}
+            onProjectImageUploaded={handleProjectImageUploaded}
+            onProjectImageRemoved={handleProjectImageRemoved}
             experiences={experiences}
             setExperiences={setExperiences}
             skills={skills}
