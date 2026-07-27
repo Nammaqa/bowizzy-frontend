@@ -129,6 +129,10 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
           min-width: 0;
         }
         .designer-text-wrap,
+        .designer-root h1,
+        .designer-root h2,
+        .designer-root h3,
+        .designer-root p,
         .designer-rich,
         .designer-rich * {
           overflow-wrap: anywhere;
@@ -188,7 +192,7 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
             </span>
           </a>
 
-          <div className="hidden @md:flex items-center gap-7 text-xs font-extrabold uppercase">
+          <div className="hidden @md:flex items-center gap-7 text-xs font-extrabold uppercase shrink-0">
             {["work", "experience", "process", "contact"].map((item) => (
               <a key={item} href={`#${item}`} className="no-underline" style={{ color: muted }}>
                 {item}
@@ -203,7 +207,7 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
               <Sparkles className="w-4 h-4" />
               Designer Portfolio
             </div>
-            <h1 className="text-5xl @md:text-6xl @lg:text-7xl leading-none font-extrabold max-w-3xl">
+            <h1 className="designer-text-wrap text-5xl @md:text-6xl @lg:text-7xl leading-none font-extrabold max-w-3xl">
               {data.portfolioName || "Creative Mind"}
             </h1>
             <p className="designer-text-wrap mt-7 max-w-2xl text-base @md:text-lg leading-8 font-medium" style={{ color: muted }}>
@@ -381,7 +385,7 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
                   </div>
                   <div className="p-5 @md:p-6">
                     <div className="flex items-start justify-between gap-4 mb-3">
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-xs font-extrabold uppercase mb-2" style={{ color: accent }}>
                           {study.role || "UI/UX Design"}
                         </p>
@@ -452,7 +456,7 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
                   </div>
                   <div className="p-5 @md:p-6">
                     <div className="flex items-start justify-between gap-4 mb-4">
-                      <h3 className="text-2xl font-extrabold">{project.title || "Project Name"}</h3>
+                      <h3 className="min-w-0 text-2xl font-extrabold">{project.title || "Project Name"}</h3>
                       {project.link && (
                         <a
                           href={project.link}
