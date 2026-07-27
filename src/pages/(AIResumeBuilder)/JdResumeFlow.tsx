@@ -81,6 +81,21 @@ function SectionCard({
   );
 }
 
+/**
+ * Only one experience may be marked "Currently working here". If the analyzer
+ * (or an older saved draft) flags several, the first one wins and the rest are
+ * cleared.
+ */
+function enforceSingleCurrentExperience(experiences: JdExperienceItem[]): JdExperienceItem[] {
+  let alreadyFlagged = false;
+  return experiences.map((exp) => {
+    if (!exp.currently_working_here) return exp;
+    if (alreadyFlagged) return { ...exp, currently_working_here: false };
+    alreadyFlagged = true;
+    return exp;
+  });
+}
+
 function normalizeJdData(raw: JdResumeData): JdResumeData {
   const rawAny = raw as any;
   const experiences: JdExperienceItem[] = Array.isArray(rawAny.work_experience)
@@ -95,7 +110,7 @@ function normalizeJdData(raw: JdResumeData): JdResumeData {
   return {
     ...raw,
     technical_summary_generated: technicalSummary,
-    work_experience: { experiences },
+    work_experience: { experiences: enforceSingleCurrentExperience(experiences) },
     projects: raw.projects || [],
     education: raw.education || [],
     skills: raw.skills || [],
@@ -131,7 +146,19 @@ export default function JdResumeFlow({ sessionId, token, onComplete }: JdResumeF
       if (!raw) return;
       const draft = JSON.parse(raw);
       if (draft?.data) {
-        setData(draft.data);
+        // Older drafts may predate the single-current-experience rule.
+        const experiences = draft.data?.work_experience?.experiences;
+        setData(
+          Array.isArray(experiences)
+            ? {
+                ...draft.data,
+                work_experience: {
+                  ...draft.data.work_experience,
+                  experiences: enforceSingleCurrentExperience(experiences),
+                },
+              }
+            : draft.data
+        );
         setStage("review");
       } else if (draft?.jdText) {
         setJdText(draft.jdText);
@@ -215,6 +242,26 @@ export default function JdResumeFlow({ sessionId, token, onComplete }: JdResumeF
       if (!prev?.work_experience?.experiences) return prev;
       const experiences = [...prev.work_experience.experiences];
       experiences[index] = { ...experiences[index], ...patch };
+      return { ...prev, work_experience: { ...prev.work_experience, experiences } };
+    });
+  };
+
+  // "Currently working here" is exclusive — checking one entry clears every other.
+  const setCurrentExperience = (index: number, checked: boolean) => {
+    setData((prev) => {
+      if (!prev?.work_experience?.experiences) return prev;
+      const experiences = prev.work_experience.experiences.map((exp, i) => {
+        if (i === index) {
+          return {
+            ...exp,
+            currently_working_here: checked,
+            end_date: checked ? null : exp.end_date,
+          };
+        }
+        return checked && exp.currently_working_here
+          ? { ...exp, currently_working_here: false }
+          : exp;
+      });
       return { ...prev, work_experience: { ...prev.work_experience, experiences } };
     });
   };
@@ -486,12 +533,7 @@ export default function JdResumeFlow({ sessionId, token, onComplete }: JdResumeF
                 <input
                   type="checkbox"
                   checked={!!e.currently_working_here}
-                  onChange={(ev) =>
-                    updateExperience(i, {
-                      currently_working_here: ev.target.checked,
-                      end_date: ev.target.checked ? null : e.end_date,
-                    })
-                  }
+                  onChange={(ev) => setCurrentExperience(i, ev.target.checked)}
                 />
                 Currently working here
               </label>
