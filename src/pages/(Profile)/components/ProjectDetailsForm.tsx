@@ -818,24 +818,12 @@ export default function ProjectDetailsForm({
         key={project.id}
         className="bg-white border border-gray-200 rounded-xl mb-4 md:mb-5 overflow-hidden"
       >
-        {/* Header */}
+        {/* Header — no Save button here anymore */}
         <div className="flex items-center justify-between px-4 sm:px-5 md:px-6 py-3 md:py-4 border-b border-gray-200">
           <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">
             Project {index + 1}
           </h3>
           <div className="flex gap-2 items-center">
-            {changed && (
-              <button
-                type="button"
-                onClick={() => handleSaveProject(project)}
-                className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-md text-sm font-medium shadow-sm hover:from-orange-500 hover:to-orange-600 transition cursor-pointer"
-                aria-pressed="false"
-                aria-label="Save project changes"
-              >
-                <Save className="w-4 h-4" strokeWidth={2} />
-                Save
-              </button>
-            )}
             <button
               type="button"
               onClick={() => toggleExpand(index)}
@@ -1076,6 +1064,31 @@ export default function ProjectDetailsForm({
                   </span>
                 </div>
               </div>
+            </div>
+
+            {/* ── Save row at the bottom of the expanded card ── */}
+            <div className="flex items-center justify-end gap-2 mt-6 pt-4 border-t border-gray-200">
+              {feedback && (
+                <span
+                  className={`text-xs px-2 py-1 rounded-full ${feedback.includes("successfully")
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
+                    }`}
+                >
+                  {feedback}
+                </span>
+              )}
+              {changed && (
+                <button
+                  type="button"
+                  onClick={() => handleSaveProject(project)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-lg hover:from-orange-500 hover:to-orange-600 transition cursor-pointer"
+                  aria-label="Save project changes"
+                >
+                  <Save className="w-4 h-4" strokeWidth={2} />
+                  Save
+                </button>
+              )}
             </div>
           </div>
         )}
