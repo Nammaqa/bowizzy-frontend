@@ -109,7 +109,6 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
       current.projectType !== (initial.projectType || "") ||
       current.startDate !== (initial.startDate || "") ||
       current.endDate !== (initial.endDate || "") ||
-      current.currentlyWorking !== (initial.currentlyWorking || false) ||
       current.description !== (initial.description || "") ||
       current.rolesResponsibilities !== (initial.rolesResponsibilities || "")
     );
@@ -227,14 +226,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
       setErrors((prev) => ({ ...prev, [`project-${id}-rolesResponsibilities`]: error }));
     }
 
-    // Clear end date error if currently working is checked
-    if (field === "currentlyWorking" && value === true) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[`project-${id}-endDate`];
-        return newErrors;
-      });
-    }
+
     // If projectType is changed, ensure it's not purely numeric
     if (field === "projectType" && typeof value === "string") {
       if (value && !/[a-zA-Z]/.test(value)) {
@@ -306,7 +298,6 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
           project_type: project.projectType || "",
           start_date: normalizeMonthToDate(project.startDate),
           end_date: normalizeMonthToDate(project.endDate),
-          currently_working: project.currentlyWorking,
           description: project.description || "",
           roles_responsibilities: project.rolesResponsibilities || "",
         };
@@ -390,16 +381,9 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
         ) {
           minimalPayload.roles_responsibilities = project.rolesResponsibilities;
         }
-        if (project.currentlyWorking !== (initial?.currentlyWorking || false)) {
-          minimalPayload.currently_working = project.currentlyWorking;
-        }
 
-        // Handle date logic when currentlyWorking changes
-        if (minimalPayload.currently_working === true) {
-          minimalPayload.end_date = null;
-        } else if (minimalPayload.currently_working === false) {
-          minimalPayload.end_date = normalizeMonthToDate(project.endDate);
-        }
+        // Handle date logic (Removed currentlyWorking check)
+        minimalPayload.end_date = normalizeMonthToDate(project.endDate);
 
         if (Object.keys(minimalPayload).length > 0) {
           await updateProjectDetails(
@@ -685,32 +669,11 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
                 min="1960-01"
                 max={getCurrentMonth()}
                 onKeyDown={(e) => e.preventDefault()}
-                disabled={project.currentlyWorking}
                 error={errors[`project-${project.id}-endDate`]}
               />
             </div>
 
-            <div className="flex items-center gap-2 mt-4">
-              <input
-                type="checkbox"
-                id={`currentlyWorking-${project.id}`}
-                checked={project.currentlyWorking}
-                onChange={(e) =>
-                  updateProject(
-                    project.id,
-                    "currentlyWorking",
-                    e.target.checked
-                  )
-                }
-                className="w-4 h-4 text-orange-400 border-gray-300 rounded focus:ring-orange-400"
-              />
-              <label
-                htmlFor={`currentlyWorking-${project.id}`}
-                className="text-sm text-gray-600"
-              >
-                Currently Working
-              </label>
-            </div>
+
 
             <div className="mt-4">
               <div className="flex flex-col gap-1">
