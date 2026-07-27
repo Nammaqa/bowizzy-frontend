@@ -72,12 +72,12 @@ function PortfolioCard({
       className="h-full min-h-[205px] bg-white rounded-xl border border-gray-100 p-5 flex flex-col gap-3 hover:shadow-md transition-shadow group relative cursor-pointer"
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center shrink-0">
             <Globe className="w-5 h-5 text-violet-500" />
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-gray-800 leading-snug">{portfolio.portfolio_name}</h3>
+          <div className="min-w-0">
+            <h3 className="text-sm font-bold text-gray-800 leading-snug break-words">{portfolio.portfolio_name}</h3>
             <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 bg-violet-50 text-violet-600 uppercase tracking-wider">
               {displayType}
             </span>
@@ -96,7 +96,7 @@ function PortfolioCard({
         </button>
       </div>
 
-      <p className="min-h-[54px] text-xs text-gray-500 leading-relaxed line-clamp-3 mt-1">
+      <p className="min-h-[54px] text-xs text-gray-500 leading-relaxed line-clamp-3 break-words mt-1">
         {portfolio.description || ""}
       </p>
 
@@ -350,7 +350,7 @@ export default function PortfolioList() {
               <X className="w-5 h-5" />
             </button>
             <h2 className="text-xl font-bold text-gray-900 mb-1">Manage Domain</h2>
-            <p className="text-sm text-gray-500 mb-5">
+            <p className="text-sm text-gray-500 mb-5 break-words">
               Choose a custom subdomain for <strong>{managePortfolio.portfolio_name}</strong>.
             </p>
 

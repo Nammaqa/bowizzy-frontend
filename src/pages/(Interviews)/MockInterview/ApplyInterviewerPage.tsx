@@ -21,9 +21,6 @@ const initialForm = {
   branch_name: "",
 };
 
-const alphabetWithSpacesRegex = /^[A-Za-z ]*$/;
-const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
-
 const isPendingApplication = (value: any) => {
   const statusText = [
     value?.status,
@@ -96,28 +93,9 @@ const ApplyInterviewerPage = () => {
   }, []);
 
   const updateField = (field: keyof typeof initialForm, value: string) => {
-    if (
-      (field === "bank_name" ||
-        field === "account_holder_name" ||
-        field === "branch_name") &&
-      (!alphabetWithSpacesRegex.test(value) || value.length > 50)
-    ) {
-      return;
-    }
-
-    if (field === "account_number" && (!/^\d*$/.test(value) || value.length > 20)) {
-      return;
-    }
-
-    if (field === "confirm_account_number" && (!/^\d*$/.test(value) || value.length > 20)) {
-      return;
-    }
-
-    if (field === "ifsc_code" && value.length > 11) return;
-
     setForm((currentForm) => ({
       ...currentForm,
-      [field]: field === "ifsc_code" ? value.toUpperCase() : value,
+      [field]: value,
     }));
     setError("");
     setSuccess("");
@@ -125,41 +103,14 @@ const ApplyInterviewerPage = () => {
 
   const validateForm = () => {
     if (!form.bank_name.trim()) return "Bank name is required.";
-    if (!alphabetWithSpacesRegex.test(form.bank_name.trim())) {
-      return "Bank name should contain alphabets only.";
-    }
-    if (form.bank_name.trim().length > 50) return "Bank name must be 50 characters or less.";
     if (!form.account_holder_name.trim()) return "Account holder name is required.";
-    if (!alphabetWithSpacesRegex.test(form.account_holder_name.trim())) {
-      return "Account holder name should contain alphabets only.";
-    }
-    if (form.account_holder_name.trim().length > 50) {
-      return "Account holder name must be 50 characters or less.";
-    }
     if (!form.account_number.trim()) return "Account number is required.";
-    if (!/^\d{1,20}$/.test(form.account_number)) {
-      return "Account number should contain digits only and be 20 digits or less.";
-    }
     if (!form.confirm_account_number.trim()) {
       return "Confirm account number is required.";
     }
-    if (form.account_number !== form.confirm_account_number) {
-      return "Account numbers do not match.";
-    }
-    if (!form.ifsc_code.trim()) {
-      return "IFSC code is required.";
-    }
-    if (!ifscRegex.test(form.ifsc_code)) {
-      return "Enter a valid IFSC code.";
-    }
+    if (!form.ifsc_code.trim()) return "IFSC code is required.";
     if (!form.account_type) return "Account type is required.";
     if (!form.branch_name.trim()) return "Branch name is required.";
-    if (!alphabetWithSpacesRegex.test(form.branch_name.trim())) {
-      return "Branch name should contain alphabets only.";
-    }
-    if (form.branch_name.trim().length > 50) {
-      return "Branch name must be 50 characters or less.";
-    }
     return "";
   };
 
@@ -282,12 +233,8 @@ const ApplyInterviewerPage = () => {
                 value={form.bank_name}
                 onChange={(event) => updateField("bank_name", event.target.value)}
                 placeholder="ICICI Bank"
-                maxLength={50}
                 className="mt-2 w-full rounded-xl border border-[#D9D9D9] px-4 py-3 text-sm focus:border-[#F26D3A] focus:outline-none focus:ring-2 focus:ring-[#FFE0D0]"
               />
-              <p className="mt-1 text-xs text-[#777777]">
-                Alphabets only. {form.bank_name.length}/50
-              </p>
             </div>
 
             <div>
@@ -298,12 +245,8 @@ const ApplyInterviewerPage = () => {
                 value={form.account_holder_name}
                 onChange={(event) => updateField("account_holder_name", event.target.value)}
                 placeholder="John Doe"
-                maxLength={50}
                 className="mt-2 w-full rounded-xl border border-[#D9D9D9] px-4 py-3 text-sm focus:border-[#F26D3A] focus:outline-none focus:ring-2 focus:ring-[#FFE0D0]"
               />
-              <p className="mt-1 text-xs text-[#777777]">
-                Alphabets only. {form.account_holder_name.length}/50
-              </p>
             </div>
 
             <div>
@@ -314,13 +257,8 @@ const ApplyInterviewerPage = () => {
                   updateField("account_number", event.target.value)
                 }
                 placeholder="1234567890"
-                inputMode="numeric"
-                maxLength={20}
                 className="mt-2 w-full rounded-xl border border-[#D9D9D9] px-4 py-3 text-sm focus:border-[#F26D3A] focus:outline-none focus:ring-2 focus:ring-[#FFE0D0]"
               />
-              <p className="mt-1 text-xs text-[#777777]">
-                Digits only. {form.account_number.length}/20
-              </p>
             </div>
 
             <div>
@@ -336,8 +274,6 @@ const ApplyInterviewerPage = () => {
                   )
                 }
                 placeholder="Re-enter account number"
-                inputMode="numeric"
-                maxLength={20}
                 className="mt-2 w-full rounded-xl border border-[#D9D9D9] px-4 py-3 text-sm focus:border-[#F26D3A] focus:outline-none focus:ring-2 focus:ring-[#FFE0D0]"
               />
             </div>
@@ -348,12 +284,8 @@ const ApplyInterviewerPage = () => {
                 value={form.ifsc_code}
                 onChange={(event) => updateField("ifsc_code", event.target.value)}
                 placeholder="ICIC0000001"
-                maxLength={11}
-                className="mt-2 w-full rounded-xl border border-[#D9D9D9] px-4 py-3 text-sm uppercase focus:border-[#F26D3A] focus:outline-none focus:ring-2 focus:ring-[#FFE0D0]"
+                className="mt-2 w-full rounded-xl border border-[#D9D9D9] px-4 py-3 text-sm focus:border-[#F26D3A] focus:outline-none focus:ring-2 focus:ring-[#FFE0D0]"
               />
-              <p className="mt-1 text-xs text-[#777777]">
-                Format: 4 letters, 0, then 6 alphanumeric characters.
-              </p>
             </div>
 
             <div>
@@ -377,12 +309,8 @@ const ApplyInterviewerPage = () => {
                 value={form.branch_name}
                 onChange={(event) => updateField("branch_name", event.target.value)}
                 placeholder="Mumbai Main"
-                maxLength={50}
                 className="mt-2 w-full rounded-xl border border-[#D9D9D9] px-4 py-3 text-sm focus:border-[#F26D3A] focus:outline-none focus:ring-2 focus:ring-[#FFE0D0]"
               />
-              <p className="mt-1 text-xs text-[#777777]">
-                Alphabets only. {form.branch_name.length}/50
-              </p>
             </div>
           </div>
 
