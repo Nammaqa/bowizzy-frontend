@@ -102,8 +102,7 @@ export default function ProjectDetailsForm({
         changedFields.push("startDate");
       if (current.endDate !== (initial?.endDate || ""))
         changedFields.push("endDate");
-      if (current.currentlyWorking !== (initial?.currentlyWorking || false))
-        changedFields.push("currentlyWorking");
+
       if (current.description !== (initial?.description || ""))
         changedFields.push("description");
       if (
@@ -248,7 +247,7 @@ export default function ProjectDetailsForm({
     if (!project.startDate) {
       fieldErrors.startDate = "Start date is required";
     }
-    if (!project.currentlyWorking && !project.endDate) {
+    if (!project.endDate) {
       fieldErrors.endDate = "End date is required";
     }
     if (!stripHtml(project.description)) {
@@ -270,14 +269,7 @@ export default function ProjectDetailsForm({
     const updated = [...projects];
     updated[index] = { ...updated[index], [field]: value, isExpanded: true };
 
-    if (field === "currentlyWorking" && value === true) {
-      updated[index].endDate = "";
-      setErrors((prevErrors) => {
-        const newErrors = { ...prevErrors };
-        delete newErrors[`project-${index}-endDate`];
-        return newErrors;
-      });
-    }
+
 
     setProjects(updated);
 
@@ -393,7 +385,6 @@ export default function ProjectDetailsForm({
           project_type: project.projectType || "",
           start_date: normalizeMonthToDate(project.startDate),
           end_date: normalizeMonthToDate(project.endDate),
-          currently_working: project.currentlyWorking,
           description: project.description || "",
           roles_responsibilities: project.rolesAndResponsibilities || "",
         };
@@ -523,18 +514,12 @@ export default function ProjectDetailsForm({
               minimalPayload.roles_responsibilities =
                 project.rolesAndResponsibilities;
               break;
-            case "currentlyWorking":
-              minimalPayload.currently_working = project.currentlyWorking;
-              break;
+
           }
         });
 
-        // Handle date logic when currentlyWorking changes
-        if (minimalPayload.currently_working === true) {
-          minimalPayload.end_date = null;
-        } else if (minimalPayload.currently_working === false) {
-          minimalPayload.end_date = normalizeMonthToDate(project.endDate);
-        }
+        // Handle date logic when currentlyWorking changes (Removed)
+        minimalPayload.end_date = normalizeMonthToDate(project.endDate);
 
         // Validate description / roles are not numeric-only and within length limits
         const descError = validateDescription(project.description);
@@ -996,7 +981,7 @@ export default function ProjectDetailsForm({
                 {/* End Date */}
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                    End Date{isMandatory && !project.currentlyWorking && <span className="text-red-500"> *</span>}
+                    End Date{isMandatory && <span className="text-red-500"> *</span>}
                   </label>
                   <div className="relative">
                     <input
@@ -1010,7 +995,6 @@ export default function ProjectDetailsForm({
                       placeholder="Select End Date"
                       min={getMinMonth()}
                       max={getCurrentMonth()}
-                      disabled={project.currentlyWorking}
                       className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm pr-8 disabled:bg-gray-100 ${errors[`project-${index}-endDate`]
                         ? "border-red-500 focus:ring-red-400"
                         : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
@@ -1023,27 +1007,6 @@ export default function ProjectDetailsForm({
                     </p>
                   )}
                 </div>
-              </div>
-
-              {/* Currently Working Checkbox */}
-              <div className="flex items-center">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={project.currentlyWorking}
-                    onChange={(e) =>
-                      handleProjectChange(
-                        index,
-                        "currentlyWorking",
-                        e.target.checked
-                      )
-                    }
-                    className="w-4 h-4 text-orange-400 border-gray-300 rounded focus:ring-orange-400"
-                  />
-                  <span className="text-xs sm:text-sm text-gray-700">
-                    Currently Working
-                  </span>
-                </label>
               </div>
 
               {/* Description */}

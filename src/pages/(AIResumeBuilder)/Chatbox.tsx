@@ -3,7 +3,7 @@ declare global {
   interface Window { Razorpay?: any; }
 }
 import React, { useRef, useEffect, Suspense, useState, useMemo } from "react";
-import { Send, Loader2, Bot, User, Download, Lock, Tag, Sparkles, ChevronDown, ChevronUp, Info, X } from "lucide-react";
+import { Send, Loader2, Bot, User, Download, Lock, Tag, Sparkles, ChevronDown, ChevronUp, Info, X, Unlock } from "lucide-react";
 import { pdf } from '@react-pdf/renderer';
 import type { ChatSession } from "./types";
 import { aiTemplateRegistry } from './templates/aiTemplateRegistry';
@@ -24,6 +24,7 @@ interface UserProfileData {
   image: string;
   isWelcomeBonusRedeemed: boolean;
   credits: number;
+  purchased_credits?: number | string;
   coupon_code: string;
 }
 
@@ -35,17 +36,19 @@ interface PriceBreakdown {
   cgst: number;
   sgst: number;
   totalTax: number;
+  purchasedCreditsUsed: number;
   finalPrice: number;
 }
 
-function calculatePriceBreakdown(basePrice: number, creditsApplied: number): PriceBreakdown {
+function calculatePriceBreakdown(basePrice: number, creditsApplied: number, purchasedCreditsToUse: number): PriceBreakdown {
   const creditDiscount = creditsApplied * CREDIT_VALUE;
   const priceAfterCredits = Math.max(0, basePrice - creditDiscount);
   const cgst = parseFloat((priceAfterCredits * CGST_RATE).toFixed(2));
   const sgst = parseFloat((priceAfterCredits * SGST_RATE).toFixed(2));
   const totalTax = cgst + sgst;
-  const finalPrice = parseFloat((priceAfterCredits + totalTax).toFixed(2));
-  return { basePrice, creditsApplied, creditDiscount, priceAfterCredits, cgst, sgst, totalTax, finalPrice };
+  const priceWithTax = parseFloat((priceAfterCredits + totalTax).toFixed(2));
+  const finalPrice = Math.max(0, parseFloat((priceWithTax - purchasedCreditsToUse).toFixed(2)));
+  return { basePrice, creditsApplied, creditDiscount, priceAfterCredits, cgst, sgst, totalTax, purchasedCreditsUsed: purchasedCreditsToUse, finalPrice };
 }
 
 // ── AI Resume Payment Modal ────────────────────────────────────────────────────
@@ -61,6 +64,7 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [creditsToApply, setCreditsToApply] = useState(0);
   const [useCredits, setUseCredits] = useState(false);
+  const [usePurchasedCredits, setUsePurchasedCredits] = useState(true);
   const [payLoading, setPayLoading] = useState(false);
   const [showBreakdown, setShowBreakdown] = useState(true);
 
@@ -83,7 +87,19 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
 
   const availableCredits = userProfile?.credits ?? 0;
   const maxApplicable = Math.min(availableCredits, MAX_CREDITS_APPLICABLE);
-  const breakdown = calculatePriceBreakdown(AI_RESUME_BASE_PRICE, creditsToApply);
+
+  const purchasedCreditsRaw = userProfile?.purchased_credits ?? 0;
+  const availablePurchasedCredits = Number.isFinite(Number(purchasedCreditsRaw)) && Number(purchasedCreditsRaw) > 0 ? Math.floor(Number(purchasedCreditsRaw)) : 0;
+  
+  const priceWithTaxForPurchasedCredits = parseFloat((
+    Math.max(0, AI_RESUME_BASE_PRICE - creditsToApply * CREDIT_VALUE) * (1 + CGST_RATE + SGST_RATE)
+  ).toFixed(2));
+  
+  const purchasedCreditsToUse = (usePurchasedCredits && availablePurchasedCredits > 0) 
+    ? Math.min(availablePurchasedCredits, priceWithTaxForPurchasedCredits) 
+    : 0;
+
+  const breakdown = calculatePriceBreakdown(AI_RESUME_BASE_PRICE, creditsToApply, purchasedCreditsToUse);
 
   const handlePay = async () => {
     setPayLoading(true);
@@ -107,6 +123,7 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
         {
           amount: breakdown.finalPrice,
           credits_applied: finalCreditsToApply,
+          purchased_credits_used: purchasedCreditsToUse,
           base_price: breakdown.basePrice,
           credit_discount: breakdown.creditDiscount,
           cgst: breakdown.cgst,
@@ -117,6 +134,14 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
       );
 
       const orderData = createResp?.data ?? createResp;
+
+      if (orderData?.message === 'Payment successful' || (orderData?.success === true && !orderData?.id && !orderData?.order_id && !orderData?.razorpay_order_id)) {
+        window.dispatchEvent(new CustomEvent("credits:refresh"));
+        onPaymentSuccess();
+        onClose();
+        return;
+      }
+
       const orderId = orderData?.id || orderData?.order_id || orderData?.orderId || orderData?.razorpay_order_id;
       const razorKey = orderData?.key || orderData?.key_id || import.meta.env.VITE_RAZORPAY_KEY_ID || '';
       const amountInPaise = Math.round(breakdown.finalPrice * 100);
@@ -146,10 +171,12 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
                 credits_applied: finalCreditsToApply,
+                purchased_credits_used: purchasedCreditsToUse,
               },
               authToken ? { headers: { Authorization: `Bearer ${authToken}` } } : undefined
             );
             if (verifyResp?.data?.message === 'Payment successful' || verifyResp?.message === 'Payment successful') {
+              window.dispatchEvent(new CustomEvent("credits:refresh"));
               onPaymentSuccess();
               onClose();
             } else {
@@ -207,7 +234,7 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
             </button>
             <div className="flex items-center gap-3 mb-1">
               <div className="w-10 h-10 rounded-2xl bg-orange-500/20 border border-orange-400/30 flex items-center justify-center">
-                <Lock className="w-5 h-5 text-orange-400" />
+                <Unlock className="w-5 h-5 text-orange-400" />
               </div>
               <div>
                 <h2 className="text-white font-semibold text-base leading-tight">Unlock AI Resume Builder</h2>
@@ -250,7 +277,8 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
                     {/* Toggle */}
                     <button
                       onClick={() => setUseCredits(v => !v)}
-                      className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${useCredits ? 'bg-orange-500' : 'bg-gray-300'}`}
+                      disabled={usePurchasedCredits}
+                      className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${useCredits ? 'bg-orange-500' : 'bg-gray-300'} ${usePurchasedCredits ? 'opacity-50 cursor-not-allowed' : ''}`}
                       style={{ boxShadow: useCredits ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : 'inset 0 1px 3px rgba(0,0,0,0.1)' }}
                     >
                       <span
@@ -295,6 +323,34 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
               </div>
             )}
 
+            {/* Purchased Credits Toggle Section */}
+            {availablePurchasedCredits > 0 && (
+              <div className="rounded-2xl border border-gray-100 p-4 shadow-sm" style={{ background: '#fafafa' }}>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-800">Use purchased credits</p>
+                    <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+                      You have <span className="font-semibold text-orange-500">{availablePurchasedCredits}</span> purchased credit{availablePurchasedCredits !== 1 ? 's' : ''} available. 1 credit = ₹1.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setUsePurchasedCredits(v => {
+                        if (!v) setUseCredits(false);
+                        return !v;
+                      });
+                    }}
+                    className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${usePurchasedCredits ? 'bg-orange-500' : 'bg-gray-300'}`}
+                    style={{ boxShadow: usePurchasedCredits ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : 'inset 0 1px 3px rgba(0,0,0,0.1)' }}
+                  >
+                    <span
+                      className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-250 pointer-events-none ${usePurchasedCredits ? 'translate-x-6' : 'translate-x-0'}`}
+                    />
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Price Breakdown */}
             <div className="rounded-2xl border border-gray-100 overflow-hidden" style={{ background: '#fff' }}>
               <button
@@ -322,6 +378,9 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
                     { label: 'Price after Credits', value: `₹${breakdown.priceAfterCredits.toFixed(2)}`, highlight: false, muted: false, bold: true },
                     { label: 'CGST (9%)', value: `₹${breakdown.cgst.toFixed(2)}`, highlight: false, muted: true, bold: false },
                     { label: 'SGST (9%)', value: `₹${breakdown.sgst.toFixed(2)}`, highlight: false, muted: true, bold: false },
+                    ...(breakdown.purchasedCreditsUsed > 0
+                      ? [{ label: `Purchased Credits Used`, value: `−₹${breakdown.purchasedCreditsUsed.toFixed(2)}`, highlight: true, muted: false, bold: false }]
+                      : []),
                   ].map((row, idx) => (
                     <div key={idx} className="flex items-center justify-between py-1.5">
                       <span className={`text-sm ${row.highlight ? 'text-green-600 font-medium' : row.muted ? 'text-gray-400' : row.bold ? 'text-gray-700 font-semibold' : 'text-gray-600'}`}>
