@@ -40,13 +40,18 @@ interface PriceBreakdown {
   finalPrice: number;
 }
 
-function calculatePriceBreakdown(basePrice: number, creditsApplied: number, purchasedCreditsToUse: number): PriceBreakdown {
+function calculatePriceBreakdown(basePrice: number, creditsApplied: number, availablePurchasedCredits: number, usePurchasedCredits: boolean): PriceBreakdown {
   const creditDiscount = creditsApplied * CREDIT_VALUE;
   const priceAfterCredits = Math.max(0, basePrice - creditDiscount);
   const cgst = parseFloat((priceAfterCredits * CGST_RATE).toFixed(2));
   const sgst = parseFloat((priceAfterCredits * SGST_RATE).toFixed(2));
   const totalTax = cgst + sgst;
   const priceWithTax = parseFloat((priceAfterCredits + totalTax).toFixed(2));
+  
+  const purchasedCreditsToUse = (usePurchasedCredits && availablePurchasedCredits > 0)
+    ? Math.min(availablePurchasedCredits, priceWithTax)
+    : 0;
+
   const finalPrice = Math.max(0, parseFloat((priceWithTax - purchasedCreditsToUse).toFixed(2)));
   return { basePrice, creditsApplied, creditDiscount, priceAfterCredits, cgst, sgst, totalTax, purchasedCreditsUsed: purchasedCreditsToUse, finalPrice };
 }
@@ -91,15 +96,8 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
   const purchasedCreditsRaw = userProfile?.purchased_credits ?? 0;
   const availablePurchasedCredits = Number.isFinite(Number(purchasedCreditsRaw)) && Number(purchasedCreditsRaw) > 0 ? Math.floor(Number(purchasedCreditsRaw)) : 0;
   
-  const priceWithTaxForPurchasedCredits = parseFloat((
-    Math.max(0, AI_RESUME_BASE_PRICE - creditsToApply * CREDIT_VALUE) * (1 + CGST_RATE + SGST_RATE)
-  ).toFixed(2));
-  
-  const purchasedCreditsToUse = (usePurchasedCredits && availablePurchasedCredits > 0) 
-    ? Math.min(availablePurchasedCredits, priceWithTaxForPurchasedCredits) 
-    : 0;
-
-  const breakdown = calculatePriceBreakdown(AI_RESUME_BASE_PRICE, creditsToApply, purchasedCreditsToUse);
+  const breakdown = calculatePriceBreakdown(AI_RESUME_BASE_PRICE, creditsToApply, availablePurchasedCredits, usePurchasedCredits);
+  const purchasedCreditsToUse = breakdown.purchasedCreditsUsed;
 
   const handlePay = async () => {
     setPayLoading(true);
@@ -135,7 +133,7 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
 
       const orderData = createResp?.data ?? createResp;
 
-      if (orderData?.message === 'Payment successful' || (orderData?.success === true && !orderData?.id && !orderData?.order_id && !orderData?.razorpay_order_id)) {
+      if (breakdown.finalPrice <= 0 || orderData?.message === 'Payment successful' || (orderData?.success === true && !orderData?.id && !orderData?.order_id && !orderData?.razorpay_order_id)) {
         window.dispatchEvent(new CustomEvent("credits:refresh"));
         onPaymentSuccess();
         onClose();
@@ -277,8 +275,8 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
                     {/* Toggle */}
                     <button
                       onClick={() => setUseCredits(v => !v)}
-                      disabled={usePurchasedCredits}
-                      className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${useCredits ? 'bg-orange-500' : 'bg-gray-300'} ${usePurchasedCredits ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      disabled={usePurchasedCredits && availablePurchasedCredits > 0}
+                      className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${useCredits ? 'bg-orange-500' : 'bg-gray-300'} ${(usePurchasedCredits && availablePurchasedCredits > 0) ? 'opacity-50 cursor-not-allowed' : ''}`}
                       style={{ boxShadow: useCredits ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : 'inset 0 1px 3px rgba(0,0,0,0.1)' }}
                     >
                       <span
@@ -324,32 +322,35 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
             )}
 
             {/* Purchased Credits Toggle Section */}
-            {availablePurchasedCredits > 0 && (
-              <div className="rounded-2xl border border-gray-100 p-4 shadow-sm" style={{ background: '#fafafa' }}>
-                <div className="flex items-center justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-800">Use purchased credits</p>
-                    <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
-                      You have <span className="font-semibold text-orange-500">{availablePurchasedCredits}</span> purchased credit{availablePurchasedCredits !== 1 ? 's' : ''} available. 1 credit = ₹1.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setUsePurchasedCredits(v => {
-                        if (!v) setUseCredits(false);
-                        return !v;
-                      });
-                    }}
-                    className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${usePurchasedCredits ? 'bg-orange-500' : 'bg-gray-300'}`}
-                    style={{ boxShadow: usePurchasedCredits ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : 'inset 0 1px 3px rgba(0,0,0,0.1)' }}
-                  >
-                    <span
-                      className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-250 pointer-events-none ${usePurchasedCredits ? 'translate-x-6' : 'translate-x-0'}`}
-                    />
-                  </button>
+            <div className="rounded-2xl border border-gray-100 p-4 shadow-sm" style={{ background: '#fafafa' }}>
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-800">Use purchased credits</p>
+                  <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+                    {availablePurchasedCredits > 0 ? (
+                      <>You have <span className="font-semibold text-orange-500">{availablePurchasedCredits}</span> purchased credit{availablePurchasedCredits !== 1 ? 's' : ''} available. 1 credit = ₹1.</>
+                    ) : (
+                      <>You don't have any purchased credits left.</>
+                    )}
+                  </p>
                 </div>
+                <button
+                  onClick={() => {
+                    setUsePurchasedCredits(v => {
+                      if (!v) setUseCredits(false);
+                      return !v;
+                    });
+                  }}
+                  disabled={availablePurchasedCredits === 0}
+                  className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${(usePurchasedCredits && availablePurchasedCredits > 0) ? 'bg-orange-500' : 'bg-gray-300'} ${availablePurchasedCredits === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  style={{ boxShadow: (usePurchasedCredits && availablePurchasedCredits > 0) ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : 'inset 0 1px 3px rgba(0,0,0,0.1)' }}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-250 pointer-events-none ${(usePurchasedCredits && availablePurchasedCredits > 0) ? 'translate-x-6' : 'translate-x-0'}`}
+                  />
+                </button>
               </div>
-            )}
+            </div>
 
             {/* Price Breakdown */}
             <div className="rounded-2xl border border-gray-100 overflow-hidden" style={{ background: '#fff' }}>
