@@ -13,6 +13,7 @@ import {
   getMockInterviewUserType,
   isInterviewerUserResponse,
   verifyMockInterviewPayment,
+  confirmMockInterviewCreditBooking
 } from "./mockInterviewService";
 
 type InterviewMode = "Online" | "Offline";
@@ -541,7 +542,7 @@ const TakeMockInterviewPage = () => {
     }
   };
 
-  const handlePayAndConfirm = async () => {
+ const handlePayAndConfirm = async () => {
     if (!canConfirm || paying) return;
 
     try {
@@ -569,27 +570,33 @@ const TakeMockInterviewPage = () => {
         purchased_credits_used: purchasedCreditsToUse,
       };
 
-      if (finalPriceINR <= 0) {
-        const bookingResponse = await createMockInterviewBooking(userId, token, payload);
-        window.dispatchEvent(new CustomEvent("credits:refresh"));
-        setConfirmed(true);
-        navigate("/interviews/mock-interview/bookings");
-        return;
-      }
-
       const bookingResponse = await createMockInterviewBooking(userId, token, payload);
-
       const booking = bookingResponse?.booking || bookingResponse?.data || bookingResponse;
       const mockInterviewId =
         booking?.mock_interview_id ||
         booking?.id ||
         bookingResponse?.mock_interview_id ||
         bookingResponse?.mockInterviewId;
-      const orderData =
-        bookingResponse?.order ||
-        bookingResponse?.razorpay_order ||
-        bookingResponse?.razorpayOrder ||
-        bookingResponse;
+
+      if (!mockInterviewId) {
+        throw new Error("Booking created, but booking ID was missing.");
+      }
+
+      // Credit-only booking: no Razorpay order was created because credits
+      // fully covered the price. This needs an explicit confirmation call
+      // to actually deduct the credits and lock in the booking.
+      const paymentStatus = booking?.payment_status || booking?.paymentStatus;
+      const orderData = bookingResponse?.order || bookingResponse?.razorpay_order || bookingResponse?.razorpayOrder;
+
+      if (!orderData && (paymentStatus === "pending_credit_confirmation" || finalPriceINR <= 0)) {
+        await confirmMockInterviewCreditBooking(userId, token, { mock_interview_id: mockInterviewId });
+        window.dispatchEvent(new CustomEvent("credits:refresh"));
+        setConfirmed(true);
+        navigate("/interviews/mock-interview/bookings");
+        return;
+      }
+
+      // Otherwise, proceed to Razorpay as before.
       const orderId =
         orderData?.id ||
         orderData?.order_id ||
@@ -600,7 +607,7 @@ const TakeMockInterviewPage = () => {
       const razorKey =
         orderData?.key || orderData?.key_id || import.meta.env.VITE_RAZORPAY_KEY_ID || "";
 
-      if (!mockInterviewId || !orderId) {
+      if (!orderId) {
         throw new Error("Booking created, but payment order details were missing.");
       }
 
@@ -663,7 +670,6 @@ const TakeMockInterviewPage = () => {
       setPaying(false);
     }
   };
-
   return (
     <div className="min-h-screen bg-[#F0F0F0] font-['Baloo_2']">
       <DashNav heading="Take Mock Interview" />
