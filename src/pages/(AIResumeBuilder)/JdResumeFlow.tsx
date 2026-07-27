@@ -108,6 +108,7 @@ function normalizeJdData(raw: JdResumeData): JdResumeData {
 interface JdResumeFlowProps {
   sessionId: string;
   token: string;
+  initialJdText?: string;
   onComplete: (data: JdResumeData) => void;
 }
 
@@ -377,26 +378,12 @@ export default function JdResumeFlow({ sessionId, token, onComplete }: JdResumeF
                 <Field label="End Date">
                   <input
                     type="date"
-                    disabled={!!p.currently_working}
                     className={fieldClass}
                     value={p.end_date || ""}
                     onChange={(e) => updateProject(i, { end_date: e.target.value })}
                   />
                 </Field>
               </div>
-              <label className="flex items-center gap-2 text-xs text-gray-500">
-                <input
-                  type="checkbox"
-                  checked={!!p.currently_working}
-                  onChange={(e) =>
-                    updateProject(i, {
-                      currently_working: e.target.checked,
-                      end_date: e.target.checked ? null : p.end_date,
-                    })
-                  }
-                />
-                Currently working on this
-              </label>
               <Field label="Description">
                 <textarea
                   rows={4}
