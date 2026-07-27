@@ -119,7 +119,7 @@ function normalizeJdData(raw: JdResumeData): JdResumeData {
     links: raw.links || [],
   };
 }
-
+//testign
 interface JdResumeFlowProps {
   sessionId: string;
   token: string;

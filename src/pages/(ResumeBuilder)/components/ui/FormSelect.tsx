@@ -26,7 +26,6 @@ export const FormSelect: React.FC<FormSelectProps> = ({
       {label && (
         <label className="text-xs text-gray-600 font-medium">
           {label}
-          {required && <span className="text-red-500 ml-0.5">*</span>}
         </label>
       )}
       <select
