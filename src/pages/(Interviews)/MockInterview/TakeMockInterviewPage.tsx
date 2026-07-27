@@ -1092,7 +1092,7 @@ const TakeMockInterviewPage = () => {
                       className="inline-flex items-center gap-1 rounded-full bg-[#FFF0E3] px-3 py-1 text-xs font-semibold text-[#F26D3A]"
                     >
                       {skill}
-                      <X size={12} />
+                      {/* <X size={12} /> */}
                     </span>
                   ))
                 ) : (
