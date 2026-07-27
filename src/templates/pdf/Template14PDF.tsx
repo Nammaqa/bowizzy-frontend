@@ -222,12 +222,19 @@ const Template14PDF: React.FC<Template14PDFProps> = ({ data, primaryColor = '#11
           <View style={{ marginTop: 8 }}><Text style={{ fontSize: 10, color: '#2b2a2a' }}>{skillsLinks.skills.filter((s: any) => s.enabled && s.skillName).map((s: any) => s.skillName).join(', ')}</Text></View>
         </>)}
 
-        {certifications.some((c: any) => c.enabled && c.certificateTitle) && (<>
+        {certifications.some((c: any) => c.enabled && (c.certificateTitle || c.providedBy)) && (<>
           <View style={{ marginTop: 16 }}>
             <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>CERTIFICATIONS</Text>
             <View style={{ height: 1.5, backgroundColor: primaryColor, width: '100%', marginTop: 4, marginBottom: 0 }} />
           </View>
-          <View style={{ marginTop: 8 }}><Text style={{ fontSize: 10, color: '#2b2a2a' }}>{certifications.filter((c: any) => c.enabled && c.certificateTitle).map((c: any) => c.certificateTitle).join(', ')}</Text></View>
+          <View style={{ marginTop: 8, flexDirection: 'column' }}>
+            {certifications.filter((c: any) => c.enabled && (c.certificateTitle || c.providedBy)).map((c: any, i: number) => (
+              <View key={i} style={{ marginBottom: 6 }}>
+                {c.certificateTitle ? <Text style={{ fontSize: 10, color: '#111827', fontFamily: pdfFontFamilyBold }}>{c.certificateTitle}</Text> : null}
+                {c.providedBy ? <Text style={{ fontSize: 9, color: '#2b2a2a', marginTop: 1 }}>Provided by: {c.providedBy}</Text> : null}
+              </View>
+            ))}
+          </View>
         </>)}
 
         {/* Footer */}

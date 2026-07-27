@@ -56,7 +56,7 @@ const PERSONAL_DETAIL_FIELDS = [
   "dateOfBirth",
 ];
 
-const CURRENT_LOCATION_FIELDS = ["address", "city", "pincode", "nationality"];
+const CURRENT_LOCATION_FIELDS = ["address", "country", "state", "city", "pincode", "nationality"];
 
 const MAX_ADDRESS_LENGTH = 250;
 const MAX_CITY_LENGTH = 60;
@@ -408,13 +408,21 @@ export default function PersonalDetailsForm({
         }
         break;
 
+      case "country":
+        if (!trimmedValue) {
+          error = "Country is required";
+        }
+        break;
+
+      case "state":
+        if (!trimmedValue) {
+          error = "State is required";
+        }
+        break;
+
       case "city":
         if (!trimmedValue) {
           error = "City is required";
-        } else if (value.length > MAX_CITY_LENGTH) {
-          error = "Maximum 60 characters allowed";
-        } else if (!/^[A-Za-z\s.'-]+$/.test(trimmedValue)) {
-          error = "Only letters allowed";
         }
         break;
 
@@ -1533,7 +1541,11 @@ export default function PersonalDetailsForm({
                       name="country"
                       value={formData.country}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
+                      aria-invalid={!!errors.country}
+                      className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8 ${errors.country
+                        ? "border-red-500 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-orange-400"
+                        }`}
                       disabled={loadingCountries}
                     >
                       <option value="">{loadingCountries ? "Loading..." : "Select Country"}</option>
@@ -1543,6 +1555,9 @@ export default function PersonalDetailsForm({
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
+                  {errors.country && (
+                    <p className="mt-1 text-xs text-red-500">{errors.country}</p>
+                  )}
                 </div>
 
                 <div>
@@ -1554,7 +1569,11 @@ export default function PersonalDetailsForm({
                       name="state"
                       value={formData.state}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
+                      aria-invalid={!!errors.state}
+                      className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8 ${errors.state
+                        ? "border-red-500 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-orange-400"
+                        }`}
                       disabled={loadingStates || !formData.country}
                     >
                       <option value="">{loadingStates ? "Loading..." : "Select State"}</option>
@@ -1564,6 +1583,9 @@ export default function PersonalDetailsForm({
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
+                  {errors.state && (
+                    <p className="mt-1 text-xs text-red-500">{errors.state}</p>
+                  )}
                 </div>
 
                 <div>

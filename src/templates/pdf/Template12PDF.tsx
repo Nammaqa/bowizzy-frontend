@@ -296,7 +296,16 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
           <View style={{ height: 1, backgroundColor: '#333', width: '100%', marginVertical: 12 }} />
           <View style={styles.grid}>
             <View style={styles.leftCol}><Text style={{ ...styles.sectionHeading, fontSize: 10, fontFamily: pdfFontFamilyBold, color: primaryColor }}>CERTIFICATIONS</Text></View>
-            <View style={styles.rightCol}><Text style={{ color: '#2b2a2a' }}>{certifications.filter((c: any) => c.enabled && c.certificateTitle).map((c: any) => c.certificateTitle).join(', ')}</Text></View>
+            <View style={styles.rightCol}>
+              <View style={{ flexDirection: 'column' }}>
+                {certifications.filter((c: any) => c.enabled && (c.certificateTitle || c.providedBy)).map((c: any, i: number) => (
+                  <View key={i} style={{ marginBottom: 6 }}>
+                    {c.certificateTitle ? <Text style={{ color: '#111827', fontFamily: pdfFontFamilyBold }}>{c.certificateTitle}</Text> : null}
+                    {c.providedBy ? <Text style={{ color: '#2b2a2a', fontSize: 9, marginTop: 1 }}>Provided by: {c.providedBy}</Text> : null}
+                  </View>
+                ))}
+              </View>
+            </View>
           </View>
         </>)}
 

@@ -209,7 +209,14 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
           <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '16px', padding: '0 8px' }}>
             <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: primaryColor, fontWeight: 700 }}>Certifications</div>
             <div>
-              <div style={{ color: '#2b2a2a' }}>{certifications.filter(c => c.enabled && c.certificateTitle).map(c => c.certificateTitle).join(', ')}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, color: '#2b2a2a' }}>
+                {certifications.filter(c => c.enabled && (c.certificateTitle || c.providedBy)).map((c, i) => (
+                  <div key={i} style={{ lineHeight: 1.4 }}>
+                    {c.certificateTitle && <div style={{ fontWeight: 700, color: '#111827' }}>{c.certificateTitle}</div>}
+                    {c.providedBy && <div style={{ fontSize: 11, color: '#2b2a2a' }}>Provided by: {c.providedBy}</div>}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </>)}
