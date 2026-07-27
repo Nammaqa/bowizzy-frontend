@@ -250,13 +250,20 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
             </div>
           </>)}
 
-          {certifications.some(c => c.enabled && c.certificateTitle) && (<>
+          {certifications.some(c => c.enabled && (c.certificateTitle || c.providedBy)) && (<>
             <div style={{ gridColumn: '1 / -1', marginTop: 12 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: primaryColor, fontWeight: 700 }}>CERTIFICATIONS</div>
               <div style={{ height: 1, background: '#cfcfcf', marginTop: 0, marginBottom: 0, width: '100%' }} />
             </div>
             <div style={{ gridColumn: '1 / -1', marginTop: 0 }}>
-              <div style={{ color: '#2b2a2a' }}>{certifications.filter(c => c.enabled && c.certificateTitle).map(c => c.certificateTitle).join(', ')}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, color: '#2b2a2a' }}>
+                {certifications.filter(c => c.enabled && (c.certificateTitle || c.providedBy)).map((c, i) => (
+                  <div key={i} style={{ lineHeight: 1.4 }}>
+                    {c.certificateTitle && <div style={{ fontWeight: 700, color: '#111827' }}>{c.certificateTitle}</div>}
+                    {c.providedBy && <div style={{ fontSize: 11, color: '#2b2a2a' }}>Provided by: {c.providedBy}</div>}
+                  </div>
+                ))}
+              </div>
             </div>
           </>)}
         </section>

@@ -199,12 +199,19 @@ const Template14Display: React.FC<Template14DisplayProps> = ({
             <div style={{ marginTop: 8, color: '#2b2a2a' }}>{skillsLinks.skills.filter(s => s.enabled && s.skillName).map((s, i) => <span key={i} style={{ marginRight: 6 }}>{s.skillName}{i < skillsLinks.skills.filter(s => s.enabled && s.skillName).length - 1 ? ',' : ''}</span>)}</div>
           </>)}
 
-          {certifications.some(c => c.enabled && c.certificateTitle) && (<>
+          {certifications.some(c => c.enabled && (c.certificateTitle || c.providedBy)) && (<>
             <div style={{ marginTop: 16 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: primaryColor, fontWeight: 700 }}>Certifications</div>
               <div style={{ height: 1.5, background: '#999', marginTop: 4, width: '100%' }} />
             </div>
-            <div style={{ marginTop: 8, color: '#2b2a2a' }}>{certifications.filter(c => c.enabled && c.certificateTitle).map((c, i) => <span key={i} style={{ marginRight: 6 }}>{c.certificateTitle}{i < certifications.filter(c => c.enabled && c.certificateTitle).length - 1 ? ',' : ''}</span>)}</div>
+            <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6, color: '#2b2a2a' }}>
+              {certifications.filter(c => c.enabled && (c.certificateTitle || c.providedBy)).map((c, i) => (
+                <div key={i} style={{ lineHeight: 1.4 }}>
+                  {c.certificateTitle && <div style={{ fontWeight: 700, color: '#111827' }}>{c.certificateTitle}</div>}
+                  {c.providedBy && <div style={{ fontSize: 11, color: '#2b2a2a' }}>Provided by: {c.providedBy}</div>}
+                </div>
+              ))}
+            </div>
           </>)}
 
         </section>
