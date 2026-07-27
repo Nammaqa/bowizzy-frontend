@@ -78,6 +78,32 @@ const isInterviewerFeedbackGiven = (b: MockInterviewBooking) =>
   String(b?.interviewer_feedback_given).toLowerCase() === "true" ||
   String(b?.interviewerFeedbackGiven).toLowerCase() === "true";
 
+const pendingPaymentMarkers = [
+  "pending",
+  "unpaid",
+  "not paid",
+  "not_paid",
+  "notpaid",
+  "awaiting",
+  "initiated",
+  "incomplete",
+];
+
+/**
+ * True when the booking's payment never went through (abandoned Razorpay checkout).
+ * These are hidden from every tab. A missing/blank payment status is NOT treated as
+ * pending — the list endpoint may simply not return the field.
+ */
+const isPaymentPending = (b: MockInterviewBooking) => {
+  const status = String(
+    b?.payment_status ?? b?.paymentStatus ?? b?.payment?.status ?? ""
+  )
+    .toLowerCase()
+    .trim();
+  if (!status) return false;
+  return pendingPaymentMarkers.some((marker) => status.includes(marker));
+};
+
 /** True for ANY cancelled booking — used to strip them from Upcoming & Past. */
 const isCancelledBooking = (b: MockInterviewBooking) =>
   String(b?.interview_status || "").toLowerCase().includes("cancel");
@@ -226,10 +252,12 @@ const MockInterviewBookingsPage = () => {
 
   const now              = new Date();
   const { userId: currentUserId } = getAuthUser();
+  // Payment-pending bookings never surface — in any tab, count, or empty state.
+  const paidBookings     = bookings.filter((b) => !isPaymentPending(b));
   // Exclude ALL cancelled bookings from Upcoming & Past tabs.
-  const activeBookings   = bookings.filter((b) => !isCancelledBooking(b));
+  const activeBookings   = paidBookings.filter((b) => !isCancelledBooking(b));
   // Cancelled tab: only show bookings the current user (candidate) cancelled.
-  const cancelledBookings = bookings.filter((b) => isCancelledByUser(b, currentUserId));
+  const cancelledBookings = paidBookings.filter((b) => isCancelledByUser(b, currentUserId));
   const pastBookings     = activeBookings.filter((b) => isPastBooking(b, now));
   const upcomingBookings = activeBookings.filter((b) => !isPastBooking(b, now));
   const visibleBookings =
@@ -418,7 +446,7 @@ const MockInterviewBookingsPage = () => {
         )}
 
         {/* ── Tabs ──────────────────────────────────────────────────────── */}
-        {!loading && bookings.length > 0 && (
+        {!loading && paidBookings.length > 0 && (
           <div className="mb-4 flex gap-1.5 rounded-xl bg-white p-1 shadow-sm border border-gray-100">
             {(["upcoming", "past", "cancelled"] as Tab[]).map((tab) => {
               const count =
@@ -459,7 +487,7 @@ const MockInterviewBookingsPage = () => {
             <RefreshCw size={22} className="mx-auto mb-3 animate-spin text-[#F26D3A]" />
             <p className="text-sm font-medium text-gray-400">Loading your bookings…</p>
           </div>
-        ) : bookings.length === 0 ? (
+        ) : paidBookings.length === 0 ? (
           <div className="rounded-2xl bg-white px-6 py-12 text-center shadow-sm border border-gray-100">
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-orange-50">
               <CalendarDays size={22} className="text-[#F26D3A]" />
