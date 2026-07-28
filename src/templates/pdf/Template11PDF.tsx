@@ -145,20 +145,142 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
   const pdfFontFamily = getPdfFontFamily(fontFamily);
   const pdfFontFamilyBold = getPdfFontFamilyBold(fontFamily);
 
-  const htmlToPlainText = (html?: string) => {
-    if (!html) return '';
-    const sanitized = DOMPurify.sanitize(html || '');
-    const withBreaks = sanitized.replace(/<br\s*\/?/gi, '\n').replace(/<\/p>|<\/li>/gi, '\n');
-    try {
-      if (typeof document !== 'undefined') {
-        const tmp = document.createElement('div');
-        tmp.innerHTML = withBreaks;
-        return (tmp.textContent || tmp.innerText || '').trim();
-      }
-    } catch (e) {
-      return withBreaks.replace(/<[^>]+>/g, '').trim();
+  // Pick the standard PDF font matching the requested bold/italic combination.
+  // react-pdf ships Times and Helvetica in all four variants.
+  const getPdfFontVariant = (bold: boolean, italic: boolean) => {
+    if (pdfFontFamily === 'Helvetica') {
+      if (bold && italic) return 'Helvetica-BoldOblique';
+      if (bold) return 'Helvetica-Bold';
+      if (italic) return 'Helvetica-Oblique';
+      return 'Helvetica';
     }
-    return withBreaks.replace(/<[^>]+>/g, '').trim();
+    if (bold && italic) return 'Times-BoldItalic';
+    if (bold) return 'Times-Bold';
+    if (italic) return 'Times-Italic';
+    return 'Times-Roman';
+  };
+
+  const decodeHtmlEntities = (value: string) =>
+    value
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#0?39;/g, "'")
+      .replace(/&apos;/g, "'")
+      .replace(/&amp;/g, '&'); // keep last so "&amp;lt;" doesn't double-decode
+
+  const stripTags = (html: string) => decodeHtmlEntities(html.replace(/<[^>]+>/g, '')).trim();
+
+  // Tags that may carry inline formatting are kept; every other tag is dropped.
+  const INLINE_TAG_PATTERN = 'b|strong|i|em|u|span|font';
+  const stripNonInlineTags = (html: string) =>
+    html.replace(new RegExp(`<(?!\\/?(?:${INLINE_TAG_PATTERN})\\b)[^>]*>`, 'gi'), '');
+
+  const VOID_TAGS = new Set(['br', 'img', 'hr', 'input', 'meta', 'link', 'source']);
+
+  // Some editors emit <span style="font-weight:700"> instead of <b>.
+  const readStyleFlags = (rawTag: string) => {
+    const styleMatch =
+      rawTag.match(/style\s*=\s*"([^"]*)"/i) || rawTag.match(/style\s*=\s*'([^']*)'/i);
+    const css = (styleMatch?.[1] || '').toLowerCase();
+    return {
+      bold: /font-weight\s*:\s*(bold(er)?|[6-9]00)/.test(css),
+      italic: /font-style\s*:\s*italic/.test(css),
+      underline: /text-decoration[^:]*:[^;]*underline/.test(css),
+    };
+  };
+
+  type InlineSegment = { text: string; bold: boolean; italic: boolean; underline: boolean };
+
+  /** Split a fragment of inline HTML into runs that each carry their own styling. */
+  const parseInlineSegments = (html: string): InlineSegment[] => {
+    const segments: InlineSegment[] = [];
+    const stack: { tag: string; bold: boolean; italic: boolean; underline: boolean }[] = [];
+    const activeFlags = () => ({
+      bold: stack.some((entry) => entry.bold),
+      italic: stack.some((entry) => entry.italic),
+      underline: stack.some((entry) => entry.underline),
+    });
+
+    const pushText = (raw: string) => {
+      if (!raw) return;
+      const text = decodeHtmlEntities(raw);
+      if (!text) return;
+      segments.push({ text, ...activeFlags() });
+    };
+
+    const tagRegex = /<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/g;
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = tagRegex.exec(html)) !== null) {
+      pushText(html.slice(lastIndex, match.index));
+
+      const rawTag = match[0];
+      const tag = match[1].toLowerCase();
+      const isClosing = rawTag.startsWith('</');
+
+      if (isClosing) {
+        for (let i = stack.length - 1; i >= 0; i--) {
+          if (stack[i].tag === tag) {
+            stack.splice(i, 1);
+            break;
+          }
+        }
+      } else if (!VOID_TAGS.has(tag) && !/\/>\s*$/.test(rawTag)) {
+        const flags = readStyleFlags(rawTag);
+        stack.push({
+          tag,
+          bold: flags.bold || tag === 'b' || tag === 'strong',
+          italic: flags.italic || tag === 'i' || tag === 'em',
+          underline: flags.underline || tag === 'u',
+        });
+      }
+
+      lastIndex = tagRegex.lastIndex;
+    }
+
+    pushText(html.slice(lastIndex));
+    return segments;
+  };
+
+  /** Render one line of inline HTML as styled <Text> runs. */
+  const renderInlineRuns = (html: string) =>
+    parseInlineSegments(html).map((segment, idx) => (
+      <Text
+        key={idx}
+        style={{
+          fontFamily: getPdfFontVariant(segment.bold, segment.italic),
+          ...(segment.underline ? { textDecoration: 'underline' as const } : {}),
+        }}
+      >
+        {segment.text}
+      </Text>
+    ));
+
+  /** Break rich text into bullet items (from <li>) or plain lines, keeping inline tags. */
+  const splitIntoBlocks = (sanitized: string): { html: string; bullet: boolean }[] => {
+    const liRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
+    const items: { html: string; bullet: boolean }[] = [];
+    let match: RegExpExecArray | null;
+
+    while ((match = liRegex.exec(sanitized)) !== null) {
+      const inner = stripNonInlineTags(match[1] || '').trim();
+      if (stripTags(inner)) items.push({ html: inner, bullet: true });
+    }
+
+    if (items.length > 0) return items;
+
+    const withBreaks = sanitized
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/(p|div|h[1-6])>/gi, '\n');
+
+    return stripNonInlineTags(withBreaks)
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => stripTags(line))
+      .map((html) => ({ html, bullet: false }));
   };
 
   // Build contact parts including optional links — respects enabled flags
@@ -175,50 +297,50 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
     return parts.filter(Boolean);
   })();
 
-  const renderBulletedParagraph = (html?: string, textStyle?: any) => {
+  /**
+   * Renders rich text (bold / italic / underline / bullets) authored in the
+   * resume builder's editor. Inline formatting is preserved by emitting one
+   * styled <Text> run per formatting change.
+   */
+  const renderBulletedParagraph = (
+    html?: string,
+    textStyle?: { fontSize?: number; lineHeight?: number; color?: string }
+  ) => {
     if (!html) return null;
     const sanitized = DOMPurify.sanitize(html || '');
+    const blocks = splitIntoBlocks(sanitized);
+    if (blocks.length === 0) return null;
 
-    // Try to extract list items first
-    const liRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
-    const items: string[] = [];
-    let m: RegExpExecArray | null;
-    while ((m = liRegex.exec(sanitized)) !== null) {
-      let inner = m[1] || '';
-      inner = inner.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').trim();
-      if (inner) items.push(inner);
-    }
+    const fontSize = textStyle?.fontSize ?? 10;
+    const color = textStyle?.color ?? '#000000';
+    const isBulleted = blocks[0].bullet;
+    const lineHeight = textStyle?.lineHeight ?? (isBulleted ? 1.3 : 1.35);
 
-    // If we found list items, render them as bullets
-    if (items.length > 0) {
+    if (isBulleted) {
       return (
         <View style={{ marginTop: 6, width: '100%' }}>
-          {items.map((it, idx) => (
-            <View key={idx} style={{ flexDirection: 'row', marginTop: idx > 0 ? 4 : 0, alignItems: 'flex-start', width: '100%' }}>
-              <Text style={{ width: 10, color: '#000000', fontSize: 10, flexShrink: 0 }}>•</Text>
-              <Text style={{ flex: 1, color: '#000000', fontSize: 10, lineHeight: 1.3, textAlign: 'justify' }}>{it}</Text>
+          {blocks.map((block, idx) => (
+            <View
+              key={idx}
+              style={{ flexDirection: 'row', marginTop: idx > 0 ? 4 : 0, alignItems: 'flex-start', width: '100%' }}
+            >
+              <Text style={{ width: 10, color, fontSize, flexShrink: 0 }}>•</Text>
+              <Text style={{ flex: 1, color, fontSize, lineHeight, textAlign: 'justify', fontFamily: pdfFontFamily }}>
+                {renderInlineRuns(block.html)}
+              </Text>
             </View>
           ))}
         </View>
       );
     }
 
-    // Fallback: convert paragraphs and line breaks into lines
-    let text = sanitized
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<\/p>/gi, '\n')
-      .replace(/<[^>]+>/g, '')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .trim();
-
-    const lines = text.split('\n').map((l: string) => l.trim()).filter(Boolean);
-
     return (
       <View style={{ marginTop: 6, width: '100%' }}>
-        {lines.map((line: string, idx: number) => (
+        {blocks.map((block, idx) => (
           <View key={idx} style={{ marginTop: idx > 0 ? 6 : 0, width: '100%' }}>
-            <Text style={{ color: '#000000', fontSize: 10, lineHeight: 1.35, textAlign: 'justify' }}>{line}</Text>
+            <Text style={{ color, fontSize, lineHeight, textAlign: 'justify', fontFamily: pdfFontFamily }}>
+              {renderInlineRuns(block.html)}
+            </Text>
           </View>
         ))}
       </View>
@@ -330,9 +452,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
             <View style={{ marginBottom: 12 }} minPresenceAhead={60}>
               <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>CAREER OBJECTIVE</Text>
               <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 6 }} />
-              <Text style={{ fontSize: 11, color: '#000000', fontFamily: pdfFontFamily, lineHeight: 1.6, textAlign: 'justify' }}>
-                {htmlToPlainText(personal.aboutCareerObjective)}
-              </Text>
+              {renderBulletedParagraph(personal.aboutCareerObjective, { fontSize: 11, lineHeight: 1.6 })}
             </View>
           )}
 
@@ -357,7 +477,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
                   </View>
                   {w.description ? (
                     <View style={{ width: '100%' }}>
-                      {renderBulletedParagraph(w.description, { fontSize: 11, color: '#000000' })}
+                      {renderBulletedParagraph(w.description)}
                     </View>
                   ) : null}
                 </View>
@@ -468,7 +588,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
                   {/* Description */}
                   {proj.description && proj.description.replace(/<[^>]*>/g, '').trim() ? (
                     <View style={{ marginBottom: 4 }}>
-                      {renderBulletedParagraph(proj.description, { fontSize: 11, color: '#000000' })}
+                      {renderBulletedParagraph(proj.description)}
                     </View>
                   ) : null}
                   {/* Roles & Responsibilities */}
@@ -476,7 +596,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
                     <View style={{ marginTop: 3 }}>
                       <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', marginBottom: 2 }}>Role:</Text>
                       <View style={{ marginLeft: 8 }}>
-                        {renderBulletedParagraph(proj.rolesResponsibilities, { fontSize: 11, color: '#000000' })}
+                        {renderBulletedParagraph(proj.rolesResponsibilities)}
                       </View>
                     </View>
                   ) : null}
@@ -498,11 +618,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
                     <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{cert.certificateTitle}</Text>
                     <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>{cert.date}</Text>
                   </View>
-                  {cert.description ? (
-                    <Text style={{ color: '#000000', fontFamily: pdfFontFamily, marginTop: 3, textAlign: 'justify' }}>
-                      {htmlToPlainText(cert.description)}
-                    </Text>
-                  ) : null}
+                  {cert.description ? renderBulletedParagraph(cert.description) : null}
                 </View>
               ))}
             </View>
