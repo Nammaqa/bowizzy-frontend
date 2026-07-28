@@ -71,7 +71,7 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [creditsToApply, setCreditsToApply] = useState(0);
   const [useCredits, setUseCredits] = useState(false);
-  const [usePurchasedCredits, setUsePurchasedCredits] = useState(true);
+  const [usePurchasedCredits, setUsePurchasedCredits] = useState(false);
   const [payLoading, setPayLoading] = useState(false);
   const [showBreakdown, setShowBreakdown] = useState(true);
 
@@ -279,9 +279,14 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
                     </div>
                     {/* Toggle */}
                     <button
-                      onClick={() => setUseCredits(v => !v)}
-                      disabled={usePurchasedCredits && availablePurchasedCredits > 0}
-                      className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${useCredits ? 'bg-orange-500' : 'bg-gray-300'} ${(usePurchasedCredits && availablePurchasedCredits > 0) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      onClick={() => {
+                        const nextValue = !useCredits;
+                        setUseCredits(nextValue);
+                        if (nextValue) {
+                          setUsePurchasedCredits(false);
+                        }
+                      }}
+                      className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${useCredits ? 'bg-orange-500' : 'bg-gray-300'}`}
                       style={{ boxShadow: useCredits ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : 'inset 0 1px 3px rgba(0,0,0,0.1)' }}
                     >
                       <span
@@ -341,10 +346,11 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
                 </div>
                 <button
                   onClick={() => {
-                    setUsePurchasedCredits(v => {
-                      if (!v) setUseCredits(false);
-                      return !v;
-                    });
+                    const nextValue = !usePurchasedCredits;
+                    setUsePurchasedCredits(nextValue);
+                    if (nextValue) {
+                      setUseCredits(false);
+                    }
                   }}
                   disabled={availablePurchasedCredits === 0}
                   className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${(usePurchasedCredits && availablePurchasedCredits > 0) ? 'bg-orange-500' : 'bg-gray-300'} ${availablePurchasedCredits === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
