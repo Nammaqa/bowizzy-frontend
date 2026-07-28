@@ -16,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 import {
   cancelMockInterviewBooking,
   getMockInterviewBookings,
+  isPaymentPendingBooking,
 } from "./mockInterviewService";
 
 type MockInterviewBooking = Record<string, any>;
@@ -77,32 +78,6 @@ const isInterviewerFeedbackGiven = (b: MockInterviewBooking) =>
   b?.interviewerFeedbackGiven === true ||
   String(b?.interviewer_feedback_given).toLowerCase() === "true" ||
   String(b?.interviewerFeedbackGiven).toLowerCase() === "true";
-
-const pendingPaymentMarkers = [
-  "pending",
-  "unpaid",
-  "not paid",
-  "not_paid",
-  "notpaid",
-  "awaiting",
-  "initiated",
-  "incomplete",
-];
-
-/**
- * True when the booking's payment never went through (abandoned Razorpay checkout).
- * These are hidden from every tab. A missing/blank payment status is NOT treated as
- * pending — the list endpoint may simply not return the field.
- */
-const isPaymentPending = (b: MockInterviewBooking) => {
-  const status = String(
-    b?.payment_status ?? b?.paymentStatus ?? b?.payment?.status ?? ""
-  )
-    .toLowerCase()
-    .trim();
-  if (!status) return false;
-  return pendingPaymentMarkers.some((marker) => status.includes(marker));
-};
 
 /** True for ANY cancelled booking — used to strip them from Upcoming & Past. */
 const isCancelledBooking = (b: MockInterviewBooking) =>
@@ -253,7 +228,7 @@ const MockInterviewBookingsPage = () => {
   const now              = new Date();
   const { userId: currentUserId } = getAuthUser();
   // Payment-pending bookings never surface — in any tab, count, or empty state.
-  const paidBookings     = bookings.filter((b) => !isPaymentPending(b));
+  const paidBookings     = bookings.filter((b) => !isPaymentPendingBooking(b));
   // Exclude ALL cancelled bookings from Upcoming & Past tabs.
   const activeBookings   = paidBookings.filter((b) => !isCancelledBooking(b));
   // Cancelled tab: only show bookings the current user (candidate) cancelled.

@@ -21,6 +21,7 @@ import {
   cancelMockInterviewBooking,
   fetchAvailableMockInterviews,
   getAcceptedMockInterviews,
+  isPaymentPendingBooking,
   isVerifiedInterviewerResponse,
   validateInterviewer,
 } from "./mockInterviewService";
@@ -178,6 +179,8 @@ const isAvailableInterviewActive = (interview: any, currentDate: Date) => {
   const status = String(interview?.interview_status || interview?.status || "").toLowerCase();
   const startDate = getInterviewStartDate(interview);
 
+  // An unpaid booking is never offered to interviewers.
+  if (isPaymentPendingBooking(interview)) return false;
   if (status === "expired") return false;
   return startDate ? startDate > currentDate : true;
 };

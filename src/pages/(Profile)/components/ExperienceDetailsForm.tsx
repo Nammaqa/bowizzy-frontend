@@ -1264,17 +1264,6 @@ export default function ExperienceDetailsForm({
               </div>
             </div>
 
-            {jobRoleFeedback && (
-              <div
-                className={`p-4 text-sm ${jobRoleFeedback.includes("successfully")
-                    ? "bg-green-50 text-green-700 border border-green-200"
-                    : "bg-red-50 text-red-700 border border-red-200"
-                  }`}
-              >
-                {jobRoleFeedback}
-              </div>
-            )}
-
             {jobRoleExpanded && (
               <div className="p-4 sm:p-5 md:p-6">
                 {isOptional && (
@@ -1344,6 +1333,16 @@ export default function ExperienceDetailsForm({
                 </div>
 
                 <div className="flex items-center justify-end gap-2 mt-8 pt-4 border-t border-gray-200">
+                  {jobRoleFeedback && (
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full ${jobRoleFeedback.includes("successfully")
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                        }`}
+                    >
+                      {jobRoleFeedback}
+                    </span>
+                  )}
                   {jobRoleChanged && (
                     <button
                       type="button"
