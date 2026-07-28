@@ -352,7 +352,12 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
                     <button
                       onClick={() => {
                         if (availablePurchasedCredits > 0) {
-                          setUsePurchasedCredits(v => !v);
+                          const nextValue = !usePurchasedCredits;
+                          setUsePurchasedCredits(nextValue);
+                          if (nextValue) {
+                            setUseCredits(false);
+                            setCreditsToApply(0);
+                          }
                         }
                       }}
                       disabled={availablePurchasedCredits === 0}
@@ -369,80 +374,92 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
                 </div>
 
                 {/* Bonus Credits Section */}
-                {!usePurchasedCredits && (
-                  availableBonusCredits > 0 ? (
-                    <div
-                      className="rounded-2xl overflow-hidden border transition-all duration-200"
-                      style={{
-                        borderColor: useCredits ? '#F97316' : '#e5e7eb',
-                        background: useCredits ? 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)' : '#fafafa',
-                      }}
-                    >
-                      <div className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2.5">
-                            <div
-                              className="w-9 h-9 rounded-xl flex items-center justify-center"
-                              style={{ background: useCredits ? '#F97316' : '#f3f4f6' }}
-                            >
-                              <Sparkles className={`w-4 h-4 ${useCredits ? 'text-white' : 'text-gray-400'}`} />
-                            </div>
-                            <div>
-                              <p className="text-sm font-semibold text-gray-800">
-                                You have <span className="text-orange-500">{availableBonusCredits} bonus credits</span>
-                              </p>
-                              <p className="text-xs text-gray-500">1 credit = ₹{CREDIT_VALUE} · Max {MAX_CREDITS_APPLICABLE} applicable</p>
-                            </div>
-                          </div>
-                          {/* Toggle */}
-                          <button
-                            onClick={() => setUseCredits(v => !v)}
-                            className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${useCredits ? 'bg-orange-500' : 'bg-gray-300'}`}
-                            style={{
-                              boxShadow: useCredits ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : 'inset 0 1px 3px rgba(0,0,0,0.1)',
-                            }}
+                {availableBonusCredits > 0 ? (
+                  <div
+                    className="rounded-2xl overflow-hidden border transition-all duration-200"
+                    style={{
+                      borderColor: useCredits ? '#F97316' : '#e5e7eb',
+                      background: useCredits ? 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)' : '#fafafa',
+                      opacity: usePurchasedCredits ? 0.75 : 1,
+                    }}
+                  >
+                    <div className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div
+                            className="w-9 h-9 rounded-xl flex items-center justify-center"
+                            style={{ background: useCredits ? '#F97316' : '#f3f4f6' }}
                           >
-                            <span
-                              className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-250 pointer-events-none ${useCredits ? 'translate-x-6' : 'translate-x-0'}`}
-                            />
-                          </button>
-                        </div>
-
-                        {/* Credit slider */}
-                        {useCredits && (
-                          <div className="mt-4 pt-4 border-t border-orange-200">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-xs font-medium text-gray-600">Credits to apply</span>
-                              <span className="text-sm font-bold text-orange-600">
-                                {creditsToApply} credits → −₹{(creditsToApply * CREDIT_VALUE).toFixed(2)}
-                              </span>
-                            </div>
-                            <input
-                              type="range"
-                              min={0}
-                              max={maxApplicable}
-                              value={creditsToApply}
-                              onChange={e => setCreditsToApply(Number(e.target.value))}
-                              className="w-full h-2 rounded-full appearance-none cursor-pointer"
-                              style={{
-                                background: `linear-gradient(to right, #F97316 0%, #F97316 ${(maxApplicable > 0 ? (creditsToApply / maxApplicable) * 100 : 0)}%, #e5e7eb ${(maxApplicable > 0 ? (creditsToApply / maxApplicable) * 100 : 0)}%, #e5e7eb 100%)`,
-                                accentColor: '#F97316',
-                              }}
-                            />
-                            <div className="flex justify-between mt-1">
-                              <span className="text-xs text-gray-400">0</span>
-                              <span className="text-xs text-gray-400">{maxApplicable}</span>
-                            </div>
+                            <Sparkles className={`w-4 h-4 ${useCredits ? 'text-white' : 'text-gray-400'}`} />
                           </div>
-                        )}
+                          <div>
+                            <p className="text-sm font-semibold text-gray-800">
+                              You have <span className="text-orange-500">{availableBonusCredits} bonus credits</span>
+                            </p>
+                            <p className="text-xs text-gray-500">1 credit = ₹{CREDIT_VALUE} · Max {MAX_CREDITS_APPLICABLE} applicable</p>
+                          </div>
+                        </div>
+                        {/* Toggle */}
+                        <button
+                          onClick={() => {
+                            const nextValue = !useCredits;
+                            setUseCredits(nextValue);
+                            if (nextValue) {
+                              setUsePurchasedCredits(false);
+                              setCreditsToApply(0);
+                            }
+                          }}
+                          className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${useCredits ? 'bg-orange-500' : 'bg-gray-300'}`}
+                          style={{
+                            boxShadow: useCredits ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : 'inset 0 1px 3px rgba(0,0,0,0.1)',
+                          }}
+                        >
+                          <span
+                            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-250 pointer-events-none ${useCredits ? 'translate-x-6' : 'translate-x-0'}`}
+                          />
+                        </button>
                       </div>
+
+                      {usePurchasedCredits && (
+                        <p className="mt-3 text-xs text-gray-500">
+                          Bonus credits are disabled while purchased credits are being used.
+                        </p>
+                      )}
+
+                      {/* Credit slider */}
+                      {useCredits && !usePurchasedCredits && (
+                        <div className="mt-4 pt-4 border-t border-orange-200">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-medium text-gray-600">Credits to apply</span>
+                            <span className="text-sm font-bold text-orange-600">
+                              {creditsToApply} credits → −₹{(creditsToApply * CREDIT_VALUE).toFixed(2)}
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min={0}
+                            max={maxApplicable}
+                            value={creditsToApply}
+                            onChange={e => setCreditsToApply(Number(e.target.value))}
+                            className="w-full h-2 rounded-full appearance-none cursor-pointer"
+                            style={{
+                              background: `linear-gradient(to right, #F97316 0%, #F97316 ${(maxApplicable > 0 ? (creditsToApply / maxApplicable) * 100 : 0)}%, #e5e7eb ${(maxApplicable > 0 ? (creditsToApply / maxApplicable) * 100 : 0)}%, #e5e7eb 100%)`,
+                              accentColor: '#F97316',
+                            }}
+                          />
+                          <div className="flex justify-between mt-1">
+                            <span className="text-xs text-gray-400">0</span>
+                            <span className="text-xs text-gray-400">{maxApplicable}</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="flex items-center gap-2.5 p-3.5 rounded-2xl bg-gray-50 border border-gray-100">
-                      <Info className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                      <span className="text-sm text-gray-500">You have no bonus credits available.</span>
-                    </div>
-                  )
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2.5 p-3.5 rounded-2xl bg-gray-50 border border-gray-100">
+                    <Info className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <span className="text-sm text-gray-500">You have no bonus credits available.</span>
+                  </div>
                 )}
               </div>
             )}
@@ -683,6 +700,7 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
   }, [isOpen, userId, token]);
 
   const previewContentRef = useRef<HTMLDivElement>(null);
+  const pdfPreviewScrollRef = useRef<HTMLDivElement>(null);
   const [modalPaginatePageCount, setModalPaginatePageCount] = useState<number | null>(null);
   const [modalPaginateCurrentPage, setModalPaginateCurrentPage] = useState<number>(1);
   const modalPaginatedRef = useRef<{ goTo: (i: number) => void; next: () => void; prev: () => void } | null>(null);
@@ -963,6 +981,15 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
+  };
+
+  const scrollPdfPreview = (direction: "up" | "down") => {
+    const container = pdfPreviewScrollRef.current;
+    if (!container) return;
+    container.scrollBy({
+      top: direction === "down" ? container.clientHeight * 0.8 : -container.clientHeight * 0.8,
+      behavior: "smooth",
+    });
   };
 
   const handleSaveAndDownloadPdf = async (paymentAlreadyCompleted = false) => {
@@ -1252,55 +1279,80 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                   )}
                 </div>
               ) : (
-                <div className="flex flex-col flex-1">
+                <div className="flex flex-col flex-1 min-h-0">
                   <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900">Bowizzy Preview</h3>
-                    {pdfUrl && isMobilePreviewDevice() && (
-                      <a
-                        href={pdfUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="px-3 py-1.5 text-xs font-medium text-white bg-blue-500 rounded-full"
-                      >
-                        Open Preview
-                      </a>
-                    )}
-                  </div>
-
-                  <div className="flex-1 overflow-auto bg-gray-100 rounded-lg mb-4">
-                    {/* Premium badge for locked templates */}
-                    {isTemplateLocked && (
-                      <div className="flex flex-col items-center justify-center py-3">
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-lg font-semibold text-gray-900">Bowizzy Preview</h3>
+                      {isTemplateLocked && (
                         <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 shadow-md">
                           <Lock className="w-4 h-4 text-white" />
                           <span className="text-sm font-bold text-white tracking-wide">Premium Resume</span>
                         </div>
-                      </div>
-                    )}
-                    <div className="relative w-full h-full">
-                      <iframe
-                        src={pdfUrl ? (pdfUrl.includes('docs.google.com') ? pdfUrl : `${pdfUrl}#toolbar=0`) : ''}
-                        className="w-full h-full border-none"
-                        title="Resume PDF Preview"
-                      />
-                      {/* Browser PDF viewers isolate their context menu from React.
-                          This shield keeps pointer input out of the viewer so its
-                          Save/Print/Rotate menu cannot be opened. */}
-                      <div
-                        className="absolute left-0 top-0 bottom-0 right-5 z-[5]"
-                        aria-hidden="true"
-                        onContextMenu={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                        }}
-                      />
-                      {/* Overlay to hide Google Docs Viewer "open in new tab" toolbar on mobile */}
-                      {pdfUrl && pdfUrl.includes('docs.google.com') && (
-                        <div
-                          className="absolute top-0 right-0 pointer-events-none"
-                          style={{ width: '60px', height: '50px', background: '#f3f4f6', zIndex: 10 }}
-                        />
                       )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => scrollPdfPreview("up")}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition hover:bg-gray-50"
+                        aria-label="Scroll resume up"
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => scrollPdfPreview("down")}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition hover:bg-gray-50"
+                        aria-label="Scroll resume down"
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+                      {pdfUrl && isMobilePreviewDevice() && (
+                        <a
+                          href={pdfUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-3 py-1.5 text-xs font-medium text-white bg-blue-500 rounded-full"
+                        >
+                          Open Preview
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  <div
+                    ref={pdfPreviewScrollRef}
+                    className="relative flex-1 min-h-0 overflow-y-auto overflow-x-hidden rounded-lg bg-[#262626] mb-4"
+                  >
+                    <div className="flex justify-center px-6 py-4">
+                      <div className="relative shadow-xl">
+                        {DisplayComponent && (
+                          <div className="pointer-events-none select-none">
+                            <DisplayComponent
+                              data={resumeData}
+                              supportsPhoto={template?.supportsPhoto ?? false}
+                              primaryColor={primaryColor}
+                              fontFamily={fontFamily}
+                            />
+                          </div>
+                        )}
+                        <div
+                          className="absolute inset-0 z-10 cursor-default"
+                          aria-hidden="true"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
+                          onMouseDown={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
+                          onContextMenu={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
+                        />
+                      </div>
                     </div>
                   </div>
 
