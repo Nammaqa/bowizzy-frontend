@@ -50,6 +50,44 @@ const HARDCODED_QUESTIONS = [
   "Are these your certificates? Remove any you don't want included or mention any additional certificates.",
 ];
 
+type ChipCategory =
+  | "projects"
+  | "experience"
+  | "education"
+  | "skills"
+  | "links"
+  | "certificates";
+
+/** Which profile section each question reviews. Question 0 reviews nothing. */
+const QUESTION_CATEGORIES: Record<number, ChipCategory> = {
+  1: "projects",
+  2: "experience",
+  3: "education",
+  4: "skills",
+  5: "links",
+  6: "certificates",
+};
+
+/**
+ * Asked instead of the "Are these your …?" question when the profile has
+ * nothing saved for that section — there is nothing to confirm, so we prompt
+ * the user to supply it instead.
+ */
+const EMPTY_SECTION_QUESTIONS: Record<ChipCategory, string> = {
+  projects:
+    "You haven't added any projects to your profile yet. Please add it here so that this section can be generated for your resume.",
+  experience:
+    "You haven't added any work experience to your profile yet. Please add it here so that this section can be generated for your resume.",
+  education:
+    "You haven't added any education details to your profile yet. Please add it here so that this section can be generated for your resume.",
+  skills:
+    "You haven't added any skills to your profile yet. Please add it here so that this section can be generated for your resume.",
+  links:
+    "You haven't added any links to your profile yet. Please add it here so that this section can be generated for your resume.",
+  certificates:
+    "You haven't added any certificates to your profile yet. Please add it here so that this section can be generated for your resume.",
+};
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface SessionAnswers {
@@ -139,11 +177,14 @@ export default function AIBuilder() {
 
   // ── Fetch /resume-data and build chips ───────────────────────────────────
 
-  const fetchAndBuildChips = async (
-    sessionId: string,
-    category: "projects" | "experience" | "education" | "skills" | "links" | "certificates",
-    botMessageId: string
-  ) => {
+  /**
+   * Fetches the profile and maps one section into chips.
+   * Returns [] when the section is genuinely empty, and null when the data
+   * couldn't be fetched — the caller must not treat a failure as "empty".
+   */
+  const fetchCategoryChips = async (
+    category: ChipCategory
+  ): Promise<DataChip[] | null> => {
     const u = JSON.parse(localStorage.getItem("user") || "null");
     const authToken = u?.token;
     const base = (import.meta.env.VITE_API_BASE_URL as string) || "http://localhost:5000";
@@ -152,7 +193,7 @@ export default function AIBuilder() {
       const res = await fetch(`${base}/resume-data`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
-      if (!res.ok) return;
+      if (!res.ok) return null;
       const json = await res.json();
       const data = json.data || json;
 
@@ -238,12 +279,10 @@ export default function AIBuilder() {
         }));
       }
 
-      setChipStates((prev) => ({
-        ...prev,
-        [sessionId]: { chips, messageId: botMessageId },
-      }));
+      return chips;
     } catch (err) {
       console.error("Failed to fetch resume-data for chips", err);
+      return null;
     }
   };
 
@@ -500,15 +539,26 @@ export default function AIBuilder() {
 
       if (nextQIndex < HARDCODED_QUESTIONS.length) {
         // ── More questions remain ───────────────────────────────────────
-        const botMsgId = await appendBotMessage(sessionId, HARDCODED_QUESTIONS[nextQIndex]);
+        // Load the section first: with nothing saved there is nothing to
+        // confirm, so we ask the user to add it instead of listing chips.
+        const category = QUESTION_CATEGORIES[nextQIndex];
+        const chips = category ? await fetchCategoryChips(category) : null;
+        const sectionIsEmpty = !!category && Array.isArray(chips) && chips.length === 0;
+
+        const botMsgId = await appendBotMessage(
+          sessionId,
+          sectionIsEmpty && category
+            ? EMPTY_SECTION_QUESTIONS[category]
+            : HARDCODED_QUESTIONS[nextQIndex]
+        );
         setQuestionIndex((prev) => ({ ...prev, [sessionId]: nextQIndex }));
 
-        if (nextQIndex === 1)      await fetchAndBuildChips(sessionId, "projects",      botMsgId);
-        else if (nextQIndex === 2) await fetchAndBuildChips(sessionId, "experience",    botMsgId);
-        else if (nextQIndex === 3) await fetchAndBuildChips(sessionId, "education",     botMsgId);
-        else if (nextQIndex === 4) await fetchAndBuildChips(sessionId, "skills",        botMsgId);
-        else if (nextQIndex === 5) await fetchAndBuildChips(sessionId, "links",         botMsgId);
-        else if (nextQIndex === 6) await fetchAndBuildChips(sessionId, "certificates",  botMsgId);
+        if (chips && chips.length > 0) {
+          setChipStates((prev) => ({
+            ...prev,
+            [sessionId]: { chips, messageId: botMsgId },
+          }));
+        }
 
       } else {
         // ── All 7 answers collected — build payload ─────────────────────
