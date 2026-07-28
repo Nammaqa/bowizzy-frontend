@@ -24,6 +24,7 @@ interface Experience {
   endDate?: string;
   duration: string;
   details: string;
+  currentlyWorking?: boolean;
 }
 
 interface DesignProcessStep {
@@ -80,24 +81,7 @@ export default function PortfolioEditor() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [skills, setSkills] = useState<string[]>([]);
-  const [designProcess, setDesignProcess] = useState<DesignProcessStep[]>([
-    {
-      title: "Discover",
-      description: "Understand business goals, user needs, constraints, and success metrics.",
-    },
-    {
-      title: "Define",
-      description: "Map flows, information architecture, user journeys, and product requirements.",
-    },
-    {
-      title: "Design",
-      description: "Create wireframes, high-fidelity screens, prototypes, and visual systems.",
-    },
-    {
-      title: "Validate",
-      description: "Test usability, refine interactions, and prepare design handoff.",
-    },
-  ]);
+  const [designProcess, setDesignProcess] = useState<DesignProcessStep[]>([]);
   const [caseStudies, setCaseStudies] = useState<CaseStudy[]>([]);
 
   // UI state
@@ -207,25 +191,9 @@ export default function PortfolioEditor() {
             }
           } else {
             // Seed defaults for empty visual presentation
-            setProjects([
-              {
-                title: "Personal Workspace App",
-                description: "A secure dashboard for managing tasks and team resources.",
-                link: "https://github.com",
-                tech: "React, Node, MongoDB",
-              },
-            ]);
-            setExperiences([
-              {
-                role: "Software Developer",
-                company: "Bowizzy Tech Solutions",
-                startDate: "01-2024",
-                endDate: "",
-                duration: "01-2024",
-                details: "Built interactive web applications using React and custom frameworks.",
-              },
-            ]);
-            setSkills(["React", "TypeScript", "Node.js", "Tailwind CSS"]);
+            setProjects([]);
+            setExperiences([]);
+            setSkills([]);
           }
         } else {
           setError("Portfolio not found.");
@@ -245,11 +213,12 @@ export default function PortfolioEditor() {
   const plainTextRegex = /^[A-Za-z0-9 ]*$/;
   const linkMaxLength = 100;
 
-  const formatDuration = (startDate?: string, endDate?: string) => {
+  const formatDuration = (startDate?: string, endDate?: string, currentlyWorking?: boolean) => {
     let start = (startDate || "").trim();
     let end = (endDate || "").trim();
     if (/^\d{2}-\d{4}$/.test(start)) start = start.replace("-", " - ");
     if (/^\d{2}-\d{4}$/.test(end)) end = end.replace("-", " - ");
+    if (currentlyWorking) return start ? `${start} - Present` : "Present";
     if (start && end) return `${start} - ${end}`;
     return start || end || "";
   };
@@ -263,7 +232,7 @@ export default function PortfolioEditor() {
       ...exp,
       startDate,
       endDate,
-      duration: formatDuration(startDate, endDate) || exp.duration,
+      duration: formatDuration(startDate, endDate, exp.currentlyWorking) || exp.duration,
     };
   };
 

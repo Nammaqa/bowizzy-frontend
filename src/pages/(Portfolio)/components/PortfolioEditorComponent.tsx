@@ -43,6 +43,7 @@ interface Experience {
   endDate?: string;
   duration: string;
   details: string;
+  currentlyWorking?: boolean;
 }
 
 interface DesignProcessStep {
@@ -286,8 +287,6 @@ export default function PortfolioEditorComponent({
   const allowedImageTypes = ["image/png", "image/jpeg", "image/webp"];
   const mmYYYYRegex = /^(0[1-9]|1[0-2])-\d{4}$/;
 
-  const sanitizePlainText = (val: string) => val.replace(/[^A-Za-z0-9 ]/g, "");
-
   const getPlainText = (html: string) => {
     if (!html) return "";
     return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
@@ -321,11 +320,12 @@ export default function PortfolioEditorComponent({
     return true;
   };
 
-  const formatDuration = (startDate?: string, endDate?: string) => {
+  const formatDuration = (startDate?: string, endDate?: string, currentlyWorking?: boolean) => {
     let start = (startDate || "").trim();
     let end = (endDate || "").trim();
     if (/^\d{2}-\d{4}$/.test(start)) start = start.replace("-", " - ");
     if (/^\d{2}-\d{4}$/.test(end)) end = end.replace("-", " - ");
+    if (currentlyWorking) return start ? `${start} - Present` : "Present";
     if (start && end) return `${start} - ${end}`;
     return start || end || "";
   };
@@ -382,7 +382,7 @@ export default function PortfolioEditorComponent({
     updated[index] = {
       ...current,
       ...dates,
-      duration: formatDuration(dates.startDate, dates.endDate),
+      duration: formatDuration(dates.startDate, dates.endDate, current.currentlyWorking),
     };
     setExperiences(updated);
   };
@@ -423,9 +423,28 @@ export default function PortfolioEditorComponent({
     setExperiences([...experiences, { role: "", company: "", startDate: "", endDate: "", duration: "", details: "" }]);
   };
 
-  const handleUpdateExperience = (index: number, field: keyof Experience, val: string) => {
-    const updated = [...experiences];
-    updated[index] = { ...updated[index], [field]: val };
+  const handleUpdateExperience = (index: number, field: keyof Experience, val: any) => {
+    let updated = [...experiences];
+    if (field === "currentlyWorking") {
+      const isChecked = val === true;
+      updated = updated.map((exp, i) => {
+        if (i === index) {
+          if (isChecked) {
+            const start = getExperienceDate(exp, "startDate");
+            return {
+              ...exp,
+              currentlyWorking: true,
+              endDate: "",
+              duration: start ? `${start} - Present` : "Present"
+            };
+          }
+          return { ...exp, currentlyWorking: false };
+        }
+        return { ...exp, currentlyWorking: isChecked ? false : exp.currentlyWorking };
+      });
+    } else {
+      updated[index] = { ...updated[index], [field]: val };
+    }
     setExperiences(updated);
   };
 
@@ -985,6 +1004,7 @@ export default function PortfolioEditorComponent({
             value={newSkill}
             onChange={(e) => setNewSkill(e.target.value)}
             placeholder="e.g. JavaScript, UI Design, AWS"
+            maxLength={100}
             className="flex-1 text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
           />
           <button
@@ -1296,8 +1316,9 @@ export default function PortfolioEditorComponent({
                     <input
                       type="text"
                       value={p.title}
-                      onChange={(e) => handleUpdateProject(idx, "title", sanitizePlainText(e.target.value))}
+                      onChange={(e) => handleUpdateProject(idx, "title", e.target.value)}
                       placeholder="e.g. Crypto Tracker"
+                      maxLength={100}
                       className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                     />
                   </div>
@@ -1451,7 +1472,7 @@ export default function PortfolioEditorComponent({
                     <input
                       type="text"
                       value={exp.role}
-                      onChange={(e) => handleUpdateExperience(idx, "role", sanitizePlainText(e.target.value).slice(0, experienceTextMax))}
+                      onChange={(e) => handleUpdateExperience(idx, "role", e.target.value.slice(0, experienceTextMax))}
                       maxLength={experienceTextMax}
                       placeholder="e.g. Lead Engineer"
                       className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
@@ -1464,7 +1485,7 @@ export default function PortfolioEditorComponent({
                     <input
                       type="text"
                       value={exp.company}
-                      onChange={(e) => handleUpdateExperience(idx, "company", sanitizePlainText(e.target.value).slice(0, experienceTextMax))}
+                      onChange={(e) => handleUpdateExperience(idx, "company", e.target.value.slice(0, experienceTextMax))}
                       maxLength={experienceTextMax}
                       placeholder="e.g. Bowizzy Inc"
                       className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
@@ -1493,7 +1514,8 @@ export default function PortfolioEditorComponent({
                     </label>
                     <input
                       type="month"
-                      value={toMonthInputValue(getExperienceDate(exp, "endDate"))}
+                      disabled={!!exp.currentlyWorking}
+                      value={exp.currentlyWorking ? "" : toMonthInputValue(getExperienceDate(exp, "endDate"))}
                       onChange={(e) => handleUpdateExperienceDate(idx, "endDate", e.target.value)}
                       title="Use month-year format, e.g. May 2026"
                       min={minMonth}
@@ -1501,9 +1523,24 @@ export default function PortfolioEditorComponent({
                       onKeyDown={(e) => e.preventDefault()}
                       onPaste={(e) => e.preventDefault()}
                       onInput={(e) => e.preventDefault()}
-                      className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+                      className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 disabled:bg-gray-100 disabled:text-gray-400"
                     />
                   </div>
+                </div>
+
+                <div className="flex items-center gap-2 mt-1 mb-2">
+                  <input
+                    type="checkbox"
+                    id={`currently-working-${idx}`}
+                    checked={!!exp.currentlyWorking}
+                    onChange={(e) => {
+                      handleUpdateExperience(idx, "currentlyWorking", e.target.checked);
+                    }}
+                    className="w-3 h-3 text-violet-600 rounded border-gray-300 focus:ring-violet-500"
+                  />
+                  <label htmlFor={`currently-working-${idx}`} className="text-[11px] text-gray-500 font-medium">
+                    Currently working here
+                  </label>
                 </div>
 
                 <div>

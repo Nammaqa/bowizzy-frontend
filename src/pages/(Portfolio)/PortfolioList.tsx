@@ -84,16 +84,28 @@ function PortfolioCard({
           </div>
         </div>
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(portfolio.portfolio_id);
-          }}
-          className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 transition cursor-pointer shrink-0 relative z-10"
-          title="Delete Portfolio"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-1.5 shrink-0 relative z-10">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick();
+            }}
+            className="p-1.5 rounded-lg text-gray-400 hover:bg-violet-50 hover:text-violet-600 transition cursor-pointer"
+            title="Edit Portfolio"
+          >
+            <Edit3 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(portfolio.portfolio_id);
+            }}
+            className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 transition cursor-pointer"
+            title="Delete Portfolio"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       <p className="min-h-[54px] text-xs text-gray-500 leading-relaxed line-clamp-3 break-words mt-1">
