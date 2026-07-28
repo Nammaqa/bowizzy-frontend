@@ -21,6 +21,11 @@ const initialForm = {
   branch_name: "",
 };
 
+// Account numbers are digits only; IFSC is letters + digits only.
+// Bank name, account holder name and branch name stay free text.
+const digitsOnlyRegex = /^\d+$/;
+const alphanumericRegex = /^[A-Za-z0-9]+$/;
+
 const isPendingApplication = (value: any) => {
   const statusText = [
     value?.status,
@@ -93,6 +98,16 @@ const ApplyInterviewerPage = () => {
   }, []);
 
   const updateField = (field: keyof typeof initialForm, value: string) => {
+    // Reject characters that aren't valid for the field as they're typed.
+    if (
+      (field === "account_number" || field === "confirm_account_number") &&
+      !/^\d*$/.test(value)
+    ) {
+      return;
+    }
+
+    if (field === "ifsc_code" && !/^[A-Za-z0-9]*$/.test(value)) return;
+
     setForm((currentForm) => ({
       ...currentForm,
       [field]: value,
@@ -104,11 +119,27 @@ const ApplyInterviewerPage = () => {
   const validateForm = () => {
     if (!form.bank_name.trim()) return "Bank name is required.";
     if (!form.account_holder_name.trim()) return "Account holder name is required.";
+
     if (!form.account_number.trim()) return "Account number is required.";
+    if (!digitsOnlyRegex.test(form.account_number)) {
+      return "Account number must contain digits only.";
+    }
+
     if (!form.confirm_account_number.trim()) {
       return "Confirm account number is required.";
     }
+    if (!digitsOnlyRegex.test(form.confirm_account_number)) {
+      return "Confirm account number must contain digits only.";
+    }
+    if (form.account_number !== form.confirm_account_number) {
+      return "Account numbers do not match.";
+    }
+
     if (!form.ifsc_code.trim()) return "IFSC code is required.";
+    if (!alphanumericRegex.test(form.ifsc_code)) {
+      return "IFSC code must contain letters and numbers only.";
+    }
+
     if (!form.account_type) return "Account type is required.";
     if (!form.branch_name.trim()) return "Branch name is required.";
     return "";
@@ -257,6 +288,7 @@ const ApplyInterviewerPage = () => {
                   updateField("account_number", event.target.value)
                 }
                 placeholder="1234567890"
+                inputMode="numeric"
                 className="mt-2 w-full rounded-xl border border-[#D9D9D9] px-4 py-3 text-sm focus:border-[#F26D3A] focus:outline-none focus:ring-2 focus:ring-[#FFE0D0]"
               />
             </div>
@@ -274,6 +306,7 @@ const ApplyInterviewerPage = () => {
                   )
                 }
                 placeholder="Re-enter account number"
+                inputMode="numeric"
                 className="mt-2 w-full rounded-xl border border-[#D9D9D9] px-4 py-3 text-sm focus:border-[#F26D3A] focus:outline-none focus:ring-2 focus:ring-[#FFE0D0]"
               />
             </div>
