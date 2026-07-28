@@ -109,6 +109,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
       current.projectType !== (initial.projectType || "") ||
       current.startDate !== (initial.startDate || "") ||
       current.endDate !== (initial.endDate || "") ||
+      current.currentlyWorking !== (initial.currentlyWorking || false) ||
       current.description !== (initial.description || "") ||
       current.rolesResponsibilities !== (initial.rolesResponsibilities || "")
     );
@@ -195,7 +196,13 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
     value: string | boolean
   ) => {
     const updatedProjects = data.map((proj) =>
-      proj.id === id ? { ...proj, [field]: value } : proj
+      proj.id === id
+        ? {
+          ...proj,
+          [field]: value,
+          ...(field === "currentlyWorking" && value === true ? { endDate: "" } : {}),
+        }
+        : proj
     );
 
     onChange(updatedProjects);
@@ -209,7 +216,9 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
       setErrors((prev) => ({ ...prev, [`project-${id}-projectTitle`]: error }));
     } else if (field === "startDate" && typeof value === "string" && updatedProj) {
       const error = validateStartDate(value);
-      const endDateError = validateEndDate(updatedProj.endDate, value);
+      const endDateError = updatedProj.currentlyWorking
+        ? ""
+        : validateEndDate(updatedProj.endDate, value);
       setErrors((prev) => ({
         ...prev,
         [`project-${id}-startDate`]: error,
@@ -218,6 +227,12 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
     } else if (field === "endDate" && typeof value === "string" && updatedProj) {
       const error = validateEndDate(value, updatedProj.startDate);
       setErrors((prev) => ({ ...prev, [`project-${id}-endDate`]: error }));
+    } else if (field === "currentlyWorking") {
+      setErrors((prev) => {
+        const updated = { ...prev };
+        delete updated[`project-${id}-endDate`];
+        return updated;
+      });
     } else if (field === "description" && typeof value === "string") {
       const error = validateDescription(value);
       setErrors((prev) => ({ ...prev, [`project-${id}-description`]: error }));
@@ -248,7 +263,9 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
     // Check local validation errors
     const projectTitleError = validateProjectTitle(project.projectTitle || "");
     const startDateError = validateStartDate(project.startDate || "");
-    const endDateError = validateEndDate(project.endDate || "", project.startDate || "");
+    const endDateError = project.currentlyWorking
+      ? ""
+      : validateEndDate(project.endDate || "", project.startDate || "");
     const descriptionError = validateDescription(project.description || "");
     const rolesError = validateRolesResponsibilities(project.rolesResponsibilities || "");
 
@@ -297,7 +314,8 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
           project_title: project.projectTitle || "",
           project_type: project.projectType || "",
           start_date: normalizeMonthToDate(project.startDate),
-          end_date: normalizeMonthToDate(project.endDate),
+          end_date: project.currentlyWorking ? null : normalizeMonthToDate(project.endDate),
+          currently_working: project.currentlyWorking,
           description: project.description || "",
           roles_responsibilities: project.rolesResponsibilities || "",
         };
@@ -370,7 +388,10 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
           minimalPayload.start_date = normalizeMonthToDate(project.startDate);
         }
         if (project.endDate !== (initial?.endDate || "")) {
-          minimalPayload.end_date = normalizeMonthToDate(project.endDate);
+          minimalPayload.end_date = project.currentlyWorking ? null : normalizeMonthToDate(project.endDate);
+        }
+        if (project.currentlyWorking !== (initial?.currentlyWorking || false)) {
+          minimalPayload.currently_working = project.currentlyWorking;
         }
         if (project.description !== (initial?.description || "")) {
           minimalPayload.description = project.description;
@@ -382,8 +403,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
           minimalPayload.roles_responsibilities = project.rolesResponsibilities;
         }
 
-        // Handle date logic (Removed currentlyWorking check)
-        minimalPayload.end_date = normalizeMonthToDate(project.endDate);
+        minimalPayload.end_date = project.currentlyWorking ? null : normalizeMonthToDate(project.endDate);
 
         if (Object.keys(minimalPayload).length > 0) {
           await updateProjectDetails(
@@ -663,17 +683,28 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
               <FormInput
                 label="End Date"
                 placeholder="Select End Date"
-                value={project.endDate}
+                value={project.currentlyWorking ? "" : project.endDate}
                 onChange={(v) => updateProject(project.id, "endDate", v)}
                 type="month"
                 min="1960-01"
                 max={getCurrentMonth()}
                 onKeyDown={(e) => e.preventDefault()}
+                disabled={project.currentlyWorking}
                 error={errors[`project-${project.id}-endDate`]}
               />
             </div>
 
-
+            <label className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-gray-700">
+              <input
+                type="checkbox"
+                checked={project.currentlyWorking}
+                onChange={(e) =>
+                  updateProject(project.id, "currentlyWorking", e.target.checked)
+                }
+                className="h-4 w-4 rounded border-gray-300 text-orange-500 focus:ring-orange-400"
+              />
+              Currently pursuing
+            </label>
 
             <div className="mt-4">
               <div className="flex flex-col gap-1">

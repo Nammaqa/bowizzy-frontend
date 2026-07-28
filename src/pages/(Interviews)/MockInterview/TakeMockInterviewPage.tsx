@@ -6,7 +6,7 @@ import { ArrowLeft, CalendarDays, CheckCircle2, Clock, FileText, IndianRupee, Pl
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "@/api";
-import { fallbackSkills, jobRoleGroups } from "./mockInterviewOptions";
+import { jobRoleGroups } from "./mockInterviewOptions";
 import {
   createMockInterviewBooking,
   getMockInterviewBookingSlots,
@@ -57,43 +57,6 @@ const timeSlots = [
 
 const experienceYears = Array.from({ length: 21 }, (_, index) => index);
 const experienceMonths = Array.from({ length: 12 }, (_, index) => index);
-
-const getProfileSkills = () => {
-  const possibleKeys = ["profileData", "resumeData", "user"];
-
-  for (const key of possibleKeys) {
-    try {
-      const value = localStorage.getItem(key);
-      if (!value) continue;
-
-      const parsed = JSON.parse(value);
-      const candidates = [
-        parsed?.skills,
-        parsed?.skillsLinks?.skills,
-        parsed?.profile?.skills,
-        parsed?.data?.skills,
-      ];
-
-      for (const candidate of candidates) {
-        if (!Array.isArray(candidate)) continue;
-
-        const skills = candidate
-          .map((skill) =>
-            typeof skill === "string"
-              ? skill
-              : skill?.skillName || skill?.skill_name || skill?.name
-          )
-          .filter(Boolean);
-
-        if (skills.length > 0) return Array.from(new Set(skills));
-      }
-    } catch {
-      continue;
-    }
-  }
-
-  return fallbackSkills;
-};
 
 const getWeekdayDates = (): InterviewDate[] => {
   const dates: InterviewDate[] = [];
@@ -170,6 +133,34 @@ const parseSlotDate = (dateValue: string, time: string) => {
 
 const isAlphabetRole = (value: string) => /^[A-Za-z ]*$/.test(value);
 
+const formatSkillName = (value: string) =>
+  value.trim()
+    ? `${value.trim().charAt(0).toUpperCase()}${value.trim().slice(1).toLowerCase()}`
+    : "";
+
+const normalizeProfileSkills = (response: any) => {
+  const candidates = [
+    response,
+    response?.data,
+    response?.skills,
+    response?.data?.skills,
+    response?.user_skills,
+    response?.data?.user_skills,
+  ];
+
+  const skillRecords = candidates.find((candidate) => Array.isArray(candidate)) || [];
+  const normalizedSkills = skillRecords
+    .map((skill: any) =>
+      typeof skill === "string"
+        ? skill
+        : skill?.skill_name || skill?.skillName || skill?.name
+    )
+    .map((skill: string) => formatSkillName(skill || ""))
+    .filter(Boolean);
+
+  return Array.from(new Set(normalizedSkills));
+};
+
 const normalizeBookings = (response: any) => {
   if (Array.isArray(response)) return response;
   if (Array.isArray(response?.bookings)) return response.bookings;
@@ -225,7 +216,6 @@ const isSlotBooked = (bookings: any[], dateValue: string, slot: string) => {
 const TakeMockInterviewPage = () => {
   const navigate = useNavigate();
   const dates = useMemo(() => getWeekdayDates(), []);
-  const initialSkills = useMemo(() => getProfileSkills(), []);
   const price = Number(import.meta.env.VITE_MOCK_INTERVIEW_PRICE || 299);
 
   const [mode, setMode] = useState<InterviewMode>("Online");
@@ -235,10 +225,12 @@ const TakeMockInterviewPage = () => {
   const [experienceMonthsValue, setExperienceMonthsValue] = useState(0);
   const [selectedDate, setSelectedDate] = useState(dates[0]?.value || "");
   const [selectedTime, setSelectedTime] = useState("");
-  const [skills, setSkills] = useState<string[]>(initialSkills);
-  const [selectedSkills, setSelectedSkills] = useState<string[]>(initialSkills.slice(0, 5));
+  const [skills, setSkills] = useState<string[]>([]);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [newSkill, setNewSkill] = useState("");
   const [skillError, setSkillError] = useState("");
+  const [loadingProfileSkills, setLoadingProfileSkills] = useState(false);
+  const [skillImportError, setSkillImportError] = useState("");
   const [savedResumes, setSavedResumes] = useState<SavedResume[]>([]);
   const [loadingResumes, setLoadingResumes] = useState(false);
   const [uploadingResume, setUploadingResume] = useState(false);
@@ -312,6 +304,35 @@ const TakeMockInterviewPage = () => {
     };
   };
 
+  const importProfileSkills = async () => {
+    try {
+      const { userId, token } = getAuthUser();
+      if (!userId || !token) return;
+
+      setLoadingProfileSkills(true);
+      setSkillImportError("");
+      const response = await api.get(`/users/${userId}/skills`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const profileSkills = normalizeProfileSkills(response?.data);
+
+      setSkills((currentSkills) =>
+        Array.from(new Set([...currentSkills, ...profileSkills]))
+      );
+      setSelectedSkills((currentSkills) =>
+        Array.from(new Set([...currentSkills, ...profileSkills]))
+      );
+    } catch (error: any) {
+      setSkillImportError(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Unable to import skills from your profile right now."
+      );
+    } finally {
+      setLoadingProfileSkills(false);
+    }
+  };
+
   const getBookingDateTime = () => {
     const startDate = parseSlotDate(selectedDate, selectedTime);
     const endDate = new Date(startDate);
@@ -369,6 +390,10 @@ const TakeMockInterviewPage = () => {
 
     guardInterviewerAccess();
   }, [navigate]);
+
+  useEffect(() => {
+    importProfileSkills();
+  }, []);
 
   useEffect(() => {
     const loadCredits = async () => {
@@ -463,11 +488,11 @@ const TakeMockInterviewPage = () => {
   }, [uploadedResume]);
 
   const addSkill = () => {
-    const trimmedSkill = newSkill.trim();
+    const trimmedSkill = formatSkillName(newSkill);
     if (!trimmedSkill) {
       return;
     }
-    if (skills.includes(trimmedSkill)) {
+    if (skills.some((skill) => skill.toLowerCase() === trimmedSkill.toLowerCase())) {
       setSkillError("This skill is already present.");
       return;
     }
@@ -871,11 +896,21 @@ const TakeMockInterviewPage = () => {
             </section>
 
             <section className="rounded-3xl bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-[#2F2F2F]">4. Skills</h2>
-              <p className="mt-1 text-sm text-[#777777]">
-                Skills are prefilled locally from profile-like browser data when available, and
-                you can add more.
-              </p>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-[#2F2F2F]">4. Skills</h2>
+                  <p className="mt-1 text-sm text-[#777777]">
+                    Add skills manually, or import the skills saved in your profile.
+                  </p>
+                </div>
+                <button
+                  onClick={importProfileSkills}
+                  disabled={loadingProfileSkills}
+                  className="inline-flex items-center justify-center rounded-xl border border-[#F26D3A] px-4 py-3 text-sm font-semibold text-[#F26D3A] transition hover:bg-[#FFF0E3] disabled:cursor-not-allowed disabled:border-[#D9D9D9] disabled:text-[#AAAAAA]"
+                >
+                  {loadingProfileSkills ? "Importing..." : "Import profile skills"}
+                </button>
+              </div>
 
               <div className="mt-4 flex gap-2">
                 <input
@@ -900,21 +935,32 @@ const TakeMockInterviewPage = () => {
                   {skillError}
                 </div>
               )}
+              {skillImportError && (
+                <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
+                  {skillImportError}
+                </div>
+              )}
 
               <div className="mt-4 flex flex-wrap gap-2">
-                {skills.map((skill) => (
-                  <button
-                    key={skill}
-                    onClick={() => toggleSkill(skill)}
-                    className={`rounded-full border px-4 py-2 text-sm font-medium ${
-                      selectedSkills.includes(skill)
-                        ? "border-[#F26D3A] bg-[#FFF0E3] text-[#F26D3A]"
-                        : "border-[#D9D9D9] bg-white text-[#3A3A3A]"
-                    }`}
-                  >
-                    {skill}
-                  </button>
-                ))}
+                {skills.length > 0 ? (
+                  skills.map((skill) => (
+                    <button
+                      key={skill}
+                      onClick={() => toggleSkill(skill)}
+                      className={`rounded-full border px-4 py-2 text-sm font-medium ${
+                        selectedSkills.includes(skill)
+                          ? "border-[#F26D3A] bg-[#FFF0E3] text-[#F26D3A]"
+                          : "border-[#D9D9D9] bg-white text-[#3A3A3A]"
+                      }`}
+                    >
+                      {skill}
+                    </button>
+                  ))
+                ) : (
+                  <p className="rounded-xl bg-[#FAFAFA] p-4 text-sm text-[#777777]">
+                    No skills added yet.
+                  </p>
+                )}
               </div>
             </section>
 
@@ -1124,9 +1170,7 @@ const TakeMockInterviewPage = () => {
                     {creditsLoading
                       ? "Loading credits…"
                       : purchasedCredits > 0
-                      ? `You have ${purchasedCredits} purchased credit${
-                          purchasedCredits !== 1 ? "s" : ""
-                        } remaining. Apply them first.`
+                      ? `Purchased credits balance: ₹${purchasedCredits}. Apply them first.`
                       : "You don't have any purchased credits left."}
                   </p>
                 </div>

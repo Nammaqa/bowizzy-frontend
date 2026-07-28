@@ -83,7 +83,7 @@ const MockInterviewLanding = () => {
                       background: "linear-gradient(180deg, #FF9D48 0%, #FF8251 100%)",
                     }}
                   >
-                    Take mock interview
+                    Book mock interview
                     <ArrowRight size={18} />
                   </button>
                 )}
