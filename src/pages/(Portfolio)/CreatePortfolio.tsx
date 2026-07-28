@@ -587,13 +587,13 @@ export default function CreatePortfolio() {
                   }}
                   placeholder="A brief intro about yourself or what this portfolio showcases…"
                   rows={3}
-                  maxLength={100}
+                  maxLength={300}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => e.preventDefault()}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white text-sm text-gray-800 placeholder-gray-400 outline-none focus:ring-2 focus:ring-violet-300 transition resize-none"
                 />
                 <p className="text-xs text-gray-400 text-right mt-1">
-                  {portfolioDescription.length}/100
+                  {portfolioDescription.length}/300
                 </p>
               </div>
             </div>

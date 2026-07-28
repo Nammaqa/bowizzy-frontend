@@ -749,7 +749,7 @@ export default function ExperienceDetailsForm({
 
   const removeWorkExperience = async (index: number) => {
     const exp = workExperiences[index];
-    if (workExperiences.length === 1) return;
+    if (!exp) return;
 
     if (exp.experience_id) {
       try {
@@ -782,7 +782,26 @@ export default function ExperienceDetailsForm({
     }
 
     const id = exp.id;
-    setWorkExperiences(workExperiences.filter((_, i) => i !== index));
+    setWorkExperiences((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      if (next.length === 0) {
+        return [{
+          id: Date.now().toString(),
+          companyName: "",
+          jobTitle: "",
+          employmentType: "",
+          location: "",
+          workMode: "",
+          startDate: "",
+          endDate: "",
+          description: "",
+          currentlyWorking: false,
+          isExpanded: true,
+        }];
+      }
+      return next;
+    });
+
     delete initialExperiencesRef.current[id];
     setExperienceChanges((prev) => {
       const updated = { ...prev };
@@ -792,8 +811,23 @@ export default function ExperienceDetailsForm({
     setErrors((prev) => {
       const newErrors = { ...prev };
       Object.keys(newErrors).forEach((key) => {
-        if (key.startsWith(`exp-${index}-`)) delete newErrors[key];
+        const prefix = `exp-${index}-`;
+        if (key.startsWith(prefix)) {
+          delete newErrors[key];
+        }
       });
+
+      Object.keys(newErrors).forEach((key) => {
+        const match = key.match(/^exp-(\d+)-(.*)$/);
+        if (!match) return;
+        const currentIndex = Number(match[1]);
+        if (currentIndex > index) {
+          const nextKey = `exp-${currentIndex - 1}-${match[2]}`;
+          newErrors[nextKey] = newErrors[key];
+          delete newErrors[key];
+        }
+      });
+
       return newErrors;
     });
   };
@@ -1331,7 +1365,7 @@ export default function ExperienceDetailsForm({
         {(experienceLevel === "intern" || experienceLevel === "experienced") && (
           <>
             {workExperiences.map((exp, index) =>
-              renderExperienceCard(exp, index, workExperiences.length > 1)
+              renderExperienceCard(exp, index, true)
             )}
 
             <button
