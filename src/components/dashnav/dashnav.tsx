@@ -20,7 +20,7 @@ interface ProfileData {
 const CREDIT_PACKS = [
     { amount: 50, base: 50, bonusPct: 10, icon: 'sm' as const, popular: false },
     { amount: 100, base: 100, bonusPct: 10, icon: 'md' as const, popular: true },
-    { amount: 250, base: 250, bonusPct: 15, icon: 'lg' as const, popular: false },
+    { amount: 250, base: 250, bonusPct: 10, icon: 'lg' as const, popular: false },
 ];
 
 export default function DashNav({ heading, zindex }: { heading: string; zindex?: number }) {
@@ -406,7 +406,7 @@ export default function DashNav({ heading, zindex }: { heading: string; zindex?:
                             {/* Pack list */}
                             <div className="px-5 -mt-4 pb-2 flex flex-col gap-3 relative">
                                 {CREDIT_PACKS.map((pack) => {
-                                    const bonus = Math.round((pack.base * pack.bonusPct) / 100);
+                                    const bonus = Math.round((pack.amount * pack.bonusPct) / 100);
                                     const total = pack.base + bonus;
                                     const isSelected = selectedPack === pack.amount;
                                     const sizeMap = { sm: 'w-9 h-9', md: 'w-10 h-10', lg: 'w-11 h-11' } as const;

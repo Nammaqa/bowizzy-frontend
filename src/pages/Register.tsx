@@ -77,7 +77,7 @@ export default function Register() {
     setErrors((prev) => ({ ...prev, [field]: message }));
   };
 
-  const sanitizeName = (value) => value.replace(/[^A-Za-z\s]/g, "").replace(/^\s+/, "");
+  const sanitizeName = (value) => value.replace(/[^A-Za-z\s]/g, "").trim();
   const sanitizePhone = (value) => value.replace(/\D/g, "").slice(0, 10);
   const isBlank = (value) => !value || value.trim() === "";
 
@@ -88,13 +88,25 @@ export default function Register() {
     return value.replace(/[^A-Za-z0-9-]/g, "");
   };
 
-  // Check if DOB is 18+
-  const isAdult = (dob) => {
-    const birth = new Date(dob);
+  const getAge = (dob: string) => {
+    if (!dob) return 0;
+
+    const birthDate = new Date(dob);
     const today = new Date();
-    const age = today.getFullYear() - birth.getFullYear();
-    const month = today.getMonth() - birth.getMonth();
-    return age > 18 || (age === 18 && month >= 0);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    const dayDiff = today.getDate() - birthDate.getDate();
+
+    if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+      age -= 1;
+    }
+
+    return age;
+  };
+
+  const isValidDob = (dob: string) => {
+    const age = getAge(dob);
+    return age > 18 && age < 100;
   };
 
   // Password rule
@@ -104,14 +116,15 @@ export default function Register() {
 
   // Step 1: Send OTP to email
   const handleSendOtp = async () => {
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) return;
     try {
       setEmailOtpSending(true);
       setEmailVerifyMessage("");
       setEmailVerifyStatus("");
       setOtp("");
 
-      await api.post("/auth/send-email-otp", { email });
+      await api.post("/auth/send-email-otp", { email: normalizedEmail });
 
       setEmailOtpSent(true);
       setEmailVerifyStatus("success");
@@ -190,42 +203,52 @@ export default function Register() {
     e.preventDefault();
     setFormError("");
 
-    if (isBlank(firstName)) return setFormError("Please enter your first name.");
-    if (isBlank(lastName)) return setFormError("Please enter your last name.");
-    if (isBlank(phoneNumber)) return setFormError("Please enter your phone number.");
-    if (isBlank(email)) return setFormError("Please enter your email address.");
-    if (isBlank(linkedinUsername)) return setFormError("Please enter your LinkedIn username.");
+    const normalizedFirstName = firstName.trim();
+    const normalizedMiddleName = middleName.trim();
+    const normalizedLastName = lastName.trim();
+    const normalizedPhoneNumber = phoneNumber.trim();
+    const normalizedEmail = email.trim();
+    const normalizedLinkedinUsername = linkedinUsername.trim();
+    const normalizedPassword = password.trim();
+    const normalizedConfirmPassword = confirmPassword.trim();
+    const normalizedCoupon = coupon.trim();
+
+    if (isBlank(normalizedFirstName)) return setFormError("Please enter your first name.");
+    if (isBlank(normalizedLastName)) return setFormError("Please enter your last name.");
+    if (isBlank(normalizedPhoneNumber)) return setFormError("Please enter your phone number.");
+    if (isBlank(normalizedEmail)) return setFormError("Please enter your email address.");
+    if (isBlank(normalizedLinkedinUsername)) return setFormError("Please enter your LinkedIn username.");
     if (!emailVerified) return setFormError("Please verify your email address before signing up.");
 
     if (!agree) return setFormError("You must agree to the terms.");
 
-    if (password !== confirmPassword)
+    if (normalizedPassword !== normalizedConfirmPassword)
       return setFormError("Passwords do not match.");
 
-    if (!validPassword(password))
+    if (!validPassword(normalizedPassword))
       return setFormError("Password must be 8+ chars, include upper, lower, number, symbol.");
 
-    if (!/^[6-9]\d{9}$/.test(phoneNumber))
+    if (!/^[6-9]\d{9}$/.test(normalizedPhoneNumber))
       return setFormError("Phone number must be valid.");
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail))
       return setFormError("Enter a valid email address.");
 
-    if (!isAdult(dateOfBirth))
-      return setFormError("You must be 18 years or older.");
+    if (!isValidDob(dateOfBirth))
+      return setFormError("You must be between 18 and 99 years old.");
 
-    if (!linkedinUsername || !/^[A-Za-z0-9-]+$/.test(linkedinUsername))
+    if (!normalizedLinkedinUsername || !/^[A-Za-z0-9-]+$/.test(normalizedLinkedinUsername))
       return setFormError("Invalid LinkedIn identifier.");
 
     setLoading(true);
 
     try {
       // If a coupon was entered but not checked/validated yet, validate it now
-      if (coupon && coupon.trim()) {
+      if (normalizedCoupon) {
         if (couponStatus !== "valid") {
           try {
             setCheckingCoupon(true);
-            const couponRes = await checkCoupon(coupon);
+            const couponRes = await checkCoupon(normalizedCoupon);
 
             if (!couponRes.exists) {
               setCouponStatus("invalid");
@@ -251,16 +274,16 @@ export default function Register() {
 
       await api.post("/auth", {
         type: "signup",
-        email,
-        password,
-        first_name: firstName,
-        middle_name: middleName,
-        last_name: lastName,
-        phone_number: phoneNumber,
+        email: normalizedEmail,
+        password: normalizedPassword,
+        first_name: normalizedFirstName,
+        middle_name: normalizedMiddleName,
+        last_name: normalizedLastName,
+        phone_number: normalizedPhoneNumber,
         date_of_birth: dateOfBirth,
-        linkedin_url: `https://www.linkedin.com/in/${linkedinUsername}`,
+        linkedin_url: `https://www.linkedin.com/in/${normalizedLinkedinUsername}`,
         gender,
-        coupon_code: coupon,
+        coupon_code: normalizedCoupon,
       });
 
       setLoading(false);
@@ -320,16 +343,17 @@ export default function Register() {
                     value={firstName}
                     onChange={(e) => {
                       const raw = e.target.value;
-                      if (/[^A-Za-z\s]/.test(raw)) {
+                      const normalized = raw.trim();
+                      if (/[^A-Za-z\s]/.test(normalized)) {
                         setFieldError("firstName", "Only letters allowed");
-                      } else if (raw.length > 32) {
+                      } else if (normalized.length > 32) {
                         setFieldError("firstName", "Max 32 characters");
-                      } else if (isBlank(raw)) {
+                      } else if (isBlank(normalized)) {
                         setFieldError("firstName", "First name is required");
                       } else {
                         setFieldError("firstName", "");
                       }
-                      const val = sanitizeName(raw).slice(0, 32);
+                      const val = sanitizeName(normalized).slice(0, 32);
                       setFirstName(val);
                     }}
                     className="mt-2 w-full px-4 py-3 border rounded-lg"
@@ -346,14 +370,15 @@ export default function Register() {
                     value={middleName}
                     onChange={(e) => {
                       const raw = e.target.value;
-                      if (/[^A-Za-z\s]/.test(raw)) {
+                      const normalized = raw.trim();
+                      if (/[^A-Za-z\s]/.test(normalized)) {
                         setFieldError("middleName", "Only letters allowed");
-                      } else if (raw.length > 32) {
+                      } else if (normalized.length > 32) {
                         setFieldError("middleName", "Max 32 characters");
                       } else {
                         setFieldError("middleName", "");
                       }
-                      const val = sanitizeName(raw).slice(0, 32);
+                      const val = sanitizeName(normalized).slice(0, 32);
                       setMiddleName(val);
                     }}
                     className="mt-2 w-full px-4 py-3 border rounded-lg"
@@ -370,16 +395,17 @@ export default function Register() {
                     value={lastName}
                     onChange={(e) => {
                       const raw = e.target.value;
-                      if (/[^A-Za-z\s]/.test(raw)) {
+                      const normalized = raw.trim();
+                      if (/[^A-Za-z\s]/.test(normalized)) {
                         setFieldError("lastName", "Only letters allowed");
-                      } else if (raw.length > 32) {
+                      } else if (normalized.length > 32) {
                         setFieldError("lastName", "Max 32 characters");
-                      } else if (isBlank(raw)) {
+                      } else if (isBlank(normalized)) {
                         setFieldError("lastName", "Last name is required");
                       } else {
                         setFieldError("lastName", "");
                       }
-                      const val = sanitizeName(raw).slice(0, 32);
+                      const val = sanitizeName(normalized).slice(0, 32);
                       setLastName(val);
                     }}
                     className="mt-2 w-full px-4 py-3 border rounded-lg"
@@ -395,7 +421,7 @@ export default function Register() {
                   <input
                     value={phoneNumber}
                     onChange={(e) => {
-                      const v = sanitizePhone(e.target.value);
+                      const v = sanitizePhone(e.target.value.trim());
                       if (v.length > 0 && !/^[6-9]/.test(v)) {
                         setFieldError("phone", "Must start with 6-9");
                         return;
@@ -416,13 +442,14 @@ export default function Register() {
                   <label>Date of Birth*</label>
                   <input
                     type="date"
-                    max={new Date().toISOString().split("T")[0]}
+                    min={new Date(new Date().setFullYear(new Date().getFullYear() - 100)).toISOString().split("T")[0]}
+                    max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split("T")[0]}
                     value={dateOfBirth}
                     onChange={(e) => {
                       const val = e.target.value;
                       setDateOfBirth(val);
-                      if (!isAdult(val)) {
-                        setFieldError("dob", "You must above 18 years");
+                      if (!isValidDob(val)) {
+                        setFieldError("dob", "You must be between 18 and 99 years old");
                       } else {
                         setFieldError("dob", "");
                       }
@@ -443,7 +470,7 @@ export default function Register() {
                       maxLength={150}
                       disabled={emailVerified}
                       onChange={(e) => {
-                        const val = e.target.value.trimStart();
+                        const val = e.target.value.trim();
                         setEmail(val);
                         if (errors.email) setFieldError("email", "");
 
@@ -592,7 +619,7 @@ export default function Register() {
                     <input
                       value={linkedinUsername}
                       onChange={(e) => {
-                        let val = e.target.value;
+                        let val = e.target.value.trim();
                         if (val.startsWith("http")) {
                           setFieldError("linkedin", "Do not enter full URL");
                           val = val.replace(
@@ -636,7 +663,7 @@ export default function Register() {
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => {
-                        const val = e.target.value;
+                        const val = e.target.value.trim();
                         setPassword(val);
                         if (!validPassword(val)) {
                           setFieldError(
@@ -670,7 +697,7 @@ export default function Register() {
                       type={showConfirm ? "text" : "password"}
                       value={confirmPassword}
                       onChange={(e) => {
-                        const val = e.target.value;
+                        const val = e.target.value.trim();
                         setConfirmPassword(val);
                         if (password !== val) {
                           setFieldError("confirmPassword", "Passwords do not match");
@@ -701,7 +728,7 @@ export default function Register() {
                     <input
                       value={coupon}
                       onChange={(e) => {
-                        setCoupon(e.target.value);
+                        setCoupon(e.target.value.trim());
                         setCouponStatus("");
                         setCouponMessage("");
                       }}

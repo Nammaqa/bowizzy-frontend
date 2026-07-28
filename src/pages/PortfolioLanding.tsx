@@ -101,7 +101,7 @@ export default function PortfolioLanding() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               id="portfolio-get-started-btn"
-              onClick={() => navigate("/portfolio/list")}
+              onClick={() => navigate("/portfolio/create")}
               className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-violet-600 to-violet-500 text-white font-semibold text-sm hover:from-violet-700 hover:to-violet-600 transition shadow-md shadow-violet-200 cursor-pointer"
             >
               Create my Portfolio
@@ -194,7 +194,7 @@ export default function PortfolioLanding() {
             </p>
             <button
               id="portfolio-cta-bottom-btn"
-              onClick={() => navigate("/portfolio/list")}
+              onClick={() => navigate("/portfolio/create")}
               className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-white text-violet-700 font-bold text-sm hover:bg-gray-50 transition cursor-pointer shadow-lg"
             >
               Create My Portfolio
