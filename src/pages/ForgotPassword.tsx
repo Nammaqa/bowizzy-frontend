@@ -5,7 +5,6 @@ import Bowizzy from "../assets/bowizzy.png";
 import {
   changeForgotPassword,
   sendForgotPasswordOtp,
-  verifyForgotPasswordOtp,
 } from "@/services/login";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -92,7 +91,7 @@ export default function ForgotPassword() {
     }
   };
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
+  const handleVerifyOtp = (e: React.FormEvent) => {
     e.preventDefault();
     setMessage("");
     setMessageType("");
@@ -102,20 +101,12 @@ export default function ForgotPassword() {
       return;
     }
 
-    try {
-      setLoadingAction("verify");
-      await verifyForgotPasswordOtp(email, otp);
-      setOtpVerified(true);
-      setOtpError("");
-      setMessageType("success");
-      setMessage("OTP verified. Create your new password.");
-    } catch (err: any) {
-      setOtpVerified(false);
-      setMessageType("error");
-      setMessage(err?.response?.data?.message || "Invalid OTP. Please try again.");
-    } finally {
-      setLoadingAction("");
-    }
+    // The password-change endpoint performs the authoritative OTP check.
+    // Calling verify-otp first consumes the one-time code on the backend.
+    setOtpVerified(true);
+    setOtpError("");
+    setMessageType("success");
+    setMessage("OTP entered. Create your new password.");
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
