@@ -237,6 +237,8 @@ const InterviewerDashboardPage = () => {
   const [cancellingInterviewId, setCancellingInterviewId] = useState<
     string | number | null
   >(null);
+  const [interviewToAccept, setInterviewToAccept] = useState<any>(null);
+  const [acceptSuccessMessage, setAcceptSuccessMessage] = useState<string | null>(null);
   const [interviewToCancel, setInterviewToCancel] = useState<any>(null);
   const [cancelStatus, setCancelStatus] = useState<{
     type: "success" | "error";
@@ -400,6 +402,11 @@ const InterviewerDashboardPage = () => {
           : [updatedInterview, ...currentInterviews];
       });
       setSelectedInterview(null);
+      setAcceptSuccessMessage(
+        `${interview?.job_role || interview?.title || "The interview"} on ${formatIndianDateTime(
+          interview?.start_time_utc || interview?.scheduled_time
+        )} has been added to your schedule.`
+      );
     } catch (error: any) {
       setAcceptError(
         error?.response?.data?.message ||
@@ -1034,7 +1041,7 @@ const InterviewerDashboardPage = () => {
               </p>
               {canAcceptSelectedInterview ? (
                 <button
-                  onClick={() => handleAcceptInterview(selectedInterview)}
+                  onClick={() => setInterviewToAccept(selectedInterview)}
                   disabled={acceptingInterviewId === selectedInterviewId}
                   className="rounded-xl bg-[#F26D3A] px-5 py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#e35f2f] disabled:cursor-not-allowed disabled:opacity-70"
                 >
@@ -1047,6 +1054,52 @@ const InterviewerDashboardPage = () => {
                   Interview accepted
                 </span>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Acceptance confirmation modal — sits above the details modal */}
+      {interviewToAccept && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.45)" }}
+        >
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl p-6">
+            <h3 className="text-lg font-bold text-[#2F2F2F] mb-2">Accept Interview?</h3>
+            <p className="text-sm text-[#666666] mb-2">
+              Are you sure you want to accept{" "}
+              <span className="font-semibold text-[#2F2F2F]">
+                {interviewToAccept?.job_role || interviewToAccept?.title || "this interview"}
+              </span>
+              {" "}on{" "}
+              <span className="font-semibold text-[#2F2F2F]">
+                {formatIndianDateTime(
+                  interviewToAccept?.start_time_utc || interviewToAccept?.scheduled_time
+                )}
+              </span>
+              ?
+            </p>
+            <p className="text-sm text-[#666666] mb-6">
+              It will be added to your schedule and the candidate's resume and meeting link
+              will be unlocked.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setInterviewToAccept(null)}
+                className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition cursor-pointer"
+              >
+                No, go back
+              </button>
+              <button
+                onClick={() => {
+                  handleAcceptInterview(interviewToAccept);
+                  setInterviewToAccept(null);
+                }}
+                className="px-4 py-2 rounded-xl bg-[#F26D3A] text-white text-sm font-semibold hover:bg-[#e35f2f] transition cursor-pointer"
+              >
+                Yes, accept
+              </button>
             </div>
           </div>
         </div>
@@ -1078,6 +1131,32 @@ const InterviewerDashboardPage = () => {
                 Yes, cancel
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Acceptance success popup */}
+      {acceptSuccessMessage && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.45)" }}
+          onClick={() => setAcceptSuccessMessage(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mx-auto inline-flex rounded-full bg-green-50 p-3 text-green-600">
+              <CheckCircle2 size={32} />
+            </div>
+            <h3 className="mt-4 text-lg font-bold text-[#2F2F2F]">Interview accepted</h3>
+            <p className="mt-2 text-sm text-[#666666]">{acceptSuccessMessage}</p>
+            <button
+              onClick={() => setAcceptSuccessMessage(null)}
+              className="mt-6 w-full rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-green-700 cursor-pointer"
+            >
+              Done
+            </button>
           </div>
         </div>
       )}
