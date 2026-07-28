@@ -1392,17 +1392,6 @@ export default function PersonalDetailsForm({
 
           {languagesExpanded && (
             <div className="p-4 sm:p-5 md:p-6">
-              {languagesFeedback && (
-                <div
-                  className={`mb-4 p-3 rounded-lg text-sm ${languagesFeedback.includes("success")
-                    ? "bg-green-50 text-green-700 border border-green-200"
-                    : "bg-red-50 text-red-700 border border-red-200"
-                    }`}
-                >
-                  {languagesFeedback}
-                </div>
-              )}
-
               <div
                 ref={languageContainerRef}
                 className="relative w-full overflow-visible"
@@ -1458,6 +1447,16 @@ export default function PersonalDetailsForm({
               </div>
 
               <div className="flex items-center justify-end gap-2 mt-8 pt-4 border-t border-gray-200">
+                {languagesFeedback && (
+                  <span
+                    className={`text-xs px-2 py-1 rounded-full ${languagesFeedback.includes("success")
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                      }`}
+                  >
+                    {languagesFeedback}
+                  </span>
+                )}
                 {languagesChanged && (
                   <button
                     type="button"
@@ -1500,16 +1499,6 @@ export default function PersonalDetailsForm({
 
           {currentLocationExpanded && (
             <div className="p-4 sm:p-5 md:p-6">
-              {locationFeedback && (
-                <div
-                  className={`mb-4 p-3 rounded-lg text-sm ${locationFeedback.includes("success")
-                    ? "bg-green-50 text-green-700 border border-green-200"
-                    : "bg-red-50 text-red-700 border border-red-200"
-                    }`}
-                >
-                  {locationFeedback}
-                </div>
-              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 <div className="sm:col-span-2 lg:col-span-3">
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
@@ -1683,6 +1672,16 @@ export default function PersonalDetailsForm({
               </div>
 
               <div className="flex items-center justify-end gap-2 mt-8 pt-4 border-t border-gray-200">
+                {locationFeedback && (
+                  <span
+                    className={`text-xs px-2 py-1 rounded-full ${locationFeedback.includes("success")
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                      }`}
+                  >
+                    {locationFeedback}
+                  </span>
+                )}
                 {locationChanged && (
                   <button
                     type="button"

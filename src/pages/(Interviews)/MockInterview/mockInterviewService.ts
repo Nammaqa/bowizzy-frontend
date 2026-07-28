@@ -267,6 +267,34 @@ export const isVerifiedInterviewerResponse = (value: any) =>
   value?.is_interviewer_verified === true ||
   String(value?.is_interviewer_verified).toLowerCase() === "true";
 
+const pendingPaymentMarkers = [
+  "pending",
+  "unpaid",
+  "not paid",
+  "not_paid",
+  "notpaid",
+  "awaiting",
+  "initiated",
+  "incomplete",
+];
+
+/**
+ * True when a booking's payment never went through (abandoned checkout, or a
+ * credit booking left at "pending_credit_confirmation"). Such bookings are
+ * hidden from the candidate's booking list and from the interviewer's
+ * available-interviews list. A missing/blank payment status is NOT treated as
+ * pending — an endpoint may simply not return the field.
+ */
+export const isPaymentPendingBooking = (booking: any) => {
+  const status = String(
+    booking?.payment_status ?? booking?.paymentStatus ?? booking?.payment?.status ?? ""
+  )
+    .toLowerCase()
+    .trim();
+  if (!status) return false;
+  return pendingPaymentMarkers.some((marker) => status.includes(marker));
+};
+
 export const getMockInterviewUserType = async (
   userId: string | number,
   token: string
