@@ -47,6 +47,7 @@ export default function ProjectDetailsForm({
       ? initialData.projects.map((p: any) => ({
         ...p,
         id: p.id || p.project_id?.toString() || Date.now().toString(),
+        currentlyWorking: p.currentlyWorking ?? p.currently_working ?? false,
         isExpanded: p.isExpanded ?? false,
       }))
       : [
@@ -102,6 +103,8 @@ export default function ProjectDetailsForm({
         changedFields.push("startDate");
       if (current.endDate !== (initial?.endDate || ""))
         changedFields.push("endDate");
+      if (current.currentlyWorking !== (initial?.currentlyWorking || false))
+        changedFields.push("currentlyWorking");
 
       if (current.description !== (initial?.description || ""))
         changedFields.push("description");
@@ -247,7 +250,7 @@ export default function ProjectDetailsForm({
     if (!project.startDate) {
       fieldErrors.startDate = "Start date is required";
     }
-    if (!project.endDate) {
+    if (!project.currentlyWorking && !project.endDate) {
       fieldErrors.endDate = "End date is required";
     }
     if (!stripHtml(project.description)) {
@@ -269,7 +272,17 @@ export default function ProjectDetailsForm({
     const updated = [...projects];
     updated[index] = { ...updated[index], [field]: value, isExpanded: true };
 
-
+    if (field === "currentlyWorking") {
+      updated[index].currentlyWorking = Boolean(value);
+      if (value === true) {
+        updated[index].endDate = "";
+        setErrors((prev) => {
+          const next = { ...prev };
+          delete next[`project-${index}-endDate`];
+          return next;
+        });
+      }
+    }
 
     setProjects(updated);
 
@@ -312,7 +325,9 @@ export default function ProjectDetailsForm({
           return updatedErr;
         });
       }
-      const rangeError = validateDateRange(value, updated[index].endDate);
+      const rangeError = updated[index].currentlyWorking
+        ? ""
+        : validateDateRange(value, updated[index].endDate);
       setErrors((prev) => ({ ...prev, [`project-${index}-endDate`]: rangeError }));
     } else if (field === "endDate" && typeof value === "string") {
       const fmtError = validateMonthFormat(value);
@@ -327,6 +342,11 @@ export default function ProjectDetailsForm({
         const rangeError = validateDateRange(updated[index].startDate, value);
         setErrors((prev) => ({ ...prev, [`project-${index}-endDate`]: rangeError }));
       }
+    } else if (field === "currentlyWorking" && value === false && updated[index].projectTitle) {
+      setErrors((prev) => ({
+        ...prev,
+        [`project-${index}-endDate`]: updated[index].endDate ? "" : "End date is required",
+      }));
     }
   };
 
@@ -384,7 +404,8 @@ export default function ProjectDetailsForm({
           project_title: project.projectTitle || "",
           project_type: project.projectType || "",
           start_date: normalizeMonthToDate(project.startDate),
-          end_date: normalizeMonthToDate(project.endDate),
+          end_date: project.currentlyWorking ? null : normalizeMonthToDate(project.endDate),
+          currently_working: project.currentlyWorking,
           description: project.description || "",
           roles_responsibilities: project.rolesAndResponsibilities || "",
         };
@@ -505,7 +526,10 @@ export default function ProjectDetailsForm({
               );
               break;
             case "endDate":
-              minimalPayload.end_date = normalizeMonthToDate(project.endDate);
+              minimalPayload.end_date = project.currentlyWorking ? null : normalizeMonthToDate(project.endDate);
+              break;
+            case "currentlyWorking":
+              minimalPayload.currently_working = project.currentlyWorking;
               break;
             case "description":
               minimalPayload.description = project.description;
@@ -518,8 +542,7 @@ export default function ProjectDetailsForm({
           }
         });
 
-        // Handle date logic when currentlyWorking changes (Removed)
-        minimalPayload.end_date = normalizeMonthToDate(project.endDate);
+        minimalPayload.end_date = project.currentlyWorking ? null : normalizeMonthToDate(project.endDate);
 
         // Validate description / roles are not numeric-only and within length limits
         const descError = validateDescription(project.description);
@@ -969,12 +992,12 @@ export default function ProjectDetailsForm({
                 {/* End Date */}
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                    End Date{isMandatory && <span className="text-red-500"> *</span>}
+                    End Date{isMandatory && !project.currentlyWorking && <span className="text-red-500"> *</span>}
                   </label>
                   <div className="relative">
                     <input
                       type="month"
-                      value={project.endDate}
+                      value={project.currentlyWorking ? "" : project.endDate}
                       onChange={(e) =>
                         handleProjectChange(index, "endDate", e.target.value)
                       }
@@ -983,6 +1006,7 @@ export default function ProjectDetailsForm({
                       placeholder="Select End Date"
                       min={getMinMonth()}
                       max={getCurrentMonth()}
+                      disabled={project.currentlyWorking}
                       className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm pr-8 disabled:bg-gray-100 ${errors[`project-${index}-endDate`]
                         ? "border-red-500 focus:ring-red-400"
                         : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
@@ -996,6 +1020,18 @@ export default function ProjectDetailsForm({
                   )}
                 </div>
               </div>
+
+              <label className="mt-3 inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={project.currentlyWorking}
+                  onChange={(e) =>
+                    handleProjectChange(index, "currentlyWorking", e.target.checked)
+                  }
+                  className="h-4 w-4 rounded border-gray-300 text-orange-500 focus:ring-orange-400"
+                />
+                Currently pursuing
+              </label>
 
               {/* Description */}
               <div>
