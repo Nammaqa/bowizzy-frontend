@@ -1050,26 +1050,6 @@ export default function PersonalDetailsForm({
                   strokeWidth={2.5}
                 />
               </button>
-              {personalDetailsChanged && (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const personalErrors = validateFields(PERSONAL_DETAIL_FIELDS);
-                    if (hasErrors(personalErrors)) {
-                      setPersonalDetailsExpanded(true);
-                      setSubmitError("Please fix validation errors in Personal Details before saving.");
-                      return;
-                    }
-                    handlePersonalDetailsOtpSent();
-                    setShowOtpPopup(true);
-                  }}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-md text-sm font-medium shadow-sm hover:from-orange-500 hover:to-orange-600 transition cursor-pointer"
-                  aria-label="Save personal details"
-                >
-                  <Save className="w-4 h-4" strokeWidth={2} />
-                  Save
-                </button>
-              )}
             </div>
           </div>
 
@@ -1326,6 +1306,29 @@ export default function PersonalDetailsForm({
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 mt-8 pt-4 border-t border-gray-200">
+                {personalDetailsChanged && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const personalErrors = validateFields(PERSONAL_DETAIL_FIELDS);
+                      if (hasErrors(personalErrors)) {
+                        setPersonalDetailsExpanded(true);
+                        setSubmitError("Please fix validation errors in Personal Details before saving.");
+                        return;
+                      }
+                      handlePersonalDetailsOtpSent();
+                      setShowOtpPopup(true);
+                    }}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-md text-sm font-medium shadow-sm hover:from-orange-500 hover:to-orange-600 transition cursor-pointer"
+                    aria-label="Save personal details"
+                  >
+                    <Save className="w-4 h-4" strokeWidth={2} />
+                    Save
+                  </button>
+                )}
               </div>
             </div>
           )}
