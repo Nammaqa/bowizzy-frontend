@@ -542,6 +542,17 @@ export default function EducationDetailsForm({
     );
   };
 
+  const isPuSectionFilled = (): boolean => {
+    return !!(
+      puData.institutionName ||
+      puData.boardType ||
+      puData.subjectStream ||
+      puData.yearOfPassing ||
+      puData.resultFormat ||
+      puData.result
+    );
+  };
+
   // Helper function to validate mandatory fields if degree is selected
   const validateMandatoryFields = (
     edu: HigherEducation,
@@ -944,6 +955,21 @@ export default function EducationDetailsForm({
   const handleSavePu = async () => {
     const currentData = puData;
     const initial = initialPu.current;
+
+    if (!isPuSectionFilled()) {
+      setErrors((prev) => {
+        const updated = { ...prev };
+        delete updated["pu-institutionName"];
+        delete updated["pu-boardType"];
+        delete updated["pu-yearOfPassing"];
+        delete updated["pu-resultFormat"];
+        delete updated["pu-result"];
+        return updated;
+      });
+      setPuFeedback("Pre-university section is optional and can be left empty.");
+      setTimeout(() => setPuFeedback(""), 3000);
+      return;
+    }
 
     let hasError = false;
 
@@ -1483,18 +1509,19 @@ export default function EducationDetailsForm({
     e.preventDefault();
 
     const resultErrors: { [key: string]: string } = {};
+    const isPuFilled = isPuSectionFilled();
+
     const sslcBoardTypeError =
       sslcData.boardType ||
         !(sslcData.institutionName || sslcData.resultFormat || sslcData.yearOfPassing || sslcData.result)
         ? ""
         : "Board Type is required";
     const puBoardTypeError =
-      puData.boardType ||
-        !(puData.institutionName || puData.subjectStream || puData.resultFormat || puData.yearOfPassing || puData.result)
-        ? ""
-        : "Board Type is required";
+      isPuFilled && !puData.boardType
+        ? "Board Type is required"
+        : "";
     const sslcResultError = validateResult(sslcData.result, sslcData.resultFormat);
-    const puResultError = validateResult(puData.result, puData.resultFormat);
+    const puResultError = isPuFilled ? validateResult(puData.result, puData.resultFormat) : "";
 
     const sslcResultFormatError =
       sslcData.resultFormat ||
@@ -1502,10 +1529,9 @@ export default function EducationDetailsForm({
         ? ""
         : "Result Format is required";
     const puResultFormatError =
-      puData.resultFormat ||
-        !(puData.institutionName || puData.boardType || puData.subjectStream || puData.yearOfPassing || puData.result)
-        ? ""
-        : "Result Format is required";
+      isPuFilled && !puData.resultFormat
+        ? "Result Format is required"
+        : "";
 
     if (sslcBoardTypeError) resultErrors["sslc-boardType"] = sslcBoardTypeError;
     if (puBoardTypeError) resultErrors["pu-boardType"] = puBoardTypeError;
@@ -1513,6 +1539,18 @@ export default function EducationDetailsForm({
     if (puResultError) resultErrors["pu-result"] = puResultError;
     if (sslcResultFormatError) resultErrors["sslc-resultFormat"] = sslcResultFormatError;
     if (puResultFormatError) resultErrors["pu-resultFormat"] = puResultFormatError;
+
+    if (!isPuFilled) {
+      setErrors((prev) => {
+        const updated = { ...prev };
+        delete updated["pu-institutionName"];
+        delete updated["pu-boardType"];
+        delete updated["pu-yearOfPassing"];
+        delete updated["pu-resultFormat"];
+        delete updated["pu-result"];
+        return updated;
+      });
+    }
 
     higherEducations.forEach((edu, index) => {
       const resultError = validateResult(edu.result, edu.resultFormat);
@@ -2155,9 +2193,12 @@ export default function EducationDetailsForm({
         {/* Pre-University (12th Standard) */}
         <div className="bg-white border border-gray-200 rounded-xl mb-4 md:mb-5 overflow-hidden">
           <div className="flex items-center justify-between px-4 sm:px-5 md:px-6 py-3 md:py-4 border-b border-gray-200">
-            <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">
-              Pre-university (12th Standard)
-            </h3>
+            <div>
+              <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">
+                Pre-university (12th Standard)
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">Optional — fill only if applicable</p>
+            </div>
             <div className="flex gap-2 items-center">
               <button
                 type="button"
@@ -2277,7 +2318,6 @@ export default function EducationDetailsForm({
                       name="resultFormat"
                       value={puData.resultFormat}
                       onChange={handlePuChange}
-                      required
                       className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm appearance-none bg-white pr-8 ${errors["pu-resultFormat"]
                         ? "border-red-500 focus:ring-red-400"
                         : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
