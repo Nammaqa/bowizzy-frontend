@@ -648,8 +648,9 @@ export default function ChatBox({
         accept=".pdf,.doc,.docx,.txt"
       />
 
-      {/* Input bar — only visible after start */}
-      {started && (
+      {/* Input bar — only visible after start, and never in JD mode: that flow
+          finishes inside JdResumeFlow, so there is nothing left to reply to. */}
+      {started && mode !== "jd" && (
         <div className="bg-white border-t border-gray-200 px-4 pt-3 pb-4">
           <div className="max-w-2xl mx-auto">
             <div className="flex items-center gap-2">

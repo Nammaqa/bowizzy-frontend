@@ -96,6 +96,31 @@ function enforceSingleCurrentExperience(experiences: JdExperienceItem[]): JdExpe
   });
 }
 
+/**
+ * The analyzer returns two separate lists per project, and every template
+ * renders them as one bullet list — so roles used to appear in the preview
+ * without ever being shown in review. Fold them into the description up front:
+ * one editable field, and the preview matches it line for line.
+ */
+function mergeProjectDescriptions(projects: JdProjectItem[]): JdProjectItem[] {
+  return projects.map((project) => {
+    const roles = Array.isArray(project.roles_responsibilities)
+      ? project.roles_responsibilities.filter(Boolean)
+      : [];
+    if (roles.length === 0) return project;
+
+    const description = Array.isArray(project.enhanced_description)
+      ? project.enhanced_description
+      : [];
+
+    return {
+      ...project,
+      enhanced_description: [...description, ...roles],
+      roles_responsibilities: [],
+    };
+  });
+}
+
 function normalizeJdData(raw: JdResumeData): JdResumeData {
   const rawAny = raw as any;
   const experiences: JdExperienceItem[] = Array.isArray(rawAny.work_experience)
@@ -111,7 +136,7 @@ function normalizeJdData(raw: JdResumeData): JdResumeData {
     ...raw,
     technical_summary_generated: technicalSummary,
     work_experience: { experiences: enforceSingleCurrentExperience(experiences) },
-    projects: raw.projects || [],
+    projects: mergeProjectDescriptions(raw.projects || []),
     education: raw.education || [],
     skills: raw.skills || [],
     ai_skills: raw.ai_skills || [],
@@ -147,19 +172,23 @@ export default function JdResumeFlow({ sessionId, token, onComplete }: JdResumeF
       if (!raw) return;
       const draft = JSON.parse(raw);
       if (draft?.data) {
-        // Older drafts may predate the single-current-experience rule.
+        // Older drafts may predate the single-current-experience and
+        // merged-project-description rules.
         const experiences = draft.data?.work_experience?.experiences;
-        setData(
-          Array.isArray(experiences)
+        setData({
+          ...draft.data,
+          ...(Array.isArray(experiences)
             ? {
-                ...draft.data,
                 work_experience: {
                   ...draft.data.work_experience,
                   experiences: enforceSingleCurrentExperience(experiences),
                 },
               }
-            : draft.data
-        );
+            : {}),
+          ...(Array.isArray(draft.data.projects)
+            ? { projects: mergeProjectDescriptions(draft.data.projects) }
+            : {}),
+        });
         setStage("review");
       } else if (draft?.jdText) {
         setJdText(draft.jdText);
@@ -425,15 +454,29 @@ export default function JdResumeFlow({ sessionId, token, onComplete }: JdResumeF
                 <Field label="End Date">
                   <input
                     type="date"
+                    disabled={!!p.currently_working}
                     className={fieldClass}
                     value={p.end_date || ""}
                     onChange={(e) => updateProject(i, { end_date: e.target.value })}
                   />
                 </Field>
               </div>
-              <Field label="Description">
+              <label className="flex items-center gap-2 text-xs text-gray-500">
+                <input
+                  type="checkbox"
+                  checked={!!p.currently_working}
+                  onChange={(e) =>
+                    updateProject(i, {
+                      currently_working: e.target.checked,
+                      end_date: e.target.checked ? null : p.end_date,
+                    })
+                  }
+                />
+                Currently pursuing
+              </label>
+              <Field label="Description & Responsibilities">
                 <textarea
-                  rows={4}
+                  rows={5}
                   className={`${fieldClass} resize-none`}
                   value={(p.enhanced_description || []).join("\n")}
                   onChange={(e) => updateProject(i, { enhanced_description: e.target.value.split("\n") })}
@@ -727,6 +770,14 @@ export default function JdResumeFlow({ sessionId, token, onComplete }: JdResumeF
                   />
                 </Field>
               </div>
+              <Field label="Description">
+                <textarea
+                  rows={3}
+                  className={`${fieldClass} resize-none`}
+                  value={c.description || ""}
+                  onChange={(e) => updateCertificate(i, { description: e.target.value })}
+                />
+              </Field>
             </div>
           ))}
         </SectionCard>

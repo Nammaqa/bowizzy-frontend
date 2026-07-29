@@ -15,7 +15,10 @@ export function mapInfoJsonToResumeData(info: any): ResumeData {
   const eduList = info.education || [];
   const certs = info.certificates || [];
   const links = info.links || [];
-  const techSummary = info.enhanced_technical_summary || info.technical_summary_generated || info.technical_summary || "";
+  // `technical_summary_generated` is the field the JD review form edits, so it
+  // must win — the raw `enhanced_technical_summary` survives on the object and
+  // would otherwise mask the user's edit.
+  const techSummary = info.technical_summary_generated || info.enhanced_technical_summary || info.technical_summary || "";
 
   // Extract linkedin/github from links array (first of each type)
   const linkedinLink = links.find((l: any) => l.link_type === "linkedin");

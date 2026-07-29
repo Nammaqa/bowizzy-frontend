@@ -120,6 +120,7 @@ export interface JdCertificateItem {
     certificate_provided_by?: string;
     domain?: string;
     date?: string;
+    description?: string;
 }
 
 export interface JdLinkItem {
