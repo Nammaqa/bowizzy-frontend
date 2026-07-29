@@ -216,228 +216,246 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
   return (
     <>
       <div className="fixed inset-0 bg-black/70 z-[90] backdrop-blur-sm" onClick={onClose} />
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        <div
-          className="relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl"
-          style={{
-            background: 'linear-gradient(145deg, #ffffff 0%, #fff7f3 100%)',
-            border: '1px solid rgba(249,115,22,0.15)',
-          }}
-        >
-          {/* Header band */}
+
+      {/* Outer layer: ONLY handles page-level scrolling (no centering here,
+          so the modal can never be clipped when it's taller than the viewport) */}
+      <div className="fixed inset-0 z-[100] overflow-y-auto overscroll-contain">
+        {/* Inner layer: ONLY handles centering. min-h-full (not h-full) lets
+            this wrapper grow taller than the viewport so scrolling actually works */}
+        <div className="min-h-full flex items-center justify-center p-2 sm:p-4">
           <div
-            className="px-5 pt-5 pb-3"
-            style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)' }}
+            className="relative flex w-full max-w-sm sm:max-w-lg md:max-w-2xl max-h-[95dvh] flex-col overflow-hidden rounded-2xl shadow-2xl my-4"
+            style={{
+              background: 'linear-gradient(145deg, #ffffff 0%, #fff7f3 100%)',
+              border: '1px solid rgba(249,115,22,0.15)',
+            }}
           >
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-white/10 transition-colors"
+            {/* Header band */}
+            <div
+              className="shrink-0 px-4 pt-4 pb-3 sm:px-5 sm:pt-5"
+              style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)' }}
             >
-              <X className="w-4 h-4 text-white/70" />
-            </button>
-            <div className="flex items-center gap-3 mb-1">
-              <div className="w-10 h-10 rounded-2xl bg-orange-500/20 border border-orange-400/30 flex items-center justify-center">
-                <Unlock className="w-5 h-5 text-orange-400" />
-              </div>
-              <div>
-                <h2 className="text-white font-semibold text-base leading-tight">Unlock AI Resume Builder</h2>
-                <p className="text-white/50 text-xs leading-tight">One-time payment · Instant access</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 flex flex-col gap-3">
-            {/* Credits Section */}
-            {loadingProfile ? (
-              <div className="flex items-center gap-2 p-4 rounded-2xl bg-orange-50 border border-orange-100">
-                <div className="w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
-                <span className="text-sm text-orange-600">Loading your credits...</span>
-              </div>
-            ) : availableCredits > 0 ? (
-              <div
-                className="rounded-2xl overflow-hidden border transition-all duration-200"
-                style={{
-                  borderColor: useCredits ? '#F97316' : '#e5e7eb',
-                  background: useCredits ? 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)' : '#fafafa',
-                }}
-              >
-                <div className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div
-                        className="w-9 h-9 rounded-xl flex items-center justify-center"
-                        style={{ background: useCredits ? '#F97316' : '#f3f4f6' }}
-                      >
-                        <Sparkles className={`w-4 h-4 ${useCredits ? 'text-white' : 'text-gray-400'}`} />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-800">
-                          You have <span className="text-orange-500">{availableCredits} credits</span>
-                        </p>
-                        <p className="text-xs text-gray-500">1 credit = ₹{CREDIT_VALUE} · Max {MAX_CREDITS_APPLICABLE} applicable</p>
-                      </div>
-                    </div>
-                    {/* Toggle */}
-                    <button
-                      onClick={() => {
-                        const nextValue = !useCredits;
-                        setUseCredits(nextValue);
-                        if (nextValue) {
-                          setUsePurchasedCredits(false);
-                        }
-                      }}
-                      className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${useCredits ? 'bg-orange-500' : 'bg-gray-300'}`}
-                      style={{ boxShadow: useCredits ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : 'inset 0 1px 3px rgba(0,0,0,0.1)' }}
-                    >
-                      <span
-                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-250 pointer-events-none ${useCredits ? 'translate-x-6' : 'translate-x-0'}`}
-                      />
-                    </button>
-                  </div>
-
-                  {/* Credit slider */}
-                  {useCredits && (
-                    <div className="mt-4 pt-4 border-t border-orange-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-medium text-gray-600">Credits to apply</span>
-                        <span className="text-sm font-bold text-orange-600">
-                          {creditsToApply} credits → −₹{(creditsToApply * CREDIT_VALUE).toFixed(2)}
-                        </span>
-                      </div>
-                      <input
-                        type="range"
-                        min={0}
-                        max={maxApplicable}
-                        value={creditsToApply}
-                        onChange={e => setCreditsToApply(Number(e.target.value))}
-                        className="w-full h-2 rounded-full appearance-none cursor-pointer"
-                        style={{
-                          background: `linear-gradient(to right, #F97316 0%, #F97316 ${maxApplicable > 0 ? (creditsToApply / maxApplicable) * 100 : 0}%, #e5e7eb ${maxApplicable > 0 ? (creditsToApply / maxApplicable) * 100 : 0}%, #e5e7eb 100%)`,
-                          accentColor: '#F97316',
-                        }}
-                      />
-                      <div className="flex justify-between mt-1">
-                        <span className="text-xs text-gray-400">0</span>
-                        <span className="text-xs text-gray-400">{maxApplicable}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2.5 p-3.5 rounded-2xl bg-gray-50 border border-gray-100">
-                <Info className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                <span className="text-sm text-gray-500">You have no credits available.</span>
-              </div>
-            )}
-
-            {/* Purchased Credits Toggle Section */}
-            <div className="rounded-2xl border border-gray-100 p-4 shadow-sm" style={{ background: '#fafafa' }}>
-              <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gray-800">Use purchased credits</p>
-                  <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
-                    {availablePurchasedCredits > 0 ? (
-                      <>You have <span className="font-semibold text-orange-500">{availablePurchasedCredits}</span> purchased credit{availablePurchasedCredits !== 1 ? 's' : ''} available. 1 credit = ₹1.</>
-                    ) : (
-                      <>You don't have any purchased credits left.</>
-                    )}
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    const nextValue = !usePurchasedCredits;
-                    setUsePurchasedCredits(nextValue);
-                    if (nextValue) {
-                      setUseCredits(false);
-                    }
-                  }}
-                  disabled={availablePurchasedCredits === 0}
-                  className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${(usePurchasedCredits && availablePurchasedCredits > 0) ? 'bg-orange-500' : 'bg-gray-300'} ${availablePurchasedCredits === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  style={{ boxShadow: (usePurchasedCredits && availablePurchasedCredits > 0) ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : 'inset 0 1px 3px rgba(0,0,0,0.1)' }}
-                >
-                  <span
-                    className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-250 pointer-events-none ${(usePurchasedCredits && availablePurchasedCredits > 0) ? 'translate-x-6' : 'translate-x-0'}`}
-                  />
-                </button>
-              </div>
-            </div>
-
-            {/* Price Breakdown */}
-            <div className="rounded-2xl border border-gray-100 overflow-hidden" style={{ background: '#fff' }}>
               <button
-                className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
-                onClick={() => setShowBreakdown(v => !v)}
+                onClick={onClose}
+                className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-white/10 transition-colors"
               >
-                <div className="flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm font-semibold text-gray-700">Price Breakdown</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-gray-900">₹{breakdown.finalPrice}</span>
-                  {showBreakdown ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-                </div>
+                <X className="w-4 h-4 text-white/70" />
               </button>
-
-              {showBreakdown && (
-                <div className="px-4 pb-4 flex flex-col gap-0">
-                  <div className="border-t border-gray-100 mb-3" />
-                  {[
-                    { label: 'Base Price', value: `₹${breakdown.basePrice.toFixed(2)}`, highlight: false, muted: false, bold: false },
-                    ...(breakdown.creditsApplied > 0
-                      ? [{ label: `Credits Applied (${breakdown.creditsApplied} × ₹${CREDIT_VALUE})`, value: `−₹${breakdown.creditDiscount.toFixed(2)}`, highlight: true, muted: false, bold: false }]
-                      : []),
-                    { label: 'Price after Credits', value: `₹${breakdown.priceAfterCredits.toFixed(2)}`, highlight: false, muted: false, bold: true },
-                    { label: 'CGST (9%)', value: `₹${breakdown.cgst.toFixed(2)}`, highlight: false, muted: true, bold: false },
-                    { label: 'SGST (9%)', value: `₹${breakdown.sgst.toFixed(2)}`, highlight: false, muted: true, bold: false },
-                    ...(breakdown.purchasedCreditsUsed > 0
-                      ? [{ label: `Purchased Credits Used`, value: `−₹${breakdown.purchasedCreditsUsed.toFixed(2)}`, highlight: true, muted: false, bold: false }]
-                      : []),
-                  ].map((row, idx) => (
-                    <div key={idx} className="flex items-center justify-between py-1.5">
-                      <span className={`text-sm ${row.highlight ? 'text-green-600 font-medium' : row.muted ? 'text-gray-400' : row.bold ? 'text-gray-700 font-semibold' : 'text-gray-600'}`}>
-                        {row.label}
-                      </span>
-                      <span className={`text-sm font-semibold ${row.highlight ? 'text-green-600' : row.muted ? 'text-gray-400' : 'text-gray-800'}`}>
-                        {row.value}
-                      </span>
-                    </div>
-                  ))}
-                  {/* Total */}
-                  <div
-                    className="flex items-center justify-between mt-2 pt-3 rounded-xl px-3 py-2.5"
-                    style={{ background: 'linear-gradient(135deg, #1a1a2e, #0f3460)' }}
-                  >
-                    <span className="text-sm font-bold text-white/80">Total Payable</span>
-                    <span className="text-lg font-extrabold text-orange-400">₹{breakdown.finalPrice}</span>
-                  </div>
-                  {breakdown.creditsApplied > 0 && (
-                    <p className="text-xs text-green-600 text-center mt-2 font-medium">
-                      🎉 You saved ₹{breakdown.creditDiscount.toFixed(2)} using credits!
-                    </p>
-                  )}
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-10 h-10 rounded-2xl bg-orange-500/20 border border-orange-400/30 flex items-center justify-center">
+                  <Unlock className="w-5 h-5 text-orange-400" />
                 </div>
-              )}
+                <div>
+                  <h2 className="text-white font-semibold text-base leading-tight">Unlock AI Resume Builder</h2>
+                  <p className="text-white/50 text-xs leading-tight">One-time payment · Instant access</p>
+                </div>
+              </div>
             </div>
 
-            {/* Pay Button */}
-            <button
-              onClick={handlePay}
-              disabled={payLoading}
-              className="w-full py-3.5 rounded-2xl text-white font-bold text-base transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-              style={{
-                background: payLoading ? '#9ca3af' : 'linear-gradient(135deg, #F97316 0%, #ea580c 100%)',
-                boxShadow: payLoading ? 'none' : '0 8px 24px rgba(249,115,22,0.35)',
-              }}
-            >
-              {payLoading ? (
-                <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />Initiating Payment...</>
-              ) : (
-                <><Lock className="w-4 h-4" />Pay ₹{breakdown.finalPrice} & Start</>
-              )}
-            </button>
+            {/* Scrollable body. On md+ screens the content splits into two
+                columns side-by-side; on small screens it stacks and scrolls. */}
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4">
+              <div className="flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-4 md:items-start">
 
-            <p className="text-xs text-gray-400 text-center">Secured by Razorpay · GST inclusive pricing</p>
+                {/* LEFT COLUMN (md+): credits controls */}
+                <div className="flex flex-col gap-3">
+                  {/* Credits Section */}
+                  {loadingProfile ? (
+                    <div className="flex items-center gap-2 p-4 rounded-2xl bg-orange-50 border border-orange-100">
+                      <div className="w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
+                      <span className="text-sm text-orange-600">Loading your credits...</span>
+                    </div>
+                  ) : availableCredits > 0 ? (
+                    <div
+                      className="rounded-2xl overflow-hidden border transition-all duration-200"
+                      style={{
+                        borderColor: useCredits ? '#F97316' : '#e5e7eb',
+                        background: useCredits ? 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)' : '#fafafa',
+                      }}
+                    >
+                      <div className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <div
+                              className="w-9 h-9 rounded-xl flex items-center justify-center"
+                              style={{ background: useCredits ? '#F97316' : '#f3f4f6' }}
+                            >
+                              <Sparkles className={`w-4 h-4 ${useCredits ? 'text-white' : 'text-gray-400'}`} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-800">
+                                You have <span className="text-orange-500">{availableCredits} credits</span>
+                              </p>
+                              <p className="text-xs text-gray-500">1 credit = ₹{CREDIT_VALUE} · Max {MAX_CREDITS_APPLICABLE} applicable</p>
+                            </div>
+                          </div>
+                          {/* Toggle */}
+                          <button
+                            onClick={() => {
+                              const nextValue = !useCredits;
+                              setUseCredits(nextValue);
+                              if (nextValue) {
+                                setUsePurchasedCredits(false);
+                              }
+                            }}
+                            className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${useCredits ? 'bg-orange-500' : 'bg-gray-300'}`}
+                            style={{ boxShadow: useCredits ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : 'inset 0 1px 3px rgba(0,0,0,0.1)' }}
+                          >
+                            <span
+                              className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-250 pointer-events-none ${useCredits ? 'translate-x-6' : 'translate-x-0'}`}
+                            />
+                          </button>
+                        </div>
+
+                        {/* Credit slider */}
+                        {useCredits && (
+                          <div className="mt-4 pt-4 border-t border-orange-200">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-medium text-gray-600">Credits to apply</span>
+                              <span className="text-sm font-bold text-orange-600">
+                                {creditsToApply} credits → −₹{(creditsToApply * CREDIT_VALUE).toFixed(2)}
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min={0}
+                              max={maxApplicable}
+                              value={creditsToApply}
+                              onChange={e => setCreditsToApply(Number(e.target.value))}
+                              className="w-full h-2 rounded-full appearance-none cursor-pointer"
+                              style={{
+                                background: `linear-gradient(to right, #F97316 0%, #F97316 ${maxApplicable > 0 ? (creditsToApply / maxApplicable) * 100 : 0}%, #e5e7eb ${maxApplicable > 0 ? (creditsToApply / maxApplicable) * 100 : 0}%, #e5e7eb 100%)`,
+                                accentColor: '#F97316',
+                              }}
+                            />
+                            <div className="flex justify-between mt-1">
+                              <span className="text-xs text-gray-400">0</span>
+                              <span className="text-xs text-gray-400">{maxApplicable}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2.5 p-3.5 rounded-2xl bg-gray-50 border border-gray-100">
+                      <Info className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <span className="text-sm text-gray-500">You have no credits available.</span>
+                    </div>
+                  )}
+
+                  {/* Purchased Credits Toggle Section */}
+                  <div className="rounded-2xl border border-gray-100 p-4 shadow-sm" style={{ background: '#fafafa' }}>
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-800">Use purchased credits</p>
+                        <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+                          {availablePurchasedCredits > 0 ? (
+                            <>You have <span className="font-semibold text-orange-500">{availablePurchasedCredits}</span> purchased credit{availablePurchasedCredits !== 1 ? 's' : ''} available. 1 credit = ₹1.</>
+                          ) : (
+                            <>You don't have any purchased credits left.</>
+                          )}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const nextValue = !usePurchasedCredits;
+                          setUsePurchasedCredits(nextValue);
+                          if (nextValue) {
+                            setUseCredits(false);
+                          }
+                        }}
+                        disabled={availablePurchasedCredits === 0}
+                        className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${(usePurchasedCredits && availablePurchasedCredits > 0) ? 'bg-orange-500' : 'bg-gray-300'} ${availablePurchasedCredits === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        style={{ boxShadow: (usePurchasedCredits && availablePurchasedCredits > 0) ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : 'inset 0 1px 3px rgba(0,0,0,0.1)' }}
+                      >
+                        <span
+                          className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-250 pointer-events-none ${(usePurchasedCredits && availablePurchasedCredits > 0) ? 'translate-x-6' : 'translate-x-0'}`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* RIGHT COLUMN (md+): price breakdown + pay button */}
+                <div className="flex flex-col gap-3">
+                  {/* Price Breakdown */}
+                  <div className="rounded-2xl border border-gray-100 overflow-hidden" style={{ background: '#fff' }}>
+                    <button
+                      className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+                      onClick={() => setShowBreakdown(v => !v)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Tag className="w-4 h-4 text-gray-500" />
+                        <span className="text-sm font-semibold text-gray-700">Price Breakdown</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-gray-900">₹{breakdown.finalPrice}</span>
+                        {showBreakdown ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                      </div>
+                    </button>
+
+                    {showBreakdown && (
+                      <div className="px-4 pb-4 flex flex-col gap-0">
+                        <div className="border-t border-gray-100 mb-3" />
+                        {[
+                          { label: 'Base Price', value: `₹${breakdown.basePrice.toFixed(2)}`, highlight: false, muted: false, bold: false },
+                          ...(breakdown.creditsApplied > 0
+                            ? [{ label: `Credits Applied (${breakdown.creditsApplied} × ₹${CREDIT_VALUE})`, value: `−₹${breakdown.creditDiscount.toFixed(2)}`, highlight: true, muted: false, bold: false }]
+                            : []),
+                          { label: 'Price after Credits', value: `₹${breakdown.priceAfterCredits.toFixed(2)}`, highlight: false, muted: false, bold: true },
+                          { label: 'CGST (9%)', value: `₹${breakdown.cgst.toFixed(2)}`, highlight: false, muted: true, bold: false },
+                          { label: 'SGST (9%)', value: `₹${breakdown.sgst.toFixed(2)}`, highlight: false, muted: true, bold: false },
+                          ...(breakdown.purchasedCreditsUsed > 0
+                            ? [{ label: `Purchased Credits Used`, value: `−₹${breakdown.purchasedCreditsUsed.toFixed(2)}`, highlight: true, muted: false, bold: false }]
+                            : []),
+                        ].map((row, idx) => (
+                          <div key={idx} className="flex items-center justify-between py-1.5">
+                            <span className={`text-sm ${row.highlight ? 'text-green-600 font-medium' : row.muted ? 'text-gray-400' : row.bold ? 'text-gray-700 font-semibold' : 'text-gray-600'}`}>
+                              {row.label}
+                            </span>
+                            <span className={`text-sm font-semibold ${row.highlight ? 'text-green-600' : row.muted ? 'text-gray-400' : 'text-gray-800'}`}>
+                              {row.value}
+                            </span>
+                          </div>
+                        ))}
+                        {/* Total */}
+                        <div
+                          className="flex items-center justify-between mt-2 pt-3 rounded-xl px-3 py-2.5"
+                          style={{ background: 'linear-gradient(135deg, #1a1a2e, #0f3460)' }}
+                        >
+                          <span className="text-sm font-bold text-white/80">Total Payable</span>
+                          <span className="text-lg font-extrabold text-orange-400">₹{breakdown.finalPrice}</span>
+                        </div>
+                        {breakdown.creditsApplied > 0 && (
+                          <p className="text-xs text-green-600 text-center mt-2 font-medium">
+                            🎉 You saved ₹{breakdown.creditDiscount.toFixed(2)} using credits!
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Pay Button */}
+                  <button
+                    onClick={handlePay}
+                    disabled={payLoading}
+                    className="w-full py-3.5 rounded-2xl text-white font-bold text-base transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                    style={{
+                      background: payLoading ? '#9ca3af' : 'linear-gradient(135deg, #F97316 0%, #ea580c 100%)',
+                      boxShadow: payLoading ? 'none' : '0 8px 24px rgba(249,115,22,0.35)',
+                    }}
+                  >
+                    {payLoading ? (
+                      <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />Initiating Payment...</>
+                    ) : (
+                      <><Lock className="w-4 h-4" />Pay ₹{breakdown.finalPrice} & Start</>
+                    )}
+                  </button>
+
+                  <p className="text-xs text-gray-400 text-center">Secured by Razorpay · GST inclusive pricing</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

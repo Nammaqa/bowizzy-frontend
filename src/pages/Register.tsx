@@ -68,6 +68,7 @@ export default function Register() {
     dob?: string;
     email?: string;
     linkedin?: string;
+    gender?: string;
     password?: string;
     confirmPassword?: string;
   };
@@ -220,6 +221,7 @@ export default function Register() {
     if (isBlank(normalizedLinkedinUsername)) return setFormError("Please enter your LinkedIn username.");
     if (!emailVerified) return setFormError("Please verify your email address before signing up.");
 
+    if (isBlank(gender)) return setFormError("Please select your gender.");
     if (!agree) return setFormError("You must agree to the terms.");
 
     if (normalizedPassword !== normalizedConfirmPassword)
@@ -594,7 +596,7 @@ export default function Register() {
                           Resend
                         </button>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">OTP sent to {email}. Check your inbox.</p>
+                      {/* <p className="text-xs text-gray-500 mt-1">OTP sent to {email}. Check your inbox.</p> */}
                     </div>
                   )}
 
@@ -645,7 +647,15 @@ export default function Register() {
                   <label>Gender*</label>
                   <select
                     value={gender}
-                    onChange={(e) => setGender(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setGender(value);
+                      if (!value) {
+                        setFieldError("gender", "Gender is required");
+                      } else {
+                        setFieldError("gender", "");
+                      }
+                    }}
                     className="mt-2 w-full px-4 py-3 border rounded-lg"
                   >
                     <option value="">Select</option>
@@ -653,6 +663,9 @@ export default function Register() {
                     <option value="female">Female</option>
                     <option value="non-binary">Non-Binary</option>
                   </select>
+                  {errors.gender && (
+                    <p className="text-red-500 text-sm">{errors.gender}</p>
+                  )}
                 </div>
 
                 {/* PASSWORD */}

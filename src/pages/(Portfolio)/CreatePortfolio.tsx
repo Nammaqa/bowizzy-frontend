@@ -786,7 +786,7 @@ export default function CreatePortfolio() {
                   </div>
                   <div className="bg-orange-50 rounded-xl p-3">
                     <p className="text-xs text-orange-400 mb-1">Credit discount</p>
-                    <p className="text-sm font-semibold text-orange-600">−₹{creditDiscount.toFixed(2)}</p>
+                    <p className="text-sm font-semibold text-orange-600">₹{creditDiscount.toFixed(2)}</p>
                   </div>
                   <div className="bg-violet-50 rounded-xl p-3">
                     <p className="text-xs text-violet-400 mb-1">You pay</p>
