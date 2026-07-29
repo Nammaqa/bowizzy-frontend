@@ -84,6 +84,7 @@ function calculatePriceBreakdown(basePrice: number, creditsApplied: number, purc
 interface PaymentBreakdownModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onDismiss?: () => void;
   onPaymentSuccess: () => void;
   templateId: string | null;
   userId?: string;
@@ -94,6 +95,7 @@ interface PaymentBreakdownModalProps {
 const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
   isOpen,
   onClose,
+  onDismiss,
   onPaymentSuccess,
   templateId,
   userId,
@@ -279,7 +281,7 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/70 z-[90] backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/70 z-[90] backdrop-blur-sm" onClick={onDismiss ?? onClose} />
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
         <div
           className="relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl"
@@ -296,7 +298,7 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
             }}
           >
             <button
-              onClick={onClose}
+              onClick={onDismiss ?? onClose}
               className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-white/10 transition-colors"
             >
               <X className="w-4 h-4 text-white/70" />
@@ -1039,15 +1041,25 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
     }
   };
 
+  const handlePaymentModalClose = () => {
+    pendingSaveAfterPaymentRef.current = false;
+    setShowPaymentBreakdown(false);
+  };
+
+  const handlePaymentModalDismiss = () => {
+    handlePaymentModalClose();
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
+  };
+
   return (
     <>
       {/* Payment Breakdown Modal */}
       <PaymentBreakdownModal
         isOpen={showPaymentBreakdown}
-        onClose={() => {
-          pendingSaveAfterPaymentRef.current = false;
-          setShowPaymentBreakdown(false);
-        }}
+        onClose={handlePaymentModalClose}
+        onDismiss={handlePaymentModalDismiss}
         onPaymentSuccess={() => {
           setResumeUnlocked(true);
           if (pendingSaveAfterPaymentRef.current) {
