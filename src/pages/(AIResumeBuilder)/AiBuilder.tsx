@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Menu, Sparkles, Wand2, Brain, Rocket, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import DashNav from "@/components/dashnav/dashnav";
@@ -120,6 +121,7 @@ export default function AIBuilder() {
     token = u?.token || "";
   } catch {}
 
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mode, setMode] = useState<"jd" | "non-jd">("non-jd");
   const [inputValue, setInputValue] = useState("");
@@ -184,6 +186,29 @@ export default function AIBuilder() {
   React.useEffect(() => {
     if (currentSession?.mode) setMode(currentSession.mode);
   }, [currentSession?.id, currentSession?.mode]);
+
+  // Entering from the landing page's "JD Based AI Builder" button. The mode is
+  // written onto the active session (not just local state) so the sync effect
+  // above keeps it, and so it survives switching chats. Applied once per
+  // navigation — afterwards the user is free to toggle back.
+  const requestedMode = (location.state as { mode?: "jd" | "non-jd" } | null)?.mode;
+  const requestedModeAppliedRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (requestedModeAppliedRef.current) return;
+    if (requestedMode !== "jd" || !currentSessionId) return;
+
+    requestedModeAppliedRef.current = true;
+
+    // A session that's already been paid for is locked to its mode.
+    if (paidJdSessions[currentSessionId]) return;
+
+    setMode("jd");
+    setInfoModalMode("jd");
+    setChatSessions((prev) =>
+      prev.map((s) => (s.id === currentSessionId ? { ...s, mode: "jd" } : s))
+    );
+  }, [requestedMode, currentSessionId, paidJdSessions]);
 
   // ── Fetch /resume-data and build chips ───────────────────────────────────
 

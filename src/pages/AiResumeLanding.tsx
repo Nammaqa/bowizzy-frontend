@@ -141,11 +141,23 @@ function ProfilePopup({
 export default function AiResumeLanding() {
   const navigate = useNavigate();
   const [showPopup, setShowPopup] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  // Which button is mid-flight, so only that one shows a spinner.
+  const [loadingMode, setLoadingMode] = useState<"jd" | "non-jd" | null>(null);
+  // Remembered while the profile pop-up is open, so "Continue without profile"
+  // lands in the mode the user originally picked.
+  const [pendingMode, setPendingMode] = useState<"jd" | "non-jd">("non-jd");
+  const isLoading = loadingMode !== null;
 
-  const handleStartBuilding = async () => {
+  const goToBuilder = (mode: "jd" | "non-jd") => {
+    // JD mode is passed via navigation state — the builder applies it to the
+    // active session on arrival.
+    navigate("/ai-resume-builder/chat", mode === "jd" ? { state: { mode } } : undefined);
+  };
+
+  const handleStartBuilding = async (mode: "jd" | "non-jd" = "non-jd") => {
+    setPendingMode(mode);
     try {
-      setIsLoading(true);
+      setLoadingMode(mode);
       const userStr = localStorage.getItem("user");
       const user = userStr ? JSON.parse(userStr) : null;
       const token = user?.token;
@@ -159,7 +171,7 @@ export default function AiResumeLanding() {
       const data = await getProfileProgress(userId, token);
 
       if (data && data.percentage > 80) {
-        navigate("/ai-resume-builder/chat");
+        goToBuilder(mode);
       } else {
         setShowPopup(true);
       }
@@ -167,7 +179,7 @@ export default function AiResumeLanding() {
       console.error("Failed to fetch profile progress", error);
       setShowPopup(true);
     } finally {
-      setIsLoading(false);
+      setLoadingMode(null);
     }
   };
 
@@ -184,7 +196,7 @@ export default function AiResumeLanding() {
           }}
           onContinueWithout={() => {
             setShowPopup(false);
-            navigate("/ai-resume-builder/chat");
+            goToBuilder(pendingMode);
           }}
         />
       )}
@@ -206,13 +218,22 @@ export default function AiResumeLanding() {
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center mt-8">
             <button
-              onClick={handleStartBuilding}
+              onClick={() => handleStartBuilding("non-jd")}
               disabled={isLoading}
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-orange-500 text-white font-semibold text-sm hover:bg-orange-600 transition cursor-pointer disabled:opacity-70"
             >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              {loadingMode === "non-jd" ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               AI Builder
               {/* {!isLoading && <ArrowRight className="w-4 h-4" />} */}
+            </button>
+            <button
+              onClick={() => handleStartBuilding("jd")}
+              disabled={isLoading}
+              style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)" }}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white font-semibold text-sm hover:brightness-125 transition cursor-pointer disabled:opacity-70"
+            >
+              {loadingMode === "jd" ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              JD Based AI Builder
             </button>
             <button
               onClick={() => navigate("/ResumeBuilder")}
@@ -277,11 +298,11 @@ export default function AiResumeLanding() {
             </ul>
 
             <button
-              onClick={handleStartBuilding}
+              onClick={() => handleStartBuilding("jd")}
               disabled={isLoading}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-orange-500 text-white text-sm font-semibold hover:bg-orange-600 transition cursor-pointer disabled:opacity-70"
             >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+              {loadingMode === "jd" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
               Try with a job description
             </button>
           </div>
