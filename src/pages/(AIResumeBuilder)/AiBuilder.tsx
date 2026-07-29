@@ -175,6 +175,16 @@ export default function AIBuilder() {
   const currentSession = chatSessions.find((s) => s.id === currentSessionId);
   const activeChipState = currentSessionId ? chipStates[currentSessionId] : undefined;
 
+  // The mode belongs to the session, so the toggle must follow whichever
+  // session is active. Sessions get selected automatically in two places (on
+  // load, and after deleting the active one) and neither sets the mode — so
+  // remounting the page (navigating to the profile and back) would leave a JD
+  // session running at the "non-jd" default until the user clicked another
+  // chat, which made JD mode behave like AI mode.
+  React.useEffect(() => {
+    if (currentSession?.mode) setMode(currentSession.mode);
+  }, [currentSession?.id, currentSession?.mode]);
+
   // ── Fetch /resume-data and build chips ───────────────────────────────────
 
   /**
