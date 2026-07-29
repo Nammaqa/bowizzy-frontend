@@ -66,15 +66,11 @@ export default function Profile() {
 
   // Validation function for file
   const validateFile = (file) => {
-    const validTypes = [
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ];
+    const validTypes = ["application/pdf"];
     const maxSize = 10 * 1024 * 1024; // 10MB
 
     if (!validTypes.includes(file.type)) {
-      return "Only PDF and Word documents (.doc, .docx) are allowed";
+      return "Only PDF files are allowed";
     }
 
     if (file.size > maxSize) {
