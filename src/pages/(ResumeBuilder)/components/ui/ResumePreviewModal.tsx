@@ -12,8 +12,8 @@ const CREDIT_VALUE = 0.5; // 1 credit = ₹0.5
 const CGST_RATE = 0.09;
 const SGST_RATE = 0.09;
 
-import { Lock, Tag, Sparkles, ChevronDown, ChevronUp, Info } from "lucide-react";
-import { X, Download, Eye, Save } from "lucide-react";
+import { Lock, Tag, Sparkles, ChevronDown, ChevronUp, Info, Unlock } from "lucide-react";
+import { X, Download, Eye } from "lucide-react";
 import type { ResumeData } from "@/types/resume";
 import { getTemplateById } from "@/templates/templateRegistry";
 import { pdf } from "@react-pdf/renderer";
@@ -29,6 +29,8 @@ interface UserProfileData {
   image: string;
   isWelcomeBonusRedeemed: boolean;
   credits: number;
+  purchased_credits?: number;
+  purchasedCredits?: number;
   coupon_code: string;
 }
 
@@ -40,6 +42,8 @@ interface PriceBreakdown {
   cgst: number;
   sgst: number;
   totalTax: number;
+  priceWithTax?: number;
+  purchasedCreditsApplied?: number;
   finalPrice: number;
 }
 
@@ -53,6 +57,7 @@ interface ResumePreviewModalProps {
   autoShowPdfPreview?: boolean;
   onPreviewComplete?: () => void;
   onSaveAndExit?: () => Promise<void>;
+  onSaveAndDownloadComplete?: () => void;
   userId?: string;
   token?: string;
   resumeTemplateId?: string | null;
@@ -64,14 +69,15 @@ interface ResumePreviewModalProps {
 }
 
 // ─── Price Breakdown Calculator ───────────────────────────────────────────────
-function calculatePriceBreakdown(basePrice: number, creditsApplied: number): PriceBreakdown {
+function calculatePriceBreakdown(basePrice: number, creditsApplied: number, purchasedCreditsApplied: number = 0): PriceBreakdown {
   const creditDiscount = creditsApplied * CREDIT_VALUE;
   const priceAfterCredits = Math.max(0, basePrice - creditDiscount);
   const cgst = parseFloat((priceAfterCredits * CGST_RATE).toFixed(2));
   const sgst = parseFloat((priceAfterCredits * SGST_RATE).toFixed(2));
   const totalTax = cgst + sgst;
-  const finalPrice = parseFloat((priceAfterCredits + totalTax).toFixed(2));
-  return { basePrice, creditsApplied, creditDiscount, priceAfterCredits, cgst, sgst, totalTax, finalPrice };
+  const priceWithTax = parseFloat((priceAfterCredits + totalTax).toFixed(2));
+  const finalPrice = Math.max(0, parseFloat((priceWithTax - purchasedCreditsApplied).toFixed(2)));
+  return { basePrice, creditsApplied, creditDiscount, priceAfterCredits, cgst, sgst, totalTax, priceWithTax, purchasedCreditsApplied, finalPrice };
 }
 
 // ─── Payment Breakdown Modal ──────────────────────────────────────────────────
@@ -98,6 +104,7 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [creditsToApply, setCreditsToApply] = useState(0);
   const [useCredits, setUseCredits] = useState(false);
+  const [usePurchasedCredits, setUsePurchasedCredits] = useState(false);
   const [payLoading, setPayLoading] = useState(false);
   const [showBreakdown, setShowBreakdown] = useState(true);
 
@@ -130,9 +137,20 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
     }
   }, [useCredits, userProfile]);
 
-  const availableCredits = userProfile?.credits ?? 0;
-  const maxApplicable = Math.min(availableCredits, MAX_CREDITS_APPLICABLE);
-  const breakdown = calculatePriceBreakdown(RESUME_AMOUNT, creditsToApply);
+  useEffect(() => {
+    if (usePurchasedCredits) {
+      setUseCredits(false);
+      setCreditsToApply(0);
+    }
+  }, [usePurchasedCredits]);
+
+  const availableBonusCredits = userProfile?.credits ?? 0;
+  const availablePurchasedCredits = userProfile?.purchased_credits ?? userProfile?.purchasedCredits ?? 0;
+  const maxApplicable = Math.min(availableBonusCredits, MAX_CREDITS_APPLICABLE);
+  
+  const baseBreakdown = calculatePriceBreakdown(RESUME_AMOUNT, useCredits ? creditsToApply : 0, 0);
+  const purchasedCreditsToApply = usePurchasedCredits ? Math.min(availablePurchasedCredits, baseBreakdown.priceWithTax || baseBreakdown.finalPrice) : 0;
+  const breakdown = calculatePriceBreakdown(RESUME_AMOUNT, useCredits ? creditsToApply : 0, purchasedCreditsToApply);
 
   const handlePay = async () => {
     setPayLoading(true);
@@ -153,7 +171,7 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
       const authToken = token || userData?.token;
 
       // Ensure creditsToApply respects the maximum (10 or available, whichever is less)
-      const finalCreditsToApply = useCredits ? Math.min(creditsToApply, Math.min(availableCredits, MAX_CREDITS_APPLICABLE)) : 0;
+      const finalCreditsToApply = useCredits ? Math.min(creditsToApply, Math.min(availableBonusCredits, MAX_CREDITS_APPLICABLE)) : 0;
 
       const createResp = await api.post(
         '/payment/create-order',
@@ -162,6 +180,8 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
           credits_applied: finalCreditsToApply,
           base_price: breakdown.basePrice,
           credit_discount: breakdown.creditDiscount,
+          purchased_credits_used: usePurchasedCredits ? purchasedCreditsToApply : 0,
+          bonus_credits_used: usePurchasedCredits ? 0 : finalCreditsToApply,
           cgst: breakdown.cgst,
           sgst: breakdown.sgst,
           plan_type: 'RESUME_NON_AI',
@@ -172,6 +192,13 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
       );
 
       const orderData = createResp?.data ?? createResp;
+      
+      if (breakdown.finalPrice <= 0 || orderData?.message === "Payment successful" || orderData?.status === "success") {
+         onPaymentSuccess();
+         onClose();
+         return;
+      }
+      
       const orderId = orderData?.id || orderData?.order_id || orderData?.orderId || orderData?.razorpay_order_id;
       const razorKey = orderData?.key || orderData?.key_id || import.meta.env.VITE_RAZORPAY_KEY_ID || '';
       // Amount in paise
@@ -205,7 +232,9 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-                credits_applied: useCredits ? creditsToApply : 0,
+                credits_applied: finalCreditsToApply,
+                purchased_credits_used: usePurchasedCredits ? purchasedCreditsToApply : 0,
+                bonus_credits_used: usePurchasedCredits ? 0 : finalCreditsToApply,
               },
               authToken ? { headers: { Authorization: `Bearer ${authToken}` } } : undefined
             );
@@ -274,7 +303,7 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
             </button>
             <div className="flex items-center gap-3 mb-1">
               <div className="w-10 h-10 rounded-2xl bg-orange-500/20 border border-orange-400/30 flex items-center justify-center">
-                <Lock className="w-5 h-5 text-orange-400" />
+                <Unlock className="w-5 h-5 text-orange-400" />
               </div>
               <div>
                 <h2 className="text-white font-semibold text-base leading-tight">Unlock Premium Resume</h2>
@@ -290,77 +319,148 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
                 <div className="w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
                 <span className="text-sm text-orange-600">Loading your credits...</span>
               </div>
-            ) : availableCredits > 0 ? (
-              <div
-                className="rounded-2xl overflow-hidden border transition-all duration-200"
-                style={{
-                  borderColor: useCredits ? '#F97316' : '#e5e7eb',
-                  background: useCredits ? 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)' : '#fafafa',
-                }}
-              >
-                <div className="p-4">
-                  <div className="flex items-center justify-between">
+            ) : (
+              <div className="flex flex-col gap-3">
+                {/* Purchased Credits Section */}
+                <div
+                  className="rounded-2xl overflow-hidden border transition-all duration-200"
+                  style={{
+                    borderColor: usePurchasedCredits ? '#F97316' : '#e5e7eb',
+                    background: usePurchasedCredits ? 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)' : '#fafafa',
+                    opacity: availablePurchasedCredits > 0 ? 1 : 0.7,
+                  }}
+                >
+                  <div className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <div
                         className="w-9 h-9 rounded-xl flex items-center justify-center"
-                        style={{ background: useCredits ? '#F97316' : '#f3f4f6' }}
+                        style={{ background: usePurchasedCredits ? '#F97316' : '#f3f4f6' }}
                       >
-                        <Sparkles className={`w-4 h-4 ${useCredits ? 'text-white' : 'text-gray-400'}`} />
+                        <Sparkles className={`w-4 h-4 ${usePurchasedCredits ? 'text-white' : 'text-gray-400'}`} />
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-gray-800">
-                          You have <span className="text-orange-500">{availableCredits} credits</span>
+                          Use <span className="text-orange-500">purchased credits</span>
                         </p>
-                        <p className="text-xs text-gray-500">1 credit = ₹{CREDIT_VALUE} · Max {MAX_CREDITS_APPLICABLE} applicable</p>
+                        <p className="text-xs text-gray-500">
+                          {availablePurchasedCredits > 0
+                            ? `You have ${availablePurchasedCredits} purchased credit${availablePurchasedCredits !== 1 ? 's' : ''}`
+                            : "You don't have any purchased credits left."}
+                        </p>
                       </div>
                     </div>
-                    {/* Toggle */}
                     <button
-                      onClick={() => setUseCredits(v => !v)}
-                      className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${useCredits ? 'bg-orange-500' : 'bg-gray-300'}`}
+                      onClick={() => {
+                        if (availablePurchasedCredits > 0) {
+                          const nextValue = !usePurchasedCredits;
+                          setUsePurchasedCredits(nextValue);
+                          if (nextValue) {
+                            setUseCredits(false);
+                            setCreditsToApply(0);
+                          }
+                        }
+                      }}
+                      disabled={availablePurchasedCredits === 0}
+                      className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${usePurchasedCredits ? 'bg-orange-500' : 'bg-gray-300'} ${availablePurchasedCredits === 0 ? 'cursor-not-allowed opacity-50' : ''}`}
                       style={{
-                        boxShadow: useCredits ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : 'inset 0 1px 3px rgba(0,0,0,0.1)',
+                        boxShadow: usePurchasedCredits ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : 'inset 0 1px 3px rgba(0,0,0,0.1)',
                       }}
                     >
                       <span
-                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-250 pointer-events-none ${useCredits ? 'translate-x-6' : 'translate-x-0'}`}
+                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-250 pointer-events-none ${usePurchasedCredits ? 'translate-x-6' : 'translate-x-0'}`}
                       />
                     </button>
                   </div>
-
-                  {/* Credit slider */}
-                  {useCredits && (
-                    <div className="mt-4 pt-4 border-t border-orange-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-medium text-gray-600">Credits to apply</span>
-                        <span className="text-sm font-bold text-orange-600">
-                          {creditsToApply} credits → −₹{(creditsToApply * CREDIT_VALUE).toFixed(2)}
-                        </span>
-                      </div>
-                      <input
-                        type="range"
-                        min={0}
-                        max={maxApplicable}
-                        value={creditsToApply}
-                        onChange={e => setCreditsToApply(Number(e.target.value))}
-                        className="w-full h-2 rounded-full appearance-none cursor-pointer"
-                        style={{
-                          background: `linear-gradient(to right, #F97316 0%, #F97316 ${(creditsToApply / maxApplicable) * 100}%, #e5e7eb ${(creditsToApply / maxApplicable) * 100}%, #e5e7eb 100%)`,
-                          accentColor: '#F97316',
-                        }}
-                      />
-                      <div className="flex justify-between mt-1">
-                        <span className="text-xs text-gray-400">0</span>
-                        <span className="text-xs text-gray-400">{maxApplicable}</span>
-                      </div>
-                    </div>
-                  )}
                 </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2.5 p-3.5 rounded-2xl bg-gray-50 border border-gray-100">
-                <Info className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                <span className="text-sm text-gray-500">You have no credits available.</span>
+
+                {/* Bonus Credits Section */}
+                {availableBonusCredits > 0 ? (
+                  <div
+                    className="rounded-2xl overflow-hidden border transition-all duration-200"
+                    style={{
+                      borderColor: useCredits ? '#F97316' : '#e5e7eb',
+                      background: useCredits ? 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)' : '#fafafa',
+                      opacity: usePurchasedCredits ? 0.75 : 1,
+                    }}
+                  >
+                    <div className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div
+                            className="w-9 h-9 rounded-xl flex items-center justify-center"
+                            style={{ background: useCredits ? '#F97316' : '#f3f4f6' }}
+                          >
+                            <Sparkles className={`w-4 h-4 ${useCredits ? 'text-white' : 'text-gray-400'}`} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-gray-800">
+                              You have <span className="text-orange-500">{availableBonusCredits} bonus credits</span>
+                            </p>
+                            <p className="text-xs text-gray-500">1 credit = ₹{CREDIT_VALUE} · Max {MAX_CREDITS_APPLICABLE} applicable</p>
+                          </div>
+                        </div>
+                        {/* Toggle */}
+                        <button
+                          onClick={() => {
+                            const nextValue = !useCredits;
+                            setUseCredits(nextValue);
+                            if (nextValue) {
+                              setUsePurchasedCredits(false);
+                              setCreditsToApply(0);
+                            }
+                          }}
+                          className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${useCredits ? 'bg-orange-500' : 'bg-gray-300'}`}
+                          style={{
+                            boxShadow: useCredits ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : 'inset 0 1px 3px rgba(0,0,0,0.1)',
+                          }}
+                        >
+                          <span
+                            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-250 pointer-events-none ${useCredits ? 'translate-x-6' : 'translate-x-0'}`}
+                          />
+                        </button>
+                      </div>
+
+                      {usePurchasedCredits && (
+                        <p className="mt-3 text-xs text-gray-500">
+                          Bonus credits are disabled while purchased credits are being used.
+                        </p>
+                      )}
+
+                      {/* Credit slider */}
+                      {useCredits && !usePurchasedCredits && (
+                        <div className="mt-4 pt-4 border-t border-orange-200">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-medium text-gray-600">Credits to apply</span>
+                            <span className="text-sm font-bold text-orange-600">
+                              {creditsToApply} credits → −₹{(creditsToApply * CREDIT_VALUE).toFixed(2)}
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min={0}
+                            max={maxApplicable}
+                            value={creditsToApply}
+                            onChange={e => setCreditsToApply(Number(e.target.value))}
+                            className="w-full h-2 rounded-full appearance-none cursor-pointer"
+                            style={{
+                              background: `linear-gradient(to right, #F97316 0%, #F97316 ${(maxApplicable > 0 ? (creditsToApply / maxApplicable) * 100 : 0)}%, #e5e7eb ${(maxApplicable > 0 ? (creditsToApply / maxApplicable) * 100 : 0)}%, #e5e7eb 100%)`,
+                              accentColor: '#F97316',
+                            }}
+                          />
+                          <div className="flex justify-between mt-1">
+                            <span className="text-xs text-gray-400">0</span>
+                            <span className="text-xs text-gray-400">{maxApplicable}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2.5 p-3.5 rounded-2xl bg-gray-50 border border-gray-100">
+                    <Info className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <span className="text-sm text-gray-500">You have no bonus credits available.</span>
+                  </div>
+                )}
               </div>
             )}
 
@@ -427,6 +527,16 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
                       strike: false,
                       muted: true,
                     },
+                    ...(breakdown.purchasedCreditsApplied && breakdown.purchasedCreditsApplied > 0
+                      ? [{
+                        label: 'Purchased Credits Applied',
+                        value: `−₹${breakdown.purchasedCreditsApplied.toFixed(2)}`,
+                        sub: null,
+                        highlight: true,
+                        strike: false,
+                        bold: true,
+                      }]
+                      : []),
                   ].map((row, idx) => (
                     <div key={idx} className="flex items-center justify-between py-1.5">
                       <span
@@ -536,6 +646,7 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
   autoShowPdfPreview = false,
   onPreviewComplete,
   onSaveAndExit,
+  onSaveAndDownloadComplete,
   userId,
   token,
   resumeTemplateId,
@@ -545,9 +656,9 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
   primaryColor = '#111827',
   fontFamily = 'Times New Roman, serif',
 }) => {
-  const [showPayMsg, setShowPayMsg] = React.useState(false);
   const [resumeUnlocked, setResumeUnlocked] = React.useState(false);
   const [showPaymentBreakdown, setShowPaymentBreakdown] = React.useState(false);
+  const pendingSaveAfterPaymentRef = useRef(false);
 
   const generateDefaultResumeName = (): string => {
     const fn = (resumeData?.personal?.firstName || '').trim().replace(/\s+/g, '').replace(/[^a-zA-Z0-9-_]/g, '');
@@ -564,8 +675,6 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
   const [showNameDialog, setShowNameDialog] = useState(false);
   const [resumeName, setResumeName] = useState<string>('');
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
-  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
-  const [saveMode, setSaveMode] = useState<'download' | 'template' | null>(null);
 
   useEffect(() => {
     if (showNameDialog && !resumeName) {
@@ -591,6 +700,7 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
   }, [isOpen, userId, token]);
 
   const previewContentRef = useRef<HTMLDivElement>(null);
+  const pdfPreviewScrollRef = useRef<HTMLDivElement>(null);
   const [modalPaginatePageCount, setModalPaginatePageCount] = useState<number | null>(null);
   const [modalPaginateCurrentPage, setModalPaginateCurrentPage] = useState<number>(1);
   const modalPaginatedRef = useRef<{ goTo: (i: number) => void; next: () => void; prev: () => void } | null>(null);
@@ -620,6 +730,74 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
     return num && num >= 12 && num <= 20;
   })();
 
+  const uploadPdfToCloudinary = async (blob: Blob): Promise<string | null> => {
+    try {
+      const finalName = resumeName.trim() || generateDefaultResumeName() || 'resume';
+      const file = new File([blob], `${finalName}.pdf`, { type: 'application/pdf' });
+      const result = await uploadToCloudinary(file);
+      return result?.url || null;
+    } catch (error) {
+      console.error('Cloudinary PDF upload error:', error);
+      return null;
+    }
+  };
+
+  const isMobilePreviewDevice = () => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth < 768 || /Android|iPhone|iPad|iPod/i.test(window.navigator.userAgent);
+  };
+
+  const isSamsungPreviewBrowser = () => {
+    if (typeof window === 'undefined') return false;
+    return /SamsungBrowser/i.test(window.navigator.userAgent);
+  };
+
+  const getPreviewCanvasScale = () => (isMobilePreviewDevice() ? 1 : 2);
+
+  const generatePdfFromPrintablePages = async (printable: NodeListOf<Element>) => {
+    const pdfDoc = new jsPDF('p', 'pt', 'a4');
+    const pdfWidth = pdfDoc.internal.pageSize.getWidth();
+    const pdfHeight = pdfDoc.internal.pageSize.getHeight();
+    const canvasScale = getPreviewCanvasScale();
+
+    for (let i = 0; i < printable.length; i++) {
+      const canvas = await html2canvas(printable[i] as HTMLElement, {
+        scale: canvasScale,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+      const imgData = canvas.toDataURL('image/png');
+      if (i > 0) pdfDoc.addPage();
+      pdfDoc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    }
+
+    return pdfDoc.output('blob') as Blob;
+  };
+
+  const generatePdfFromReactPdf = async (dataForPdf: ResumeData) => {
+    if (!PDFComponent) return null;
+    const preparedData = await embedProfilePhoto(dataForPdf);
+    const doc = <PDFComponent data={preparedData} primaryColor={primaryColor} fontFamily={fontFamily} />;
+    const asPdf = pdf(doc);
+    return await asPdf.toBlob();
+  };
+
+  const handleSetPdfUrl = async (blob: Blob) => {
+    const localUrl = URL.createObjectURL(blob);
+    setPdfUrl(localUrl);
+
+    if (isSamsungPreviewBrowser()) return;
+
+    if (isMobilePreviewDevice()) {
+      const cUrl = await uploadPdfToCloudinary(blob);
+      if (cUrl) {
+        setPdfUrl(`https://docs.google.com/viewer?url=${encodeURIComponent(cUrl)}&embedded=true`);
+        return;
+      }
+    }
+  };
+
   useEffect(() => {
     if (!isOpen || !autoGeneratePreview || !PDFComponent) return;
 
@@ -643,28 +821,19 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
         const printable = await waitForPages();
 
         if (printable && printable.length > 0) {
-          const pdfDoc = new jsPDF('p', 'pt', 'a4');
-          const pdfWidth = pdfDoc.internal.pageSize.getWidth();
-          const pdfHeight = pdfDoc.internal.pageSize.getHeight();
-          for (let i = 0; i < printable.length; i++) {
-            const canvas = await html2canvas(printable[i] as HTMLElement, { scale: 2, useCORS: true });
-            const imgData = canvas.toDataURL('image/png');
-            if (i > 0) pdfDoc.addPage();
-            pdfDoc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          try {
+            generatedBlob = await generatePdfFromPrintablePages(printable);
+          } catch (canvasError) {
+            console.error('Canvas preview generation failed, falling back to PDF renderer:', canvasError);
+            generatedBlob = await generatePdfFromReactPdf(resumeDataRef.current);
           }
-          generatedBlob = pdfDoc.output('blob') as Blob;
-        } else {
-          const preparedData = await embedProfilePhoto(resumeDataRef.current);
-          const doc = <PDFComponent data={preparedData} primaryColor={primaryColor} fontFamily={fontFamily} />;
-          const asPdf = pdf(doc);
-          generatedBlob = await asPdf.toBlob();
         }
+        if (!generatedBlob) generatedBlob = await generatePdfFromReactPdf(resumeDataRef.current);
 
         if (generatedBlob) {
           cachedBlobRef.current = generatedBlob;
           setPdfBlob(generatedBlob);
-          const url = URL.createObjectURL(generatedBlob);
-          setPdfUrl(url);
+          await handleSetPdfUrl(generatedBlob);
           if (autoShowPdfPreview) {
             setShowDownloadDialog(true);
             onPreviewComplete?.();
@@ -672,15 +841,15 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
         }
       } catch (err) {
         console.error('PDF generation error:', err);
+        onPreviewComplete?.();
       } finally {
         setIsDownloading(false);
       }
     };
 
     if (cachedBlobRef.current) {
-      const url = URL.createObjectURL(cachedBlobRef.current);
       setPdfBlob(cachedBlobRef.current);
-      setPdfUrl(url);
+      void handleSetPdfUrl(cachedBlobRef.current);
       if (autoShowPdfPreview) {
         setShowDownloadDialog(true);
         onPreviewComplete?.();
@@ -694,19 +863,31 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
 
   if (!isOpen) return null;
 
-  const uploadPdfToCloudinary = async (blob: Blob): Promise<string | null> => {
-    try {
-      const file = new File([blob], `${resumeName.trim()}.pdf`, { type: 'application/pdf' });
-      const result = await uploadToCloudinary(file);
-      return result?.url || null;
-    } catch (error) {
-      console.error('Cloudinary PDF upload error:', error);
-      return null;
+
+
+  const getAuthForSave = () => {
+    let resolvedUserId = userId;
+    let resolvedToken = token;
+
+    if ((!resolvedUserId || !resolvedToken) && typeof window !== 'undefined') {
+      try {
+        const userData = JSON.parse(localStorage.getItem('user') || '{}');
+        resolvedUserId = resolvedUserId || userData.user_id || userData.id || userData.userId || '';
+        resolvedToken = resolvedToken || userData.token || localStorage.getItem('token') || '';
+      } catch {
+        resolvedToken = resolvedToken || localStorage.getItem('token') || '';
+      }
     }
+
+    if (!resolvedUserId || !resolvedToken) {
+      throw new Error('Missing login details. Please log in again before saving your resume.');
+    }
+
+    return { resolvedUserId, resolvedToken };
   };
 
   const saveResumeTemplate = async (templateFileUrl: string) => {
-    if (!userId || !token) return;
+    const { resolvedUserId, resolvedToken } = getAuthForSave();
     try {
       const templatePayload = {
         template_name: resumeName.trim(),
@@ -716,24 +897,24 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
       };
       const payload = { templates: [templatePayload] };
       const endpoint = resumeTemplateId
-        ? `/users/${userId}/resume-templates/${resumeTemplateId}`
-        : `/users/${userId}/resume-templates`;
+        ? `/users/${resolvedUserId}/resume-templates/${resumeTemplateId}`
+        : `/users/${resolvedUserId}/resume-templates`;
       const method = resumeTemplateId ? 'put' : 'post';
       const response = await api[method](endpoint, payload, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${resolvedToken}` },
       });
-      return response.data;
+      return response.data ?? true;
     } catch (error) {
       console.error('Error saving template:', error);
       throw error;
     }
   };
 
-  const handleSaveAndExitClick = () => {
-    setSaveMode('template');
+  const openSaveAndDownloadDialog = () => {
     setShowDownloadDialog(false);
-    if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+    if (pdfUrl && !pdfUrl.includes('docs.google.com')) URL.revokeObjectURL(pdfUrl);
     setPdfUrl(null);
+    setPdfBlob(null);
     setResumeName(generateDefaultResumeName());
     setShowNameDialog(true);
   };
@@ -782,21 +963,79 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
 
     const printable = await waitForPages();
     if (printable && printable.length > 0) {
-      const pdfDoc = new jsPDF('p', 'pt', 'a4');
-      const pdfWidth = pdfDoc.internal.pageSize.getWidth();
-      const pdfHeight = pdfDoc.internal.pageSize.getHeight();
-      for (let i = 0; i < printable.length; i++) {
-        const canvas = await html2canvas(printable[i] as HTMLElement, { scale: 2, useCORS: true });
-        const imgData = canvas.toDataURL('image/png');
-        if (i > 0) pdfDoc.addPage();
-        pdfDoc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      try {
+        return await generatePdfFromPrintablePages(printable);
+      } catch (canvasError) {
+        console.error('Canvas preview generation failed, falling back to PDF renderer:', canvasError);
       }
-      return pdfDoc.output('blob') as Blob;
-    } else {
-      const preparedData = await embedProfilePhoto(resumeData);
-      const doc = <PDFComponent data={preparedData} primaryColor={primaryColor} fontFamily={fontFamily} />;
-      const asPdf = pdf(doc);
-      return await asPdf.toBlob();
+    }
+    return await generatePdfFromReactPdf(resumeData);
+  };
+
+  const downloadPdfBlob = (blob: Blob, name: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${name}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const scrollPdfPreview = (direction: "up" | "down") => {
+    const container = pdfPreviewScrollRef.current;
+    if (!container) return;
+    container.scrollBy({
+      top: direction === "down" ? container.clientHeight * 0.8 : -container.clientHeight * 0.8,
+      behavior: "smooth",
+    });
+  };
+
+  const handleSaveAndDownloadPdf = async (paymentAlreadyCompleted = false) => {
+    const finalName = resumeName.trim();
+    if (!finalName) return;
+
+    if (isTemplateLocked && !resumeUnlocked && !paymentAlreadyCompleted) {
+      pendingSaveAfterPaymentRef.current = true;
+      setShowPaymentBreakdown(true);
+      return;
+    }
+
+    setIsDownloadingPdf(true);
+    try {
+      const finalBlob = pdfBlob ?? cachedBlobRef.current ?? await generatePdfBlob();
+      if (!finalBlob) {
+        alert('Failed to generate PDF.');
+        return;
+      }
+
+      await onSaveAndExit?.();
+
+      const cloudinaryUrl = await uploadPdfToCloudinary(finalBlob);
+      if (!cloudinaryUrl) {
+        alert('Failed to upload PDF to Cloudinary');
+        return;
+      }
+
+      const savedTemplate = await saveResumeTemplate(cloudinaryUrl);
+      if (!savedTemplate) {
+        alert('Failed to save resume before download.');
+        return;
+      }
+
+      downloadPdfBlob(finalBlob, finalName);
+      setShowNameDialog(false);
+      setShowDownloadDialog(false);
+      onSaveAndDownloadComplete?.();
+      if (!onSaveAndDownloadComplete) {
+        onClose();
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      alert('Failed to save and download PDF. See console for details.');
+    } finally {
+      setIsDownloadingPdf(false);
     }
   };
 
@@ -805,10 +1044,18 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
       {/* Payment Breakdown Modal */}
       <PaymentBreakdownModal
         isOpen={showPaymentBreakdown}
-        onClose={() => setShowPaymentBreakdown(false)}
+        onClose={() => {
+          pendingSaveAfterPaymentRef.current = false;
+          setShowPaymentBreakdown(false);
+        }}
         onPaymentSuccess={() => {
           setResumeUnlocked(true);
-          setShowPayMsg(false);
+          if (pendingSaveAfterPaymentRef.current) {
+            pendingSaveAfterPaymentRef.current = false;
+            setTimeout(() => {
+              void handleSaveAndDownloadPdf(true);
+            }, 0);
+          }
         }}
         templateId={templateId}
         userId={userId}
@@ -891,19 +1138,11 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
             </button>
 
             <button
-              onClick={handleSaveAndExitClick}
-              className="flex items-center bg-white text-left py-3 px-4 rounded-full border-0 hover:bg-gray-50 transition-colors shadow-md cursor-pointer"
-            >
-              <Save className="w-5 h-5 mr-2 text-orange-500" />
-              <span className="text-black text-sm font-medium whitespace-nowrap">Save & Exit</span>
-            </button>
-
-            <button
-              onClick={() => { setShowNameDialog(true); }}
+              onClick={openSaveAndDownloadDialog}
               className="flex items-center bg-orange-500 text-left py-3 px-4 rounded-full border-0 hover:bg-orange-600 transition-colors shadow-md cursor-pointer"
             >
               <Download className="w-5 h-5 mr-2 text-white" />
-              <span className="text-white text-sm font-medium whitespace-nowrap">Download PDF</span>
+              <span className="text-white text-sm font-medium whitespace-nowrap">Save & Download PDF</span>
             </button>
 
             {PDFComponent && (
@@ -914,8 +1153,7 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                     const generatedBlob = await generatePdfBlob();
                     if (generatedBlob) {
                       setPdfBlob(generatedBlob);
-                      const url = URL.createObjectURL(generatedBlob);
-                      setPdfUrl(url);
+                      await handleSetPdfUrl(generatedBlob);
                       setShowDownloadDialog(true);
                     }
                   } catch (_err) {
@@ -966,8 +1204,7 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                   onChange={(e) => setResumeName(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && resumeName.trim()) {
-                      const downloadBtn = document.querySelector('[data-download-trigger]') as HTMLButtonElement;
-                      if (downloadBtn) downloadBtn.click();
+                      void handleSaveAndDownloadPdf();
                     }
                   }}
                   className="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
@@ -985,50 +1222,17 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                 </button>
                 <button
                   data-download-trigger
-                  onClick={async () => {
-                    if (!resumeName.trim()) return;
-                    setIsDownloadingPdf(true);
-                    try {
-                      const finalBlob = await generatePdfBlob();
-
-                      if (saveMode === 'template') {
-                        const cloudinaryUrl = await uploadPdfToCloudinary(finalBlob!);
-                        if (cloudinaryUrl) {
-                          await saveResumeTemplate(cloudinaryUrl);
-                          setShowNameDialog(false);
-                          onClose();
-                        } else {
-                          alert('Failed to upload PDF to Cloudinary');
-                        }
-                      } else {
-                        const url = URL.createObjectURL(finalBlob!);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `${resumeName.trim()}.pdf`;
-                        document.body.appendChild(a);
-                        a.click();
-                        a.remove();
-                        URL.revokeObjectURL(url);
-                        setShowNameDialog(false);
-                      }
-                    } catch (err) {
-                      console.error('Error:', err);
-                      alert('Failed to process PDF. See console for details.');
-                    } finally {
-                      setIsDownloadingPdf(false);
-                      setSaveMode(null);
-                    }
-                  }}
+                  onClick={() => void handleSaveAndDownloadPdf()}
                   disabled={!resumeName.trim() || isDownloadingPdf}
                   className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 >
                   {isDownloadingPdf ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      {saveMode === 'template' ? 'Saving...' : 'Downloading...'}
+                      Saving & downloading...
                     </>
                   ) : (
-                    saveMode === 'template' ? 'Save' : 'Download'
+                    'Save & Download PDF'
                   )}
                 </button>
               </div>
@@ -1058,8 +1262,7 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                           const generatedBlob = await generatePdfBlob();
                           if (generatedBlob) {
                             setPdfBlob(generatedBlob);
-                            const url = URL.createObjectURL(generatedBlob);
-                            setPdfUrl(url);
+                            await handleSetPdfUrl(generatedBlob);
                           }
                         } catch (err) {
                           console.error('PDF generation error:', err);
@@ -1076,26 +1279,81 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                   )}
                 </div>
               ) : (
-                <div className="flex flex-col flex-1">
+                <div className="flex flex-col flex-1 min-h-0">
                   <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900">Bowizzy Preview</h3>
-                  </div>
-
-                  <div className="flex-1 overflow-auto bg-gray-100 rounded-lg mb-4">
-                    {/* Premium badge for locked templates */}
-                    {isTemplateLocked && (
-                      <div className="flex flex-col items-center justify-center py-3">
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-lg font-semibold text-gray-900">Bowizzy Preview</h3>
+                      {isTemplateLocked && (
                         <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 shadow-md">
                           <Lock className="w-4 h-4 text-white" />
                           <span className="text-sm font-bold text-white tracking-wide">Premium Resume</span>
                         </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => scrollPdfPreview("up")}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition hover:bg-gray-50"
+                        aria-label="Scroll resume up"
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => scrollPdfPreview("down")}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition hover:bg-gray-50"
+                        aria-label="Scroll resume down"
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+                      {pdfUrl && isMobilePreviewDevice() && (
+                        <a
+                          href={pdfUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-3 py-1.5 text-xs font-medium text-white bg-blue-500 rounded-full"
+                        >
+                          Open Preview
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  <div
+                    ref={pdfPreviewScrollRef}
+                    className="relative flex-1 min-h-0 overflow-y-auto overflow-x-hidden rounded-lg bg-[#262626] mb-4"
+                  >
+                    <div className="flex justify-center px-6 py-4">
+                      <div className="relative shadow-xl">
+                        {DisplayComponent && (
+                          <div className="pointer-events-none select-none">
+                            <DisplayComponent
+                              data={resumeData}
+                              supportsPhoto={template?.supportsPhoto ?? false}
+                              primaryColor={primaryColor}
+                              fontFamily={fontFamily}
+                            />
+                          </div>
+                        )}
+                        <div
+                          className="absolute inset-0 z-10 cursor-default"
+                          aria-hidden="true"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
+                          onMouseDown={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
+                          onContextMenu={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
+                        />
                       </div>
-                    )}
-                    <iframe
-                      src={pdfUrl ? `${pdfUrl}#toolbar=0` : ''}
-                      className="w-full h-full border-none"
-                      title="Resume PDF Preview"
-                    />
+                    </div>
                   </div>
 
                   {/* Locked template: Pay to unlock section */}
@@ -1117,16 +1375,6 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                           <span className="text-gray-400"> · Credits & GST applicable</span>
                         </p>
                       </div>
-                      <button
-                        onClick={() => setShowPaymentBreakdown(true)}
-                        className="flex-shrink-0 px-4 py-2 rounded-xl text-sm font-bold text-white transition-all"
-                        style={{
-                          background: 'linear-gradient(135deg, #F97316, #ea580c)',
-                          boxShadow: '0 4px 12px rgba(249,115,22,0.3)',
-                        }}
-                      >
-                        Unlock Now
-                      </button>
                     </div>
                   )}
 
@@ -1145,7 +1393,7 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                         onClick={() => {
                           onClose();
                           setShowDownloadDialog(false);
-                          if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+                          if (pdfUrl && !pdfUrl.includes('docs.google.com')) URL.revokeObjectURL(pdfUrl);
                           setPdfUrl(null);
                           setPdfBlob(null);
                         }}
@@ -1154,27 +1402,9 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                         <X className="w-4 h-4" />
                         Back to Edit
                       </button>
-                      <button
-                        onClick={handleSaveAndExitClick}
-                        className="px-6 py-2.5 text-sm font-medium border-2 rounded-full flex items-center gap-2 transition-colors bg-white border-orange-400 text-gray-800 hover:bg-orange-50 shadow-sm"
-                      >
-                        <Save className="w-4 h-4 text-orange-500" />
-                        Save & Exit
-                      </button>
                     </div>
                     <button
-                      onClick={() => {
-                        if (isTemplateLocked && !resumeUnlocked) {
-                          setShowPaymentBreakdown(true);
-                          return;
-                        }
-                        setShowDownloadDialog(false);
-                        if (pdfUrl) URL.revokeObjectURL(pdfUrl);
-                        setPdfUrl(null);
-                        setPdfBlob(null);
-                        setResumeName(generateDefaultResumeName());
-                        setShowNameDialog(true);
-                      }}
+                      onClick={openSaveAndDownloadDialog}
                       className={`px-6 py-2.5 text-sm font-medium rounded-full flex items-center gap-2 transition-colors ${isTemplateLocked && !resumeUnlocked
                         ? 'bg-orange-500 hover:bg-orange-600 text-white'
                         : 'text-white bg-orange-500 hover:bg-orange-600'
@@ -1182,13 +1412,13 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                     >
                       {isTemplateLocked && !resumeUnlocked ? (
                         <>
-                          <Lock className="w-4 h-4 text-white" />
-                          Unlock & Download
+                          <Download className="w-4 h-4 text-white" />
+                          Pay, Save & Download PDF
                         </>
                       ) : (
                         <>
                           <Download className="w-4 h-4 text-white" />
-                          Download PDF
+                          Save & Download PDF
                         </>
                       )}
                     </button>

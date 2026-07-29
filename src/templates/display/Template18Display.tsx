@@ -1,6 +1,7 @@
 import React from 'react';
 import DOMPurify from 'dompurify';
 import type { ResumeData } from '@/types/resume';
+import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 
 interface Template18DisplayProps {
   data: ResumeData
@@ -50,6 +51,20 @@ const formatMonthYearParts = (s?: string) => {
     return { month: String(s).replace(yearMatch[1], '').trim(), year: yearMatch[1] };
   }
   return { month: String(s), year: '' };
+};
+
+const formatYear = (s?: string) => {
+  if (!s) return '';
+  const str = String(s).trim();
+  const y = str.match(/(\d{4})/);
+  return y ? y[1] : str;
+};
+
+const formatEducationDateRange = (edu: any) => {
+  const start = formatYear(edu?.startYear || edu?.startDate || '');
+  const end = formatYear(edu?.endYear || edu?.yearOfPassing || '');
+  if (start && end) return `${start} - ${end}`;
+  return start || end || '';
 };
 
 const Template18Display: React.FC<Template18DisplayProps> = ({
@@ -124,7 +139,7 @@ const Template18Display: React.FC<Template18DisplayProps> = ({
                         const s = formatMonthYearParts(w.startDate);
                         return (<div style={{ whiteSpace: 'nowrap' }}><span style={{ color: '#000' }}>{s.month}{s.month ? ' ' : ''}</span><span style={{ fontWeight: 400, color: '#000' }}>{s.year}</span></div>);
                       })()}
-                      <div style={{ margin: '0 6px', fontWeight: 400, color: '#000' }}>—</div>
+                      <div style={{ margin: '0 6px', fontWeight: 400, color: '#000' }}>-</div>
                       {/* End date or Present */}
                       {w.currentlyWorking ? (<div style={{ fontWeight: 400, color: '#000' }}>Present</div>) : (() => {
                         const e = formatMonthYearParts(w.endDate);
@@ -152,13 +167,11 @@ const Template18Display: React.FC<Template18DisplayProps> = ({
             <div style={{ marginTop: 8 }}>
               {education.higherEducation.filter(edu => edu.enabled).reverse().map((edu: any, i: number) => (
                 <div key={i} style={{ marginBottom: 12 }}>
-                  <div style={{ color: '#000', marginTop: 4, fontWeight: 800 }}>{edu.instituteName}{edu.universityBoard ? ` — ${edu.universityBoard}` : ''}</div>
+                  <div style={{ color: '#000', marginTop: 4, fontWeight: 800 }}>{edu.instituteName}{edu.universityBoard ? ` - ${edu.universityBoard}` : ''}</div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-                    <div style={{ color: '#000' }}>{edu.degree}</div>
-                    <div style={{ color: '#000', fontWeight: 400, fontFamily: "'Times New Roman', Times, serif" }}>
-                      {edu.startYear ? String(edu.startYear).match(/(\d{4})/)?.[1] : ''}
-                      {edu.startYear && (edu.endYear || edu.currentlyPursuing) ? ' — ' : ''}
-                      {edu.currentlyPursuing ? 'Present' : (edu.endYear ? String(edu.endYear).match(/(\d{4})/)?.[1] : '')}
+                <div style={{ color: '#000' }}>{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</div>
+                    <div style={{ color: '#000', fontWeight: 400 }}>
+                      {edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}
                     </div>
                   </div>
                   {edu.resultFormat && edu.result && (<div style={{ marginTop: 4, color: '#444', fontSize: 11 }}>{edu.resultFormat}: {edu.result}</div>)}
@@ -169,8 +182,8 @@ const Template18Display: React.FC<Template18DisplayProps> = ({
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ color: '#000', marginTop: 4, fontWeight: 800 }}>{education.preUniversity.instituteName || 'Pre University'}</div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-                    <div style={{ color: '#000' }}>Pre University (12th Standard){education.preUniversity.boardType ? ` — ${education.preUniversity.boardType}` : ''}{education.preUniversity.subjectStream ? ` (${education.preUniversity.subjectStream})` : ''}</div>
-                    <div style={{ color: '#000', fontWeight: 400 }}>{education.preUniversity.yearOfPassing ? String(education.preUniversity.yearOfPassing).match(/(\d{4})/)?.[1] : ''}</div>
+                    <div style={{ color: '#000' }}>Pre University (12th Standard){education.preUniversity.boardType ? ` - ${education.preUniversity.boardType}` : ''}{education.preUniversity.subjectStream ? ` (${education.preUniversity.subjectStream})` : ''}</div>
+                    <div style={{ color: '#000', fontWeight: 400 }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
                   </div>
                   {education.preUniversity.resultFormat && education.preUniversity.result && (<div style={{ marginTop: 4, color: '#444', fontSize: 11 }}>{education.preUniversity.resultFormat}: {education.preUniversity.result}</div>)}
                 </div>
@@ -180,8 +193,8 @@ const Template18Display: React.FC<Template18DisplayProps> = ({
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ color: '#000', marginTop: 4, fontWeight: 800 }}>{education.sslc.instituteName || 'SSLC'}</div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-                    <div style={{ color: '#000' }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</div>
-                    <div style={{ color: '#000', fontWeight: 400 }}>{education.sslc.yearOfPassing ? String(education.sslc.yearOfPassing).match(/(\d{4})/)?.[1] : ''}</div>
+                    <div style={{ color: '#000' }}>SSLC (10th Standard){education.sslc.boardType ? ` - ${education.sslc.boardType}` : ''}</div>
+                    <div style={{ color: '#000', fontWeight: 400 }}>{formatResumeEducationDateRange(education.sslc)}</div>
                   </div>
                   {education.sslc.resultFormat && education.sslc.result && (<div style={{ marginTop: 4, color: '#444', fontSize: 11 }}>{education.sslc.resultFormat}: {education.sslc.result}</div>)}
                 </div>
@@ -217,7 +230,7 @@ const Template18Display: React.FC<Template18DisplayProps> = ({
                     <span style={{ color: '#444' }}>•</span>
                     <div style={{ color: '#444', lineHeight: 1.4 }}>
                       <span style={{ fontWeight: 100, color: '#000' }}>{c.certificateTitle}</span>
-                      {c.providedBy ? ` — ${c.providedBy}` : ''}
+                      {c.providedBy ? ` - ${c.providedBy}` : ''}
                     </div>
                   </div>
                   <div style={{ color: '#000', fontSize: 11, whiteSpace: 'nowrap', marginLeft: 12 }}>{c.date ? String(c.date).match(/(\d{4})/)?.[1] : ''}</div>

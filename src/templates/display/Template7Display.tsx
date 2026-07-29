@@ -69,9 +69,7 @@ const Template7Display: React.FC<Template7DisplayProps> = ({ data }) => {
                   <div style={{ fontSize: 10, fontWeight: 700, color: '#222' }}>{edu.instituteName}</div>
                   <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>{edu.degree}</div>
                   <div style={{ fontSize: 9, color: '#999', marginTop: 2 }}>{edu.startYear} - {edu.currentlyPursuing ? 'Present' : edu.endYear}</div>
-                  {edu.fieldOfStudy && (
-                    <div style={{ fontSize: 9, color: '#999', marginTop: 4 }}>Relevant Coursework: {edu.fieldOfStudy}</div>
-                  )}
+                 
                 </div>
               ))}
               {/* Pre University */}

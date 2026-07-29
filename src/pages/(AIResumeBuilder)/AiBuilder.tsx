@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import DashNav from "@/components/dashnav/dashnav";
 import ChatList from "./Chatlist";
 import ChatBox from "./Chatbox";
+import ModeInfoModal from "./ModeInfoModal";
 import type { DataChip } from "./DataChips";
 
 import type { ChatSession, ChatMessage } from "./types";
@@ -37,59 +38,55 @@ function formatDate(dateStr?: string | null): string {
   }
 }
 
-// ── Question generator ────────────────────────────────────────────────────────
+// ── Question queue ────────────────────────────────────────────────────────────
 
-function getQuestion(index: number, resumeData?: Record<string, unknown> | null): string {
-  const data = (resumeData as Record<string, unknown>) || {};
+const HARDCODED_QUESTIONS = [
+  "Can you give me a brief about yourself?",
+  "Are these your projects? Feel free to remove any that don't apply or mention additional projects you'd like to add.",
+  "Are these your work experiences? Feel free to remove any that don't apply or mention additional experiences you'd like to add.",
+  "Are these your education details? Feel free to remove any that don't apply or mention additional education you'd like to add.",
+  "Are these your skills? Feel free to remove any that don't apply or mention additional skills you'd like to add.",
+  "Are these your links? Remove any you don't want included or mention any additional links.",
+  "Are these your certificates? Remove any you don't want included or mention any additional certificates.",
+];
 
-  const hasProjects = Array.isArray(data.projects) && (data.projects as unknown[]).length > 0;
-  const hasExperience = Array.isArray((data.work_experience as Record<string, unknown>)?.experiences)
-    && ((data.work_experience as Record<string, unknown>).experiences as unknown[]).length > 0;
-  const hasEducation = Array.isArray(data.education) && (data.education as unknown[]).length > 0;
-  const hasSkills = Array.isArray(data.skills) && (data.skills as unknown[]).length > 0;
-  const hasLinks = Array.isArray(data.links) && (data.links as unknown[]).length > 0;
-  const hasCerts = Array.isArray(data.certificates) && (data.certificates as unknown[]).length > 0;
+type ChipCategory =
+  | "projects"
+  | "experience"
+  | "education"
+  | "skills"
+  | "links"
+  | "certificates";
 
-  switch (index) {
-    case 0:
-      return "Could you please share a brief introduction about yourself?";
+/** Which profile section each question reviews. Question 0 reviews nothing. */
+const QUESTION_CATEGORIES: Record<number, ChipCategory> = {
+  1: "projects",
+  2: "experience",
+  3: "education",
+  4: "skills",
+  5: "links",
+  6: "certificates",
+};
 
-    case 1:
-      return hasProjects
-        ? "Great! Are these your projects? Feel free to remove any that are not relevant or add additional projects you'd like to include. For any new project, please provide the project title, start date, and end date."
-        : "Great! Please do mention your projects. For each project, please provide the project title, start date, and end date."
-
-    case 2:
-      return hasExperience
-        ? "Wonderful! Are these your work experiences? Feel free to remove any that do not apply or add additional experiences you'd like to include. For any new work experience, please provide the company name, job title, start date, and end date."
-        : "Wonderful! Please do mention your work experiences. For each experience, please provide the company name, job title, start date, and end date.";
-
-    case 3:
-      return hasEducation
-        ? "Excellent! Are these your education details? Feel free to remove any that are not relevant or add additional education records you'd like to include. For any new education entry, please provide the institution name, board/university type, start date, and end date."
-        : "Excellent! Please do mention your education details. For each entry, please provide the institution name, board/university type, start date, and end date.";
-
-    case 4:
-      return hasSkills
-        ? "Looks good! Are these your skills? Feel free to remove any that do not apply or add additional skills you'd like to include. For each new skill, please mention the skill name and your proficiency level (Beginner, Intermediate, Advanced, or Expert)."
-        : "Looks good! Please do mention your skills. For each skill, please mention the skill name and your proficiency level (Beginner, Intermediate, Advanced, or Expert).";
-
-    case 5:
-      return hasLinks
-        ? "Nice! Are these your professional links? Feel free to remove any you do not want included or add any additional links you'd like to showcase."
-        : "Nice! Please do mention your professional links. Feel free to add any links you'd like to showcase (e.g. LinkedIn, GitHub, portfolio).";
-
-    case 6:
-      return hasCerts
-        ? "Are these your certifications? Feel free to remove any that are not relevant or add additional certifications you'd like to include. For each new certification, please provide the certificate title, month and year achieved, and certificate type (Course Completion, Professional Certification, Achievement, Training, Workshop, or Other)."
-        : "Please do mention your certifications. For each certification, please provide the certificate title, month and year achieved, and certificate type (Course Completion, Professional Certification, Achievement, Training, Workshop, or Other).";
-
-    default:
-      return "";
-  }
-}
-
-const QUESTION_COUNT = 7;
+/**
+ * Asked instead of the "Are these your …?" question when the profile has
+ * nothing saved for that section — there is nothing to confirm, so we prompt
+ * the user to supply it instead.
+ */
+const EMPTY_SECTION_QUESTIONS: Record<ChipCategory, string> = {
+  projects:
+    "You haven't added any projects to your profile yet. Please add it here so that this section can be generated for your resume.",
+  experience:
+    "You haven't added any work experience to your profile yet. Please add it here so that this section can be generated for your resume.",
+  education:
+    "You haven't added any education details to your profile yet. Please add it here so that this section can be generated for your resume.",
+  skills:
+    "You haven't added any skills to your profile yet. Please add it here so that this section can be generated for your resume.",
+  links:
+    "You haven't added any links to your profile yet. Please add it here so that this section can be generated for your resume.",
+  certificates:
+    "You haven't added any certificates to your profile yet. Please add it here so that this section can be generated for your resume.",
+};
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -121,7 +118,7 @@ export default function AIBuilder() {
   try {
     const u = JSON.parse(localStorage.getItem("user") || "null");
     token = u?.token || "";
-  } catch { }
+  } catch {}
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mode, setMode] = useState<"jd" | "non-jd">("non-jd");
@@ -132,9 +129,9 @@ export default function AIBuilder() {
   const [questionIndex, setQuestionIndex] = useState<Record<string, number>>({});
   const [chatAnswers, setChatAnswers] = useState<Record<string, SessionAnswers>>({});
   const [chipStates, setChipStates] = useState<Record<string, ChipState>>({});
-  const [resumeDataCache, setResumeDataCache] = useState<Record<string, unknown> | null>(null);
-  // ── NEW: track which sessions have completed resume generation ────────────
-  const [completedSessions, setCompletedSessions] = useState<Record<string, boolean>>({});
+  const [paidJdSessions, setPaidJdSessions] = useState<Record<string, boolean>>({});
+  // Guidelines pop-up — shown on entry, on every new chat, and on mode switch
+  const [infoModalMode, setInfoModalMode] = useState<"jd" | "non-jd" | null>("non-jd");
 
   // ── Fetch sessions ────────────────────────────────────────────────────────
 
@@ -142,16 +139,26 @@ export default function AIBuilder() {
     async function fetchSessions() {
       try {
         const sessions = await getAiSessions(token);
+        const newPaidSessions: Record<string, boolean> = {};
+        
         setChatSessions(
-          sessions.map((s) => ({
-            ...s,
-            id: String(s.id),
-            messages: s.messages || [],
-            started: s.started ?? false,
-            createdAt: s.createdAt,
-            infoJson: s.infoJson || null,
-          }))
+          sessions.map((s) => {
+            if (s.is_paid) {
+              newPaidSessions[String(s.id)] = true;
+            }
+            return {
+              ...s,
+              id: String(s.id),
+              messages: s.messages || [],
+              started: s.started || (s.mode === "jd" && !!s.infoJson),
+              is_paid: s.is_paid ?? false,
+              createdAt: s.createdAt,
+              infoJson: s.infoJson || null,
+              jd_text: s.jd_text || "",
+            };
+          })
         );
+        setPaidJdSessions(newPaidSessions);
       } catch (err) {
         console.error("Failed to fetch sessions", err);
       }
@@ -170,11 +177,14 @@ export default function AIBuilder() {
 
   // ── Fetch /resume-data and build chips ───────────────────────────────────
 
-  const fetchAndBuildChips = async (
-    sessionId: string,
-    category: "projects" | "experience" | "education" | "skills" | "links" | "certificates",
-    botMessageId: string
-  ) => {
+  /**
+   * Fetches the profile and maps one section into chips.
+   * Returns [] when the section is genuinely empty, and null when the data
+   * couldn't be fetched — the caller must not treat a failure as "empty".
+   */
+  const fetchCategoryChips = async (
+    category: ChipCategory
+  ): Promise<DataChip[] | null> => {
     const u = JSON.parse(localStorage.getItem("user") || "null");
     const authToken = u?.token;
     const base = (import.meta.env.VITE_API_BASE_URL as string) || "http://localhost:5000";
@@ -183,12 +193,9 @@ export default function AIBuilder() {
       const res = await fetch(`${base}/resume-data`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
-      if (!res.ok) return;
+      if (!res.ok) return null;
       const json = await res.json();
       const data = json.data || json;
-
-      // Cache resume data for question generation
-      setResumeDataCache(data);
 
       let chips: DataChip[] = [];
 
@@ -272,12 +279,10 @@ export default function AIBuilder() {
         }));
       }
 
-      setChipStates((prev) => ({
-        ...prev,
-        [sessionId]: { chips, messageId: botMessageId },
-      }));
+      return chips;
     } catch (err) {
       console.error("Failed to fetch resume-data for chips", err);
+      return null;
     }
   };
 
@@ -335,7 +340,7 @@ export default function AIBuilder() {
       )
     );
     if (saveToApi) {
-      try { await createChat(sessionId, content, "assistant", null, token); } catch { }
+      try { await createChat(sessionId, content, "assistant", null, token); } catch {}
     }
     return msgId;
   };
@@ -352,6 +357,7 @@ export default function AIBuilder() {
       setChatSessions((prev) => [enriched, ...prev]);
       setCurrentSessionId(enriched.id);
       setSidebarOpen(false);
+      setInfoModalMode(mode);
     } catch (err) { console.error("Failed to create session", err); }
   };
 
@@ -363,7 +369,7 @@ export default function AIBuilder() {
     try {
       const chats = await getSessionChats(id, token);
       setChatSessions((prev) =>
-        prev.map((s) => s.id === id ? { ...s, messages: chats, started: chats?.length > 0 } : s)
+        prev.map((s) => s.id === id ? { ...s, messages: chats, started: chats?.length > 0 || (s.mode === "jd" && !!s.infoJson) } : s)
       );
     } catch (err) { console.error("Failed to fetch session chats", err); }
   };
@@ -381,7 +387,11 @@ export default function AIBuilder() {
   };
 
   const handleModeChange = (newMode: "jd" | "non-jd") => {
+    if (currentSessionId && paidJdSessions[currentSessionId]) {
+      return;
+    }
     setMode(newMode);
+    if (newMode !== mode) setInfoModalMode(newMode);
     setChatSessions((prev) =>
       prev.map((s) => s.id === currentSessionId ? { ...s, mode: newMode } : s)
     );
@@ -403,18 +413,38 @@ export default function AIBuilder() {
         prev.map((s) =>
           s.id === currentSessionId
             ? {
-              ...s,
-              started: true,
-              messages: [...(Array.isArray(s.messages) ? s.messages : []), openingMsg],
-              title: "Hi, I need help to build my resume.",
-            }
+                ...s,
+                started: true,
+                messages: [...(Array.isArray(s.messages) ? s.messages : []), openingMsg],
+                title: "Hi, I need help to build my resume.",
+              }
             : s
         )
       );
       await createChat(currentSessionId, openingMsg.content, "user", null, token);
       setQuestionIndex((prev) => ({ ...prev, [currentSessionId]: 0 }));
-      await appendBotMessage(currentSessionId, getQuestion(0, null));
+      await appendBotMessage(currentSessionId, HARDCODED_QUESTIONS[0]);
     } catch (err) { console.error("Failed to start session", err); }
+  };
+
+  // ── JD mode completion — bypasses the interview Q&A entirely ──────────────
+
+  const handleJdComplete = async (data: Record<string, unknown>) => {
+    if (!currentSessionId) return;
+    const sessionId = currentSessionId;
+    try {
+      await startAiSession(sessionId, token);
+    } catch (err) { console.error("Failed to mark JD session as started", err); }
+    setChatSessions((prev) =>
+      prev.map((s) =>
+        s.id === sessionId ? { ...s, started: true, infoJson: data } : s
+      )
+    );
+    // setCompletedSessions((prev) => ({ ...prev, [sessionId]: true }));
+    await appendBotMessage(
+      sessionId,
+      "Great! I've tailored your resume content to match the job description you provided. You can now choose a template and download your resume."
+    );
   };
 
   // ── Send ──────────────────────────────────────────────────────────────────
@@ -422,9 +452,9 @@ export default function AIBuilder() {
   const handleSend = async () => {
     if (!inputValue.trim() || !currentSession || isLoading) return;
 
-    const sessionId = currentSessionId!;
+    const sessionId     = currentSessionId!;
     const currentQIndex = questionIndex[sessionId] ?? 0;
-    const nextQIndex = currentQIndex + 1;
+    const nextQIndex    = currentQIndex + 1;
 
     // Snapshot chip state BEFORE clearing
     const snapshotChips = chipStates[sessionId]?.chips ?? [];
@@ -448,13 +478,13 @@ export default function AIBuilder() {
       prev.map((s) =>
         s.id === sessionId
           ? {
-            ...s,
-            messages: [...(Array.isArray(s.messages) ? s.messages : []), userMsg],
-            title:
-              (Array.isArray(s.messages) ? s.messages.length : 0) === 0
-                ? inputValue.slice(0, 35)
-                : s.title,
-          }
+              ...s,
+              messages: [...(Array.isArray(s.messages) ? s.messages : []), userMsg],
+              title:
+                (Array.isArray(s.messages) ? s.messages.length : 0) === 0
+                  ? inputValue.slice(0, 35)
+                  : s.title,
+            }
           : s
       )
     );
@@ -507,17 +537,28 @@ export default function AIBuilder() {
       const u = JSON.parse(localStorage.getItem("user") || "null");
       const authToken = u?.token;
 
-      if (nextQIndex < QUESTION_COUNT) {
+      if (nextQIndex < HARDCODED_QUESTIONS.length) {
         // ── More questions remain ───────────────────────────────────────
-        const botMsgId = await appendBotMessage(sessionId, getQuestion(nextQIndex, resumeDataCache));
+        // Load the section first: with nothing saved there is nothing to
+        // confirm, so we ask the user to add it instead of listing chips.
+        const category = QUESTION_CATEGORIES[nextQIndex];
+        const chips = category ? await fetchCategoryChips(category) : null;
+        const sectionIsEmpty = !!category && Array.isArray(chips) && chips.length === 0;
+
+        const botMsgId = await appendBotMessage(
+          sessionId,
+          sectionIsEmpty && category
+            ? EMPTY_SECTION_QUESTIONS[category]
+            : HARDCODED_QUESTIONS[nextQIndex]
+        );
         setQuestionIndex((prev) => ({ ...prev, [sessionId]: nextQIndex }));
 
-        if (nextQIndex === 1) await fetchAndBuildChips(sessionId, "projects", botMsgId);
-        else if (nextQIndex === 2) await fetchAndBuildChips(sessionId, "experience", botMsgId);
-        else if (nextQIndex === 3) await fetchAndBuildChips(sessionId, "education", botMsgId);
-        else if (nextQIndex === 4) await fetchAndBuildChips(sessionId, "skills", botMsgId);
-        else if (nextQIndex === 5) await fetchAndBuildChips(sessionId, "links", botMsgId);
-        else if (nextQIndex === 6) await fetchAndBuildChips(sessionId, "certificates", botMsgId);
+        if (chips && chips.length > 0) {
+          setChipStates((prev) => ({
+            ...prev,
+            [sessionId]: { chips, messageId: botMsgId },
+          }));
+        }
 
       } else {
         // ── All 7 answers collected — build payload ─────────────────────
@@ -532,20 +573,20 @@ export default function AIBuilder() {
         };
 
         const cleanChatAnswers = {
-          about_yourself: accumulated.about_yourself ?? "",
-          additional_projects: accumulated.additional_projects ?? "",
-          additional_experience: accumulated.additional_experience ?? "",
-          additional_education: accumulated.additional_education ?? "",
-          additional_skills: accumulated.additional_skills ?? "",
-          additional_links: accumulated.additional_links ?? "",
+          about_yourself:          accumulated.about_yourself          ?? "",
+          additional_projects:     accumulated.additional_projects     ?? "",
+          additional_experience:   accumulated.additional_experience   ?? "",
+          additional_education:    accumulated.additional_education    ?? "",
+          additional_skills:       accumulated.additional_skills       ?? "",
+          additional_links:        accumulated.additional_links        ?? "",
           additional_certificates: accumulated.additional_certificates ?? "",
         };
 
-        const retained_project_ids = accumulated.retained_project_ids;
-        const retained_experience_ids = accumulated.retained_experience_ids;
-        const retained_education_ids = accumulated.retained_education_ids;
-        const retained_skill_ids = accumulated.retained_skill_ids;
-        const retained_link_ids = accumulated.retained_link_ids;
+        const retained_project_ids     = accumulated.retained_project_ids;
+        const retained_experience_ids  = accumulated.retained_experience_ids;
+        const retained_education_ids   = accumulated.retained_education_ids;
+        const retained_skill_ids       = accumulated.retained_skill_ids;
+        const retained_link_ids        = accumulated.retained_link_ids;
         const retained_certificate_ids = accumulated.retained_certificate_ids;
 
         const generateRes = await fetch(
@@ -554,13 +595,13 @@ export default function AIBuilder() {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
             body: JSON.stringify({
-              session_id: sessionId,
+              session_id:   sessionId,
               chat_answers: cleanChatAnswers,
-              ...(retained_project_ids !== undefined && { retained_project_ids }),
-              ...(retained_experience_ids !== undefined && { retained_experience_ids }),
-              ...(retained_education_ids !== undefined && { retained_education_ids }),
-              ...(retained_skill_ids !== undefined && { retained_skill_ids }),
-              ...(retained_link_ids !== undefined && { retained_link_ids }),
+              ...(retained_project_ids     !== undefined && { retained_project_ids }),
+              ...(retained_experience_ids  !== undefined && { retained_experience_ids }),
+              ...(retained_education_ids   !== undefined && { retained_education_ids }),
+              ...(retained_skill_ids       !== undefined && { retained_skill_ids }),
+              ...(retained_link_ids        !== undefined && { retained_link_ids }),
               ...(retained_certificate_ids !== undefined && { retained_certificate_ids }),
             }),
           }
@@ -575,8 +616,6 @@ export default function AIBuilder() {
               prev.map((s) => s.id === sessionId ? { ...s, infoJson: infoJsonFromApi } : s)
             );
           }
-          // ── NEW: mark this session as completed so the chatbox hides ──
-          setCompletedSessions((prev) => ({ ...prev, [sessionId]: true }));
           await appendBotMessage(
             sessionId,
             "Great! I've gathered all your details and generated your resume content. Your resume is ready with an enhanced technical summary, project descriptions, and work experience highlights. You can now review and download it."
@@ -604,6 +643,8 @@ export default function AIBuilder() {
   return (
     <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
       <DashNav heading="AI Resume Builder" />
+
+      <ModeInfoModal mode={infoModalMode} onClose={() => setInfoModalMode(null)} />
 
       <div className="flex flex-1 overflow-hidden relative">
         <ChatList
@@ -640,34 +681,36 @@ export default function AIBuilder() {
               onSend={handleSend}
               onFileUpload={handleFileUpload}
               onStart={handleStart}
+              onJdComplete={handleJdComplete}
               token={token}
               activeChips={activeChipState?.chips}
               onChipDelete={handleChipDelete}
               onChipUndo={handleChipUndo}
               chipMessageId={activeChipState?.messageId ?? null}
-              // ── NEW: hide the input area once resume is generated ──────
-              isCompleted={completedSessions[currentSession.id] ?? false}
+              onShowGuide={() => setInfoModalMode(mode)}
+              isJdPaid={!!paidJdSessions[currentSession.id]}
+              onJdPaymentSuccess={() => setPaidJdSessions(prev => ({ ...prev, [currentSession.id]: true }))}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center p-6 bg-white">
-              <motion.div
+              <motion.div 
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4, ease: "easeOut" }}
                 className="max-w-md w-full text-center flex flex-col items-center"
               >
-                <motion.div
+                <motion.div 
                   animate={{ y: [0, -8, 0] }}
                   transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
                   className="w-20 h-20 bg-orange-50 rounded-[1.5rem] flex items-center justify-center shadow-sm border border-orange-100 mb-6"
                 >
                   <Sparkles className="w-10 h-10 text-orange-500" />
                 </motion.div>
-
+                
                 <h2 className="text-2xl font-bold text-gray-800 mb-3 tracking-tight">
                   Your AI Career Assistant
                 </h2>
-
+                
                 <p className="text-gray-500 text-sm mb-8 leading-relaxed max-w-sm mx-auto">
                   Build a professional, ATS-optimized resume effortlessly. Start a new session to let our intelligent assistant guide you step-by-step.
                 </p>

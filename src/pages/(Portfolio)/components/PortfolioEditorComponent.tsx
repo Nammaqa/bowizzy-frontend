@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { uploadPdfToCloudinary } from "@/utils/uploadPdfToCloudinary";
 import { uploadToCloudinary } from "@/utils/uploadToCloudinary";
 import {
@@ -31,13 +31,19 @@ interface Project {
   description: string;
   link: string;
   tech: string;
+  imageUrl?: string;
+  imagePublicId?: string;
+  imageDeleteToken?: string | null;
 }
 
 interface Experience {
   role: string;
   company: string;
+  startDate?: string;
+  endDate?: string;
   duration: string;
   details: string;
+  currentlyWorking?: boolean;
 }
 
 interface DesignProcessStep {
@@ -50,8 +56,16 @@ interface CaseStudy {
   subtitle: string;
   description: string;
   imageUrl: string;
+  imagePublicId?: string;
+  imageDeleteToken?: string | null;
   link: string;
   role: string;
+}
+
+interface UploadedAsset {
+  url: string;
+  publicId?: string | null;
+  deleteToken?: string | null;
 }
 
 export interface PortfolioEditorComponentProps {
@@ -71,8 +85,12 @@ export interface PortfolioEditorComponentProps {
   setCustomUrl: (val: string) => void;
   cvUrl: string;
   setCvUrl: (val: string) => void;
+  onCvUploaded?: (asset: UploadedAsset) => Promise<void>;
+  onCvRemoved?: () => Promise<void>;
   profileImageUrl: string;
   setProfileImageUrl: (val: string) => void;
+  onProfileImageUploaded?: (asset: UploadedAsset) => Promise<void>;
+  onProfileImageRemoved?: () => Promise<void>;
   email: string;
   setEmail: (val: string) => void;
   themeColor: string;
@@ -87,9 +105,13 @@ export interface PortfolioEditorComponentProps {
   setDesignProcess: React.Dispatch<React.SetStateAction<DesignProcessStep[]>>;
   caseStudies: CaseStudy[];
   setCaseStudies: React.Dispatch<React.SetStateAction<CaseStudy[]>>;
+  onCaseStudyImageUploaded?: (index: number, asset: UploadedAsset) => Promise<void>;
+  onCaseStudyImageRemoved?: (index: number) => Promise<void>;
 
   projects: Project[];
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
+  onProjectImageUploaded?: (index: number, asset: UploadedAsset) => Promise<void>;
+  onProjectImageRemoved?: (index: number) => Promise<void>;
   experiences: Experience[];
   setExperiences: React.Dispatch<React.SetStateAction<Experience[]>>;
   skills: string[];
@@ -122,8 +144,12 @@ export default function PortfolioEditorComponent({
   setCustomUrl,
   cvUrl,
   setCvUrl,
+  onCvUploaded,
+  onCvRemoved,
   profileImageUrl,
   setProfileImageUrl,
+  onProfileImageUploaded,
+  onProfileImageRemoved,
   email,
   setEmail,
   themeColor,
@@ -138,8 +164,12 @@ export default function PortfolioEditorComponent({
   setDesignProcess,
   caseStudies,
   setCaseStudies,
+  onCaseStudyImageUploaded,
+  onCaseStudyImageRemoved,
   projects,
   setProjects,
+  onProjectImageUploaded,
+  onProjectImageRemoved,
   experiences,
   setExperiences,
   skills,
@@ -154,6 +184,30 @@ export default function PortfolioEditorComponent({
   importSuccess = false,
 }: PortfolioEditorComponentProps) {
   const [newSkill, setNewSkill] = useState("");
+  const [removingProfileImage, setRemovingProfileImage] = useState(false);
+  const [removingCv, setRemovingCv] = useState(false);
+  const [removingCaseStudyImageIndex, setRemovingCaseStudyImageIndex] = useState<number | null>(null);
+  const [removingProjectImageIndex, setRemovingProjectImageIndex] = useState<number | null>(null);
+  const [uploadingProjectImageIndex, setUploadingProjectImageIndex] = useState<number | null>(null);
+
+  // Block drag and drop into text fields in the portfolio editor
+  useEffect(() => {
+    const handleDrop = (e: DragEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        (target.tagName === "INPUT" && (target as HTMLInputElement).type !== "file") ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener("drop", handleDrop, { capture: true });
+    return () => {
+      document.removeEventListener("drop", handleDrop, { capture: true });
+    };
+  }, []);
   const palettePresets: Array<{
     id: string;
     name: string;
@@ -221,10 +275,121 @@ export default function PortfolioEditorComponent({
 
   const nameMax = 50;
   const descMax = 300;
+  const linkMax = 100;
+  const stepTitleMax = 100;
+  const stepDescriptionMax = 250;
+  const caseStudyTitleMax = 50;
+  const caseStudyRoleMax = 50;
+  const caseStudySubtitleMax = 250;
+  const caseStudyDescriptionMax = 500;
+  const experienceTextMax = 80;
+  const maxImageSizeBytes = 5 * 1024 * 1024;
+  const allowedImageTypes = ["image/png", "image/jpeg", "image/webp"];
+  const mmYYYYRegex = /^(0[1-9]|1[0-2])-\d{4}$/;
+
+  const getPlainText = (html: string) => {
+    if (!html) return "";
+    return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
+  };
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const monthOffset = (years: number) => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() + years);
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+  };
+  const minMonth = monthOffset(-60); // 60 years back
+  const maxMonth = monthOffset(40); // 40 years ahead
+
+  const isValidImageFile = (file: File) => {
+    const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp"];
+    const isTypeAllowed = allowedImageTypes.includes(file.type);
+    const fileName = file.name.toLowerCase();
+    const isExtensionAllowed = allowedExtensions.some(ext => fileName.endsWith(ext));
+
+    if (!isTypeAllowed && !isExtensionAllowed) {
+      alert("Only PNG, JPG, JPEG, and WEBP images are allowed.");
+      return false;
+    }
+
+    if (file.size > maxImageSizeBytes) {
+      alert("Image size must be 5 MB or less.");
+      return false;
+    }
+
+    return true;
+  };
+
+  const formatDuration = (startDate?: string, endDate?: string, currentlyWorking?: boolean) => {
+    let start = (startDate || "").trim();
+    let end = (endDate || "").trim();
+    if (/^\d{2}-\d{4}$/.test(start)) start = start.replace("-", " - ");
+    if (/^\d{2}-\d{4}$/.test(end)) end = end.replace("-", " - ");
+    if (currentlyWorking) return start ? `${start} - Present` : "Present";
+    if (start && end) return `${start} - ${end}`;
+    return start || end || "";
+  };
+
+  const normalizeMonthYear = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+    if (/^\d{4}-\d{2}$/.test(trimmed)) {
+      const [year, month] = trimmed.split("-");
+      return `${month} - ${year}`;
+    }
+    return trimmed;
+  };
+
+  const toMonthInputValue = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+    const match = trimmed.match(/^(\d{2})\s*-\s*(\d{4})$/);
+    if (match) {
+      return `${match[2]}-${match[1]}`;
+    }
+    return trimmed;
+  };
+
+  const splitDuration = (duration: string) => {
+    const match = duration.match(/^(\d{2}\s*-\s*\d{4})(?:\s*-\s*(\d{2}\s*-\s*\d{4}))?$/);
+    if (match) {
+      const start = match[1] || "";
+      const end = match[2] || "";
+      return {
+        startDate: mmYYYYRegex.test(start) ? start : "",
+        endDate: mmYYYYRegex.test(end) ? end : "",
+      };
+    }
+    const parts = duration.split(/\s+-\s+/);
+    if (parts.length === 2 && mmYYYYRegex.test(parts[0]) && mmYYYYRegex.test(parts[1])) {
+       return { startDate: parts[0], endDate: parts[1] };
+    }
+    return { startDate: "", endDate: "" };
+  };
+
+  const getExperienceDate = (exp: Experience, field: "startDate" | "endDate") =>
+    exp[field] || splitDuration(exp.duration)[field];
+
+  const handleUpdateExperienceDate = (index: number, field: "startDate" | "endDate", val: string) => {
+    const normalizedValue = normalizeMonthYear(val);
+    const updated = [...experiences];
+    const current = updated[index];
+    const dates = {
+      startDate: getExperienceDate(current, "startDate"),
+      endDate: getExperienceDate(current, "endDate"),
+      [field]: normalizedValue,
+    };
+    updated[index] = {
+      ...current,
+      ...dates,
+      duration: formatDuration(dates.startDate, dates.endDate, current.currentlyWorking),
+    };
+    setExperiences(updated);
+  };
 
   // Projects helpers
   const handleAddProject = () => {
-    setProjects([...projects, { title: "", description: "", link: "", tech: "" }]);
+    setProjects([...projects, { title: "", description: "", link: "", tech: "", imageUrl: "" }]);
   };
 
   const handleUpdateProject = (index: number, field: keyof Project, val: string) => {
@@ -233,18 +398,53 @@ export default function PortfolioEditorComponent({
     setProjects(updated);
   };
 
+  const removeProjectImage = async (index: number) => {
+    try {
+      setRemovingProjectImageIndex(index);
+      if (onProjectImageRemoved) {
+        await onProjectImageRemoved(index);
+      } else {
+        handleUpdateProject(index, "imageUrl", "");
+      }
+    } catch (err) {
+      console.error("Project image removal failed", err);
+      alert("Unable to remove project image right now.");
+    } finally {
+      setRemovingProjectImageIndex(null);
+    }
+  };
+
   const handleRemoveProject = (index: number) => {
     setProjects(projects.filter((_, i) => i !== index));
   };
 
   // Experience helpers
   const handleAddExperience = () => {
-    setExperiences([...experiences, { role: "", company: "", duration: "", details: "" }]);
+    setExperiences([...experiences, { role: "", company: "", startDate: "", endDate: "", duration: "", details: "" }]);
   };
 
-  const handleUpdateExperience = (index: number, field: keyof Experience, val: string) => {
-    const updated = [...experiences];
-    updated[index] = { ...updated[index], [field]: val };
+  const handleUpdateExperience = (index: number, field: keyof Experience, val: any) => {
+    let updated = [...experiences];
+    if (field === "currentlyWorking") {
+      const isChecked = val === true;
+      updated = updated.map((exp, i) => {
+        if (i === index) {
+          if (isChecked) {
+            const start = getExperienceDate(exp, "startDate");
+            return {
+              ...exp,
+              currentlyWorking: true,
+              endDate: "",
+              duration: start ? `${start} - Present` : "Present"
+            };
+          }
+          return { ...exp, currentlyWorking: false };
+        }
+        return { ...exp, currentlyWorking: isChecked ? false : exp.currentlyWorking };
+      });
+    } else {
+      updated[index] = { ...updated[index], [field]: val };
+    }
     setExperiences(updated);
   };
 
@@ -256,10 +456,9 @@ export default function PortfolioEditorComponent({
   const handleAddSkill = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = newSkill.trim();
-    if (trimmed && !skills.includes(trimmed)) {
-      setSkills([...skills, trimmed]);
-      setNewSkill("");
-    }
+    if (!trimmed) return;
+    setSkills([...skills, trimmed]);
+    setNewSkill("");
   };
 
   const handleRemoveSkill = (skillName: string) => {
@@ -295,6 +494,54 @@ export default function PortfolioEditorComponent({
 
   const handleRemoveCaseStudy = (index: number) => {
     setCaseStudies(caseStudies.filter((_, i) => i !== index));
+  };
+
+  const removeProfileImage = async () => {
+    try {
+      setRemovingProfileImage(true);
+      if (onProfileImageRemoved) {
+        await onProfileImageRemoved();
+      } else {
+        setProfileImageUrl("");
+      }
+    } catch (err) {
+      console.error("Profile image removal failed", err);
+      alert("Unable to remove profile image right now.");
+    } finally {
+      setRemovingProfileImage(false);
+    }
+  };
+
+  const removeCv = async () => {
+    try {
+      setRemovingCv(true);
+      if (onCvRemoved) {
+        await onCvRemoved();
+      } else {
+        setCvUrl("");
+      }
+    } catch (err) {
+      console.error("CV removal failed", err);
+      alert("Unable to remove CV right now.");
+    } finally {
+      setRemovingCv(false);
+    }
+  };
+
+  const removeCaseStudyImage = async (index: number) => {
+    try {
+      setRemovingCaseStudyImageIndex(index);
+      if (onCaseStudyImageRemoved) {
+        await onCaseStudyImageRemoved(index);
+      } else {
+        handleUpdateCaseStudy(index, "imageUrl", "");
+      }
+    } catch (err) {
+      console.error("Case study image removal failed", err);
+      alert("Unable to remove case study image right now.");
+    } finally {
+      setRemovingCaseStudyImageIndex(null);
+    }
   };
 
   return (
@@ -485,6 +732,7 @@ export default function PortfolioEditorComponent({
                 <input
                   type="text"
                   value={themeColor}
+                  maxLength={7}
                   onChange={(e) => setThemeColor(e.target.value)}
                   placeholder="#4f46e5"
                   className="flex-1 text-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
@@ -506,6 +754,7 @@ export default function PortfolioEditorComponent({
                 <input
                   type="text"
                   value={backgroundColor}
+                  maxLength={7}
                   onChange={(e) => setBackgroundColor(e.target.value)}
                   placeholder="#0a0f1e"
                   className="flex-1 text-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
@@ -528,27 +777,47 @@ export default function PortfolioEditorComponent({
           <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">
             Upload Profile Image
           </label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                try {
-                  const result = await uploadToCloudinary(file);
-                  setProfileImageUrl(result.url);
-                } catch (err) {
-                  console.error('Profile image upload failed', err);
-                }
-              }
-            }}
-            className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
-          />
-          {profileImageUrl && (
-            <div className="mt-2 flex items-center gap-2">
+          {profileImageUrl ? (
+            <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-gray-200 p-2">
+              <div className="flex items-center gap-2">
               <img src={profileImageUrl} alt="Profile" className="w-10 h-10 rounded-full object-cover border border-gray-200" />
               <p className="text-xs text-gray-600">Uploaded Profile Image</p>
+              </div>
+              <button
+                type="button"
+                onClick={removeProfileImage}
+                disabled={removingProfileImage}
+                className="inline-flex items-center gap-1 rounded-lg border border-red-100 bg-red-50 px-2 py-1 text-[11px] font-bold text-red-600 transition hover:bg-red-100 disabled:opacity-60"
+              >
+                {removingProfileImage ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                Remove
+              </button>
             </div>
+          ) : (
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  if (!isValidImageFile(file)) {
+                    e.target.value = "";
+                    return;
+                  }
+                  try {
+                    const result = await uploadToCloudinary(file);
+                    if (onProfileImageUploaded) {
+                      await onProfileImageUploaded(result);
+                    } else {
+                      setProfileImageUrl(result.url);
+                    }
+                  } catch (err) {
+                    console.error('Profile image upload failed', err);
+                  }
+                }
+              }}
+              className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+            />
           )}
         </div>
 
@@ -557,24 +826,40 @@ export default function PortfolioEditorComponent({
           <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">
             Upload CV (PDF)
           </label>
-          <input
-            type="file"
-            accept="application/pdf"
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                try {
-                  const result = await uploadPdfToCloudinary(file);
-                  setCvUrl(result.url);
-                } catch (err) {
-                  console.error('CV upload failed', err);
+          {cvUrl ? (
+            <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-gray-200 p-2">
+              <p className="text-xs text-gray-600">Uploaded CV: <a href={cvUrl} target="_blank" rel="noopener noreferrer" className="underline text-violet-600 font-medium">View CV</a></p>
+              <button
+                type="button"
+                onClick={removeCv}
+                disabled={removingCv}
+                className="inline-flex items-center gap-1 rounded-lg border border-red-100 bg-red-50 px-2 py-1 text-[11px] font-bold text-red-600 transition hover:bg-red-100 disabled:opacity-60"
+              >
+                {removingCv ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                Remove
+              </button>
+            </div>
+          ) : (
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  try {
+                    const result = await uploadPdfToCloudinary(file);
+                    if (onCvUploaded) {
+                      await onCvUploaded(result);
+                    } else {
+                      setCvUrl(result.url);
+                    }
+                  } catch (err) {
+                    console.error('CV upload failed', err);
+                  }
                 }
-              }
-            }}
-            className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
-          />
-          {cvUrl && (
-            <p className="mt-2 text-xs text-gray-600">Uploaded CV: <a href={cvUrl} target="_blank" rel="noopener noreferrer" className="underline text-violet-600 font-medium">View CV</a></p>
+              }}
+              className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+            />
           )}
         </div>
 
@@ -587,6 +872,7 @@ export default function PortfolioEditorComponent({
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              maxLength={150}
               placeholder="hello@example.com"
               className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-500 bg-white"
             />
@@ -599,6 +885,7 @@ export default function PortfolioEditorComponent({
               type="url"
               value={githubUrl}
               onChange={(e) => setGithubUrl(e.target.value)}
+              maxLength={linkMax}
               onBlur={() => {
                 if (githubUrl.trim() && !/^https?:\/\//i.test(githubUrl.trim())) {
                   setGithubUrl(`https://${githubUrl.trim()}`);
@@ -616,6 +903,7 @@ export default function PortfolioEditorComponent({
               type="url"
               value={linkedinUrl}
               onChange={(e) => setLinkedinUrl(e.target.value)}
+              maxLength={linkMax}
               onBlur={() => {
                 if (linkedinUrl.trim() && !/^https?:\/\//i.test(linkedinUrl.trim())) {
                   setLinkedinUrl(`https://${linkedinUrl.trim()}`);
@@ -633,6 +921,7 @@ export default function PortfolioEditorComponent({
               type="url"
               value={twitterUrl}
               onChange={(e) => setTwitterUrl(e.target.value)}
+              maxLength={linkMax}
               onBlur={() => {
                 if (twitterUrl.trim() && !/^https?:\/\//i.test(twitterUrl.trim())) {
                   setTwitterUrl(`https://${twitterUrl.trim()}`);
@@ -650,6 +939,7 @@ export default function PortfolioEditorComponent({
               type="url"
               value={customUrl}
               onChange={(e) => setCustomUrl(e.target.value)}
+              maxLength={linkMax}
               onBlur={() => {
                 if (customUrl.trim() && !/^https?:\/\//i.test(customUrl.trim())) {
                   setCustomUrl(`https://${customUrl.trim()}`);
@@ -669,6 +959,7 @@ export default function PortfolioEditorComponent({
                   type="url"
                   value={behanceUrl}
                   onChange={(e) => setBehanceUrl(e.target.value)}
+                  maxLength={linkMax}
                   onBlur={() => {
                     if (behanceUrl.trim() && !/^https?:\/\//i.test(behanceUrl.trim())) {
                       setBehanceUrl(`https://${behanceUrl.trim()}`);
@@ -686,6 +977,7 @@ export default function PortfolioEditorComponent({
                   type="url"
                   value={dribbbleUrl}
                   onChange={(e) => setDribbbleUrl(e.target.value)}
+                  maxLength={linkMax}
                   onBlur={() => {
                     if (dribbbleUrl.trim() && !/^https?:\/\//i.test(dribbbleUrl.trim())) {
                       setDribbbleUrl(`https://${dribbbleUrl.trim()}`);
@@ -712,6 +1004,7 @@ export default function PortfolioEditorComponent({
             value={newSkill}
             onChange={(e) => setNewSkill(e.target.value)}
             placeholder="e.g. JavaScript, UI Design, AWS"
+            maxLength={100}
             className="flex-1 text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
           />
           <button
@@ -777,23 +1070,31 @@ export default function PortfolioEditorComponent({
                       </label>
                       <input
                         type="text"
+                        maxLength={stepTitleMax}
                         value={step.title}
                         onChange={(e) => handleUpdateProcessStep(idx, "title", e.target.value)}
                         placeholder="e.g. Research, Wireframe, Prototype"
                         className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                       />
+                      <div className="mt-1 text-[10px] text-gray-400 font-medium">
+                        {step.title.length}/{stepTitleMax}
+                      </div>
                     </div>
                     <div>
                       <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
                         Step Description
                       </label>
                       <textarea
+                        maxLength={stepDescriptionMax}
                         value={step.description}
                         onChange={(e) => handleUpdateProcessStep(idx, "description", e.target.value)}
                         placeholder="Describe what happens in this phase of your design process..."
                         rows={3}
                         className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 resize-y"
                       />
+                      <div className="mt-1 text-[10px] text-gray-400 font-medium">
+                        {step.description.length}/{stepDescriptionMax}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -838,11 +1139,15 @@ export default function PortfolioEditorComponent({
                         </label>
                         <input
                           type="text"
+                          maxLength={caseStudyTitleMax}
                           value={study.title}
                           onChange={(e) => handleUpdateCaseStudy(idx, "title", e.target.value)}
                           placeholder="e.g. Mobile Banking Redesign"
                           className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                         />
+                        <div className="mt-1 text-[10px] text-gray-400 font-medium">
+                          {study.title.length}/{caseStudyTitleMax}
+                        </div>
                       </div>
                       <div>
                         <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
@@ -850,11 +1155,15 @@ export default function PortfolioEditorComponent({
                         </label>
                         <input
                           type="text"
+                          maxLength={caseStudyRoleMax}
                           value={study.role}
                           onChange={(e) => handleUpdateCaseStudy(idx, "role", e.target.value)}
                           placeholder="e.g. UX Research, UI Design"
                           className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                         />
+                        <div className="mt-1 text-[10px] text-gray-400 font-medium">
+                          {study.role.length}/{caseStudyRoleMax}
+                        </div>
                       </div>
                     </div>
 
@@ -864,11 +1173,15 @@ export default function PortfolioEditorComponent({
                       </label>
                       <input
                         type="text"
+                        maxLength={caseStudySubtitleMax}
                         value={study.subtitle}
                         onChange={(e) => handleUpdateCaseStudy(idx, "subtitle", e.target.value)}
                         placeholder="e.g. Improving onboarding conversion for first-time users"
                         className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                       />
+                      <div className="mt-1 text-[10px] text-gray-400 font-medium">
+                        {study.subtitle.length}/{caseStudySubtitleMax}
+                      </div>
                     </div>
 
                     <div>
@@ -877,10 +1190,17 @@ export default function PortfolioEditorComponent({
                       </label>
                       <RichTextEditor
                         value={study.description}
-                        onChange={(val) => handleUpdateCaseStudy(idx, "description", val)}
+                        onChange={(val) => {
+                          if (getPlainText(val).length <= caseStudyDescriptionMax) {
+                            handleUpdateCaseStudy(idx, "description", val);
+                          }
+                        }}
                         placeholder="Problem, process, solution, and outcome..."
                         minHeight="90px"
                       />
+                      <div className="mt-1 text-[10px] text-gray-400 font-medium">
+                        {getPlainText(study.description).length}/{caseStudyDescriptionMax}
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -888,26 +1208,47 @@ export default function PortfolioEditorComponent({
                         <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
                           Cover Image
                         </label>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            try {
-                              const result = await uploadToCloudinary(file);
-                              handleUpdateCaseStudy(idx, "imageUrl", result.url);
-                            } catch (err) {
-                              console.error("Case study image upload failed", err);
-                            }
-                          }}
-                          className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
-                        />
                         {study.imageUrl && (
-                          <img
-                            src={study.imageUrl}
-                            alt={study.title || "Case study cover"}
-                            className="mt-2 w-full h-24 object-cover rounded-lg border border-gray-200"
+                          <div className="rounded-lg border border-gray-200 p-2">
+                            <img
+                              src={study.imageUrl}
+                              alt={study.title || "Case study cover"}
+                              className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeCaseStudyImage(idx)}
+                              disabled={removingCaseStudyImageIndex === idx}
+                              className="mt-2 inline-flex items-center gap-1 rounded-lg border border-red-100 bg-red-50 px-2 py-1 text-[11px] font-bold text-red-600 transition hover:bg-red-100 disabled:opacity-60"
+                            >
+                              {removingCaseStudyImageIndex === idx ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                              Remove
+                            </button>
+                          </div>
+                        )}
+                        {!study.imageUrl && (
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              if (!isValidImageFile(file)) {
+                                e.target.value = "";
+                                return;
+                              }
+                              try {
+                                const result = await uploadToCloudinary(file);
+                                if (onCaseStudyImageUploaded) {
+                                  await onCaseStudyImageUploaded(idx, result);
+                                } else {
+                                  handleUpdateCaseStudy(idx, "imageUrl", result.url);
+                                }
+                              } catch (err) {
+                                console.error("Case study image upload failed", err);
+                              }
+                            }}
+                            className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                           />
                         )}
                       </div>
@@ -919,6 +1260,7 @@ export default function PortfolioEditorComponent({
                           type="url"
                           value={study.link}
                           onChange={(e) => handleUpdateCaseStudy(idx, "link", e.target.value)}
+                          maxLength={linkMax}
                           placeholder="https://..."
                           className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                         />
@@ -976,6 +1318,7 @@ export default function PortfolioEditorComponent({
                       value={p.title}
                       onChange={(e) => handleUpdateProject(idx, "title", e.target.value)}
                       placeholder="e.g. Crypto Tracker"
+                      maxLength={100}
                       className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                     />
                   </div>
@@ -987,7 +1330,7 @@ export default function PortfolioEditorComponent({
                       type="text"
                       value={p.tech}
                       onChange={(e) => handleUpdateProject(idx, "tech", e.target.value)}
-                      placeholder="e.g. Next.js, GraphQL"
+                      placeholder="e.g. React, Node, AWS"
                       className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                     />
                   </div>
@@ -1005,17 +1348,81 @@ export default function PortfolioEditorComponent({
                   />
                 </div>
 
-                <div>
-                  <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
-                    Demo or Repository URL
-                  </label>
-                  <input
-                    type="url"
-                    value={p.link}
-                    onChange={(e) => handleUpdateProject(idx, "link", e.target.value)}
-                    placeholder="https://..."
-                    className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
+                      Demo or Repository URL
+                    </label>
+                    <input
+                      type="url"
+                      value={p.link}
+                      onChange={(e) => handleUpdateProject(idx, "link", e.target.value)}
+                      maxLength={linkMax}
+                      placeholder="https://..."
+                      className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
+                      Project Image
+                    </label>
+                    {p.imageUrl && (
+                      <div className="rounded-lg border border-gray-200 p-2">
+                        <img
+                          src={p.imageUrl}
+                          alt={p.title || "Project cover"}
+                          className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeProjectImage(idx)}
+                          disabled={removingProjectImageIndex === idx}
+                          className="mt-2 inline-flex items-center gap-1 rounded-lg border border-red-100 bg-red-50 px-2 py-1 text-[11px] font-bold text-red-600 transition hover:bg-red-100 disabled:opacity-60"
+                        >
+                          {removingProjectImageIndex === idx ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                          Remove
+                        </button>
+                      </div>
+                    )}
+                    {!p.imageUrl && (
+                      <>
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp"
+                          disabled={uploadingProjectImageIndex === idx}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (!isValidImageFile(file)) {
+                              e.target.value = "";
+                              return;
+                            }
+                            try {
+                              setUploadingProjectImageIndex(idx);
+                              const result = await uploadToCloudinary(file);
+                              if (onProjectImageUploaded) {
+                                await onProjectImageUploaded(idx, result);
+                              } else {
+                                handleUpdateProject(idx, "imageUrl", result.url);
+                              }
+                            } catch (err) {
+                              console.error("Project image upload failed", err);
+                              alert("Unable to upload project image right now.");
+                            } finally {
+                              setUploadingProjectImageIndex(null);
+                              e.target.value = "";
+                            }
+                          }}
+                          className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 disabled:opacity-60"
+                        />
+                        {uploadingProjectImageIndex === idx && (
+                          <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-violet-600">
+                            <Loader2 className="w-3 h-3 animate-spin" /> Uploading…
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -1057,7 +1464,7 @@ export default function PortfolioEditorComponent({
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pr-8">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 pr-8">
                   <div className="md:col-span-1">
                     <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
                       Role / Job Title
@@ -1065,7 +1472,8 @@ export default function PortfolioEditorComponent({
                     <input
                       type="text"
                       value={exp.role}
-                      onChange={(e) => handleUpdateExperience(idx, "role", e.target.value)}
+                      onChange={(e) => handleUpdateExperience(idx, "role", e.target.value.slice(0, experienceTextMax))}
+                      maxLength={experienceTextMax}
                       placeholder="e.g. Lead Engineer"
                       className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                     />
@@ -1077,23 +1485,62 @@ export default function PortfolioEditorComponent({
                     <input
                       type="text"
                       value={exp.company}
-                      onChange={(e) => handleUpdateExperience(idx, "company", e.target.value)}
+                      onChange={(e) => handleUpdateExperience(idx, "company", e.target.value.slice(0, experienceTextMax))}
+                      maxLength={experienceTextMax}
                       placeholder="e.g. Bowizzy Inc"
                       className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                     />
                   </div>
                   <div>
                     <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
-                      Timeline / Years
+                      Start Date
                     </label>
                     <input
-                      type="text"
-                      value={exp.duration}
-                      onChange={(e) => handleUpdateExperience(idx, "duration", e.target.value)}
-                      placeholder="e.g. 2022 - Present"
+                      type="month"
+                      value={toMonthInputValue(getExperienceDate(exp, "startDate"))}
+                      onChange={(e) => handleUpdateExperienceDate(idx, "startDate", e.target.value)}
+                      title="Use month-year format, e.g. April 2024"
+                      min={minMonth}
+                      max={maxMonth}
+                      onKeyDown={(e) => e.preventDefault()}
+                      onPaste={(e) => e.preventDefault()}
+                      onInput={(e) => e.preventDefault()}
                       className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                     />
                   </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
+                      End Date
+                    </label>
+                    <input
+                      type="month"
+                      disabled={!!exp.currentlyWorking}
+                      value={exp.currentlyWorking ? "" : toMonthInputValue(getExperienceDate(exp, "endDate"))}
+                      onChange={(e) => handleUpdateExperienceDate(idx, "endDate", e.target.value)}
+                      title="Use month-year format, e.g. May 2026"
+                      min={minMonth}
+                      max={maxMonth}
+                      onKeyDown={(e) => e.preventDefault()}
+                      onPaste={(e) => e.preventDefault()}
+                      onInput={(e) => e.preventDefault()}
+                      className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 disabled:bg-gray-100 disabled:text-gray-400"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 mt-1 mb-2">
+                  <input
+                    type="checkbox"
+                    id={`currently-working-${idx}`}
+                    checked={!!exp.currentlyWorking}
+                    onChange={(e) => {
+                      handleUpdateExperience(idx, "currentlyWorking", e.target.checked);
+                    }}
+                    className="w-3 h-3 text-violet-600 rounded border-gray-300 focus:ring-violet-500"
+                  />
+                  <label htmlFor={`currently-working-${idx}`} className="text-[11px] text-gray-500 font-medium">
+                    Currently working here
+                  </label>
                 </div>
 
                 <div>

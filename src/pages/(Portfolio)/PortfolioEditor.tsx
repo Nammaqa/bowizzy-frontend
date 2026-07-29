@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import DashNav from "@/components/dashnav/dashnav";
 import { Loader2 } from "lucide-react";
 import api from "@/api";
+import { deleteFromCloudinary } from "@/utils/deleteFromCloudinary";
 import PortfolioEditorComponent from "./components/PortfolioEditorComponent";
 import PortfolioPreviewComponent from "./components/PortfolioPreviewComponent";
 
@@ -11,13 +12,19 @@ interface Project {
   description: string;
   link: string;
   tech: string;
+  imageUrl?: string;
+  imagePublicId?: string;
+  imageDeleteToken?: string | null;
 }
 
 interface Experience {
   role: string;
   company: string;
+  startDate?: string;
+  endDate?: string;
   duration: string;
   details: string;
+  currentlyWorking?: boolean;
 }
 
 interface DesignProcessStep {
@@ -30,8 +37,16 @@ interface CaseStudy {
   subtitle: string;
   description: string;
   imageUrl: string;
+  imagePublicId?: string;
+  imageDeleteToken?: string | null;
   link: string;
   role: string;
+}
+
+interface UploadedAsset {
+  url: string;
+  publicId?: string | null;
+  deleteToken?: string | null;
 }
 
 const getDefaultTheme = (type: string) =>
@@ -52,7 +67,11 @@ export default function PortfolioEditor() {
   const [twitterUrl, setTwitterUrl] = useState("");
   const [customUrl, setCustomUrl] = useState("");
   const [cvUrl, setCvUrl] = useState("");
+  const [cvPublicId, setCvPublicId] = useState("");
+  const [cvDeleteToken, setCvDeleteToken] = useState<string | null>(null);
   const [profileImageUrl, setProfileImageUrl] = useState("");
+  const [profileImagePublicId, setProfileImagePublicId] = useState("");
+  const [profileImageDeleteToken, setProfileImageDeleteToken] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [themeColor, setThemeColor] = useState("#4f46e5");
   const [backgroundColor, setBackgroundColor] = useState("#0a0f1e");
@@ -62,24 +81,7 @@ export default function PortfolioEditor() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [skills, setSkills] = useState<string[]>([]);
-  const [designProcess, setDesignProcess] = useState<DesignProcessStep[]>([
-    {
-      title: "Discover",
-      description: "Understand business goals, user needs, constraints, and success metrics.",
-    },
-    {
-      title: "Define",
-      description: "Map flows, information architecture, user journeys, and product requirements.",
-    },
-    {
-      title: "Design",
-      description: "Create wireframes, high-fidelity screens, prototypes, and visual systems.",
-    },
-    {
-      title: "Validate",
-      description: "Test usability, refine interactions, and prepare design handoff.",
-    },
-  ]);
+  const [designProcess, setDesignProcess] = useState<DesignProcessStep[]>([]);
   const [caseStudies, setCaseStudies] = useState<CaseStudy[]>([]);
 
   // UI state
@@ -168,7 +170,11 @@ export default function PortfolioEditor() {
                 setTwitterUrl(cfg.twitter || "");
                 setCustomUrl(cfg.customUrl || "");
                 setCvUrl(cfg.cvUrl || "");
+                setCvPublicId(cfg.cvPublicId || "");
+                setCvDeleteToken(cfg.cvDeleteToken || null);
                 setProfileImageUrl(cfg.profileImageUrl || "");
+                setProfileImagePublicId(cfg.profileImagePublicId || "");
+                setProfileImageDeleteToken(cfg.profileImageDeleteToken || null);
                 setEmail(cfg.email || "");
                 setThemeColor(cfg.themeColor || cfgTheme.themeColor);
                 setBackgroundColor(cfg.backgroundColor || cfgTheme.backgroundColor);
@@ -185,23 +191,9 @@ export default function PortfolioEditor() {
             }
           } else {
             // Seed defaults for empty visual presentation
-            setProjects([
-              {
-                title: "Personal Workspace App",
-                description: "A secure dashboard for managing tasks and team resources.",
-                link: "https://github.com",
-                tech: "React, Node, MongoDB",
-              },
-            ]);
-            setExperiences([
-              {
-                role: "Software Developer",
-                company: "Bowizzy Tech Solutions",
-                duration: "2024 - Present",
-                details: "Built interactive web applications using React and custom frameworks.",
-              },
-            ]);
-            setSkills(["React", "TypeScript", "Node.js", "Tailwind CSS"]);
+            setProjects([]);
+            setExperiences([]);
+            setSkills([]);
           }
         } else {
           setError("Portfolio not found.");
@@ -217,13 +209,39 @@ export default function PortfolioEditor() {
     fetchPortfolioData();
   }, [id]);
 
-  // Helper to format dates from API (e.g. YYYY-MM-DD or YYYY-MM) to "Jan 2021"
+  const mmYYYYRegex = /^(0[1-9]|1[0-2])\s*-\s*\d{4}$/;
+  const plainTextRegex = /^[A-Za-z0-9 ]*$/;
+  const linkMaxLength = 100;
+
+  const formatDuration = (startDate?: string, endDate?: string, currentlyWorking?: boolean) => {
+    let start = (startDate || "").trim();
+    let end = (endDate || "").trim();
+    if (/^\d{2}-\d{4}$/.test(start)) start = start.replace("-", " - ");
+    if (/^\d{2}-\d{4}$/.test(end)) end = end.replace("-", " - ");
+    if (currentlyWorking) return start ? `${start} - Present` : "Present";
+    if (start && end) return `${start} - ${end}`;
+    return start || end || "";
+  };
+
+  const normalizeExperience = (exp: Experience): Experience => {
+    let startDate = (exp.startDate || "").trim();
+    let endDate = (exp.endDate || "").trim();
+    if (/^\d{2}-\d{4}$/.test(startDate)) startDate = startDate.replace("-", " - ");
+    if (/^\d{2}-\d{4}$/.test(endDate)) endDate = endDate.replace("-", " - ");
+    return {
+      ...exp,
+      startDate,
+      endDate,
+      duration: formatDuration(startDate, endDate, exp.currentlyWorking) || exp.duration,
+    };
+  };
+
+  // Helper to format dates from API (e.g. YYYY-MM-DD or YYYY-MM) to "MM - YYYY"
   const formatApiDate = (dateStr: string) => {
     if (!dateStr) return "";
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    return `${months[d.getMonth()]} ${d.getFullYear()}`;
+    return `${String(d.getMonth() + 1).padStart(2, "0")} - ${d.getFullYear()}`;
   };
 
   // Import Details from Profile APIs
@@ -254,10 +272,12 @@ export default function PortfolioEditor() {
       if (expRes.data && Array.isArray(expRes.data.experiences)) {
         const mappedExps = expRes.data.experiences.map((exp: any) => {
           const start = formatApiDate(exp.start_date);
-          const end = exp.currently_working_here ? "Present" : formatApiDate(exp.end_date);
+          const end = exp.currently_working_here ? "" : formatApiDate(exp.end_date);
           return {
             role: exp.job_title || "",
             company: exp.company_name || "",
+            startDate: start,
+            endDate: end,
             duration: start && end ? `${start} - ${end}` : start || end || "",
             details: exp.description || "",
           };
@@ -275,6 +295,7 @@ export default function PortfolioEditor() {
             description: proj.description || proj.roles_responsibilities || "",
             link: "",
             tech: "",
+            imageUrl: "",
           };
         });
         if (mappedProjs.length > 0) {
@@ -348,6 +369,284 @@ export default function PortfolioEditor() {
     }
   };
 
+  const hasAllowedUrlCharacters = (url: string): boolean => /^[A-Za-z0-9:/?#[\]@!$&'()*+,;=._~%-]+$/.test(url);
+
+  const isValidEmail = (email: string): boolean => {
+    const trimmed = email.trim();
+    if (!trimmed) return true;
+    if (trimmed.length > 150) return false;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+  };
+
+  const getPlainText = (html: string) => {
+    if (!html) return "";
+    return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
+  };
+
+  const isValidHexColor = (value: string) => /^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/.test(value.trim());
+
+  const getCloudinaryPublicIdFromUrl = (
+    url: string,
+    resourceType: "image" | "raw" | "video"
+  ) => {
+    if (!url || !url.includes("res.cloudinary.com")) return "";
+
+    try {
+      const parsedUrl = new URL(url);
+      const marker = `/${resourceType}/upload/`;
+      const markerIndex = parsedUrl.pathname.indexOf(marker);
+      if (markerIndex === -1) return "";
+
+      const uploadPath = parsedUrl.pathname.slice(markerIndex + marker.length);
+      const pathWithoutVersion = uploadPath.replace(/^v\d+\//, "");
+      const extensionIndex = pathWithoutVersion.lastIndexOf(".");
+      return decodeURIComponent(
+        extensionIndex === -1 ? pathWithoutVersion : pathWithoutVersion.slice(0, extensionIndex)
+      );
+    } catch {
+      return "";
+    }
+  };
+
+  const validateProfileUrl = (
+    url: string,
+    expectedHosts: string[],
+    pathPattern?: RegExp
+  ): boolean => {
+    if (!url.trim()) return true;
+    if (url.length > linkMaxLength || !hasAllowedUrlCharacters(url)) return false;
+    try {
+      const urlObj = new URL(ensureHttps(url));
+      const hostname = urlObj.hostname.replace(/^www\./i, "").toLowerCase();
+      if (!expectedHosts.includes(hostname)) return false;
+      if (pathPattern && !pathPattern.test(urlObj.pathname.replace(/\/+$/g, ""))) return false;
+      return !urlObj.search && !urlObj.hash;
+    } catch {
+      return false;
+    }
+  };
+
+  const validateCustomUrl = (url: string): boolean => {
+    if (!url.trim()) return true;
+    if (url.length > linkMaxLength || !hasAllowedUrlCharacters(url)) return false;
+    try {
+      const urlObj = new URL(ensureHttps(url));
+      const hostname = urlObj.hostname.replace(/^www\./i, "").toLowerCase();
+      const validDomain = /^([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i.test(hostname);
+      return validDomain && urlObj.pathname === "/" && !urlObj.search && !urlObj.hash;
+    } catch {
+      return false;
+    }
+  };
+
+  const buildPortfolioPayload = (overrides: Record<string, any> = {}) => {
+    const normalizedExperiences = experiences.map(normalizeExperience);
+
+    return {
+      name: portfolioName,
+      description: portfolioDescription,
+      portfolio_type: portfolioType,
+      github: githubUrl,
+      linkedin: linkedinUrl,
+      twitter: twitterUrl,
+      customUrl: customUrl,
+      cvUrl: cvUrl,
+      cvPublicId,
+      cvDeleteToken,
+      profileImageUrl: profileImageUrl,
+      profileImagePublicId,
+      profileImageDeleteToken,
+      email: email,
+      themeColor: themeColor,
+      backgroundColor: backgroundColor,
+      behanceUrl: behanceUrl,
+      dribbbleUrl: dribbbleUrl,
+      designProcess: portfolioType === "designer" ? designProcess : [],
+      caseStudies: portfolioType === "designer" ? caseStudies : [],
+      projects: projects,
+      experiences: normalizedExperiences,
+      skills: skills,
+      ...overrides,
+    };
+  };
+
+  const pushPortfolioJson = async (overrides: Record<string, any> = {}) => {
+    const userData = JSON.parse(localStorage.getItem("user") || "null");
+    if (!userData?.token) {
+      throw new Error("User not authenticated.");
+    }
+
+    const portfolioPayload = buildPortfolioPayload(overrides);
+    await api.put(
+      `/portfolio/${id}`,
+      {
+        portfolio_name: portfolioPayload.name,
+        description: portfolioPayload.description,
+        portfolio_json: portfolioPayload,
+      },
+      { headers: { Authorization: `Bearer ${userData.token}` } }
+    );
+
+    setSuccess(true);
+    setTimeout(() => setSuccess(false), 3000);
+  };
+
+  const deleteCloudinaryAsset = async (
+    url: string,
+    deleteToken: string | null,
+    publicId: string,
+    resourceType: "image" | "raw" | "video"
+  ) => {
+    const resolvedPublicId = publicId || getCloudinaryPublicIdFromUrl(url, resourceType);
+    if (!deleteToken && !resolvedPublicId) return true;
+    return deleteFromCloudinary(deleteToken, resolvedPublicId, resourceType);
+  };
+
+  const handleProfileImageUploaded = async (asset: UploadedAsset) => {
+    await pushPortfolioJson({
+      profileImageUrl: asset.url,
+      profileImagePublicId: asset.publicId || "",
+      profileImageDeleteToken: asset.deleteToken || null,
+    });
+    setProfileImageUrl(asset.url);
+    setProfileImagePublicId(asset.publicId || "");
+    setProfileImageDeleteToken(asset.deleteToken || null);
+  };
+
+  const handleCvUploaded = async (asset: UploadedAsset) => {
+    await pushPortfolioJson({
+      cvUrl: asset.url,
+      cvPublicId: asset.publicId || "",
+      cvDeleteToken: asset.deleteToken || null,
+    });
+    setCvUrl(asset.url);
+    setCvPublicId(asset.publicId || "");
+    setCvDeleteToken(asset.deleteToken || null);
+  };
+
+  const handleProfileImageRemoved = async () => {
+    const deleted = await deleteCloudinaryAsset(
+      profileImageUrl,
+      profileImageDeleteToken,
+      profileImagePublicId,
+      "image"
+    );
+    if (!deleted) throw new Error("Unable to delete profile image from Cloudinary.");
+
+    await pushPortfolioJson({
+      profileImageUrl: "",
+      profileImagePublicId: "",
+      profileImageDeleteToken: null,
+    });
+    setProfileImageUrl("");
+    setProfileImagePublicId("");
+    setProfileImageDeleteToken(null);
+  };
+
+  const handleCvRemoved = async () => {
+    const deleted = await deleteCloudinaryAsset(cvUrl, cvDeleteToken, cvPublicId, "raw");
+    if (!deleted) throw new Error("Unable to delete CV from Cloudinary.");
+
+    await pushPortfolioJson({
+      cvUrl: "",
+      cvPublicId: "",
+      cvDeleteToken: null,
+    });
+    setCvUrl("");
+    setCvPublicId("");
+    setCvDeleteToken(null);
+  };
+
+  const handleCaseStudyImageUploaded = async (index: number, asset: UploadedAsset) => {
+    const updatedCaseStudies = caseStudies.map((study, studyIndex) =>
+      studyIndex === index
+        ? {
+            ...study,
+            imageUrl: asset.url,
+            imagePublicId: asset.publicId || "",
+            imageDeleteToken: asset.deleteToken || null,
+          }
+        : study
+    );
+
+    await pushPortfolioJson({
+      caseStudies: portfolioType === "designer" ? updatedCaseStudies : [],
+    });
+    setCaseStudies(updatedCaseStudies);
+  };
+
+  const handleCaseStudyImageRemoved = async (index: number) => {
+    const target = caseStudies[index];
+    if (!target) return;
+
+    const deleted = await deleteCloudinaryAsset(
+      target.imageUrl,
+      target.imageDeleteToken || null,
+      target.imagePublicId || "",
+      "image"
+    );
+    if (!deleted) throw new Error("Unable to delete case study image from Cloudinary.");
+
+    const updatedCaseStudies = caseStudies.map((study, studyIndex) =>
+      studyIndex === index
+        ? {
+            ...study,
+            imageUrl: "",
+            imagePublicId: "",
+            imageDeleteToken: null,
+          }
+        : study
+    );
+
+    await pushPortfolioJson({
+      caseStudies: portfolioType === "designer" ? updatedCaseStudies : [],
+    });
+    setCaseStudies(updatedCaseStudies);
+  };
+
+  const handleProjectImageUploaded = async (index: number, asset: UploadedAsset) => {
+    const updatedProjects = projects.map((project, projectIndex) =>
+      projectIndex === index
+        ? {
+            ...project,
+            imageUrl: asset.url,
+            imagePublicId: asset.publicId || "",
+            imageDeleteToken: asset.deleteToken || null,
+          }
+        : project
+    );
+
+    await pushPortfolioJson({ projects: updatedProjects });
+    setProjects(updatedProjects);
+  };
+
+  const handleProjectImageRemoved = async (index: number) => {
+    const target = projects[index];
+    if (!target) return;
+
+    const deleted = await deleteCloudinaryAsset(
+      target.imageUrl || "",
+      target.imageDeleteToken || null,
+      target.imagePublicId || "",
+      "image"
+    );
+    if (!deleted) throw new Error("Unable to delete project image from Cloudinary.");
+
+    const updatedProjects = projects.map((project, projectIndex) =>
+      projectIndex === index
+        ? {
+            ...project,
+            imageUrl: "",
+            imagePublicId: "",
+            imageDeleteToken: null,
+          }
+        : project
+    );
+
+    await pushPortfolioJson({ projects: updatedProjects });
+    setProjects(updatedProjects);
+  };
+
   // Submit and Save Portfolio
   const handleSave = async () => {
     if (!portfolioName.trim()) {
@@ -363,21 +662,64 @@ export default function PortfolioEditor() {
     const cleanBehance = behanceUrl.trim() ? ensureHttps(behanceUrl) : "";
     const cleanDribbble = dribbbleUrl.trim() ? ensureHttps(dribbbleUrl) : "";
 
+    if (!isValidHexColor(themeColor)) {
+      alert("Theme color must be a valid hex code, e.g. #RGB or #RRGGBB.");
+      return;
+    }
+
+    if (!isValidHexColor(backgroundColor)) {
+      alert("Background color must be a valid hex code, e.g. #RGB or #RRGGBB.");
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      alert("Please enter a valid email address with 150 characters or fewer.");
+      return;
+    }
+
+    const invalidStep = designProcess.find(
+      (step) => step.title.trim().length > 100 || step.description.trim().length > 250
+    );
+    if (invalidStep) {
+      alert("Each design process step must have a title of 100 characters or less and a description of 250 characters or less.");
+      return;
+    }
+
+    const invalidCaseStudyUrl = caseStudies.find(
+      (study) => (study.link || "").trim().length > linkMaxLength
+    );
+    if (invalidCaseStudyUrl) {
+      alert("Each case study URL must be 100 characters or less.");
+      return;
+    }
+
+    const invalidCaseStudyLength = caseStudies.find(
+      (study) =>
+        study.title.trim().length > 50 ||
+        study.role.trim().length > 50 ||
+        study.subtitle.trim().length > 250 ||
+        getPlainText(study.description).length > 500
+    );
+    if (invalidCaseStudyLength) {
+      alert("Case study title and role must be 50 characters or less, subtitle must be 250 characters or less, and description must be 500 characters or less.");
+      return;
+    }
+
     // Validate URLs
-    if (cleanGithub && !isValidUrl(cleanGithub)) {
-      alert("Please enter a valid GitHub URL.");
+    if (cleanGithub && !validateProfileUrl(cleanGithub, ["github.com"], /^\/[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/)) {
+      alert("Please enter a valid GitHub profile URL under 100 characters.");
       return;
     }
-    if (cleanLinkedin && !isValidUrl(cleanLinkedin)) {
-      alert("Please enter a valid LinkedIn URL.");
+    if (cleanLinkedin && !validateProfileUrl(cleanLinkedin, ["linkedin.com"], /^\/in\/[A-Za-z0-9-]{3,100}$/)) {
+      alert("Please enter a valid LinkedIn profile URL under 100 characters.");
       return;
     }
-    if (cleanTwitter && !isValidUrl(cleanTwitter)) {
-      alert("Please enter a valid Twitter URL.");
+    if (cleanTwitter && !validateProfileUrl(cleanTwitter, ["twitter.com", "x.com"], /^\/[A-Za-z0-9_]{1,15}$/)) {
+      alert("Please enter a valid Twitter/X profile URL under 100 characters.");
       return;
     }
-    if (cleanCustom && !isValidUrl(cleanCustom)) {
-      alert("Please enter a valid Custom Domain URL.");
+    if (cleanCustom && !validateCustomUrl(cleanCustom)) {
+      alert("Please enter a valid Custom Domain URL under 100 characters.");
       return;
     }
     if (cleanBehance && !isValidUrl(cleanBehance)) {
@@ -386,6 +728,56 @@ export default function PortfolioEditor() {
     }
     if (cleanDribbble && !isValidUrl(cleanDribbble)) {
       alert("Please enter a valid Dribbble URL.");
+      return;
+    }
+
+    const tooLongLink = [
+      cleanGithub,
+      cleanLinkedin,
+      cleanTwitter,
+      cleanCustom,
+      cleanBehance,
+      cleanDribbble,
+      ...caseStudies.map((study) => study.link || ""),
+    ].find((link) => link.length > linkMaxLength);
+
+    if (tooLongLink) {
+      alert("All portfolio links must be 100 characters or less.");
+      return;
+    }
+
+    const normalizedExperiences = experiences.map(normalizeExperience);
+    const invalidProjectText = projects.find(
+      (project) => !plainTextRegex.test(project.title || "")
+    );
+
+    if (invalidProjectText) {
+      alert("Project title can only contain letters, numbers, and spaces.");
+      return;
+    }
+
+    const invalidExperienceText = normalizedExperiences.find((exp) => {
+      return (
+        !plainTextRegex.test(exp.role || "") ||
+        !plainTextRegex.test(exp.company || "") ||
+        (exp.role || "").length > 80 ||
+        (exp.company || "").length > 80
+      );
+    });
+
+    if (invalidExperienceText) {
+      alert("Job role/title and company can only contain letters, numbers, and spaces, with a maximum length of 80 characters.");
+      return;
+    }
+
+    const invalidExperience = normalizedExperiences.find((exp) => {
+      const hasStart = Boolean(exp.startDate);
+      const hasEnd = Boolean(exp.endDate);
+      return (hasStart && !mmYYYYRegex.test(exp.startDate || "")) || (hasEnd && !mmYYYYRegex.test(exp.endDate || ""));
+    });
+
+    if (invalidExperience) {
+      alert("Please enter timeline dates in MM-YYYY format.");
       return;
     }
 
@@ -412,7 +804,11 @@ export default function PortfolioEditor() {
         twitter: cleanTwitter,
         customUrl: cleanCustom,
         cvUrl: cvUrl,
+        cvPublicId,
+        cvDeleteToken,
         profileImageUrl: profileImageUrl,
+        profileImagePublicId,
+        profileImageDeleteToken,
         email: email,
         themeColor: themeColor,
         backgroundColor: backgroundColor,
@@ -421,7 +817,7 @@ export default function PortfolioEditor() {
         designProcess: portfolioType === "designer" ? designProcess : [],
         caseStudies: portfolioType === "designer" ? caseStudies : [],
         projects: projects,
-        experiences: experiences,
+        experiences: normalizedExperiences,
         skills: skills,
       };
 
@@ -491,7 +887,7 @@ export default function PortfolioEditor() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans">
-      <DashNav heading="Edit Portfolio" />
+      <DashNav heading="Edit Portfolio" zindex={100} />
 
       {/* Editor Main Section */}
       <div 
@@ -501,7 +897,7 @@ export default function PortfolioEditor() {
         {isDragging && <div className="fixed inset-0 z-50 cursor-col-resize select-none" />}
 
         {/* Left Side: Form Controls */}
-        <div className="w-full lg:w-[var(--left-width)] p-6 overflow-y-auto border-r border-gray-200">
+        <div className="w-full lg:w-[var(--left-width)] px-6 pb-6 pt-0 overflow-y-auto border-r border-gray-200">
           <PortfolioEditorComponent
             portfolioName={portfolioName}
             setPortfolioName={setPortfolioName}
@@ -519,8 +915,12 @@ export default function PortfolioEditor() {
             setCustomUrl={setCustomUrl}
             cvUrl={cvUrl}
             setCvUrl={setCvUrl}
+            onCvUploaded={handleCvUploaded}
+            onCvRemoved={handleCvRemoved}
             profileImageUrl={profileImageUrl}
             setProfileImageUrl={setProfileImageUrl}
+            onProfileImageUploaded={handleProfileImageUploaded}
+            onProfileImageRemoved={handleProfileImageRemoved}
             email={email}
             setEmail={setEmail}
             themeColor={themeColor}
@@ -535,8 +935,12 @@ export default function PortfolioEditor() {
             setDesignProcess={setDesignProcess}
             caseStudies={caseStudies}
             setCaseStudies={setCaseStudies}
+            onCaseStudyImageUploaded={handleCaseStudyImageUploaded}
+            onCaseStudyImageRemoved={handleCaseStudyImageRemoved}
             projects={projects}
             setProjects={setProjects}
+            onProjectImageUploaded={handleProjectImageUploaded}
+            onProjectImageRemoved={handleProjectImageRemoved}
             experiences={experiences}
             setExperiences={setExperiences}
             skills={skills}

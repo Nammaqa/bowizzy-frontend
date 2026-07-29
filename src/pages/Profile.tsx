@@ -66,15 +66,11 @@ export default function Profile() {
 
   // Validation function for file
   const validateFile = (file) => {
-    const validTypes = [
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ];
+    const validTypes = ["application/pdf"];
     const maxSize = 10 * 1024 * 1024; // 10MB
 
     if (!validTypes.includes(file.type)) {
-      return "Only PDF and Word documents (.doc, .docx) are allowed";
+      return "Only PDF files are allowed";
     }
 
     if (file.size > maxSize) {
@@ -333,7 +329,7 @@ export default function Profile() {
   }`}
 >
   <Upload size={16} className="sm:w-[18px] sm:h-[18px] flex-shrink-0" />
-  <span className="whitespace-nowrap hidden sm:inline">Upload Resume (PDF/Word)</span>
+  <span className="whitespace-nowrap hidden sm:inline">Upload Resume (PDF)</span>
   <span className="whitespace-nowrap sm:hidden">Upload Resume</span>
 </button>
                   </div>

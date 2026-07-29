@@ -1,4 +1,4 @@
-import { Menu, Plus, Ticket, Share2, CalendarDays, FileText, Copy, Check } from 'lucide-react';
+import { Menu, Plus, Ticket, Share2, CalendarDays, FileText, Copy, Check, ChevronDown, Sparkles, Coins, ArrowRight, Zap } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import api from '@/api';
@@ -12,40 +12,58 @@ interface ProfileData {
     image?: string;
     isWelcomeBonusRedeemed?: boolean;
     credits?: number;
+    purchased_credits?: number;
     coupon_code?: string;
 }
 
+// ── credit pack config (single source of truth for pricing + bonus math) ───
+const CREDIT_PACKS = [
+    { amount: 50, base: 50, bonusPct: 10, icon: 'sm' as const, popular: false },
+    { amount: 100, base: 100, bonusPct: 10, icon: 'md' as const, popular: true },
+    { amount: 250, base: 250, bonusPct: 10, icon: 'lg' as const, popular: false },
+];
 
-export default function DashNav({ heading }: { heading: string }) {
+export default function DashNav({ heading, zindex }: { heading: string; zindex?: number }) {
     const { toggleSidebar } = useSidebar();
     const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+    const [showCreditsDropdown, setShowCreditsDropdown] = useState(false);
     const [profileData, setProfileData] = useState<ProfileData | null>(null);
     const [profileLoading, setProfileLoading] = useState(false);
     const [imgError, setImgError] = useState(false);
     const dropdownRef = useRef<HTMLDivElement | null>(null);
 
     // ── fetch profile (single source of truth for profile + credits) ───────────
-    useEffect(() => {
-        const loadProfile = async () => {
-            try {
-                const userData = JSON.parse(localStorage.getItem('user') || 'null');
-                const token = userData?.token;
-                if (!token) return;
+    const loadProfile = useCallback(async () => {
+        try {
+            const userData = JSON.parse(localStorage.getItem('user') || 'null');
+            const token = userData?.token;
+            if (!token) return;
 
-                setProfileLoading(true);
-                const resp = await api.get('/personal-details/profile-data', {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                const data = resp?.data ?? resp;
-                if (data) setProfileData(data);
-            } catch (err) {
-                console.warn('Failed to load profile data', err);
-            } finally {
-                setProfileLoading(false);
-            }
-        };
-        loadProfile();
+            setProfileLoading(true);
+            const resp = await api.get('/personal-details/profile-data', {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = resp?.data ?? resp;
+            if (data) setProfileData(data);
+        } catch (err) {
+            console.warn('Failed to load profile data', err);
+        } finally {
+            setProfileLoading(false);
+        }
     }, []);
+
+    useEffect(() => {
+        loadProfile();
+    }, [loadProfile]);
+
+    useEffect(() => {
+        const handleCreditsRefresh = () => {
+            loadProfile();
+        };
+
+        window.addEventListener('credits:refresh', handleCreditsRefresh);
+        return () => window.removeEventListener('credits:refresh', handleCreditsRefresh);
+    }, [loadProfile]);
 
     // ── close dropdown on outside click ───────────────────────────────────────
     useEffect(() => {
@@ -65,6 +83,8 @@ export default function DashNav({ heading }: { heading: string }) {
     const [copyStatus, setCopyStatus] = useState<string | null>(null);
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [couponCopied, setCouponCopied] = useState(false);
+    const [showBuyCreditsModal, setShowBuyCreditsModal] = useState(false);
+    const [selectedPack, setSelectedPack] = useState<number>(100);
 
     const fetchTemplates = async () => {
         try {
@@ -95,9 +115,14 @@ export default function DashNav({ heading }: { heading: string }) {
             ? Number(profileData.credits).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
             : '0.00';
 
+    const formattedPurchasedCredits =
+        profileData?.purchased_credits != null
+            ? Number(profileData.purchased_credits).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            : '0.00';
+
     return (
         <>
-            <nav className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200">
+            <nav className={`relative z-[${zindex || 50}] flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200`}>
                 <div className="text-lg font-medium text-gray-700">{heading}</div>
 
                 <div className="flex items-center gap-2">
@@ -147,7 +172,7 @@ export default function DashNav({ heading }: { heading: string }) {
                         </button>
 
                         {showProfileDropdown && (
-                            <div className="absolute right-0 mt-2 w-56 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                            <div className="absolute right-0 mt-2 w-56 z-[110] animate-in fade-in slide-in-from-top-1 duration-150">
                                 <div className="absolute right-5 -top-1.5 w-3 h-3 bg-white border-l border-t border-gray-200 transform rotate-45 z-10" />
 
                                 <div className="relative rounded-xl shadow-lg border border-gray-100 bg-white overflow-hidden">
@@ -188,17 +213,52 @@ export default function DashNav({ heading }: { heading: string }) {
                                             View Events
                                         </button>
 
-                                        <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition group">
-                                            <span className="w-7 h-7 rounded-full bg-orange-50 group-hover:bg-orange-100 flex items-center justify-center transition">
-                                                <Plus size={14} className="text-orange-500" />
-                                            </span>
-                                            <span className="flex items-center justify-between w-full">
-                                                Credits
-                                                <span className="ml-auto text-xs font-semibold bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full">
-                                                    {profileLoading ? '…' : formattedCredits}
+                                        <div className="flex flex-col">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    e.preventDefault();
+                                                    setShowCreditsDropdown(!showCreditsDropdown);
+                                                }}
+                                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition group"
+                                            >
+                                                <span className="w-7 h-7 rounded-full bg-orange-50 group-hover:bg-orange-100 flex items-center justify-center transition flex-shrink-0">
+                                                    <Plus size={14} className="text-orange-500" />
                                                 </span>
-                                            </span>
-                                        </button>
+                                                <span className="flex items-center justify-between w-full">
+                                                    Credits
+                                                    <ChevronDown size={14} className={`text-gray-400 transition-transform ${showCreditsDropdown ? 'rotate-180' : ''}`} />
+                                                </span>
+                                            </button>
+
+                                            {showCreditsDropdown && (
+                                                <div className="bg-gray-50/50 px-5 py-2.5 text-sm flex flex-col gap-2.5 border-y border-gray-100 animate-in fade-in slide-in-from-top-1 duration-150">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-gray-600">Purchased credits</span>
+                                                        {profileData?.purchased_credits && profileData.purchased_credits > 0 ? (
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-xs font-semibold bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full">
+                                                                    {profileLoading ? '…' : formattedPurchasedCredits}
+                                                                </span>
+                                                            </div>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => setShowBuyCreditsModal(true)}
+                                                                className="bg-orange-500 hover:bg-orange-600 text-white text-[10px] font-bold px-3 py-1 rounded-full transition shadow-sm"
+                                                            >
+                                                                Buy
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-gray-600">Bonus credits</span>
+                                                        <span className="text-xs font-semibold bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full">
+                                                            {profileLoading ? '…' : formattedCredits}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
 
                                         <div className="px-4 py-2.5">
                                             <div className="flex items-center gap-3 mb-1.5">
@@ -295,7 +355,7 @@ export default function DashNav({ heading }: { heading: string }) {
                                                         {isCopied ? (
                                                             <><Check size={16} />Copied</>
                                                         ) : (
-                                                            <div className="flex items-center justify-center gap-2"><Copy size={16} /><span>Share URL</span></div>
+                                                            <div className="flex items-center justify-center gap-2"><Copy size={16} /><span>Copy URL</span></div>
                                                         )}
                                                     </button>
                                                 </div>
@@ -305,6 +365,118 @@ export default function DashNav({ heading }: { heading: string }) {
                                 )}
                             </div>
                             {copyStatus && <div className="mt-3 text-sm text-green-600">{copyStatus}</div>}
+                        </div>
+                    </div>
+                )}
+
+                {/* Buy Credits Modal */}
+                {showBuyCreditsModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <div
+                            className="absolute inset-0 bg-black/50"
+                            style={{ backdropFilter: 'blur(6px)' }}
+                            onClick={() => setShowBuyCreditsModal(false)}
+                        />
+
+                        <div className="relative bg-white rounded-[28px] shadow-2xl w-full max-w-md z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                            {/* Header banner */}
+                            <div className="relative px-6 pt-6 pb-8 bg-gradient-to-br from-orange-500 via-orange-500 to-amber-400 overflow-hidden">
+                                {/* soft decorative glows */}
+                                <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-white/10 blur-2xl" />
+                                <div className="absolute -bottom-10 left-10 w-24 h-24 rounded-full bg-white/10 blur-2xl" />
+
+                                <button
+                                    onClick={() => setShowBuyCreditsModal(false)}
+                                    className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition backdrop-blur-sm"
+                                    aria-label="Close"
+                                >
+                                    ✕
+                                </button>
+
+                                <div className="relative flex items-center gap-2 text-white/90 text-xs font-semibold tracking-wide uppercase mb-2">
+                                    <Sparkles size={14} />
+                                    Top up
+                                </div>
+                                <h3 className="relative text-2xl font-bold text-white mb-1">Buy Credits</h3>
+                                <p className="relative text-sm text-white/85">
+                                    Every pack includes a bonus, added to your balance instantly.
+                                </p>
+                            </div>
+
+                            {/* Pack list */}
+                            <div className="px-5 -mt-4 pb-2 flex flex-col gap-3 relative">
+                                {CREDIT_PACKS.map((pack) => {
+                                    const bonus = Math.round((pack.amount * pack.bonusPct) / 100);
+                                    const total = pack.base + bonus;
+                                    const isSelected = selectedPack === pack.amount;
+                                    const sizeMap = { sm: 'w-9 h-9', md: 'w-10 h-10', lg: 'w-11 h-11' } as const;
+                                    const iconSizeMap = { sm: 16, md: 18, lg: 20 } as const;
+
+                                    return (
+                                        <button
+                                            key={pack.amount}
+                                            onClick={() => setSelectedPack(pack.amount)}
+                                            className={`relative w-full text-left rounded-2xl border-2 bg-white p-4 flex items-center gap-3 transition-all ${
+                                                isSelected
+                                                    ? 'border-orange-500 shadow-[0_8px_24px_-8px_rgba(249,115,22,0.45)] -translate-y-0.5'
+                                                    : 'border-gray-100 hover:border-orange-200 hover:-translate-y-0.5 hover:shadow-md'
+                                            }`}
+                                        >
+                                            {pack.popular && (
+                                                <span className="absolute -top-2.5 left-4 bg-gray-900 text-white text-[10px] font-bold tracking-wide uppercase px-2.5 py-0.5 rounded-full shadow">
+                                                    Most popular
+                                                </span>
+                                            )}
+
+                                            <span
+                                                className={`${sizeMap[pack.icon]} rounded-xl flex items-center justify-center flex-shrink-0 ${
+                                                    isSelected
+                                                        ? 'bg-gradient-to-br from-orange-400 to-amber-500 text-white'
+                                                        : 'bg-orange-50 text-orange-500'
+                                                }`}
+                                            >
+                                                <Coins size={iconSizeMap[pack.icon]} />
+                                            </span>
+
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-baseline gap-1.5">
+                                                    <span className="text-lg font-bold text-gray-900">₹{pack.amount}</span>
+                                                    <span className="text-xs text-gray-400">pack</span>
+                                                </div>
+                                                <div className="flex items-center gap-1.5 mt-0.5">
+                                                    <span className="text-xs text-gray-500">{pack.base} credits</span>
+                                                    <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">
+                                                        <Zap size={9} className="fill-emerald-600" />
+                                                        +{bonus} bonus
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-col items-end flex-shrink-0">
+                                                <span className="text-sm font-extrabold text-gray-900 tabular-nums">{total}</span>
+                                                <span className="text-[10px] text-gray-400 uppercase tracking-wide">total</span>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Footer / CTA */}
+                            <div className="px-5 pt-2 pb-5">
+                                <button
+                                    onClick={() => {
+                                        setShowBuyCreditsModal(false);
+                                        window.location.href = `/credits?pack=${selectedPack}`;
+                                    }}
+                                    className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-500/25 transition"
+                                >
+                                    Continue with ₹{selectedPack} pack
+                                    <ArrowRight size={16} />
+                                </button>
+                                <p className="text-center text-[11px] text-gray-400 mt-3">
+                                    Secure checkout · Credits are added to your account instantly
+                                </p>
+                            </div>
                         </div>
                     </div>
                 )}

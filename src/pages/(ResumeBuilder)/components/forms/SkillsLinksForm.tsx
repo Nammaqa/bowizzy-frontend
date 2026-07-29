@@ -6,8 +6,9 @@ import {
   FormTextarea,
   FormSection,
   ToggleSwitch,
+  ReorderableListEditor,
 } from "@/pages/(ResumeBuilder)/components/ui";
-import { X, Save, RotateCcw, Sparkles, Loader2 } from "lucide-react";
+import { X, Save, Sparkles, Loader2 } from "lucide-react";
 import RichTextEditor from "@/pages/(ResumeBuilder)/components/ui/RichTextEditor";
 import {
   updateSkillDetails,
@@ -21,6 +22,7 @@ import {
   updateTechnicalSummary,
 } from "@/services/skillsLinksService";
 import enhanceTechnicalSummary from "@/utils/enhanceTechnicalSummary";
+import api from "@/api";
 
 interface SkillsLinksFormProps {
   data: SkillsLinksDetails;
@@ -28,6 +30,12 @@ interface SkillsLinksFormProps {
   userId: string;
   token: string;
   technicalSummaryId?: number | null;
+  disableAiEnhance?: boolean;
+  enhanceStatus?: { isBonus_enhance_used: boolean; enhance_usage_left: number; purchased_credits?: number | string } | null;
+  onRedeemEnhance?: () => void;
+  onRedeemEnhanceWithPurchasedCredits?: () => void;
+  onEnhanceStatusChange?: (status: { isBonus_enhance_used: boolean; enhance_usage_left: number; purchased_credits?: number | string }) => void;
+  redeemingEnhance?: boolean;
 }
 
 const skillLevels = [
@@ -43,6 +51,12 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
   userId,
   token,
   technicalSummaryId: initialTechnicalSummaryId,
+  disableAiEnhance = false,
+  enhanceStatus,
+  onRedeemEnhance,
+  onRedeemEnhanceWithPurchasedCredits,
+  onEnhanceStatusChange,
+  redeemingEnhance = false,
 }) => {
   const [skillsCollapsed, setSkillsCollapsed] = useState(false);
   const [linksCollapsed, setLinksCollapsed] = useState(false);
@@ -66,6 +80,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
   const [hiddenSaveIds, setHiddenSaveIds] = useState<Set<string>>(new Set());
 
   const [isEnhancingSummary, setIsEnhancingSummary] = useState(false);
+  const cannotEnhance = enhanceStatus ? enhanceStatus.enhance_usage_left <= 0 : false;
   const [enhanceSummaryError, setEnhanceSummaryError] = useState("");
   const [enhancedSummaryVersions, setEnhancedSummaryVersions] = useState<{
     atsFriendly: string;
@@ -143,14 +158,11 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
 
   const validateSkillName = (value: string) => {
     if (!value) return "";
-    if (!/^[a-zA-Z0-9\s.+#-]+$/.test(value)) {
-      return "Invalid characters in skill name";
-    }
     if (/^\d+$/.test(value.trim())) {
       return "Skill cannot be only numbers";
     }
-    if (value.length > 20) {
-      return "Max 20 characters allowed";
+    if (value.length > 50) {
+      return "Max 50 characters allowed";
     }
 
     return "";
@@ -166,7 +178,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
       return `Invalid ${type} URL format`;
     }
 
-    if (type === "Portfolio" && value.length > 100) {
+    if (value.length > 100) {
       return "Max 100 characters allowed";
     }
 
@@ -187,12 +199,41 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
     return "";
   };
 
+  const validateTechnicalSummary = (value: string) => {
+    const length = getPlainText(value).length;
+    if (length > 500) return "Technical summary cannot exceed 500 characters";
+    return "";
+  };
+
   // Handler for saving all skills
   const handleSaveAllSkills = async () => {
     const changesToSave = Object.keys(skillChanges);
     if (changesToSave.length === 0) {
       setSkillFeedback({ ["all"]: "No changes to save." });
       setTimeout(() => setSkillFeedback({}), 3000);
+      return;
+    }
+
+    // Validate that all skills have a name and a level
+    const incompleteSkills = data.skills.filter(
+      (skill) => !skill.skillName || !skill.skillName.trim() || !skill.skillLevel
+    );
+    if (incompleteSkills.length > 0) {
+      setSkillFeedback({
+        ["all"]: `Both skill name and level are mandatory. Please complete ${incompleteSkills.length} skill(s).`,
+      });
+      setTimeout(() => setSkillFeedback({}), 3000);
+      
+      const newErrors = { ...errors };
+      data.skills.forEach((skill) => {
+        if (!skill.skillName || !skill.skillName.trim()) {
+           newErrors[`skill-${skill.id}-skillName`] = "Required";
+        }
+        if (!skill.skillLevel) {
+           newErrors[`skill-${skill.id}-skillLevel`] = "Required";
+        }
+      });
+      setErrors(newErrors);
       return;
     }
 
@@ -459,6 +500,12 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
 
   // Handler for saving technical summary
   const handleSaveTechnicalSummary = async () => {
+    const technicalSummaryError = validateTechnicalSummary(data.technicalSummary || "");
+    if (technicalSummaryError) {
+      setErrors((prev) => ({ ...prev, technicalSummary: technicalSummaryError }));
+      return;
+    }
+
     if (!technicalSummaryChanges) {
       setTechnicalSummaryFeedback("No changes to save.");
       setTimeout(() => setTechnicalSummaryFeedback(""), 3000);
@@ -521,6 +568,12 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
       if (strValue.length > 20) return;
       const error = validateSkillName(strValue);
       setErrors((prev) => ({ ...prev, [`skill-${id}-skillName`]: error }));
+    } else if (field === "skillLevel") {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[`skill-${id}-skillLevel`];
+        return next;
+      });
     }
 
     onChange({
@@ -637,7 +690,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
     getPlainText(data.technicalSummary ?? "").length > 0;
 
   const handleEnhanceTechnicalSummary = async () => {
-    if (!hasTechnicalSummaryInput) return;
+    if (disableAiEnhance || !hasTechnicalSummaryInput || cannotEnhance) return;
     setIsEnhancingSummary(true);
     setEnhanceSummaryError("");
     setEnhancedSummaryVersions(null);
@@ -645,21 +698,34 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
       const skillNames = data.skills
         .filter((s) => s.enabled && s.skillName)
         .map((s) => s.skillName);
+      // 2. Call the AI service
       const result = await enhanceTechnicalSummary(
         data.technicalSummary,
         skillNames
       );
+
+      // 3. Mark as used
+      await api.post(`/users/${userId}/mark-enhance-used`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const nextUsageLeft = Math.max((enhanceStatus?.enhance_usage_left ?? 0) - 1, 0);
+      onEnhanceStatusChange?.({
+        isBonus_enhance_used: enhanceStatus?.isBonus_enhance_used ?? false,
+        enhance_usage_left: nextUsageLeft,
+        purchased_credits: enhanceStatus?.purchased_credits ?? 0,
+      });
+
       setEnhancedSummaryVersions(result);
     } catch (err: any) {
       setEnhanceSummaryError(
-        err.message || "Failed to enhance. Please try again."
+        err.response?.data?.message || err.message || "Failed to enhance. Please try again."
       );
     } finally {
       setIsEnhancingSummary(false);
     }
   };
 
-  // ✅ UPDATED: Apply version as individual bullet <div> elements
   const handleApplySummaryVersion = (type: "atsFriendly" | "informative") => {
     if (!enhancedSummaryVersions) return;
     const html = enhancedSummaryVersions[type]
@@ -712,6 +778,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
                   value={skill.skillName}
                   onChange={(v) => updateSkill(skill.id, "skillName", v)}
                   error={errors[`skill-${skill.id}-skillName`]}
+                  maxLength={50}
                 />
               </div>
 
@@ -722,6 +789,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
                   value={skill.skillLevel}
                   onChange={(v) => updateSkill(skill.id, "skillLevel", v)}
                   options={skillLevels}
+                  error={errors[`skill-${skill.id}-skillLevel`]}
                 />
               </div>
 
@@ -778,17 +846,6 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
               Save
             </button>
           )}
-          <button
-            type="button"
-            onClick={handleResetAllSkills}
-            className="w-6 h-6 flex items-center justify-center rounded-full border-2 border-gray-600 hover:bg-gray-100 transition-colors"
-            title="Reset to saved values"
-          >
-            <RotateCcw
-              className="w-3 h-3 text-gray-600 cursor-pointer"
-              strokeWidth={2.5}
-            />
-          </button>
         </div>
       </FormSection>
 
@@ -810,6 +867,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
                 value={data.links.linkedinProfile}
                 onChange={(v) => updateLink("linkedinProfile", v)}
                 error={errors[`link-linkedinProfile`]}
+                maxLength={100}
               />
             </div>
             <div className="mt-5">
@@ -829,6 +887,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
                 value={data.links.githubProfile}
                 onChange={(v) => updateLink("githubProfile", v)}
                 error={errors[`link-githubProfile`]}
+                maxLength={100}
               />
             </div>
             <div className="mt-5">
@@ -848,6 +907,7 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
                 value={data.links.portfolioUrl}
                 onChange={(v) => updateLink("portfolioUrl", v)}
                 error={errors[`link-portfolioUrl`]}
+                maxLength={100}
               />
             </div>
             <div className="mt-5">
@@ -857,45 +917,6 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
               />
             </div>
           </div>
-
-          {/* <div className="flex flex-col gap-1 mt-4">
-            <label className="font-medium">Portfolio Description</label>
-            <RichTextEditor
-              placeholder="Provide Portfolio Description..."
-              value={data.links.portfolioDescription}
-              onChange={(v) => updateLink("portfolioDescription", v)}
-              rows={3}
-            />
-          </div> */}
-
-          {/* Publication */}
-          {/* <div className="flex items-center gap-3">
-            <div className="flex-1">
-              <FormInput
-                label="Publication URL"
-                placeholder="Enter Publication URL..."
-                value={data.links.publicationUrl}
-                onChange={(v) => updateLink("publicationUrl", v)}
-                error={errors[`link-publicationUrl`]}
-              />
-            </div>
-            <div className="mt-5">
-              <ToggleSwitch
-                enabled={data.links.publicationEnabled}
-                onChange={(v) => updateLink("publicationEnabled", v)}
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1 mt-4">
-            <label className="font-medium">Publication Description</label>
-            <RichTextEditor
-              placeholder="Provide Publication Description..."
-              value={data.links.publicationDescription}
-              onChange={(v) => updateLink("publicationDescription", v)}
-              rows={3}
-            />
-          </div> */}
         </div>
 
         <div className="flex items-center justify-end gap-2 mt-8 pt-4 border-t border-gray-200">
@@ -921,17 +942,6 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
               Save
             </button>
           )}
-          <button
-            type="button"
-            onClick={handleResetAllLinks}
-            className="w-6 h-6 flex items-center justify-center rounded-full border-2 border-gray-600 hover:bg-gray-100 transition-colors"
-            title="Reset to saved values"
-          >
-            <RotateCcw
-              className="w-3 h-3 text-gray-600 cursor-pointer"
-              strokeWidth={2.5}
-            />
-          </button>
         </div>
       </FormSection>
 
@@ -949,20 +959,23 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
           setTechnicalSummaryCollapsed(!technicalSummaryCollapsed)
         }
       >
-        <div className="flex items-center justify-start gap-2 mb-4">
-          {/* AI Enhance button */}
+        <div className="flex items-center justify-start gap-4 mb-4">
           <button
             type="button"
             onClick={handleEnhanceTechnicalSummary}
-            disabled={!hasTechnicalSummaryInput || isEnhancingSummary}
+            disabled={disableAiEnhance || !hasTechnicalSummaryInput || isEnhancingSummary || cannotEnhance}
             title={
-              !hasTechnicalSummaryInput
+              disableAiEnhance
+                ? "AI enhancement is disabled for this template"
+                : cannotEnhance
+                ? "You have already used the AI enhancement feature"
+                : !hasTechnicalSummaryInput
                 ? "Add some text to enable AI enhancement"
                 : "Enhance with AI"
             }
             className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
               ${
-                hasTechnicalSummaryInput && !isEnhancingSummary
+                !disableAiEnhance && hasTechnicalSummaryInput && !isEnhancingSummary && !cannotEnhance
                   ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-sm hover:from-violet-600 hover:to-purple-700 cursor-pointer"
                   : "bg-gray-100 text-gray-400 cursor-not-allowed"
               }`}
@@ -974,20 +987,59 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
             )}
             {isEnhancingSummary ? "Enhancing..." : "Enhance with AI"}
           </button>
+          {enhanceStatus && !disableAiEnhance && (
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-600 font-medium">
+                <span className="text-orange-600 font-bold">{enhanceStatus.enhance_usage_left}</span> left
+              </span>
+              {enhanceStatus.enhance_usage_left === 0 && !enhanceStatus.isBonus_enhance_used && (
+                <button
+                  onClick={onRedeemEnhance}
+                  disabled={redeemingEnhance}
+                  className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 py-1.5 rounded-full transition disabled:opacity-50"
+                >
+                  {redeemingEnhance ? 'Redeeming...' : 'Redeem with Bonus'}
+                </button>
+              )}
+              {enhanceStatus.enhance_usage_left === 0 && enhanceStatus.isBonus_enhance_used && (
+                <button
+                  onClick={onRedeemEnhanceWithPurchasedCredits}
+                  disabled={redeemingEnhance}
+                  className="bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold px-3 py-1.5 rounded-full transition disabled:opacity-50"
+                >
+                  {redeemingEnhance ? 'Redeeming...' : 'Redeem using purchased credits'}
+                </button>
+              )}
+            </div>
+          )}
+          {disableAiEnhance && (
+            <span className="text-xs font-medium text-gray-500">
+             Enhance with AI not supported in this template
+            </span>
+          )}
         </div>
 
         <div className="flex flex-col gap-1 mt-4">
           <label className="font-medium">Technical Summary</label>
-          <RichTextEditor
+          <ReorderableListEditor
             placeholder="Provide Technical Summary"
             value={data.technicalSummary}
             onChange={(v) => {
               onChange({ ...data, technicalSummary: v });
               if (enhancedSummaryVersions) setEnhancedSummaryVersions(null);
               if (enhanceSummaryError) setEnhanceSummaryError("");
+              setErrors((prev) => {
+                const next = { ...prev };
+                delete next.technicalSummary;
+                return next;
+              });
             }}
-            rows={5}
           />
+          {errors.technicalSummary && (
+            <p className="mt-1 text-xs text-red-500">
+              {errors.technicalSummary}
+            </p>
+          )}
         </div>
 
         {/* Error */}
@@ -1125,17 +1177,6 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
               Save
             </button>
           )}
-          <button
-            type="button"
-            onClick={handleResetTechnicalSummary}
-            className="w-6 h-6 flex items-center justify-center rounded-full border-2 border-gray-600 hover:bg-gray-100 transition-colors"
-            title="Reset to saved value"
-          >
-            <RotateCcw
-              className="w-3 h-3 text-gray-600 cursor-pointer"
-              strokeWidth={2.5}
-            />
-          </button>
         </div>
       </FormSection>
     </div>

@@ -1,3 +1,5 @@
+import type { KeyboardEventHandler } from "react";
+
 interface FormInputProps {
   label?: string;
   placeholder?: string;
@@ -10,6 +12,8 @@ interface FormInputProps {
   error?: string;
   max?: string;
   min?: string;
+  maxLength?: number;
+  onKeyDown?: KeyboardEventHandler<HTMLInputElement>;
 }
 
 export const FormInput: React.FC<FormInputProps> = ({
@@ -24,6 +28,8 @@ export const FormInput: React.FC<FormInputProps> = ({
   error,
   max,
   min,
+  maxLength,
+  onKeyDown,
 }) => {
   const sanitizeMonthValue = (val: string) => {
     if (!val) return "";
@@ -39,7 +45,6 @@ export const FormInput: React.FC<FormInputProps> = ({
       {label && (
         <label className="text-xs text-gray-600 font-medium">
           {label}
-          {required && <span className="text-red-500 ml-0.5">*</span>}
         </label>
       )}
       <input
@@ -49,6 +54,9 @@ export const FormInput: React.FC<FormInputProps> = ({
         onChange={(e) => {
           const val = e.target.value as string;
           if (type === "month") {
+            // Only the native picker should be able to set this value now,
+            // but we still sanitize defensively in case a browser fires a
+            // change event without a keydown (e.g. autofill).
             const cleaned = val.replace(/[^0-9-]/g, "");
             if (cleaned.includes("-")) {
               onChange(cleaned.slice(0, 7));
@@ -59,18 +67,23 @@ export const FormInput: React.FC<FormInputProps> = ({
           }
           onChange(val);
         }}
+        onKeyDown={(e) => {
+          // Make month inputs "non-typeable" - force picker-only selection.
+          if (type === "month") {
+            const allowedKeys = ["Tab", "Shift", "Escape", "Enter"];
+            if (!allowedKeys.includes(e.key)) {
+              e.preventDefault();
+            }
+          }
+        }}
         onPaste={(e) => {
           if (type !== "month") return;
-          const paste = (e.clipboardData || (window as any).clipboardData).getData("text") as string;
-          if (!paste) return;
           e.preventDefault();
-          const cleaned = paste.replace(/[^0-9-]/g, "");
-          if (cleaned.includes("-")) onChange(cleaned.slice(0, 7));
-          else onChange(cleaned.slice(0, 4));
         }}
         disabled={disabled}
         max={max}
         min={min}
+        maxLength={maxLength}
         className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none 
           ${error ? "border-red-500" : "border-gray-200 focus:border-orange-400"}
           disabled:bg-gray-50 disabled:text-gray-400`}

@@ -3,6 +3,7 @@ import DOMPurify from 'dompurify';
 import { FiPhone, FiMail, FiMapPin, FiLinkedin, FiGithub, FiLink, FiFileText } from 'react-icons/fi';
 
 import type { ResumeData } from '@/types/resume';
+import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 
 interface Template13DisplayProps {
   data: ResumeData;
@@ -200,7 +201,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
                 <div key={`he-${i}`} style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 700 }}>{edu.instituteName}</div>
-                    <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{edu.currentlyPursuing ? 'Present' : formatYear(edu.endYear)}</div>
+                    <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear)} - Present` : formatResumeEducationDateRange(edu)}</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>
                     {edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}{edu.universityBoard ? ` — ${edu.universityBoard}` : ''}
@@ -214,7 +215,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 700 }}>{education.preUniversity.instituteName || 'Pre University'}</div>
-                    <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{formatYear(education.preUniversity.yearOfPassing)}</div>
+                  <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>
                     Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}{education.preUniversity.boardType ? ` — ${education.preUniversity.boardType}` : ''}
@@ -228,7 +229,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 700 }}>{education.sslc.instituteName || 'SSLC'}</div>
-                    <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{formatYear(education.sslc.yearOfPassing)}</div>
+                  <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{formatResumeEducationDateRange(education.sslc)}</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>
                     SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}
@@ -249,13 +250,20 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
             </div>
           </>)}
 
-          {certifications.some(c => c.enabled && c.certificateTitle) && (<>
+          {certifications.some(c => c.enabled && (c.certificateTitle || c.providedBy)) && (<>
             <div style={{ gridColumn: '1 / -1', marginTop: 12 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: primaryColor, fontWeight: 700 }}>CERTIFICATIONS</div>
               <div style={{ height: 1, background: '#cfcfcf', marginTop: 0, marginBottom: 0, width: '100%' }} />
             </div>
             <div style={{ gridColumn: '1 / -1', marginTop: 0 }}>
-              <div style={{ color: '#2b2a2a' }}>{certifications.filter(c => c.enabled && c.certificateTitle).map(c => c.certificateTitle).join(', ')}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, color: '#2b2a2a' }}>
+                {certifications.filter(c => c.enabled && (c.certificateTitle || c.providedBy)).map((c, i) => (
+                  <div key={i} style={{ lineHeight: 1.4 }}>
+                    {c.certificateTitle && <div style={{ fontWeight: 700, color: '#111827' }}>{c.certificateTitle}</div>}
+                    {c.providedBy && <div style={{ fontSize: 11, color: '#2b2a2a' }}>Provided by: {c.providedBy}</div>}
+                  </div>
+                ))}
+              </div>
             </div>
           </>)}
         </section>

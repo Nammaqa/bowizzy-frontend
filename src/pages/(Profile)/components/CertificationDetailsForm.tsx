@@ -29,7 +29,6 @@ interface Certificate {
   id: string;
   certificateType: string;
   certificateTitle: string;
-  domain: string;
   certificateProvidedBy: string;
   date: string;
   description: string;
@@ -44,6 +43,9 @@ interface Certificate {
 
 // Normalize any value to a comparable string, treating null/undefined/"" as identical
 const norm = (v: any): string => (v == null ? "" : String(v));
+const CERTIFICATE_PROVIDER_MAX_LENGTH = 50;
+const CERTIFICATE_DESCRIPTION_MAX_LENGTH = 500;
+const MIN_CERTIFICATE_YEAR = 1960;
 
 export default function CertificationDetailsForm({
   onNext,
@@ -60,9 +62,8 @@ export default function CertificationDetailsForm({
           // Normalize all fields so the ref and state start identical
           certificateType: c.certificateType || "",
           certificateTitle: c.certificateTitle || "",
-          domain: c.domain || "",
           certificateProvidedBy: c.certificateProvidedBy || "",
-          date: c.date || "",
+          date: c.date ? c.date.substring(0, 7) : "",
           description: c.description || "",
           uploadedFile: null,
           uploadedFileName: c.uploadedFileName || "",
@@ -74,7 +75,6 @@ export default function CertificationDetailsForm({
             id: "1",
             certificateType: "",
             certificateTitle: "",
-            domain: "",
             certificateProvidedBy: "",
             date: "",
             description: "",
@@ -120,8 +120,6 @@ export default function CertificationDetailsForm({
         changedFields.push("certificateType");
       if (norm(current.certificateTitle) !== norm(initial.certificateTitle))
         changedFields.push("certificateTitle");
-      if (norm(current.domain) !== norm(initial.domain))
-        changedFields.push("domain");
       if (norm(current.certificateProvidedBy) !== norm(initial.certificateProvidedBy))
         changedFields.push("certificateProvidedBy");
       if (norm(current.date) !== norm(initial.date))
@@ -155,16 +153,25 @@ export default function CertificationDetailsForm({
     return "";
   };
 
-  const validateDomain = (value: string) => {
-    if (value && !/^[a-zA-Z\s.,&\/\-]+$/.test(value)) {
-      return "Invalid characters in domain (no numbers allowed)";
+  const validateProvider = (value: string) => {
+    const trimmedValue = value.trim();
+    if (!trimmedValue) return "";
+    if (trimmedValue.length > CERTIFICATE_PROVIDER_MAX_LENGTH) {
+      return `Certificate provided by cannot exceed ${CERTIFICATE_PROVIDER_MAX_LENGTH} characters`;
+    }
+    if (!/^[a-zA-Z\s.,&'\-]+$/.test(trimmedValue)) {
+      return "Invalid characters in provider name (no numbers allowed)";
     }
     return "";
   };
 
-  const validateProvider = (value: string) => {
-    if (value && !/^[a-zA-Z\s.,&'\-]+$/.test(value)) {
-      return "Invalid characters in provider name (no numbers allowed)";
+  const getPlainTextFromHtml = (value: string) =>
+    value.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").trim();
+
+  const validateDescription = (value: string) => {
+    const text = getPlainTextFromHtml(value);
+    if (text.length > CERTIFICATE_DESCRIPTION_MAX_LENGTH) {
+      return `Description cannot exceed ${CERTIFICATE_DESCRIPTION_MAX_LENGTH} characters`;
     }
     return "";
   };
@@ -182,24 +189,56 @@ export default function CertificationDetailsForm({
     return "";
   };
 
-  const getTodayDate = (): string => {
+  const getCurrentMonth = (): string => {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+    return `${year}-${month}`;
+  };
+
+  const getMaxCertificateMonth = (): string => {
+    return getCurrentMonth();
+  };
+
+  const normalizeMonthToDate = (val: string): string => {
+    if (!val) return "";
+    if (/^\d{4}-\d{2}$/.test(val)) return `${val}-01`;
+    return val;
+  };
+
+  const blockManualDateTyping = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const allowedKeys = [
+      "Tab",
+      "Shift",
+      "Escape",
+      "Enter",
+      "ArrowUp",
+      "ArrowDown",
+      "ArrowLeft",
+      "ArrowRight",
+      "Home",
+      "End",
+      "PageUp",
+      "PageDown",
+    ];
+    if (!allowedKeys.includes(e.key)) {
+      e.preventDefault();
+    }
   };
 
   const validateDateValue = (value: string) => {
     if (!value || value === "") return "";
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return "Please select a valid date";
-    const [y, m, d] = value.split("-");
+    if (!/^\d{4}-\d{2}$/.test(value)) return "Please select a valid month (YYYY-MM)";
+    const [y, m] = value.split("-");
     if (y.length !== 4) return "Year must be 4 digits";
+    const yearNum = parseInt(y, 10);
     const monthNum = parseInt(m, 10);
-    const dayNum = parseInt(d, 10);
     if (isNaN(monthNum) || monthNum < 1 || monthNum > 12) return "Invalid month";
-    if (isNaN(dayNum) || dayNum < 1 || dayNum > 31) return "Invalid day";
-    if (value > getTodayDate()) return "Cannot select a future date";
+    const currentYear = new Date().getFullYear();
+    if (isNaN(yearNum) || yearNum < MIN_CERTIFICATE_YEAR || yearNum > currentYear) {
+      return `Year must be between ${MIN_CERTIFICATE_YEAR} and ${currentYear}`;
+    }
+    if (value > getMaxCertificateMonth()) return "Cannot select a future month";
     return "";
   };
 
@@ -215,15 +254,15 @@ export default function CertificationDetailsForm({
     if (field === "certificateTitle" && typeof value === "string") {
       const error = validateCertificateTitle(value);
       setErrors((prev) => ({ ...prev, [`cert-${index}-certificateTitle`]: error }));
-    } else if (field === "domain" && typeof value === "string") {
-      const error = validateDomain(value);
-      setErrors((prev) => ({ ...prev, [`cert-${index}-domain`]: error }));
     } else if (field === "date" && typeof value === "string") {
       const error = validateDateValue(value);
       setErrors((prev) => ({ ...prev, [`cert-${index}-date`]: error }));
     } else if (field === "certificateProvidedBy" && typeof value === "string") {
       const error = validateProvider(value);
       setErrors((prev) => ({ ...prev, [`cert-${index}-certificateProvidedBy`]: error }));
+    } else if (field === "description" && typeof value === "string") {
+      const error = validateDescription(value);
+      setErrors((prev) => ({ ...prev, [`cert-${index}-description`]: error }));
     }
   };
 
@@ -241,9 +280,8 @@ export default function CertificationDetailsForm({
       ...updated[index],
       certificateType: initial?.certificateType || "",
       certificateTitle: initial?.certificateTitle || "",
-      domain: initial?.domain || "",
       certificateProvidedBy: initial?.certificateProvidedBy || "",
-      date: initial?.date || "",
+      date: initial?.date ? initial.date.substring(0, 7) : "",
       description: initial?.description || "",
       uploadedFile: null,
       uploadedFileName:
@@ -279,7 +317,6 @@ export default function CertificationDetailsForm({
       id: newId,
       certificateType: "",
       certificateTitle: "",
-      domain: "",
       certificateProvidedBy: "",
       date: "",
       description: "",
@@ -423,26 +460,26 @@ export default function CertificationDetailsForm({
     const certId = cert.id;
     const changes = certChanges[certId];
 
-    const domainError = validateDomain(cert.domain || "");
     const providerError = validateProvider(cert.certificateProvidedBy || "");
     const dateError = validateDateValue(cert.date || "");
+    const descriptionError = validateDescription(cert.description || "");
 
-    if (domainError) {
-      setErrors((prev) => ({ ...prev, [`cert-${index}-domain`]: domainError }));
-    }
     if (providerError) {
       setErrors((prev) => ({ ...prev, [`cert-${index}-certificateProvidedBy`]: providerError }));
     }
     if (dateError) {
       setErrors((prev) => ({ ...prev, [`cert-${index}-date`]: dateError }));
     }
+    if (descriptionError) {
+      setErrors((prev) => ({ ...prev, [`cert-${index}-description`]: descriptionError }));
+    }
 
     const updatedLocalErrors = [
       errors[`cert-${index}-certificateTitle`],
       errors[`cert-${index}-file`],
-      domainError,
       providerError,
       dateError,
+      descriptionError,
     ].filter(Boolean);
 
     if (updatedLocalErrors.length > 0) return;
@@ -464,9 +501,8 @@ export default function CertificationDetailsForm({
     let formDataToSend = new FormData();
     formDataToSend.append("certificate_type", cert.certificateType || "");
     formDataToSend.append("certificate_title", cert.certificateTitle || "");
-    formDataToSend.append("domain", cert.domain || "");
     formDataToSend.append("certificate_provided_by", cert.certificateProvidedBy || "");
-    formDataToSend.append("date", cert.date || "");
+    formDataToSend.append("date", normalizeMonthToDate(cert.date || ""));
     formDataToSend.append("description", cert.description || "");
 
     if (cert.uploadedFile && changes.includes("fileUpload")) {
@@ -681,32 +717,8 @@ export default function CertificationDetailsForm({
                 </div>
               </div>
 
-              {/* Domain, Certificate Provided By, Date */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                {/* Domain */}
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                    Domain
-                  </label>
-                  <input
-                    type="text"
-                    value={certificate.domain}
-                    onChange={(e) =>
-                      handleCertificateChange(index, "domain", e.target.value)
-                    }
-                    placeholder="Enter Domain"
-                    className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${
-                      errors[`cert-${index}-domain`]
-                        ? "border-red-500 focus:ring-red-400"
-                        : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
-                    }`}
-                  />
-                  {errors[`cert-${index}-domain`] && (
-                    <p className="mt-1 text-xs text-red-500">
-                      {errors[`cert-${index}-domain`]}
-                    </p>
-                  )}
-                </div>
+              {/* Certificate Provided By, Date */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
 
                 {/* Certificate Provided By */}
                 <div>
@@ -719,6 +731,7 @@ export default function CertificationDetailsForm({
                     onChange={(e) =>
                       handleCertificateChange(index, "certificateProvidedBy", e.target.value)
                     }
+                    maxLength={CERTIFICATE_PROVIDER_MAX_LENGTH}
                     placeholder="Certificate Provided By"
                     className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${
                       errors[`cert-${index}-certificateProvidedBy`]
@@ -740,14 +753,17 @@ export default function CertificationDetailsForm({
                   </label>
                   <div className="relative">
                     <input
-                      type="date"
+                      type="month"
                       value={certificate.date}
                       onChange={(e) =>
                         handleCertificateChange(index, "date", e.target.value)
                       }
                       placeholder="Select Month and Year"
+                      onKeyDown={blockManualDateTyping}
+                      onPaste={(e) => e.preventDefault()}
                       className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm pr-8"
-                      max={getTodayDate()}
+                      min={`${MIN_CERTIFICATE_YEAR}-01`}
+                      max={getMaxCertificateMonth()}
                     />
                   </div>
                   {errors[`cert-${index}-date`] && (
@@ -760,9 +776,14 @@ export default function CertificationDetailsForm({
 
               {/* Description */}
               <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                  Description
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                    Description
+                  </label>
+                  <span className="text-[10px] sm:text-xs text-gray-400">
+                    {getPlainTextFromHtml(certificate.description).length}/{CERTIFICATE_DESCRIPTION_MAX_LENGTH}
+                  </span>
+                </div>
                 <RichTextEditor
                   value={certificate.description}
                   onChange={(value) =>
@@ -771,10 +792,15 @@ export default function CertificationDetailsForm({
                   placeholder="Provide Description..."
                   rows={5}
                 />
+                {errors[`cert-${index}-description`] && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors[`cert-${index}-description`]}
+                  </p>
+                )}
               </div>
 
               {/* Upload Certificate */}
-              <div>
+              <div className="hidden">
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
                   Upload Certificate
                 </label>

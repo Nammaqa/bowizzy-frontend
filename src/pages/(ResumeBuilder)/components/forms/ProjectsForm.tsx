@@ -6,9 +6,11 @@ import {
   FormTextarea,
   FormSection,
   AddButton,
+  ReorderableListEditor,
 } from "@/pages/(ResumeBuilder)/components/ui";
+import api from "@/api";
 import RichTextEditor from "@/pages/(ResumeBuilder)/components/ui/RichTextEditor";
-import { Save, RotateCcw, Sparkles, Loader2, X } from "lucide-react";
+import { Save, Sparkles, Loader2, X } from "lucide-react";
 import {
   saveProjectsDetails,
   updateProjectDetails,
@@ -21,6 +23,12 @@ interface ProjectsFormProps {
   onChange: (data: Project[]) => void;
   userId: string;
   token: string;
+  disableAiEnhance?: boolean;
+  enhanceStatus?: { isBonus_enhance_used: boolean; enhance_usage_left: number; purchased_credits?: number | string } | null;
+  onRedeemEnhance?: () => void;
+  onRedeemEnhanceWithPurchasedCredits?: () => void;
+  onEnhanceStatusChange?: (status: { isBonus_enhance_used: boolean; enhance_usage_left: number; purchased_credits?: number | string }) => void;
+  redeemingEnhance?: boolean;
 }
 
 const projectTypes = [
@@ -37,6 +45,12 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
   onChange,
   userId,
   token,
+  disableAiEnhance = false,
+  enhanceStatus,
+  onRedeemEnhance,
+  onRedeemEnhanceWithPurchasedCredits,
+  onEnhanceStatusChange,
+  redeemingEnhance = false,
 }) => {
   // Collapse state for each project
   const [collapsedStates, setCollapsedStates] = useState<{
@@ -54,6 +68,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
   const [hiddenSaveIds, setHiddenSaveIds] = useState<Set<string>>(new Set());
 
   const [enhancingProjectId, setEnhancingProjectId] = useState<string | null>(null);
+  const cannotEnhance = enhanceStatus ? enhanceStatus.enhance_usage_left <= 0 : false;
   const [enhanceRolesError, setEnhanceRolesError] = useState<Record<string, string>>({});
   const [enhancedRolesVersions, setEnhancedRolesVersions] = useState<Record<string, { precise: string; technical: string }>>({});
 
@@ -108,6 +123,13 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
   };
 
   // Validation functions
+  const getCurrentMonth = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  };
+
+  const isValidMonthValue = (value: string) => /^\d{4}(-\d{2})?$/.test(value);
+
   const validateProjectTitle = (value: string) => {
     if (value && !/^[a-zA-Z0-9\s.,-]+$/.test(value)) {
       return "Invalid characters in project title";
@@ -124,12 +146,39 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
     return "";
   };
 
-  const validateDateRange = (startDate: string, endDate: string) => {
-    if (startDate && endDate) {
-      if (endDate < startDate) {
-        return "End date cannot be before start date";
-      }
-    }
+  const validateStartDate = (value: string) => {
+    if (!value) return "";
+    if (!isValidMonthValue(value)) return "Enter a valid year or month";
+    const yearNum = parseInt(value.split("-")[0], 10);
+    if (yearNum < 1960) return "Start date cannot be before 1960";
+    if (yearNum > new Date().getFullYear()) return "Start date cannot be in the future";
+    return "";
+  };
+
+  const validateEndDate = (value: string, startDate: string) => {
+    if (!value) return "";
+    if (!isValidMonthValue(value)) return "Enter a valid year or month";
+    const yearNum = parseInt(value.split("-")[0], 10);
+    if (yearNum < 1960) return "End date cannot be before 1960";
+    if (yearNum > new Date().getFullYear()) return "End date cannot be in the future";
+    if (startDate && value < startDate) return "End date cannot be before start date";
+    return "";
+  };
+
+  const getPlainText = (html: string) => {
+    if (!html) return "";
+    return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
+  };
+
+  const validateDescription = (value: string) => {
+    const length = getPlainText(value).length;
+    if (length > 500) return "Description cannot exceed 500 characters";
+    return "";
+  };
+
+  const validateRolesResponsibilities = (value: string) => {
+    const length = getPlainText(value).length;
+    if (length > 500) return "Roles & Responsibilities cannot exceed 500 characters";
     return "";
   };
 
@@ -147,7 +196,13 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
     value: string | boolean
   ) => {
     const updatedProjects = data.map((proj) =>
-      proj.id === id ? { ...proj, [field]: value } : proj
+      proj.id === id
+        ? {
+          ...proj,
+          [field]: value,
+          ...(field === "currentlyWorking" && value === true ? { endDate: "" } : {}),
+        }
+        : proj
     );
 
     onChange(updatedProjects);
@@ -159,30 +214,34 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
     if (field === "projectTitle" && typeof value === "string") {
       const error = validateProjectTitle(value);
       setErrors((prev) => ({ ...prev, [`project-${id}-projectTitle`]: error }));
-    } else if (
-      field === "startDate" &&
-      typeof value === "string" &&
-      updatedProj
-    ) {
-      const error = validateDateRange(value, updatedProj.endDate);
+    } else if (field === "startDate" && typeof value === "string" && updatedProj) {
+      const error = validateStartDate(value);
+      const endDateError = updatedProj.currentlyWorking
+        ? ""
+        : validateEndDate(updatedProj.endDate, value);
+      setErrors((prev) => ({
+        ...prev,
+        [`project-${id}-startDate`]: error,
+        [`project-${id}-endDate`]: endDateError,
+      }));
+    } else if (field === "endDate" && typeof value === "string" && updatedProj) {
+      const error = validateEndDate(value, updatedProj.startDate);
       setErrors((prev) => ({ ...prev, [`project-${id}-endDate`]: error }));
-    } else if (
-      field === "endDate" &&
-      typeof value === "string" &&
-      updatedProj
-    ) {
-      const error = validateDateRange(updatedProj.startDate, value);
-      setErrors((prev) => ({ ...prev, [`project-${id}-endDate`]: error }));
+    } else if (field === "currentlyWorking") {
+      setErrors((prev) => {
+        const updated = { ...prev };
+        delete updated[`project-${id}-endDate`];
+        return updated;
+      });
+    } else if (field === "description" && typeof value === "string") {
+      const error = validateDescription(value);
+      setErrors((prev) => ({ ...prev, [`project-${id}-description`]: error }));
+    } else if (field === "rolesResponsibilities" && typeof value === "string") {
+      const error = validateRolesResponsibilities(value);
+      setErrors((prev) => ({ ...prev, [`project-${id}-rolesResponsibilities`]: error }));
     }
 
-    // Clear end date error if currently working is checked
-    if (field === "currentlyWorking" && value === true) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[`project-${id}-endDate`];
-        return newErrors;
-      });
-    }
+
     // If projectType is changed, ensure it's not purely numeric
     if (field === "projectType" && typeof value === "string") {
       if (value && !/[a-zA-Z]/.test(value)) {
@@ -202,11 +261,33 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
     const isNew = !project.project_id;
 
     // Check local validation errors
+    const projectTitleError = validateProjectTitle(project.projectTitle || "");
+    const startDateError = validateStartDate(project.startDate || "");
+    const endDateError = project.currentlyWorking
+      ? ""
+      : validateEndDate(project.endDate || "", project.startDate || "");
+    const descriptionError = validateDescription(project.description || "");
+    const rolesError = validateRolesResponsibilities(project.rolesResponsibilities || "");
+
     if (
+      projectTitleError ||
+      startDateError ||
+      endDateError ||
+      descriptionError ||
+      rolesError ||
       errors[`project-${project.id}-projectTitle`] ||
       errors[`project-${project.id}-endDate`]
-    )
+    ) {
+      setErrors((prev) => ({
+        ...prev,
+        [`project-${project.id}-projectTitle`]: projectTitleError,
+        [`project-${project.id}-startDate`]: startDateError,
+        [`project-${project.id}-endDate`]: endDateError,
+        [`project-${project.id}-description`]: descriptionError,
+        [`project-${project.id}-rolesResponsibilities`]: rolesError,
+      }));
       return;
+    }
 
     // Check if there are actually changes to save
     if (!getProjectChangedStatus(project) && !isNew) {
@@ -233,7 +314,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
           project_title: project.projectTitle || "",
           project_type: project.projectType || "",
           start_date: normalizeMonthToDate(project.startDate),
-          end_date: normalizeMonthToDate(project.endDate),
+          end_date: project.currentlyWorking ? null : normalizeMonthToDate(project.endDate),
           currently_working: project.currentlyWorking,
           description: project.description || "",
           roles_responsibilities: project.rolesResponsibilities || "",
@@ -307,7 +388,10 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
           minimalPayload.start_date = normalizeMonthToDate(project.startDate);
         }
         if (project.endDate !== (initial?.endDate || "")) {
-          minimalPayload.end_date = normalizeMonthToDate(project.endDate);
+          minimalPayload.end_date = project.currentlyWorking ? null : normalizeMonthToDate(project.endDate);
+        }
+        if (project.currentlyWorking !== (initial?.currentlyWorking || false)) {
+          minimalPayload.currently_working = project.currentlyWorking;
         }
         if (project.description !== (initial?.description || "")) {
           minimalPayload.description = project.description;
@@ -318,16 +402,8 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
         ) {
           minimalPayload.roles_responsibilities = project.rolesResponsibilities;
         }
-        if (project.currentlyWorking !== (initial?.currentlyWorking || false)) {
-          minimalPayload.currently_working = project.currentlyWorking;
-        }
 
-        // Handle date logic when currentlyWorking changes
-        if (minimalPayload.currently_working === true) {
-          minimalPayload.end_date = null;
-        } else if (minimalPayload.currently_working === false) {
-          minimalPayload.end_date = normalizeMonthToDate(project.endDate);
-        }
+        minimalPayload.end_date = project.currentlyWorking ? null : normalizeMonthToDate(project.endDate);
 
         if (Object.keys(minimalPayload).length > 0) {
           await updateProjectDetails(
@@ -488,27 +564,37 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
     });
   };
 
-  const getPlainText = (html: string) => {
-    if (!html) return "";
-    return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
-  };
-
   const handleEnhanceRoles = async (project: Project) => {
+    if (disableAiEnhance) return;
     const hasInput = getPlainText(project.rolesResponsibilities ?? "").length > 0;
     if (!hasInput) return;
     setEnhancingProjectId(project.id);
     setEnhanceRolesError((prev) => ({ ...prev, [project.id]: "" }));
     setEnhancedRolesVersions((prev) => { const u = { ...prev }; delete u[project.id]; return u; });
     try {
+      // 2. Call the AI service
       const result = await enhanceRolesResponsibilities(
         project.rolesResponsibilities,
         project.projectTitle,
         project.projectType,
         project.description
       );
+
+      // 3. Mark as used
+      await api.post(`/users/${userId}/mark-enhance-used`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const nextUsageLeft = Math.max((enhanceStatus?.enhance_usage_left ?? 0) - 1, 0);
+      onEnhanceStatusChange?.({
+        isBonus_enhance_used: enhanceStatus?.isBonus_enhance_used ?? false,
+        enhance_usage_left: nextUsageLeft,
+        purchased_credits: enhanceStatus?.purchased_credits ?? 0,
+      });
+
       setEnhancedRolesVersions((prev) => ({ ...prev, [project.id]: result }));
     } catch (err: any) {
-      setEnhanceRolesError((prev) => ({ ...prev, [project.id]: err.message || "Failed to enhance. Please try again." }));
+      setEnhanceRolesError((prev) => ({ ...prev, [project.id]: err.response?.data?.message || err.message || "Failed to enhance. Please try again." }));
     } finally {
       setEnhancingProjectId(null);
     }
@@ -517,12 +603,16 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
   const handleApplyRolesVersion = (projectId: string, type: "precise" | "technical") => {
     const versions = enhancedRolesVersions[projectId];
     if (!versions) return;
-    // Convert bullet plain text to HTML list items
-    const html = versions[type]
+    const listItems = versions[type]
       .split("\n")
       .filter((line) => line.trim())
-      .map((line) => `<div>${line.trim()}</div>`)
+      .map((line) => {
+        // Remove any leading bullets, dashes, asterisks, numbering or repeated bullet characters
+        const cleaned = line.replace(/^[\s\u2022\u2023\u25E6\u2023\u25AA\u25CF\-\*0-9\.\)]+/, "").trim();
+        return `<li>${cleaned}</li>`;
+      })
       .join("");
+    const html = `<ul style="list-style-type: disc; padding-left: 1.25rem; margin-top: 0.5rem; margin-bottom: 0.5rem;">${listItems}</ul>`;
     updateProject(projectId, "rolesResponsibilities", html);
     setEnhancedRolesVersions((prev) => { const u = { ...prev }; delete u[projectId]; return u; });
     setEnhanceRolesError((prev) => ({ ...prev, [projectId]: "" }));
@@ -565,8 +655,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
               value={project.projectTitle}
               onChange={(v) => updateProject(project.id, "projectTitle", v)}
               error={errors[`project-${project.id}-projectTitle`]}
-              max="50"
-              min="5"
+              maxLength={50}
             />
 
             <div className="mt-4">
@@ -586,39 +675,36 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
                 value={project.startDate}
                 onChange={(v) => updateProject(project.id, "startDate", v)}
                 type="month"
+                min="1960-01"
+                max={getCurrentMonth()}
+                onKeyDown={(e) => e.preventDefault()}
+                error={errors[`project-${project.id}-startDate`]}
               />
               <FormInput
                 label="End Date"
                 placeholder="Select End Date"
-                value={project.endDate}
+                value={project.currentlyWorking ? "" : project.endDate}
                 onChange={(v) => updateProject(project.id, "endDate", v)}
                 type="month"
+                min="1960-01"
+                max={getCurrentMonth()}
+                onKeyDown={(e) => e.preventDefault()}
                 disabled={project.currentlyWorking}
                 error={errors[`project-${project.id}-endDate`]}
               />
             </div>
 
-            <div className="flex items-center gap-2 mt-4">
+            <label className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-gray-700">
               <input
                 type="checkbox"
-                id={`currentlyWorking-${project.id}`}
                 checked={project.currentlyWorking}
                 onChange={(e) =>
-                  updateProject(
-                    project.id,
-                    "currentlyWorking",
-                    e.target.checked
-                  )
+                  updateProject(project.id, "currentlyWorking", e.target.checked)
                 }
-                className="w-4 h-4 text-orange-400 border-gray-300 rounded focus:ring-orange-400"
+                className="h-4 w-4 rounded border-gray-300 text-orange-500 focus:ring-orange-400"
               />
-              <label
-                htmlFor={`currentlyWorking-${project.id}`}
-                className="text-sm text-gray-600"
-              >
-                Currently Working
-              </label>
-            </div>
+              Currently pursuing
+            </label>
 
             <div className="mt-4">
               <div className="flex flex-col gap-1">
@@ -629,6 +715,11 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
                   placeholder="Provide Description of your project.."
                   rows={4}
                 />
+                {errors[`project-${project.id}-description`] && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors[`project-${project.id}-description`]}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -636,35 +727,78 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
                   <label className="font-medium">Roles & Responsibilities</label>
-                  <button
-                    type="button"
-                    onClick={() => handleEnhanceRoles(project)}
-                    disabled={!getPlainText(project.rolesResponsibilities ?? "").length || enhancingProjectId === project.id}
-                    title={!getPlainText(project.rolesResponsibilities ?? "").length ? "Add some text to enable AI enhancement" : "Enhance with AI"}
-                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
-                      ${getPlainText(project.rolesResponsibilities ?? "").length && enhancingProjectId !== project.id
-                        ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-sm hover:from-violet-600 hover:to-purple-700 cursor-pointer"
-                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                      }`}
-                  >
-                    {enhancingProjectId === project.id
-                      ? <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />
-                      : <Sparkles className="w-4 h-4" strokeWidth={2} />
-                    }
-                    {enhancingProjectId === project.id ? "Enhancing..." : "Enhance with AI"}
-                  </button>
+                  <div className="flex items-center gap-4">
+                    <button
+                      type="button"
+                      onClick={() => handleEnhanceRoles(project)}
+                      disabled={disableAiEnhance || !getPlainText(project.rolesResponsibilities ?? "").length || enhancingProjectId === project.id || cannotEnhance}
+                      title={
+                        disableAiEnhance
+                          ? "AI enhancement is disabled for this template"
+                          : cannotEnhance
+                            ? "You have already used the AI enhancement feature"
+                            : !getPlainText(project.rolesResponsibilities ?? "").length
+                              ? "Add some text to enable AI enhancement"
+                              : "Enhance with AI"
+                      }
+                      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
+                        ${!disableAiEnhance && getPlainText(project.rolesResponsibilities ?? "").length && enhancingProjectId !== project.id && !cannotEnhance
+                          ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-sm hover:from-violet-600 hover:to-purple-700 cursor-pointer"
+                          : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        }`}
+                    >
+                      {enhancingProjectId === project.id
+                        ? <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />
+                        : <Sparkles className="w-4 h-4" strokeWidth={2} />
+                      }
+                      {enhancingProjectId === project.id ? "Enhancing..." : "Enhance with AI"}
+                    </button>
+                    {enhanceStatus && !disableAiEnhance && (
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm text-gray-600 font-medium">
+                          <span className="text-orange-600 font-bold">{enhanceStatus.enhance_usage_left}</span> left
+                        </span>
+                        {enhanceStatus.enhance_usage_left === 0 && !enhanceStatus.isBonus_enhance_used && (
+                          <button
+                            onClick={onRedeemEnhance}
+                            disabled={redeemingEnhance}
+                            className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 py-1.5 rounded-full transition disabled:opacity-50"
+                          >
+                            {redeemingEnhance ? 'Redeeming...' : 'Redeem with Bonus'}
+                          </button>
+                        )}
+                        {enhanceStatus.enhance_usage_left === 0 && enhanceStatus.isBonus_enhance_used && (
+                          <button
+                            onClick={onRedeemEnhanceWithPurchasedCredits}
+                            disabled={redeemingEnhance}
+                            className="bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold px-3 py-1.5 rounded-full transition disabled:opacity-50"
+                          >
+                            {redeemingEnhance ? 'Redeeming...' : 'Redeem using purchased credits'}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {disableAiEnhance && (
+                    <span className="text-xs font-medium text-gray-500">
+                      Enahance with AI not supported in this template
+                    </span>
+                  )}
                 </div>
-                <RichTextEditor
+                <ReorderableListEditor
                   value={project.rolesResponsibilities}
                   onChange={(v) => {
                     updateProject(project.id, "rolesResponsibilities", v);
-                    if (enhancedRolesVersions[project.id]) {
-                      setEnhancedRolesVersions((prev) => { const u = { ...prev }; delete u[project.id]; return u; });
-                    }
-                  }}
+                    setEnhancedRolesVersions((prev) => { const u = { ...prev }; delete u[project.id]; return u; });
+                  }
+                  }
                   placeholder="Provide your roles & responsibilities..."
-                  rows={4}
                 />
+                {errors[`project-${project.id}-rolesResponsibilities`] && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors[`project-${project.id}-rolesResponsibilities`]}
+                  </p>
+                )}
 
                 {/* Error */}
                 {enhanceRolesError[project.id] && (
@@ -760,17 +894,6 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
                   Save
                 </button>
               )}
-              <button
-                type="button"
-                onClick={() => resetProject(project.id)}
-                className="w-6 h-6 flex items-center justify-center rounded-full border-2 border-gray-600 hover:bg-gray-100 transition-colors"
-                title="Reset to saved values"
-              >
-                <RotateCcw
-                  className="w-3 h-3 text-gray-600 cursor-pointer"
-                  strokeWidth={2.5}
-                />
-              </button>
             </div>
           </FormSection>
         );

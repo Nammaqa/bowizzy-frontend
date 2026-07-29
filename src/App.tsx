@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   createBrowserRouter,
   RouterProvider,
@@ -10,6 +10,7 @@ import Home from "./pages/Home";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
 import WelcomeBonusManager from "./components/WelcomeBonusManager";
 import {
   Sidebar,
@@ -26,6 +27,7 @@ import {
 import Bowizzy from "@/assets/bowizzy.png";
 import {
   Box,
+  Coins,
   Crown,
   FileArchive,
   LayoutDashboard,
@@ -36,6 +38,7 @@ import {
   User,
   Video,
   BrainCircuit,
+  ChevronDown,
   Globe,
   Settings as SettingsIcon,
 } from "lucide-react";
@@ -63,7 +66,7 @@ import InterviewComplete from "./pages/(InterviewPrep)/VideoPractise/Components/
 import InterviewReview from "./pages/(InterviewPrep)/VideoPractise/Components/InterviewReview";
 import TemplateSelection from "./pages/(ResumeBuilder)/TemplateSelection";
 import ResumeEditor from "./pages/(ResumeBuilder)/ResumeEditor";
-import Premium from "./pages/Premium";
+import Credits from "./pages/Credits";
 import AiResumeLanding from "./pages/AiResumeLanding";
 import AIBuilder from "./pages/(AIResumeBuilder)/AiBuilder";
 import Terms from "./pages/terms";
@@ -73,6 +76,13 @@ import PortfolioList from "./pages/(Portfolio)/PortfolioList";
 import PortfolioLanding from "./pages/PortfolioLanding";
 import PortfolioEditor from "./pages/(Portfolio)/PortfolioEditor";
 import PublicPortfolioPreview from "./pages/(Portfolio)/PublicPortfolioPreview";
+import MockInterviewLanding from "./pages/(Interviews)/MockInterview/MockInterviewLanding";
+import TakeMockInterviewPage from "./pages/(Interviews)/MockInterview/TakeMockInterviewPage";
+import MockInterviewBookingsPage from "./pages/(Interviews)/MockInterview/MockInterviewBookingsPage";
+import ApplyInterviewerPage from "./pages/(Interviews)/MockInterview/ApplyInterviewerPage";
+import InterviewerDashboardPage from "./pages/(Interviews)/MockInterview/InterviewerDashboardPage";
+import CandidateReviewsPage from "./pages/(Interviews)/MockInterview/CandidateReviewsPage";
+import InterviewerReviewsPage from "./pages/(Interviews)/MockInterview/InterviewerReviewsPage";
 
 
 const isAuthenticated = () => {
@@ -86,6 +96,66 @@ const isAuthenticated = () => {
   }
 };
 
+/**
+ * Shared logout function — floods the history stack with /login entries so
+ * ALL old session pages are buried, then does a hard reload at /login.
+ * This is the web equivalent of navigation.reset({ index:0, routes:[{name:'Login'}] }).
+ */
+function clearHistoryAndLogout() {
+  try {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+  } catch { /* ignore */ }
+
+  // Replace current entry with /login, then push enough /login entries
+  // to completely bury every old history entry the user may have visited.
+  const depth = window.history.length + 10;
+  window.history.replaceState(null, "", "/login");
+  for (let i = 0; i < depth; i++) {
+    window.history.pushState(null, "", "/login");
+  }
+
+  // Hard reload — React + React Router restart completely fresh at /login.
+  window.location.reload();
+}
+
+/**
+ * Global guard: intercepts any back/forward press and, if the user is no
+ * longer authenticated, does a hard redirect to /login instead of letting
+ * React Router render a stale protected page.
+ * Also handles bfcache restoration (event.persisted) so the frozen DOM is
+ * never shown to an unauthenticated user.
+ */
+function AuthPopstateGuard() {
+  useEffect(() => {
+    // Sentinel push so the very first back-press is also interceptable.
+    window.history.pushState(null, "", window.location.href);
+
+    const handlePopState = () => {
+      if (!isAuthenticated()) {
+        window.location.replace("/login");
+      }
+    };
+
+    // pageshow fires when bfcache restores a frozen page — JS never ran on
+    // restore, so this is the only reliable hook for that case.
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted && !isAuthenticated()) {
+        window.location.replace("/login");
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    window.addEventListener("pageshow", handlePageShow);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, []);
+
+  return null;
+}
+
 // Only show Profile & My resumes for now. Remaining items are hidden as requested. (okna)
 const careerMap = [
   {
@@ -97,12 +167,6 @@ const careerMap = [
     href: "/ResumeBuilder",
     icon: <FileArchive color="#3B3B3B" size={16} />,
     label: "My resumes",
-  },
-  {
-    href: "/interview-prep",
-    icon: <Video color="#3B3B3B" size={16} />,
-    label: "Interview Prep",
-    comingSoon: true,
   },
   {
     href: "/ai-resume-builder",
@@ -119,6 +183,13 @@ const careerMap = [
   //   icon: <Linkedin color="#3B3B3B" size={16} />,
   //   label: "LinkedIn optimization",
   // },
+];
+
+const interviews = [
+  {
+    href: "/interviews/mock-interview",
+    label: "Mock interview",
+  },
 ];
 
 // All Bowizzy items hidden for now as requested.
@@ -139,9 +210,23 @@ const bowizzy = [
   //   label: "Feedback",
   // },
 ];
-
 function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isInterviewsOpen, setIsInterviewsOpen] = useState(
+    location.pathname.startsWith("/interviews") ||
+    location.pathname.startsWith("/interview-prep")
+  );
+
+  // Keep the Interviews submenu open automatically when navigating into it
+  useEffect(() => {
+    if (
+      location.pathname.startsWith("/interviews") ||
+      location.pathname.startsWith("/interview-prep")
+    ) {
+      setIsInterviewsOpen(true);
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem("user"));
@@ -152,16 +237,17 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
       getProfileProgress(userId, token)
         .catch((error) => {
           if (error.response?.status === 401) {
-            // Clear user data and logout
-            localStorage.removeItem("user");
-            navigate("/login");
+            clearHistoryAndLogout();
           }
         });
     }
-  }, [navigate]);
+  }, []);
 
-  const location = useLocation();
   const isPortfolioEditor = location.pathname.includes("/portfolio/editor/");
+
+  // exact match for leaf routes, prefix match for section roots like /interviews
+  const isActivePath = (href: string) =>
+    location.pathname === href || location.pathname.startsWith(href + "/");
 
   return (
     <SidebarProvider>
@@ -178,7 +264,11 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem key={"Dashboard"}>
-                  <SidebarMenuButton asChild className="p-5 flex items-center">
+                  <SidebarMenuButton
+                    asChild
+                    className="p-5 flex items-center"
+                    isActive={isActivePath("/dashboard")}
+                  >
                     <a href={"/dashboard"}>
                       <LayoutDashboard color="#3B3B3B" size={16} />
                       <span className="ml-4" style={{ fontSize: "14px" }}>
@@ -199,37 +289,7 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
                   <SidebarMenuButton
                     asChild
                     className="p-5 flex items-center"
-                    key={item.label + idx}
-                  >
-                    <a
-                      href={item.href}
-                    // onClick={(e) => {
-                    //   if ((item as any).comingSoon) {
-                    //     e.preventDefault();
-                    //     alert("Coming Soon!");
-                    //   }
-                    // }}
-                    >
-                      {item.icon}
-                      <span className="ml-4" style={{ fontSize: "14px" }}>
-                        {item.label}
-                      </span>
-                    </a>
-                  </SidebarMenuButton>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-
-          {/*
-          <SidebarGroup>
-            <SidebarGroupLabel className="p-5">Bowizzy</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {bowizzy.map((item, idx) => (
-                  <SidebarMenuButton
-                    asChild
-                    className="p-5 flex items-center"
+                    isActive={isActivePath(item.href)}
                     key={item.label + idx}
                   >
                     <a href={item.href}>
@@ -240,10 +300,48 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
                     </a>
                   </SidebarMenuButton>
                 ))}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    className="p-5 flex items-center justify-between"
+                    isActive={
+                      location.pathname.startsWith("/interviews") ||
+                      location.pathname.startsWith("/interview-prep")
+                    }
+                    onClick={() => setIsInterviewsOpen((isOpen) => !isOpen)}
+                  >
+                    <span className="flex items-center">
+                      <Video color="#3B3B3B" size={16} />
+                      <span className="ml-4" style={{ fontSize: "14px" }}>
+                        Interviews
+                      </span>
+                    </span>
+                    <ChevronDown
+                      color="#3B3B3B"
+                      size={16}
+                      className={`transition-transform ${isInterviewsOpen ? "rotate-180" : ""}`}
+                    />
+                  </SidebarMenuButton>
+
+                  {isInterviewsOpen && (
+                    <div className="ml-9 mt-1 space-y-1 border-l border-[#E5E5E5] pl-3">
+                      {interviews.map((item) => (
+                        <SidebarMenuButton
+                          asChild
+                          key={item.label}
+                          className="h-9 px-3 text-[#3B3B3B]"
+                          isActive={isActivePath(item.href)}
+                        >
+                          <a href={item.href}>
+                            <span style={{ fontSize: "13px" }}>{item.label}</span>
+                          </a>
+                        </SidebarMenuButton>
+                      ))}
+                    </div>
+                  )}
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-          */}
 
           <SidebarFooter className="mt-auto mb-4">
             <SidebarMenu>
@@ -251,6 +349,21 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
                 <SidebarMenuButton
                   asChild
                   className="p-5 flex items-center"
+                  isActive={isActivePath("/credits")}
+                >
+                  <a href="/credits">
+                    <Coins color="#3B3B3B" size={16} />
+                    <span className="ml-4" style={{ fontSize: "14px" }}>
+                      Credits
+                    </span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  className="p-5 flex items-center"
+                  isActive={isActivePath("/settings")}
                 >
                   <a href="/settings">
                     <SettingsIcon color="#3B3B3B" size={16} />
@@ -265,14 +378,7 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
                   className="p-5 flex items-center border-2 border-[#FF0000]"
                   onClick={(e) => {
                     e.preventDefault();
-                    try {
-                      localStorage.removeItem("user");
-                      localStorage.removeItem("token");
-                    } catch {
-                      /* ignore */
-                    }
-                    window.location.href = "/login";
-                    window.location.reload();
+                    clearHistoryAndLogout();
                   }}
                 >
                   <LogOut color="#FF0000" size={16} />
@@ -293,10 +399,17 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
-
+  
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (!isAuthenticated()) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
+  }
+  return <>{children}</>;
+}
+
+function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
+  if (isAuthenticated()) {
+    return <Navigate to="/dashboard" replace />;
   }
   return <>{children}</>;
 }
@@ -314,11 +427,23 @@ function App() {
     },
     {
       path: "login",
-      Component: () => <Login />,
+      Component: () => (
+        <PublicOnlyRoute>
+          <Login />
+        </PublicOnlyRoute>
+      ),
     },
     {
       path: "signup",
       Component: () => <Register />,
+    },
+    {
+      path: "forgot-password",
+      Component: () => (
+        <PublicOnlyRoute>
+          <ForgotPassword />
+        </PublicOnlyRoute>
+      ),
     },
     {
       path: "dashboard",
@@ -376,6 +501,76 @@ function App() {
         <ProtectedRoute>
           <LayoutWrapper>
             <InterviewPrep />
+          </LayoutWrapper>
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "interviews/mock-interview",
+      Component: () => (
+        <ProtectedRoute>
+          <LayoutWrapper>
+            <MockInterviewLanding />
+          </LayoutWrapper>
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "interviews/mock-interview/take",
+      Component: () => (
+        <ProtectedRoute>
+          <LayoutWrapper>
+            <TakeMockInterviewPage />
+          </LayoutWrapper>
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "interviews/mock-interview/bookings",
+      Component: () => (
+        <ProtectedRoute>
+          <LayoutWrapper>
+            <MockInterviewBookingsPage />
+          </LayoutWrapper>
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "interviews/mock-interview/apply-interviewer",
+      Component: () => (
+        <ProtectedRoute>
+          <LayoutWrapper>
+            <ApplyInterviewerPage />
+          </LayoutWrapper>
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "interviews/mock-interview/dashboard",
+      Component: () => (
+        <ProtectedRoute>
+          <LayoutWrapper>
+            <InterviewerDashboardPage />
+          </LayoutWrapper>
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "interviews/mock-interview/candidate-reviews/:id",
+      Component: () => (
+        <ProtectedRoute>
+          <LayoutWrapper>
+            <CandidateReviewsPage />
+          </LayoutWrapper>
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "interviews/mock-interview/interviewer-reviews/:id",
+      Component: () => (
+        <ProtectedRoute>
+          <LayoutWrapper>
+            <InterviewerReviewsPage />
           </LayoutWrapper>
         </ProtectedRoute>
       ),
@@ -572,11 +767,11 @@ function App() {
       )
     },
     {
-      path: "premium",
+      path: "credits",
       Component: () => (
         <ProtectedRoute>
           <LayoutWrapper>
-            <Premium />
+            <Credits />
           </LayoutWrapper>
         </ProtectedRoute>
       )
@@ -649,7 +844,13 @@ function App() {
     },
   ]);
 
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      {/* Always-on guard: equivalent of navigation.reset() on logout */}
+      <AuthPopstateGuard />
+      <RouterProvider router={router} />
+    </>
+  );
 }
 
 export default App;

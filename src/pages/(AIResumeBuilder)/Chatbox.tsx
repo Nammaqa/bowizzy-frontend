@@ -3,12 +3,13 @@ declare global {
   interface Window { Razorpay?: any; }
 }
 import React, { useRef, useEffect, Suspense, useState, useMemo } from "react";
-import { Send, Loader2, Bot, User, Download, Lock, Tag, Sparkles, ChevronDown, ChevronUp, Info, X } from "lucide-react";
+import { Send, Loader2, Bot, User, Download, Lock, Tag, Sparkles, ChevronDown, ChevronUp, Info, X, Unlock } from "lucide-react";
 import { pdf } from '@react-pdf/renderer';
 import type { ChatSession } from "./types";
 import { aiTemplateRegistry } from './templates/aiTemplateRegistry';
 import { mapInfoJsonToResumeData } from './mapInfoJsonToResumeData';
 import DataChips, { type DataChip } from "./DataChips";
+import JdResumeFlow from "./JdResumeFlow";
 import api from "@/api";
 
 // ── AI Resume Payment constants ────────────────────────────────────────────────
@@ -23,6 +24,7 @@ interface UserProfileData {
   image: string;
   isWelcomeBonusRedeemed: boolean;
   credits: number;
+  purchased_credits?: number | string;
   coupon_code: string;
 }
 
@@ -34,17 +36,24 @@ interface PriceBreakdown {
   cgst: number;
   sgst: number;
   totalTax: number;
+  purchasedCreditsUsed: number;
   finalPrice: number;
 }
 
-function calculatePriceBreakdown(basePrice: number, creditsApplied: number): PriceBreakdown {
+function calculatePriceBreakdown(basePrice: number, creditsApplied: number, availablePurchasedCredits: number, usePurchasedCredits: boolean): PriceBreakdown {
   const creditDiscount = creditsApplied * CREDIT_VALUE;
   const priceAfterCredits = Math.max(0, basePrice - creditDiscount);
   const cgst = parseFloat((priceAfterCredits * CGST_RATE).toFixed(2));
   const sgst = parseFloat((priceAfterCredits * SGST_RATE).toFixed(2));
   const totalTax = cgst + sgst;
-  const finalPrice = parseFloat((priceAfterCredits + totalTax).toFixed(2));
-  return { basePrice, creditsApplied, creditDiscount, priceAfterCredits, cgst, sgst, totalTax, finalPrice };
+  const priceWithTax = parseFloat((priceAfterCredits + totalTax).toFixed(2));
+  
+  const purchasedCreditsToUse = (usePurchasedCredits && availablePurchasedCredits > 0)
+    ? Math.min(availablePurchasedCredits, priceWithTax)
+    : 0;
+
+  const finalPrice = Math.max(0, parseFloat((priceWithTax - purchasedCreditsToUse).toFixed(2)));
+  return { basePrice, creditsApplied, creditDiscount, priceAfterCredits, cgst, sgst, totalTax, purchasedCreditsUsed: purchasedCreditsToUse, finalPrice };
 }
 
 // ── AI Resume Payment Modal ────────────────────────────────────────────────────
@@ -53,13 +62,16 @@ interface AiPaymentModalProps {
   onClose: () => void;
   onPaymentSuccess: () => void;
   token: string;
+  sessionId?: string;
+  mode?: "jd" | "non-jd";
 }
 
-const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaymentSuccess, token }) => {
+const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaymentSuccess, token, sessionId, mode }) => {
   const [userProfile, setUserProfile] = useState<UserProfileData | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [creditsToApply, setCreditsToApply] = useState(0);
   const [useCredits, setUseCredits] = useState(false);
+  const [usePurchasedCredits, setUsePurchasedCredits] = useState(false);
   const [payLoading, setPayLoading] = useState(false);
   const [showBreakdown, setShowBreakdown] = useState(true);
 
@@ -82,7 +94,12 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
 
   const availableCredits = userProfile?.credits ?? 0;
   const maxApplicable = Math.min(availableCredits, MAX_CREDITS_APPLICABLE);
-  const breakdown = calculatePriceBreakdown(AI_RESUME_BASE_PRICE, creditsToApply);
+
+  const purchasedCreditsRaw = userProfile?.purchased_credits ?? 0;
+  const availablePurchasedCredits = Number.isFinite(Number(purchasedCreditsRaw)) && Number(purchasedCreditsRaw) > 0 ? Math.floor(Number(purchasedCreditsRaw)) : 0;
+  
+  const breakdown = calculatePriceBreakdown(AI_RESUME_BASE_PRICE, creditsToApply, availablePurchasedCredits, usePurchasedCredits);
+  const purchasedCreditsToUse = breakdown.purchasedCreditsUsed;
 
   const handlePay = async () => {
     setPayLoading(true);
@@ -106,16 +123,26 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
         {
           amount: breakdown.finalPrice,
           credits_applied: finalCreditsToApply,
+          purchased_credits_used: purchasedCreditsToUse,
           base_price: breakdown.basePrice,
           credit_discount: breakdown.creditDiscount,
           cgst: breakdown.cgst,
           sgst: breakdown.sgst,
-          plan_type: 'AI_RESUME',
+          plan_type: mode === 'jd' ? 'jd' : 'non-jd',
+          session_id: sessionId,
         },
         authToken ? { headers: { Authorization: `Bearer ${authToken}` } } : undefined
       );
 
       const orderData = createResp?.data ?? createResp;
+
+      if (breakdown.finalPrice <= 0 || orderData?.message === 'Payment successful' || (orderData?.success === true && !orderData?.id && !orderData?.order_id && !orderData?.razorpay_order_id)) {
+        window.dispatchEvent(new CustomEvent("credits:refresh"));
+        onPaymentSuccess();
+        onClose();
+        return;
+      }
+
       const orderId = orderData?.id || orderData?.order_id || orderData?.orderId || orderData?.razorpay_order_id;
       const razorKey = orderData?.key || orderData?.key_id || import.meta.env.VITE_RAZORPAY_KEY_ID || '';
       const amountInPaise = Math.round(breakdown.finalPrice * 100);
@@ -145,10 +172,14 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
                 credits_applied: finalCreditsToApply,
+                purchased_credits_used: purchasedCreditsToUse,
+                session_id: sessionId,
+                plan_type: mode === 'jd' ? 'jd' : 'non-jd',
               },
               authToken ? { headers: { Authorization: `Bearer ${authToken}` } } : undefined
             );
             if (verifyResp?.data?.message === 'Payment successful' || verifyResp?.message === 'Payment successful') {
+              window.dispatchEvent(new CustomEvent("credits:refresh"));
               onPaymentSuccess();
               onClose();
             } else {
@@ -185,187 +216,246 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
   return (
     <>
       <div className="fixed inset-0 bg-black/70 z-[90] backdrop-blur-sm" onClick={onClose} />
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        <div
-          className="relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl"
-          style={{
-            background: 'linear-gradient(145deg, #ffffff 0%, #fff7f3 100%)',
-            border: '1px solid rgba(249,115,22,0.15)',
-          }}
-        >
-          {/* Header band */}
+
+      {/* Outer layer: ONLY handles page-level scrolling (no centering here,
+          so the modal can never be clipped when it's taller than the viewport) */}
+      <div className="fixed inset-0 z-[100] overflow-y-auto overscroll-contain">
+        {/* Inner layer: ONLY handles centering. min-h-full (not h-full) lets
+            this wrapper grow taller than the viewport so scrolling actually works */}
+        <div className="min-h-full flex items-center justify-center p-2 sm:p-4">
           <div
-            className="px-5 pt-5 pb-3"
-            style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)' }}
+            className="relative flex w-full max-w-sm sm:max-w-lg md:max-w-2xl max-h-[95dvh] flex-col overflow-hidden rounded-2xl shadow-2xl my-4"
+            style={{
+              background: 'linear-gradient(145deg, #ffffff 0%, #fff7f3 100%)',
+              border: '1px solid rgba(249,115,22,0.15)',
+            }}
           >
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-white/10 transition-colors"
+            {/* Header band */}
+            <div
+              className="shrink-0 px-4 pt-4 pb-3 sm:px-5 sm:pt-5"
+              style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)' }}
             >
-              <X className="w-4 h-4 text-white/70" />
-            </button>
-            <div className="flex items-center gap-3 mb-1">
-              <div className="w-10 h-10 rounded-2xl bg-orange-500/20 border border-orange-400/30 flex items-center justify-center">
-                <Lock className="w-5 h-5 text-orange-400" />
-              </div>
-              <div>
-                <h2 className="text-white font-semibold text-base leading-tight">Unlock AI Resume Builder</h2>
-                <p className="text-white/50 text-xs leading-tight">One-time payment · Instant access</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 flex flex-col gap-3">
-            {/* Credits Section */}
-            {loadingProfile ? (
-              <div className="flex items-center gap-2 p-4 rounded-2xl bg-orange-50 border border-orange-100">
-                <div className="w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
-                <span className="text-sm text-orange-600">Loading your credits...</span>
-              </div>
-            ) : availableCredits > 0 ? (
-              <div
-                className="rounded-2xl overflow-hidden border transition-all duration-200"
-                style={{
-                  borderColor: useCredits ? '#F97316' : '#e5e7eb',
-                  background: useCredits ? 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)' : '#fafafa',
-                }}
-              >
-                <div className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div
-                        className="w-9 h-9 rounded-xl flex items-center justify-center"
-                        style={{ background: useCredits ? '#F97316' : '#f3f4f6' }}
-                      >
-                        <Sparkles className={`w-4 h-4 ${useCredits ? 'text-white' : 'text-gray-400'}`} />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-800">
-                          You have <span className="text-orange-500">{availableCredits} credits</span>
-                        </p>
-                        <p className="text-xs text-gray-500">1 credit = ₹{CREDIT_VALUE} · Max {MAX_CREDITS_APPLICABLE} applicable</p>
-                      </div>
-                    </div>
-                    {/* Toggle */}
-                    <button
-                      onClick={() => setUseCredits(v => !v)}
-                      className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${useCredits ? 'bg-orange-500' : 'bg-gray-300'}`}
-                      style={{ boxShadow: useCredits ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : 'inset 0 1px 3px rgba(0,0,0,0.1)' }}
-                    >
-                      <span
-                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-250 pointer-events-none ${useCredits ? 'translate-x-6' : 'translate-x-0'}`}
-                      />
-                    </button>
-                  </div>
-
-                  {/* Credit slider */}
-                  {useCredits && (
-                    <div className="mt-4 pt-4 border-t border-orange-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-medium text-gray-600">Credits to apply</span>
-                        <span className="text-sm font-bold text-orange-600">
-                          {creditsToApply} credits → −₹{(creditsToApply * CREDIT_VALUE).toFixed(2)}
-                        </span>
-                      </div>
-                      <input
-                        type="range"
-                        min={0}
-                        max={maxApplicable}
-                        value={creditsToApply}
-                        onChange={e => setCreditsToApply(Number(e.target.value))}
-                        className="w-full h-2 rounded-full appearance-none cursor-pointer"
-                        style={{
-                          background: `linear-gradient(to right, #F97316 0%, #F97316 ${maxApplicable > 0 ? (creditsToApply / maxApplicable) * 100 : 0}%, #e5e7eb ${maxApplicable > 0 ? (creditsToApply / maxApplicable) * 100 : 0}%, #e5e7eb 100%)`,
-                          accentColor: '#F97316',
-                        }}
-                      />
-                      <div className="flex justify-between mt-1">
-                        <span className="text-xs text-gray-400">0</span>
-                        <span className="text-xs text-gray-400">{maxApplicable}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2.5 p-3.5 rounded-2xl bg-gray-50 border border-gray-100">
-                <Info className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                <span className="text-sm text-gray-500">You have no credits available.</span>
-              </div>
-            )}
-
-            {/* Price Breakdown */}
-            <div className="rounded-2xl border border-gray-100 overflow-hidden" style={{ background: '#fff' }}>
               <button
-                className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
-                onClick={() => setShowBreakdown(v => !v)}
+                onClick={onClose}
+                className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-white/10 transition-colors"
               >
-                <div className="flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm font-semibold text-gray-700">Price Breakdown</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-gray-900">₹{breakdown.finalPrice}</span>
-                  {showBreakdown ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-                </div>
+                <X className="w-4 h-4 text-white/70" />
               </button>
-
-              {showBreakdown && (
-                <div className="px-4 pb-4 flex flex-col gap-0">
-                  <div className="border-t border-gray-100 mb-3" />
-                  {[
-                    { label: 'Base Price', value: `₹${breakdown.basePrice.toFixed(2)}`, highlight: false, muted: false, bold: false },
-                    ...(breakdown.creditsApplied > 0
-                      ? [{ label: `Credits Applied (${breakdown.creditsApplied} × ₹${CREDIT_VALUE})`, value: `−₹${breakdown.creditDiscount.toFixed(2)}`, highlight: true, muted: false, bold: false }]
-                      : []),
-                    { label: 'Price after Credits', value: `₹${breakdown.priceAfterCredits.toFixed(2)}`, highlight: false, muted: false, bold: true },
-                    { label: 'CGST (9%)', value: `₹${breakdown.cgst.toFixed(2)}`, highlight: false, muted: true, bold: false },
-                    { label: 'SGST (9%)', value: `₹${breakdown.sgst.toFixed(2)}`, highlight: false, muted: true, bold: false },
-                  ].map((row, idx) => (
-                    <div key={idx} className="flex items-center justify-between py-1.5">
-                      <span className={`text-sm ${row.highlight ? 'text-green-600 font-medium' : row.muted ? 'text-gray-400' : row.bold ? 'text-gray-700 font-semibold' : 'text-gray-600'}`}>
-                        {row.label}
-                      </span>
-                      <span className={`text-sm font-semibold ${row.highlight ? 'text-green-600' : row.muted ? 'text-gray-400' : 'text-gray-800'}`}>
-                        {row.value}
-                      </span>
-                    </div>
-                  ))}
-                  {/* Total */}
-                  <div
-                    className="flex items-center justify-between mt-2 pt-3 rounded-xl px-3 py-2.5"
-                    style={{ background: 'linear-gradient(135deg, #1a1a2e, #0f3460)' }}
-                  >
-                    <span className="text-sm font-bold text-white/80">Total Payable</span>
-                    <span className="text-lg font-extrabold text-orange-400">₹{breakdown.finalPrice}</span>
-                  </div>
-                  {breakdown.creditsApplied > 0 && (
-                    <p className="text-xs text-green-600 text-center mt-2 font-medium">
-                      🎉 You saved ₹{breakdown.creditDiscount.toFixed(2)} using credits!
-                    </p>
-                  )}
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-10 h-10 rounded-2xl bg-orange-500/20 border border-orange-400/30 flex items-center justify-center">
+                  <Unlock className="w-5 h-5 text-orange-400" />
                 </div>
-              )}
+                <div>
+                  <h2 className="text-white font-semibold text-base leading-tight">Unlock AI Resume Builder</h2>
+                  <p className="text-white/50 text-xs leading-tight">One-time payment · Instant access</p>
+                </div>
+              </div>
             </div>
 
-            {/* Pay Button */}
-            <button
-              onClick={handlePay}
-              disabled={payLoading}
-              className="w-full py-3.5 rounded-2xl text-white font-bold text-base transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-              style={{
-                background: payLoading ? '#9ca3af' : 'linear-gradient(135deg, #F97316 0%, #ea580c 100%)',
-                boxShadow: payLoading ? 'none' : '0 8px 24px rgba(249,115,22,0.35)',
-              }}
-            >
-              {payLoading ? (
-                <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />Initiating Payment...</>
-              ) : (
-                <><Lock className="w-4 h-4" />Pay ₹{breakdown.finalPrice} & Start</>
-              )}
-            </button>
+            {/* Scrollable body. On md+ screens the content splits into two
+                columns side-by-side; on small screens it stacks and scrolls. */}
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4">
+              <div className="flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-4 md:items-start">
 
-            <p className="text-xs text-gray-400 text-center">Secured by Razorpay · GST inclusive pricing</p>
+                {/* LEFT COLUMN (md+): credits controls */}
+                <div className="flex flex-col gap-3">
+                  {/* Credits Section */}
+                  {loadingProfile ? (
+                    <div className="flex items-center gap-2 p-4 rounded-2xl bg-orange-50 border border-orange-100">
+                      <div className="w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
+                      <span className="text-sm text-orange-600">Loading your credits...</span>
+                    </div>
+                  ) : availableCredits > 0 ? (
+                    <div
+                      className="rounded-2xl overflow-hidden border transition-all duration-200"
+                      style={{
+                        borderColor: useCredits ? '#F97316' : '#e5e7eb',
+                        background: useCredits ? 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)' : '#fafafa',
+                      }}
+                    >
+                      <div className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <div
+                              className="w-9 h-9 rounded-xl flex items-center justify-center"
+                              style={{ background: useCredits ? '#F97316' : '#f3f4f6' }}
+                            >
+                              <Sparkles className={`w-4 h-4 ${useCredits ? 'text-white' : 'text-gray-400'}`} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-800">
+                                You have <span className="text-orange-500">{availableCredits} credits</span>
+                              </p>
+                              <p className="text-xs text-gray-500">1 credit = ₹{CREDIT_VALUE} · Max {MAX_CREDITS_APPLICABLE} applicable</p>
+                            </div>
+                          </div>
+                          {/* Toggle */}
+                          <button
+                            onClick={() => {
+                              const nextValue = !useCredits;
+                              setUseCredits(nextValue);
+                              if (nextValue) {
+                                setUsePurchasedCredits(false);
+                              }
+                            }}
+                            className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${useCredits ? 'bg-orange-500' : 'bg-gray-300'}`}
+                            style={{ boxShadow: useCredits ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : 'inset 0 1px 3px rgba(0,0,0,0.1)' }}
+                          >
+                            <span
+                              className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-250 pointer-events-none ${useCredits ? 'translate-x-6' : 'translate-x-0'}`}
+                            />
+                          </button>
+                        </div>
+
+                        {/* Credit slider */}
+                        {useCredits && (
+                          <div className="mt-4 pt-4 border-t border-orange-200">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-medium text-gray-600">Credits to apply</span>
+                              <span className="text-sm font-bold text-orange-600">
+                                {creditsToApply} credits → −₹{(creditsToApply * CREDIT_VALUE).toFixed(2)}
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min={0}
+                              max={maxApplicable}
+                              value={creditsToApply}
+                              onChange={e => setCreditsToApply(Number(e.target.value))}
+                              className="w-full h-2 rounded-full appearance-none cursor-pointer"
+                              style={{
+                                background: `linear-gradient(to right, #F97316 0%, #F97316 ${maxApplicable > 0 ? (creditsToApply / maxApplicable) * 100 : 0}%, #e5e7eb ${maxApplicable > 0 ? (creditsToApply / maxApplicable) * 100 : 0}%, #e5e7eb 100%)`,
+                                accentColor: '#F97316',
+                              }}
+                            />
+                            <div className="flex justify-between mt-1">
+                              <span className="text-xs text-gray-400">0</span>
+                              <span className="text-xs text-gray-400">{maxApplicable}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2.5 p-3.5 rounded-2xl bg-gray-50 border border-gray-100">
+                      <Info className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <span className="text-sm text-gray-500">You have no credits available.</span>
+                    </div>
+                  )}
+
+                  {/* Purchased Credits Toggle Section */}
+                  <div className="rounded-2xl border border-gray-100 p-4 shadow-sm" style={{ background: '#fafafa' }}>
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-800">Use purchased credits</p>
+                        <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+                          {availablePurchasedCredits > 0 ? (
+                            <>You have <span className="font-semibold text-orange-500">{availablePurchasedCredits}</span> purchased credit{availablePurchasedCredits !== 1 ? 's' : ''} available. 1 credit = ₹1.</>
+                          ) : (
+                            <>You don't have any purchased credits left.</>
+                          )}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const nextValue = !usePurchasedCredits;
+                          setUsePurchasedCredits(nextValue);
+                          if (nextValue) {
+                            setUseCredits(false);
+                          }
+                        }}
+                        disabled={availablePurchasedCredits === 0}
+                        className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${(usePurchasedCredits && availablePurchasedCredits > 0) ? 'bg-orange-500' : 'bg-gray-300'} ${availablePurchasedCredits === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        style={{ boxShadow: (usePurchasedCredits && availablePurchasedCredits > 0) ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : 'inset 0 1px 3px rgba(0,0,0,0.1)' }}
+                      >
+                        <span
+                          className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-250 pointer-events-none ${(usePurchasedCredits && availablePurchasedCredits > 0) ? 'translate-x-6' : 'translate-x-0'}`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* RIGHT COLUMN (md+): price breakdown + pay button */}
+                <div className="flex flex-col gap-3">
+                  {/* Price Breakdown */}
+                  <div className="rounded-2xl border border-gray-100 overflow-hidden" style={{ background: '#fff' }}>
+                    <button
+                      className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+                      onClick={() => setShowBreakdown(v => !v)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Tag className="w-4 h-4 text-gray-500" />
+                        <span className="text-sm font-semibold text-gray-700">Price Breakdown</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-gray-900">₹{breakdown.finalPrice}</span>
+                        {showBreakdown ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                      </div>
+                    </button>
+
+                    {showBreakdown && (
+                      <div className="px-4 pb-4 flex flex-col gap-0">
+                        <div className="border-t border-gray-100 mb-3" />
+                        {[
+                          { label: 'Base Price', value: `₹${breakdown.basePrice.toFixed(2)}`, highlight: false, muted: false, bold: false },
+                          ...(breakdown.creditsApplied > 0
+                            ? [{ label: `Credits Applied (${breakdown.creditsApplied} × ₹${CREDIT_VALUE})`, value: `−₹${breakdown.creditDiscount.toFixed(2)}`, highlight: true, muted: false, bold: false }]
+                            : []),
+                          { label: 'Price after Credits', value: `₹${breakdown.priceAfterCredits.toFixed(2)}`, highlight: false, muted: false, bold: true },
+                          { label: 'CGST (9%)', value: `₹${breakdown.cgst.toFixed(2)}`, highlight: false, muted: true, bold: false },
+                          { label: 'SGST (9%)', value: `₹${breakdown.sgst.toFixed(2)}`, highlight: false, muted: true, bold: false },
+                          ...(breakdown.purchasedCreditsUsed > 0
+                            ? [{ label: `Purchased Credits Used`, value: `−₹${breakdown.purchasedCreditsUsed.toFixed(2)}`, highlight: true, muted: false, bold: false }]
+                            : []),
+                        ].map((row, idx) => (
+                          <div key={idx} className="flex items-center justify-between py-1.5">
+                            <span className={`text-sm ${row.highlight ? 'text-green-600 font-medium' : row.muted ? 'text-gray-400' : row.bold ? 'text-gray-700 font-semibold' : 'text-gray-600'}`}>
+                              {row.label}
+                            </span>
+                            <span className={`text-sm font-semibold ${row.highlight ? 'text-green-600' : row.muted ? 'text-gray-400' : 'text-gray-800'}`}>
+                              {row.value}
+                            </span>
+                          </div>
+                        ))}
+                        {/* Total */}
+                        <div
+                          className="flex items-center justify-between mt-2 pt-3 rounded-xl px-3 py-2.5"
+                          style={{ background: 'linear-gradient(135deg, #1a1a2e, #0f3460)' }}
+                        >
+                          <span className="text-sm font-bold text-white/80">Total Payable</span>
+                          <span className="text-lg font-extrabold text-orange-400">₹{breakdown.finalPrice}</span>
+                        </div>
+                        {breakdown.creditsApplied > 0 && (
+                          <p className="text-xs text-green-600 text-center mt-2 font-medium">
+                            🎉 You saved ₹{breakdown.creditDiscount.toFixed(2)} using credits!
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Pay Button */}
+                  <button
+                    onClick={handlePay}
+                    disabled={payLoading}
+                    className="w-full py-3.5 rounded-2xl text-white font-bold text-base transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                    style={{
+                      background: payLoading ? '#9ca3af' : 'linear-gradient(135deg, #F97316 0%, #ea580c 100%)',
+                      boxShadow: payLoading ? 'none' : '0 8px 24px rgba(249,115,22,0.35)',
+                    }}
+                  >
+                    {payLoading ? (
+                      <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />Initiating Payment...</>
+                    ) : (
+                      <><Lock className="w-4 h-4" />Pay ₹{breakdown.finalPrice} & Start</>
+                    )}
+                  </button>
+
+                  <p className="text-xs text-gray-400 text-center">Secured by Razorpay · GST inclusive pricing</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -396,6 +486,7 @@ interface ChatBoxProps {
   onSend: () => void;
   onFileUpload: (file: File) => void;
   onStart: () => void;
+  onJdComplete: (data: any) => void;
   token: string;
   // Chip props — only present when a chip-question is active
   activeChips?: DataChip[];
@@ -403,8 +494,11 @@ interface ChatBoxProps {
   onChipUndo?: (id: string) => void;
   // ID of the message that should render chips below it
   chipMessageId?: string | null;
-  // Hide input bar once resume generation is complete
-  isCompleted?: boolean;
+  // Re-opens the mode guidelines pop-up
+  onShowGuide?: () => void;
+  isJdPaid?: boolean;
+  onJdPaymentSuccess?: () => void;
+  initialJdText?: string;
 }
 
 export default function ChatBox({
@@ -417,12 +511,16 @@ export default function ChatBox({
   onSend,
   onFileUpload,
   onStart,
+  onJdComplete,
   token,
   activeChips,
   onChipDelete,
   onChipUndo,
   chipMessageId,
-  isCompleted = false,
+  onShowGuide,
+  isJdPaid,
+  onJdPaymentSuccess,
+  initialJdText,
 }: ChatBoxProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -452,11 +550,18 @@ export default function ChatBox({
       <div className="flex-1 overflow-y-auto px-4 py-6">
         {!started ? (
           <PreStartState
+            key={session?.id || 'new-session'}
             mode={mode}
             onModeChange={onModeChange}
             onFileUpload={() => fileInputRef.current?.click()}
             onStart={onStart}
+            onJdComplete={onJdComplete}
             token={token}
+            sessionId={session?.id}
+            onShowGuide={onShowGuide}
+            isJdPaid={isJdPaid}
+            onJdPaymentSuccess={onJdPaymentSuccess}
+            initialJdText={initialJdText}
           />
         ) : (
           <div className="max-w-2xl mx-auto space-y-4">
@@ -543,8 +648,8 @@ export default function ChatBox({
         accept=".pdf,.doc,.docx,.txt"
       />
 
-      {/* Input bar — only visible after start and before completion */}
-      {started && !isCompleted && (
+      {/* Input bar — only visible after start */}
+      {started && (
         <div className="bg-white border-t border-gray-200 px-4 pt-3 pb-4">
           <div className="max-w-2xl mx-auto">
             <div className="flex items-center gap-2">
@@ -584,30 +689,46 @@ function PreStartState({
   onModeChange,
   onFileUpload,
   onStart,
+  onJdComplete,
   token,
+  sessionId,
+  onShowGuide,
+  isJdPaid,
+  onJdPaymentSuccess,
+  initialJdText,
 }: {
   mode: "jd" | "non-jd";
   onModeChange: (m: "jd" | "non-jd") => void;
   onFileUpload: () => void;
   onStart: () => void;
+  onJdComplete: (data: any) => void;
   token: string;
+  sessionId?: string;
+  onShowGuide?: () => void;
+  isJdPaid?: boolean;
+  onJdPaymentSuccess?: () => void;
+  initialJdText?: string;
 }) {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   const handleStartClick = () => {
-    if (mode === "non-jd") {
-      setShowPaymentModal(true);
-    }
+    setShowPaymentModal(true);
   };
 
   const handlePaymentSuccess = () => {
     setShowPaymentModal(false);
-    onStart();
-    // setTimeout(() => window.location.reload(), 800);
+    if (mode === "jd") {
+      onJdPaymentSuccess?.();
+    } else {
+      onStart();
+    }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full min-h-[60vh] text-center px-4 py-16 gap-6">
+    <div
+      className={`flex flex-col items-center h-full min-h-[60vh] text-center px-4 gap-6 ${mode === "jd" ? "justify-start pt-10 pb-16" : "justify-center py-16"
+        }`}
+    >
       {/* Icon + heading */}
       <div>
         <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center mb-4 mx-auto">
@@ -617,7 +738,9 @@ function PreStartState({
           Let's build your resume
         </h2>
         <p className="text-sm text-gray-400 max-w-xs leading-relaxed">
-          Choose a mode, then hit Start Payment to begin.
+          {mode === "jd"
+            ? "Paste a job description below and we'll tailor your resume to match it."
+            : "Choose a mode, then hit Start Payment to begin."}
         </p>
       </div>
 
@@ -628,11 +751,12 @@ function PreStartState({
           {(["non-jd", "jd"] as const).map((m) => (
             <button
               key={m}
-              onClick={() => onModeChange(m)}
+              onClick={() => { if (!isJdPaid) onModeChange(m); }}
+              disabled={isJdPaid}
               className={`text-xs px-4 py-1.5 rounded-md font-medium transition ${mode === m
                 ? "bg-white text-gray-800 shadow-sm"
                 : "text-gray-500 hover:text-gray-700"
-                }`}
+                } ${isJdPaid ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               {m === "jd" ? "JD Mode" : "AI Mode"}
             </button>
@@ -643,11 +767,20 @@ function PreStartState({
             Tailored to job description
           </span>
         )}
+        {onShowGuide && (
+          <button
+            onClick={onShowGuide}
+            className="flex items-center gap-1 text-xs text-gray-400 hover:text-orange-500 transition"
+          >
+            <Info className="w-3.5 h-3.5" />
+            How {mode === "jd" ? "JD Mode" : "AI Mode"} works
+          </button>
+        )}
       </div>
 
-      {/* Start Payment button */}
+      {/* Start Payment button / JD flow */}
       {
-        mode !== "jd" ? (
+        !isJdPaid ? (
           <button
             onClick={handleStartClick}
             className="flex items-center gap-2 px-8 py-2.5 rounded-xl bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 active:scale-95 transition"
@@ -655,12 +788,18 @@ function PreStartState({
             <Lock className="w-4 h-4" />
             Start Payment
           </button>
+        ) : mode === "jd" ? (
+          sessionId ? (
+            <JdResumeFlow sessionId={sessionId} token={token} onComplete={onJdComplete} initialJdText={initialJdText} />
+          ) : (
+            <p className="text-xs text-gray-400">Loading session...</p>
+          )
         ) : (
           <button
-            disabled
-            className="px-8 py-2.5 rounded-xl bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 active:scale-95 transition disabled:opacity-50"
+            onClick={onStart}
+            className="flex items-center gap-2 px-8 py-2.5 rounded-xl bg-green-500 text-white text-sm font-medium hover:bg-green-600 active:scale-95 transition"
           >
-            Coming Soon
+            Start Resume Builder
           </button>
         )
       }
@@ -671,6 +810,8 @@ function PreStartState({
         onClose={() => setShowPaymentModal(false)}
         onPaymentSuccess={handlePaymentSuccess}
         token={token}
+        sessionId={sessionId}
+        mode={mode}
       />
     </div>
   );

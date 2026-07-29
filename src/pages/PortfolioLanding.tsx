@@ -14,7 +14,7 @@ import {
   Star,
   Monitor,
 } from "lucide-react";
-
+const price = import.meta.env.VITE_BASE_PORTFOLIO_PRICE || 10; // Fallback to 10 if env variable is not set
 const features = [
   {
     icon: <LayoutTemplate className="w-5 h-5" />,
@@ -55,7 +55,7 @@ const features = [
 ];
 
 const steps = [
-  { step: "1", label: "Pay ₹10 or use credits", sub: "One-time unlock — no hidden charges" },
+  { step: "1", label: `Pay ₹${price} or use credits`, sub: "One-time unlock — no hidden charges" },
   { step: "2", label: "Fill in your details", sub: "Projects, skills, bio & more" },
   { step: "3", label: "Pick a template", sub: "Dozens of premium designs to choose from" },
   { step: "4", label: "Publish & share", sub: "Go live with a unique URL instantly" },
@@ -101,10 +101,10 @@ export default function PortfolioLanding() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               id="portfolio-get-started-btn"
-              onClick={() => navigate("/portfolio/list")}
+              onClick={() => navigate("/portfolio/create")}
               className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-violet-600 to-violet-500 text-white font-semibold text-sm hover:from-violet-700 hover:to-violet-600 transition shadow-md shadow-violet-200 cursor-pointer"
             >
-              Get Started
+              Create my Portfolio
               <ArrowRight className="w-4 h-4" />
             </button>
             <button
@@ -190,11 +190,11 @@ export default function PortfolioLanding() {
               Ready to build your portfolio?
             </h2>
             <p className="text-sm text-white/80 mb-6 max-w-md mx-auto">
-              Unlock your portfolio for just <strong className="text-white">₹10</strong> — or use your Bowizzy credits. No subscription, no recurring fee.
+              Unlock your portfolio for just ₹ <strong className="text-white">{price}</strong> — or use your Bowizzy credits. No subscription, no recurring fee.
             </p>
             <button
               id="portfolio-cta-bottom-btn"
-              onClick={() => navigate("/portfolio/list")}
+              onClick={() => navigate("/portfolio/create")}
               className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-white text-violet-700 font-bold text-sm hover:bg-gray-50 transition cursor-pointer shadow-lg"
             >
               Create My Portfolio

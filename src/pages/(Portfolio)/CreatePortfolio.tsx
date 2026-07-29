@@ -21,7 +21,37 @@ import api from "@/api";
 const MIN_CREDITS = 1;
 const MAX_CREDITS = 10;
 const CREDIT_TO_INR = 0.5; // 1 credit = ₹0.5
-const BASE_PRICE_INR = 5; // Base portfolio creation price in INR
+const BASE_PRICE_INR = 10; // Base portfolio creation price in INR
+
+const parseNumericBalance = (value: any): number => {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue) || numericValue <= 0) {
+    return 0;
+  }
+
+  return Math.floor(numericValue);
+};
+
+const parseProfileCreditBalances = (payload: any) => {
+  const profileData = payload?.data ?? payload ?? {};
+
+  return {
+    bonusCredits: parseNumericBalance(
+      profileData?.credits ??
+        profileData?.credit ??
+        payload?.credits ??
+        payload?.credit ??
+        0
+    ),
+    purchasedCredits: parseNumericBalance(
+      profileData?.purchased_credits ??
+        profileData?.purchasedCredits ??
+        payload?.purchased_credits ??
+        payload?.purchasedCredits ??
+        0
+    ),
+  };
+};
 
 function loadRazorpayScript(): Promise<boolean> {
   return new Promise((resolve) => {
@@ -40,9 +70,11 @@ function loadRazorpayScript(): Promise<boolean> {
 
 function SuccessModal({
   portfolioName,
+  portfolioId,
   onClose,
 }: {
   portfolioName: string;
+  portfolioId: string | number | null;
   onClose: () => void;
 }) {
   const navigate = useNavigate();
@@ -67,16 +99,22 @@ function SuccessModal({
           </p>
           <div className="flex flex-col gap-2">
             <button
-              onClick={() => navigate("/portfolio/list")}
+              onClick={() => {
+                if (portfolioId) {
+                  navigate(`/portfolio/editor/${portfolioId}`);
+                } else {
+                  navigate("/portfolio/list");
+                }
+              }}
               className="w-full py-3 rounded-xl bg-gradient-to-r from-violet-600 to-violet-500 text-white font-semibold text-sm hover:from-violet-700 hover:to-violet-600 transition cursor-pointer"
             >
-              View My Portfolios
+              Go to Editor
             </button>
             <button
-              onClick={onClose}
+              onClick={() => navigate("/portfolio/list")}
               className="w-full py-2.5 rounded-xl border border-gray-200 text-gray-500 text-sm font-medium hover:bg-gray-50 transition cursor-pointer"
             >
-              Stay Here
+              View My Portfolios
             </button>
           </div>
         </div>
@@ -89,27 +127,37 @@ export default function CreatePortfolio() {
   const navigate = useNavigate();
   const [portfolioName, setPortfolioName] = useState("");
   const [portfolioDescription, setPortfolioDescription] = useState("");
-  const [userCredits, setUserCredits] = useState<number>(0);
+  const [bonusCredits, setBonusCredits] = useState<number>(0);
+  const [purchasedCredits, setPurchasedCredits] = useState<number>(0);
   const [creditsLoading, setCreditsLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [createdPortfolioId, setCreatedPortfolioId] = useState<string | number | null>(null);
   const [nameError, setNameError] = useState("");
 
   // Credit discount state
   const [useCredits, setUseCredits] = useState(false);
+  const [usePurchasedCredits, setUsePurchasedCredits] = useState(true);
   const [selectedCredits, setSelectedCredits] = useState(MIN_CREDITS);
   const [portfolioType, setPortfolioType] = useState<string>("");
 
   // Derived values
-  const creditDiscount = useCredits ? selectedCredits * CREDIT_TO_INR : 0;
-  const finalPriceINR = Math.max(0, BASE_PRICE_INR - creditDiscount);
+  const shouldUsePurchasedCredits = purchasedCredits > 0 && usePurchasedCredits;
+  const purchasedCreditsToUse = shouldUsePurchasedCredits
+    ? Math.min(purchasedCredits, BASE_PRICE_INR)
+    : 0;
+  const amountToPay = Math.max(0, BASE_PRICE_INR - purchasedCreditsToUse);
+  const creditDiscount = useCredits && !shouldUsePurchasedCredits ? selectedCredits * CREDIT_TO_INR : 0;
+  const finalPriceINR = shouldUsePurchasedCredits
+    ? amountToPay
+    : Math.max(0, BASE_PRICE_INR - creditDiscount);
   const finalPricePaise = finalPriceINR * 100;
-  const actualMaxCredits = Math.max(MIN_CREDITS, Math.min(userCredits, MAX_CREDITS));
+  const actualMaxCredits = Math.min(bonusCredits, MAX_CREDITS);
   const sliderPercent = actualMaxCredits > MIN_CREDITS
     ? ((selectedCredits - MIN_CREDITS) / (actualMaxCredits - MIN_CREDITS)) * 100
     : 0;
-  const hasEnoughCredits = userCredits >= selectedCredits;
+  const hasEnoughBonusCredits = bonusCredits >= selectedCredits;
 
   // Load user credits
   useEffect(() => {
@@ -117,14 +165,22 @@ export default function CreatePortfolio() {
       try {
         const userData = JSON.parse(localStorage.getItem("user") || "null");
         const token = userData?.token;
-        if (!token) return;
+        if (!token) {
+          setBonusCredits(0);
+          setPurchasedCredits(0);
+          return;
+        }
 
-        // TODO: Replace with real API call
-        // const resp = await api.get('/personal-details/profile-data', { headers: { Authorization: `Bearer ${token}` } });
-        // setUserCredits(resp.data?.credits ?? 0);
-        setUserCredits(5); // Simulated — replace with API
+        const resp = await api.get("/personal-details/profile-data", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const { bonusCredits: nextBonusCredits, purchasedCredits: nextPurchasedCredits } =
+          parseProfileCreditBalances(resp?.data ?? resp);
+        setBonusCredits(nextBonusCredits);
+        setPurchasedCredits(nextPurchasedCredits);
       } catch {
-        setUserCredits(0);
+        setBonusCredits(0);
+        setPurchasedCredits(0);
       } finally {
         setCreditsLoading(false);
       }
@@ -132,20 +188,94 @@ export default function CreatePortfolio() {
     load();
   }, []);
 
+  useEffect(() => {
+    const refreshCredits = async () => {
+      try {
+        const userData = JSON.parse(localStorage.getItem("user") || "null");
+        const token = userData?.token;
+        if (!token) return;
+
+        const resp = await api.get("/personal-details/profile-data", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const { bonusCredits: nextBonusCredits, purchasedCredits: nextPurchasedCredits } =
+          parseProfileCreditBalances(resp?.data ?? resp);
+        setBonusCredits(nextBonusCredits);
+        setPurchasedCredits(nextPurchasedCredits);
+      } catch {
+        setBonusCredits(0);
+        setPurchasedCredits(0);
+      }
+    };
+
+    const handleCreditsRefresh = () => {
+      refreshCredits();
+    };
+
+    window.addEventListener("credits:refresh", handleCreditsRefresh);
+    return () =>
+      window.removeEventListener("credits:refresh", handleCreditsRefresh);
+  }, []);
+
+  useEffect(() => {
+    if (purchasedCredits === 0) {
+      setUsePurchasedCredits(false);
+    }
+
+    if (shouldUsePurchasedCredits) {
+      setUseCredits(false);
+      setSelectedCredits(MIN_CREDITS);
+      return;
+    }
+
+    if (actualMaxCredits === 0) {
+      if (useCredits) {
+        setUseCredits(false);
+      }
+      setSelectedCredits(MIN_CREDITS);
+      return;
+    }
+
+    if (selectedCredits > actualMaxCredits) {
+      setSelectedCredits(actualMaxCredits);
+    }
+  }, [actualMaxCredits, selectedCredits, useCredits, shouldUsePurchasedCredits]);
+
   // Reset slider when credits toggled off
   const handleToggleCredits = (val: boolean) => {
+    if (shouldUsePurchasedCredits) {
+      setUseCredits(false);
+      setError(null);
+      return;
+    }
+
+    if (val && bonusCredits === 0) {
+      setUseCredits(false);
+      setError("You do not have any bonus credits available right now.");
+      return;
+    }
+
     setUseCredits(val);
     if (!val) setSelectedCredits(MIN_CREDITS);
+    if (val) {
+      setSelectedCredits((prev) =>
+        Math.min(Math.max(prev, MIN_CREDITS), Math.min(bonusCredits, MAX_CREDITS))
+      );
+    }
     setError(null);
   };
 
   const validate = () => {
+    setError(null);
+
     if (!portfolioName.trim()) {
       setNameError("Portfolio name is required.");
+      setError("Portfolio name is required.");
       return false;
     }
     if (portfolioName.trim().length < 3) {
       setNameError("Name must be at least 3 characters.");
+      setError("Name must be at least 3 characters.");
       return false;
     }
     setNameError("");
@@ -157,30 +287,29 @@ export default function CreatePortfolio() {
   };
 
   const createPortfolioProject = async (orderId?: string, paymentId?: string, signature?: string) => {
-    // TODO: Call backend API to create the portfolio project
-    console.log('orderid ', orderId)
     const userData = JSON.parse(localStorage.getItem("user") || "null");
-    await api.post('/portfolio/create-portfolio', {
+    const response = await api.post('/portfolio/create-portfolio', {
       name: portfolioName,
       portfolio_name: portfolioName,
       description: portfolioDescription,
       portfolio_type: portfolioType,
-      order_id: orderId,
-      razorpay_payment_id: paymentId,
-      razorpay_signature: signature,
-      credits_used: useCredits ? selectedCredits : 0,
+      order_id: orderId ?? null,
+      razorpay_payment_id: paymentId ?? null,
+      razorpay_signature: signature ?? null,
+      credits_used: shouldUsePurchasedCredits ? purchasedCreditsToUse : useCredits ? selectedCredits : 0,
+      purchased_credits_used: shouldUsePurchasedCredits ? purchasedCreditsToUse : 0,
+      bonus_credits_used: shouldUsePurchasedCredits ? 0 : useCredits ? selectedCredits : 0,
     }, { headers: { Authorization: `Bearer ${userData.token}` } });
-    return true;
+    return response.data;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
-    // Guard: if credits toggled but not enough
-    if (useCredits && !hasEnoughCredits) {
+    if (useCredits && !hasEnoughBonusCredits) {
       setError(
-        `You need ${selectedCredits} credits but only have ${userCredits}. Reduce the credit amount or disable the credit discount.`
+        `You need ${selectedCredits} bonus credits but only have ${bonusCredits}. Reduce the credit amount or disable the credit discount.`
       );
       return;
     }
@@ -188,22 +317,42 @@ export default function CreatePortfolio() {
     setProcessing(true);
     setError(null);
 
-    const loaded = await loadRazorpayScript();
-    if (!loaded) {
-      setError(
-        "Failed to load payment gateway. Please check your internet connection."
-      );
-      setProcessing(false);
-      return;
-    }
-
     try {
-      const userData = JSON.parse(localStorage.getItem("user") || "null");
+      if (finalPriceINR <= 0) {
+        const result = await createPortfolioProject();
+        window.dispatchEvent(new CustomEvent("credits:refresh"));
+        const pid = result?.portfolio_id || result?.id || result?.data?.portfolio_id || result?.portfolio?.portfolio_id || null;
+        setCreatedPortfolioId(pid);
+        setSuccess(true);
+        setProcessing(false);
+        return;
+      }
 
-      // TODO: Replace with backend order creation
+      if (shouldUsePurchasedCredits && purchasedCreditsToUse >= BASE_PRICE_INR) {
+        const result = await createPortfolioProject();
+        window.dispatchEvent(new CustomEvent("credits:refresh"));
+        const pid = result?.portfolio_id || result?.id || result?.data?.portfolio_id || result?.portfolio?.portfolio_id || null;
+        setCreatedPortfolioId(pid);
+        setSuccess(true);
+        setProcessing(false);
+        return;
+      }
+
+      const loaded = await loadRazorpayScript();
+      if (!loaded) {
+        setError(
+          "Failed to load payment gateway. Please check your internet connection."
+        );
+        setProcessing(false);
+        return;
+      }
+
+      const userData = JSON.parse(localStorage.getItem("user") || "null");
       const orderResp = await api.post('/portfolio/create-order', {
         amount: finalPriceINR,
         credits_used: useCredits ? selectedCredits : 0,
+        purchased_credits_used: shouldUsePurchasedCredits ? purchasedCreditsToUse : 0,
+        bonus_credits_used: shouldUsePurchasedCredits ? 0 : useCredits ? selectedCredits : 0,
         portfolio_type: portfolioType,
       }, { headers: { Authorization: `Bearer ${userData.token}` } });
       const { order_id } = orderResp.data;
@@ -225,9 +374,10 @@ export default function CreatePortfolio() {
         },
         handler: async (response: any) => {
           try {
-            console.log('response from razorpay ', response)
-            await createPortfolioProject(order_id, response.razorpay_payment_id, response.razorpay_signature
-            );
+            const result = await createPortfolioProject(order_id, response.razorpay_payment_id, response.razorpay_signature);
+            window.dispatchEvent(new CustomEvent("credits:refresh"));
+            const pid = result?.portfolio_id || result?.id || result?.data?.portfolio_id || result?.portfolio?.portfolio_id || null;
+            setCreatedPortfolioId(pid);
             setSuccess(true);
           } catch {
             setError(
@@ -262,6 +412,7 @@ export default function CreatePortfolio() {
       {success && (
         <SuccessModal
           portfolioName={portfolioName}
+          portfolioId={createdPortfolioId}
           onClose={() => setSuccess(false)}
         />
       )}
@@ -315,6 +466,8 @@ export default function CreatePortfolio() {
                     src="/Bowizzy Logo (No Container).png"
                     alt="Developer Logo"
                     className="w-full h-full object-contain"
+                    draggable={false}
+                    onDragStart={(e) => e.preventDefault()}
                   />
                 </div>
                 <h3 className="text-sm font-bold text-gray-800 mb-1">Developer Portfolio</h3>
@@ -325,6 +478,8 @@ export default function CreatePortfolio() {
                   href="https://google.com"
                   target="_blank"
                   rel="noopener noreferrer"
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
                   onClick={(e) => e.stopPropagation()}
                   className="mt-4 px-3 py-1.5 rounded-lg text-xs font-semibold text-violet-600 bg-violet-50 hover:bg-violet-100 transition-colors flex items-center gap-1.5 cursor-pointer border border-violet-100"
                 >
@@ -347,6 +502,8 @@ export default function CreatePortfolio() {
                     src="/Bowizzy Logo (No Container).png"
                     alt="Designer Logo"
                     className="w-full h-full object-contain"
+                    draggable={false}
+                    onDragStart={(e) => e.preventDefault()}
                   />
                 </div>
                 <h3 className="text-sm font-bold text-gray-800 mb-1">Designer Portfolio</h3>
@@ -357,6 +514,8 @@ export default function CreatePortfolio() {
                   href="https://google.com"
                   target="_blank"
                   rel="noopener noreferrer"
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
                   onClick={(e) => e.stopPropagation()}
                   className="mt-4 px-3 py-1.5 rounded-lg text-xs font-semibold text-violet-600 bg-violet-50 hover:bg-violet-100 transition-colors flex items-center gap-1.5 cursor-pointer border border-violet-100"
                 >
@@ -387,11 +546,16 @@ export default function CreatePortfolio() {
                   type="text"
                   value={portfolioName}
                   onChange={(e) => {
-                    setPortfolioName(e.target.value);
+                    const sanitized = e.target.value.replace(/[^a-zA-Z0-9\s-]/g, "");
+                    setPortfolioName(sanitized);
                     setNameError("");
                   }}
                   placeholder="e.g. John Doe — UX Designer"
                   maxLength={50}
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => e.preventDefault()}
                   className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder-gray-400 outline-none transition focus:ring-2 focus:ring-violet-300 ${nameError
                     ? "border-red-300 bg-red-50"
                     : "border-gray-200 bg-gray-50 focus:bg-white"
@@ -417,75 +581,106 @@ export default function CreatePortfolio() {
                 <textarea
                   id="portfolio-description"
                   value={portfolioDescription}
-                  onChange={(e) => setPortfolioDescription(e.target.value)}
+                  onChange={(e) => {
+                    const sanitized = e.target.value.replace(/[^a-zA-Z0-9\s.,!?'"-]/g, "");
+                    setPortfolioDescription(sanitized);
+                  }}
                   placeholder="A brief intro about yourself or what this portfolio showcases…"
                   rows={3}
-                  maxLength={100}
+                  maxLength={300}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => e.preventDefault()}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white text-sm text-gray-800 placeholder-gray-400 outline-none focus:ring-2 focus:ring-violet-300 transition resize-none"
                 />
                 <p className="text-xs text-gray-400 text-right mt-1">
-                  {portfolioDescription.length}/100
+                  {portfolioDescription.length}/300
                 </p>
               </div>
             </div>
           </div>
 
           {/* ── Credit Discount (collapsible toggle) ── */}
-          <div
-            className={`bg-white rounded-2xl border-2 p-5 mb-5 shadow-sm transition-all ${useCredits ? "border-orange-300" : "border-gray-100"
-              }`}
-          >
-            {/* Toggle row — native checkbox for reliable click handling */}
-            <label className="flex items-center gap-3 cursor-pointer select-none w-full">
-              {/* Native checkbox hidden, custom track rendered via sibling */}
-              <div className="relative shrink-0 w-11 h-6">
-                <input
-                  type="checkbox"
-                  checked={useCredits}
-                  onChange={(e) => handleToggleCredits(e.target.checked)}
-                  className="sr-only"
-                />
-                <div
-                  className={`absolute inset-0 rounded-full transition-colors duration-200 ${useCredits ? "bg-orange-400" : "bg-gray-200"
-                    }`}
-                />
-                <span
-                  className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${useCredits ? "translate-x-5" : "translate-x-0"
-                    }`}
-                />
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Coins
-                    className={`w-4 h-4 shrink-0 ${useCredits ? "text-orange-500" : "text-gray-400"
-                      }`}
-                  />
-                  <span className="text-sm font-semibold text-gray-800">
-                    Apply credit discount
-                  </span>
-                  {useCredits && (
-                    <span className="px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 text-xs font-semibold">
-                      −{selectedCredits} credit{selectedCredits > 1 ? "s" : ""}
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-gray-400 mt-0.5 ml-6">
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-5 shadow-sm">
+            <div className="flex items-center justify-between gap-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-gray-800">Use purchased credits</p>
+                <p className="text-xs text-gray-500 mt-0.5">
                   {creditsLoading
                     ? "Loading credits…"
-                    : `You have ${userCredits} credit${userCredits !== 1 ? "s" : ""} · 1 credit = ₹${CREDIT_TO_INR}`}
+                    : purchasedCredits > 0
+                    ? `You have ${purchasedCredits} purchased credit${
+                        purchasedCredits !== 1 ? "s" : ""
+                      } remaining.`
+                    : "You don't have any purchased credits left."}
                 </p>
               </div>
+              <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={purchasedCredits > 0 ? usePurchasedCredits : false}
+                  onChange={(e) => setUsePurchasedCredits(e.target.checked)}
+                  disabled={creditsLoading || purchasedCredits === 0}
+                />
+                <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-emerald-500 transition-colors" />
+                <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${usePurchasedCredits ? "translate-x-5" : "translate-x-0"}`} />
+              </label>
+            </div>
 
-              {useCredits ? (
-                <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
-              )}
-            </label>
+            <div
+              className={`mt-4 rounded-2xl border-2 p-5 transition-all ${useCredits ? "border-orange-300" : "border-gray-100"
+                }`}
+            >
+            {!shouldUsePurchasedCredits ? (
+              <>
+                {/* Toggle row — native checkbox for reliable click handling */}
+                <label className="flex items-center gap-3 cursor-pointer select-none w-full">
+                  {/* Native checkbox hidden, custom track rendered via sibling */}
+                  <div className="relative shrink-0 w-11 h-6">
+                    <input
+                      type="checkbox"
+                      checked={useCredits}
+                      onChange={(e) => handleToggleCredits(e.target.checked)}
+                      className="sr-only"
+                      disabled={creditsLoading || bonusCredits === 0}
+                    />
+                    <div
+                      className={`absolute inset-0 rounded-full transition-colors duration-200 ${useCredits ? "bg-orange-400" : "bg-gray-200"
+                        }`}
+                    />
+                    <span
+                      className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${useCredits ? "translate-x-5" : "translate-x-0"
+                        }`}
+                    />
+                  </div>
 
-            {/* Expandable slider content */}
-            {useCredits && (
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Coins
+                        className={`w-4 h-4 shrink-0 ${useCredits ? "text-orange-500" : "text-gray-400"
+                          }`}
+                      />
+                      <span className="text-sm font-semibold text-gray-800">
+                        Apply bonus credit discount
+                      </span>
+                      {useCredits && (
+                        <span className="px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 text-xs font-semibold">
+                          −{selectedCredits} credit{selectedCredits > 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-0.5 ml-6">
+                      {creditsLoading
+                        ? "Loading credits…"
+                        : bonusCredits > 0
+                          ? `You have ${bonusCredits} bonus credit${bonusCredits !== 1 ? "s" : ""} · Use 1-${Math.min(bonusCredits, MAX_CREDITS)} credits · 1 credit = ₹${CREDIT_TO_INR}`
+                          : `You have 0 bonus credits · 1 credit = ₹${CREDIT_TO_INR}`}
+                    </p>
+                  </div>
+                </label>
+
+                {/* Expandable slider content */}
+                {useCredits && (
               <div className="mt-5 border-t border-orange-100 pt-5">
 
                 {/* Big credit number + saves label */}
@@ -555,17 +750,17 @@ export default function CreatePortfolio() {
                     id="credit-slider"
                     type="range"
                     min={MIN_CREDITS}
-                    max={Math.min(userCredits, MAX_CREDITS)}
+                    max={actualMaxCredits}
                     step={1}
                     value={selectedCredits}
-                    disabled={userCredits === 0}
+                    disabled={actualMaxCredits === 0}
                     onChange={(e) => setSelectedCredits(Number(e.target.value))}
                   />
 
                   {/* Clickable tick labels */}
                   <div className="flex justify-between mt-2 px-0.5">
                     {Array.from(
-                      { length: Math.min(userCredits, MAX_CREDITS) },
+                      { length: actualMaxCredits },
                       (_, i) => i + 1
                     ).map((n) => (
                       <button
@@ -591,7 +786,7 @@ export default function CreatePortfolio() {
                   </div>
                   <div className="bg-orange-50 rounded-xl p-3">
                     <p className="text-xs text-orange-400 mb-1">Credit discount</p>
-                    <p className="text-sm font-semibold text-orange-600">−₹{creditDiscount.toFixed(2)}</p>
+                    <p className="text-sm font-semibold text-orange-600">₹{creditDiscount.toFixed(2)}</p>
                   </div>
                   <div className="bg-violet-50 rounded-xl p-3">
                     <p className="text-xs text-violet-400 mb-1">You pay</p>
@@ -599,25 +794,41 @@ export default function CreatePortfolio() {
                   </div>
                 </div>
 
-                {/* Warnings */}
-                {!creditsLoading && !hasEnoughCredits && (
-                  <div className="mt-3 flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-100">
-                    <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-                    <p className="text-xs text-red-600 leading-relaxed">
-                      You only have <strong>{userCredits} credits</strong>. Reduce the slider to {userCredits} or fewer.
-                    </p>
-                  </div>
-                )}
-                {userCredits === 0 && !creditsLoading && (
-                  <div className="mt-3 flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-100">
-                    <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                    <p className="text-xs text-amber-700 leading-relaxed">
-                      You have no credits. Full price of ₹{BASE_PRICE_INR} applies.
-                    </p>
-                  </div>
-                )}
+                  {/* Warnings */}
+                  {!creditsLoading && !hasEnoughBonusCredits && (
+                    <div className="mt-3 flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-100">
+                      <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                      <p className="text-xs text-red-600 leading-relaxed">
+                        You only have <strong>{bonusCredits} bonus credits</strong>. Reduce the slider to {bonusCredits} or fewer.
+                      </p>
+                    </div>
+                  )}
+                  {bonusCredits === 0 && !creditsLoading && (
+                    <div className="mt-3 flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-100">
+                      <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <p className="text-xs text-amber-700 leading-relaxed">
+                        You have no bonus credits. Full price of ₹{BASE_PRICE_INR} applies.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+              <div className="mt-4 rounded-xl border border-orange-100 bg-orange-50/70 px-4 py-3 text-sm text-orange-700">
+                <p className="font-semibold">Purchased credits are available.</p>
+                <p className="mt-1 text-xs text-orange-600">
+                  If you use purchased credits to cover this portfolio. Bonus credits will not be applied.
+                </p>
+              </div>
+            </>
+            ) : (
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 px-4 py-3 text-sm text-emerald-700">
+                <p className="font-semibold">Purchased credits available</p>
+                <p className="mt-1 text-xs text-emerald-600">
+                  Your purchased credits will cover up to the portfolio price. Any remaining balance will be paid through Razorpay if needed.
+                </p>
               </div>
             )}
+            </div>
           </div>
 
           {/* Payment method — always Razorpay, shown as info
@@ -666,14 +877,26 @@ export default function CreatePortfolio() {
 
             <div className="flex items-center justify-between text-sm mb-2">
               <span className="text-gray-600">Portfolio creation</span>
-              <span className="font-semibold text-gray-800">₹{BASE_PRICE_INR}</span>
+              <span className="font-semibold text-gray-800">₹{BASE_PRICE_INR}.00</span>
             </div>
+
+            {shouldUsePurchasedCredits && (
+              <div className="flex items-center justify-between text-sm mb-2">
+                <span className="flex items-center gap-1.5 text-emerald-600">
+                  <Tag className="w-3.5 h-3.5" />
+                  Purchased credits applied
+                </span>
+                <span className="font-semibold text-emerald-600">
+                  −₹{purchasedCreditsToUse.toFixed(2)}
+                </span>
+              </div>
+            )}
 
             {useCredits && selectedCredits > 0 && (
               <div className="flex items-center justify-between text-sm mb-2">
                 <span className="flex items-center gap-1.5 text-orange-600">
                   <Tag className="w-3.5 h-3.5" />
-                  Credit discount ({selectedCredits} credit
+                  Bonus credit discount ({selectedCredits} credit
                   {selectedCredits > 1 ? "s" : ""})
                 </span>
                 <span className="font-semibold text-orange-600">
@@ -699,12 +922,7 @@ export default function CreatePortfolio() {
           <button
             type="submit"
             id="portfolio-pay-submit-btn"
-            disabled={
-              processing ||
-              !portfolioName.trim() ||
-              !portfolioType ||
-              (useCredits && !hasEnoughCredits && userCredits > 0)
-            }
+            disabled={processing}
             className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-gradient-to-r from-violet-600 to-violet-500 text-white font-bold text-sm hover:from-violet-700 hover:to-violet-600 transition disabled:opacity-60 disabled:cursor-not-allowed shadow-md shadow-violet-200 cursor-pointer"
           >
             {processing ? (
@@ -715,7 +933,7 @@ export default function CreatePortfolio() {
             ) : (
               <>
                 <CreditCard className="w-4 h-4" />
-                Pay ₹{finalPriceINR.toFixed(2)} & Create Portfolio
+                {finalPriceINR <= 0 ? "Create Portfolio" : `Pay ₹${finalPriceINR.toFixed(2)} & Create Portfolio`}
                 {useCredits && selectedCredits > 0 && (
                   <span className="ml-1 text-violet-200 font-normal text-xs">
                     ({selectedCredits} credit{selectedCredits > 1 ? "s" : ""} applied)

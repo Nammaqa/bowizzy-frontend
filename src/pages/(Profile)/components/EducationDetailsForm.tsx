@@ -6,6 +6,9 @@ import {
   deleteEducation,
 } from "@/services/educationService";
 
+const CURRENT_YEAR = new Date().getFullYear();
+const LETTERS_ONLY_REGEX = /^[A-Za-z\s]+$/;
+
 export const branchesByDegree: Record<string, string[]> = {
   Diploma: [
     "Mechanical",
@@ -113,9 +116,9 @@ interface EducationDetailsFormProps {
 interface HigherEducation {
   id: string; // Client-side unique ID (timestamp or generated)
   degree: string;
+  fieldOfStudy?: string;
   institutionName: string;
   universityBoard: string;
-  fieldOfStudy: string;
   startYear: string;
   endYear: string;
   resultFormat: string;
@@ -164,27 +167,26 @@ export default function EducationDetailsForm({
   const [submitError, setSubmitError] = useState("");
 
   // SSLC Data
-  const [sslcData, setSslcData] = useState({
-    institutionName: initialData.sslc?.institutionName || "",
-    boardType: initialData.sslc?.boardType || "",
-    resultFormat: initialData.sslc?.resultFormat || "",
-    yearOfPassing: initialData.sslc?.yearOfPassing || "",
-    result: initialData.sslc?.result || "",
-    education_id: initialData.sslc?.education_id || null,
+  const getEducationStateFromData = (data: any) => ({
+    sslcData: {
+      institutionName: data.sslc?.institutionName || "",
+      boardType: data.sslc?.boardType || "",
+      resultFormat: data.sslc?.resultFormat || "",
+      yearOfPassing: data.sslc?.yearOfPassing || "",
+      result: data.sslc?.result || "",
+      education_id: data.sslc?.education_id || null,
+    },
+    puData: {
+      institutionName: data.pu?.institutionName || "",
+      boardType: data.pu?.boardType || "",
+      yearOfPassing: data.pu?.yearOfPassing || "",
+      resultFormat: data.pu?.resultFormat || "",
+      subjectStream: data.pu?.subjectStream || "",
+      result: data.pu?.result || "",
+      education_id: data.pu?.education_id || null,
+    },
   });
 
-  // PU Data
-  const [puData, setPuData] = useState({
-    institutionName: initialData.pu?.institutionName || "",
-    boardType: initialData.pu?.boardType || "",
-    yearOfPassing: initialData.pu?.yearOfPassing || "",
-    resultFormat: initialData.pu?.resultFormat || "",
-    subjectStream: initialData.pu?.subjectStream || "",
-    result: initialData.pu?.result || "",
-    education_id: initialData.pu?.education_id || null,
-  });
-
-  // Helper to initialize lists, ensuring at least one Higher Education card exists
   const getInitialHigherEducations = (data: any) => {
     const higherEdus = data.higherEducations || [];
     const extraEdus = data.extraEducations || [];
@@ -197,9 +199,9 @@ export default function EducationDetailsForm({
       combined.push({
         id: Date.now().toString(),
         degree: "",
+        fieldOfStudy: "",
         institutionName: "",
         universityBoard: "",
-        fieldOfStudy: "",
         startYear: "",
         endYear: "",
         resultFormat: "",
@@ -220,6 +222,10 @@ export default function EducationDetailsForm({
   const getInitialExpanded = (array: HigherEducation[]) =>
     array.reduce((acc, edu) => ({ ...acc, [edu.id]: true }), {});
 
+  const [sslcData, setSslcData] = useState(
+    getEducationStateFromData(initialData).sslcData
+  );
+  const [puData, setPuData] = useState(getEducationStateFromData(initialData).puData);
   const [higherEducations, setHigherEducations] =
     useState<HigherEducation[]>(initialHigherEdu);
   const [extraEducations, setExtraEducations] =
@@ -260,18 +266,49 @@ export default function EducationDetailsForm({
   const initialHigher = useRef<Record<string, HigherEducation>>({});
   const initialExtra = useRef<Record<string, HigherEducation>>({});
 
-  // Initialize refs for higher and extra educations on mount
-  useEffect(() => {
-    [...initialHigherEdu, ...initialExtraEdu].forEach((edu) => {
+  const syncEducationStateFromInitialData = (data: any) => {
+    const nextState = getEducationStateFromData(data);
+    setSslcData(nextState.sslcData);
+    setPuData(nextState.puData);
+
+    const nextEducations = getInitialHigherEducations(data);
+    const nextHigherEdu = nextEducations.slice(0, 1);
+    const nextExtraEdu = nextEducations.slice(1);
+
+    setHigherEducations(nextHigherEdu);
+    setExtraEducations(nextExtraEdu);
+    setHigherExpanded(getInitialExpanded(nextHigherEdu));
+    setExtraExpanded(getInitialExpanded(nextExtraEdu));
+
+    setSslcChanged(false);
+    setPuChanged(false);
+    setHigherChanges({});
+    setExtraChanges({});
+    setSslcFeedback("");
+    setPuFeedback("");
+    setHigherFeedback({});
+    setExtraFeedback({});
+
+    initialSslc.current = nextState.sslcData;
+    initialPu.current = nextState.puData;
+    initialHigher.current = {};
+    initialExtra.current = {};
+
+    [...nextHigherEdu, ...nextExtraEdu].forEach((edu) => {
       if (edu.id) {
-        if (initialHigherEdu.some((e) => e.id === edu.id)) {
+        if (nextHigherEdu.some((e) => e.id === edu.id)) {
           initialHigher.current[edu.id] = { ...edu };
         } else {
           initialExtra.current[edu.id] = { ...edu };
         }
       }
     });
-  }, []);
+  };
+
+  // Initialize refs for higher and extra educations on mount
+  useEffect(() => {
+    syncEducationStateFromInitialData(initialData);
+  }, [initialData]);
 
   // Check SSLC changes
   useEffect(() => {
@@ -340,12 +377,12 @@ export default function EducationDetailsForm({
   ): string[] => {
     const changedFields = [];
     if (current.degree !== (initial.degree || "")) changedFields.push("degree");
+    if ((current.fieldOfStudy || "") !== (initial.fieldOfStudy || ""))
+      changedFields.push("fieldOfStudy");
     if (current.institutionName !== (initial.institutionName || ""))
       changedFields.push("institutionName");
     if (current.universityBoard !== (initial.universityBoard || ""))
       changedFields.push("universityBoard");
-    if (current.fieldOfStudy !== (initial.fieldOfStudy || ""))
-      changedFields.push("fieldOfStudy");
     if (current.startYear !== (initial.startYear || ""))
       changedFields.push("startYear");
     if (current.endYear !== (initial.endYear || ""))
@@ -360,7 +397,10 @@ export default function EducationDetailsForm({
 
   // Helper function to validate result format
   const validateResult = (value: string, format: string) => {
-    if (!value || !format) return "";
+    if (!format) return "";
+    if (!value || !value.trim()) {
+      return "Result is required when result format is selected";
+    }
 
     // Ensure no negative sign is allowed if format is numeric
     if (format === "Percentage" || format === "CGPA") {
@@ -381,9 +421,8 @@ export default function EducationDetailsForm({
         if (cgpa < 0 || cgpa > 10) return "Must be between 0-10";
         break;
       case "Grade":
-        // Disallow negative grades like A- or B-; allow A, A+, B, B+, Pass, Fail
-        if (!/^[A-F]\+?$|^Pass$|^Fail$/i.test(value))
-          return "Enter valid grade (A, B+, Pass, Fail)";
+        if (!/^(?:A1|A2|B1|B2|C1|C2|D|E)$/i.test(value.trim()))
+          return "Enter valid grade (A1, A2, B1, B2, C1, C2, D, E)";
         break;
     }
     return "";
@@ -392,21 +431,11 @@ export default function EducationDetailsForm({
   // Helper function to validate institution/board names
   const validateInstitutionName = (value: string) => {
     if (!value || !value.trim()) return "Institution name is required";
-    if (value.trim().length <= 5) {
-      return "Institution name must be more than 5 characters";
+    if (value.length > 100) {
+      return "Max 100 characters allowed";
     }
-
-    // allow letters, numbers, spaces, dot, comma, &, apostrophe, hyphen, parentheses
-    const regex = /^[a-zA-Z0-9\s.,&'\-()]+$/;
-
-    if (!regex.test(value)) {
-      return "Invalid institution name";
-    }
-    if (!/[a-zA-Z]/.test(value)) {
-      return "Institution name must include a letter";
-    }
-    if (value.length > 50) {
-      return "Max 50 characters allowed";
+    if (!LETTERS_ONLY_REGEX.test(value)) {
+      return "Only letters allowed";
     }
     if (value.split(/\s+/).some((word) => word.length > 15)) {
       return "Each word must be 15 characters or less";
@@ -415,12 +444,41 @@ export default function EducationDetailsForm({
     return "";
   };
 
+  const validateAlphabetField = (value: string, label: string) => {
+    if (!value || !value.trim()) return `${label} is required`;
+    if (value.length > 50) return "Max 50 characters allowed";
+    if (!LETTERS_ONLY_REGEX.test(value)) return "Only letters allowed";
+    return "";
+  };
+
+  const sanitizeAlphabetInput = (value: string) =>
+    value.replace(/[^A-Za-z\s]/g, "").slice(0, 50);
+
+  const sanitizeInstitutionNameInput = (value: string) =>
+    value.replace(/[^A-Za-z\s]/g, "").slice(0, 100);
+
+  const validateYearOfPassing = (value: string, label = "Year of Passing") => {
+    if (!value) return "";
+    const error = validateMonthFormat(value);
+    if (error) return error;
+    const year = Number(value.slice(0, 4));
+    if (year > CURRENT_YEAR) return `${label} cannot be after ${CURRENT_YEAR}`;
+    return "";
+  };
+
+  const validateBoardType = (value: string) => {
+    if (!value || !value.trim()) return "Board Type is required";
+    return "";
+  };
 
   // Helper function to validate date range
   const validateDateRange = (startDate: string, endDate: string) => {
     if (startDate && endDate) {
+      if (startDate === endDate) {
+        return "Start date and end date should not be the same";
+      }
       if (endDate < startDate) {
-        return "End date cannot be before start date";
+        return "End date must be after start date";
       }
     }
     return "";
@@ -462,7 +520,8 @@ export default function EducationDetailsForm({
     const [y, m] = value.split("-");
     if (y.length !== 4) return "Year must be 4 digits";
     const yearNum = parseInt(y, 10);
-    if (yearNum < 1960) return "Year must be 1960 or later";
+    if (yearNum <= 1960) return "Year must be after 1960";
+    if (yearNum > CURRENT_YEAR) return `Year cannot be after ${CURRENT_YEAR}`;
     const monthNum = parseInt(m, 10);
     if (isNaN(monthNum) || monthNum < 1 || monthNum > 12)
       return "Invalid month";
@@ -473,21 +532,67 @@ export default function EducationDetailsForm({
   const isEducationCardFilled = (edu: HigherEducation): boolean => {
     return !!(
       edu.degree ||
+      edu.fieldOfStudy ||
       edu.institutionName ||
       edu.universityBoard ||
-      edu.fieldOfStudy ||
       edu.startYear ||
       edu.endYear ||
+      edu.resultFormat ||
       edu.result
     );
   };
 
-  // Helper function to validate mandatory Result Format and Result if card is filled
-  const validateResultMandatory = (
+  // Helper function to validate mandatory fields if degree is selected
+  const validateMandatoryFields = (
     edu: HigherEducation,
     prefix: string
   ): void => {
-    if (isEducationCardFilled(edu)) {
+    if (edu.degree) {
+      const requiredFields = [
+        { key: "fieldOfStudy", message: "Field of Study is required", validator: () => validateAlphabetField(edu.fieldOfStudy || "", "Field of Study") },
+        { key: "institutionName", message: "Institution Name is required", validator: () => validateInstitutionName(edu.institutionName) },
+        { key: "universityBoard", message: "University/Board is required", validator: () => validateAlphabetField(edu.universityBoard, "University/Board") },
+        { key: "startYear", message: "Start Year is required", validator: () => validateMonthFormat(edu.startYear) },
+        { key: "resultFormat", message: "Result Format is required", validator: () => "" },
+        { key: "result", message: "Result is required", validator: () => validateResult(edu.result, edu.resultFormat) },
+      ];
+
+      requiredFields.forEach(({ key, message, validator }) => {
+        if (!edu[key as keyof HigherEducation]) {
+          setErrors((prev) => ({ ...prev, [`${prefix}-${key}`]: message }));
+        } else {
+          const error = validator();
+          setErrors((prev) => {
+            const updated = { ...prev };
+            if (error) {
+              updated[`${prefix}-${key}`] = error;
+            } else {
+              delete updated[`${prefix}-${key}`];
+            }
+            return updated;
+          });
+        }
+      });
+
+      if (!edu.currentlyPursuing && !edu.endYear) {
+        setErrors((prev) => ({ ...prev, [`${prefix}-endYear`]: "End Year is required" }));
+      } else {
+        const endYearError =
+          !edu.currentlyPursuing && edu.endYear
+            ? validateMonthFormat(edu.endYear) || validateDateRange(edu.startYear, edu.endYear)
+            : "";
+        setErrors((prev) => {
+          const updated = { ...prev };
+          if (endYearError) {
+            updated[`${prefix}-endYear`] = endYearError;
+          } else if (updated[`${prefix}-endYear`] === "End Year is required" || !endYearError) {
+            delete updated[`${prefix}-endYear`];
+          }
+          return updated;
+        });
+      }
+
+    } else if (isEducationCardFilled(edu)) {
       if (!edu.resultFormat) {
         setErrors((prev) => ({
           ...prev,
@@ -515,10 +620,10 @@ export default function EducationDetailsForm({
       }
     } else {
       // If card is empty, clear the mandatory errors
+      const keysToClear = ["fieldOfStudy", "institutionName", "universityBoard", "startYear", "endYear", "resultFormat", "result"];
       setErrors((prev) => {
         const updated = { ...prev };
-        delete updated[`${prefix}-resultFormat`];
-        delete updated[`${prefix}-result`];
+        keysToClear.forEach(key => delete updated[`${prefix}-${key}`]);
         return updated;
       });
     }
@@ -530,13 +635,16 @@ export default function EducationDetailsForm({
   ) => {
     const { name, value } = e.target;
     let finalValue = value;
+    if (name === "institutionName") {
+      finalValue = sanitizeInstitutionNameInput(value);
+    }
     if (name === "result" && sslcData.resultFormat === "Grade") {
       finalValue = value.toUpperCase();
     }
     setSslcData((prev) => {
       const nextData = { ...prev, [name]: finalValue };
-      if (name === "resultFormat" && value === "Grade") {
-        nextData.result = nextData.result.toUpperCase();
+      if (name === "resultFormat") {
+        nextData.result = "";
       }
       return nextData;
     });
@@ -545,12 +653,17 @@ export default function EducationDetailsForm({
       const error = validateResult(finalValue, sslcData.resultFormat);
       setErrors((prev) => ({ ...prev, [`sslc-result`]: error }));
     } else if (name === "resultFormat") {
-      const updatedResult = value === "Grade" ? sslcData.result.toUpperCase() : sslcData.result;
-      const error = validateResult(updatedResult, value);
-      setErrors((prev) => ({ ...prev, [`sslc-result`]: error }));
+      const error = validateResult("", value);
+      setErrors((prev) => ({ ...prev, [`sslc-result`]: error, [`sslc-resultFormat`]: value ? "" : "Result Format is required" }));
     } else if (name === "institutionName") {
       const error = validateInstitutionName(finalValue);
       setErrors((prev) => ({ ...prev, [`sslc-institutionName`]: error }));
+    } else if (name === "boardType") {
+      const error = validateBoardType(finalValue);
+      setErrors((prev) => ({ ...prev, [`sslc-boardType`]: error }));
+    } else if (name === "yearOfPassing") {
+      const error = validateYearOfPassing(finalValue);
+      setErrors((prev) => ({ ...prev, [`sslc-yearOfPassing`]: error }));
     }
   };
 
@@ -560,13 +673,17 @@ export default function EducationDetailsForm({
   ) => {
     const { name, value } = e.target;
     let finalValue = value;
+    if (name === "institutionName") {
+        finalValue = sanitizeInstitutionNameInput(value);   // ✅ caps at 100
+
+    }
     if (name === "result" && puData.resultFormat === "Grade") {
       finalValue = value.toUpperCase();
     }
     setPuData((prev) => {
       const nextData = { ...prev, [name]: finalValue };
-      if (name === "resultFormat" && value === "Grade") {
-        nextData.result = nextData.result.toUpperCase();
+      if (name === "resultFormat") {
+        nextData.result = "";
       }
       return nextData;
     });
@@ -575,12 +692,17 @@ export default function EducationDetailsForm({
       const error = validateResult(finalValue, puData.resultFormat);
       setErrors((prev) => ({ ...prev, [`pu-result`]: error }));
     } else if (name === "resultFormat") {
-      const updatedResult = value === "Grade" ? puData.result.toUpperCase() : puData.result;
-      const error = validateResult(updatedResult, value);
-      setErrors((prev) => ({ ...prev, [`pu-result`]: error }));
+      const error = validateResult("", value);
+      setErrors((prev) => ({ ...prev, [`pu-result`]: error, [`pu-resultFormat`]: value ? "" : "Result Format is required" }));
     } else if (name === "institutionName") {
       const error = validateInstitutionName(finalValue);
       setErrors((prev) => ({ ...prev, [`pu-institutionName`]: error }));
+    } else if (name === "boardType") {
+      const error = validateBoardType(finalValue);
+      setErrors((prev) => ({ ...prev, [`pu-boardType`]: error }));
+    } else if (name === "yearOfPassing") {
+      const error = validateYearOfPassing(finalValue);
+      setErrors((prev) => ({ ...prev, [`pu-yearOfPassing`]: error }));
     }
   };
 
@@ -597,6 +719,15 @@ export default function EducationDetailsForm({
     const prefix = isExtra ? `extra-${index}` : `higher-${index}`;
 
     let finalValue = value;
+    if (
+      typeof value === "string" &&
+      (field === "fieldOfStudy" ||
+        field === "universityBoard")
+    ) {
+      finalValue = sanitizeAlphabetInput(value);
+    } else if (typeof value === "string" && field === "institutionName") {
+      finalValue = sanitizeInstitutionNameInput(value);
+    }
     if (field === "result" && typeof value === "string" && currentList[index]?.resultFormat === "Grade") {
       finalValue = value.toUpperCase();
     }
@@ -605,8 +736,8 @@ export default function EducationDetailsForm({
       const updated = [...prev];
       updated[index] = { ...updated[index], [field]: finalValue };
 
-      if (field === "resultFormat" && value === "Grade") {
-        updated[index].result = updated[index].result.toUpperCase();
+      if (field === "resultFormat") {
+        updated[index].result = "";
       }
 
       if (field === "currentlyPursuing" && finalValue === true) {
@@ -629,8 +760,8 @@ export default function EducationDetailsForm({
 
     // Validation logic
     const updatedEdu = { ...currentList[index], [field]: finalValue };
-    if (field === "resultFormat" && value === "Grade") {
-      updatedEdu.result = updatedEdu.result.toUpperCase();
+    if (field === "resultFormat") {
+      updatedEdu.result = "";
     }
 
     if (field === "result" && typeof finalValue === "string") {
@@ -638,12 +769,19 @@ export default function EducationDetailsForm({
       setErrors((prev) => ({ ...prev, [`${prefix}-result`]: error }));
     } else if (field === "resultFormat" && typeof finalValue === "string") {
       const error = validateResult(updatedEdu.result, finalValue);
-      setErrors((prev) => ({ ...prev, [`${prefix}-result`]: error }));
+      setErrors((prev) => ({
+        ...prev,
+        [`${prefix}-result`]: error,
+        [`${prefix}-resultFormat`]: finalValue ? "" : "Result Format is required",
+      }));
+    } else if (field === "fieldOfStudy" && typeof finalValue === "string") {
+      const error = validateAlphabetField(finalValue, "Field of Study");
+      setErrors((prev) => ({ ...prev, [`${prefix}-fieldOfStudy`]: error }));
     } else if (field === "institutionName" && typeof finalValue === "string") {
       const error = validateInstitutionName(finalValue);
       setErrors((prev) => ({ ...prev, [`${prefix}-institutionName`]: error }));
     } else if (field === "universityBoard" && typeof finalValue === "string") {
-      const error = validateInstitutionName(finalValue);
+      const error = validateAlphabetField(finalValue, "University/Board");
       setErrors((prev) => ({ ...prev, [`${prefix}-universityBoard`]: error }));
     } else if (field === "startYear" && typeof finalValue === "string") {
       const fmtError = validateMonthFormat(finalValue);
@@ -675,13 +813,7 @@ export default function EducationDetailsForm({
     }
 
     // After all validations, check if result format and result are mandatory
-    setTimeout(() => {
-      const currentList = isExtra ? extraEducations : higherEducations;
-      const currentEdu = currentList[index];
-      if (currentEdu) {
-        validateResultMandatory(currentEdu, prefix);
-      }
-    }, 0);
+    validateMandatoryFields(updatedEdu, prefix);
   };
 
   // Handler for saving SSLC details (PUT/POST call)
@@ -689,8 +821,46 @@ export default function EducationDetailsForm({
     const currentData = sslcData;
     const initial = initialSslc.current;
 
-    // Check for validation errors
-    if (errors["sslc-result"] || errors["sslc-institutionName"]) return;
+    let hasError = false;
+
+    const instError = validateInstitutionName(currentData.institutionName);
+    if (instError) {
+      setErrors((prev) => ({ ...prev, "sslc-institutionName": instError }));
+      hasError = true;
+    }
+
+    const boardTypeError = validateBoardType(currentData.boardType);
+    if (boardTypeError) {
+      setErrors((prev) => ({ ...prev, "sslc-boardType": boardTypeError }));
+      hasError = true;
+    }
+
+    const yearError = validateYearOfPassing(currentData.yearOfPassing);
+    if (yearError) {
+      setErrors((prev) => ({ ...prev, "sslc-yearOfPassing": yearError }));
+      hasError = true;
+    }
+
+    if (!currentData.resultFormat) {
+      setErrors((prev) => ({ ...prev, "sslc-resultFormat": "Result Format is required" }));
+      hasError = true;
+    }
+
+    if (!currentData.result) {
+      setErrors((prev) => ({ ...prev, "sslc-result": "Result is required" }));
+      hasError = true;
+    } else if (currentData.resultFormat) {
+      const resultError = validateResult(currentData.result, currentData.resultFormat);
+      if (resultError) {
+        setErrors((prev) => ({ ...prev, "sslc-result": resultError }));
+        hasError = true;
+      }
+    }
+
+    if (hasError) return;
+
+    // Check for any remaining validation errors
+    if (errors["sslc-institutionName"] || errors["sslc-boardType"] || errors["sslc-yearOfPassing"] || errors["sslc-resultFormat"] || errors["sslc-result"]) return;
 
     try {
       let payload: Record<string, any> = {};
@@ -775,8 +945,46 @@ export default function EducationDetailsForm({
     const currentData = puData;
     const initial = initialPu.current;
 
-    // Check for validation errors
-    if (errors["pu-result"] || errors["pu-institutionName"]) return;
+    let hasError = false;
+
+    const instError = validateInstitutionName(currentData.institutionName);
+    if (instError) {
+      setErrors((prev) => ({ ...prev, "pu-institutionName": instError }));
+      hasError = true;
+    }
+
+    const boardTypeError = validateBoardType(currentData.boardType);
+    if (boardTypeError) {
+      setErrors((prev) => ({ ...prev, "pu-boardType": boardTypeError }));
+      hasError = true;
+    }
+
+    const yearError = validateYearOfPassing(currentData.yearOfPassing);
+    if (yearError) {
+      setErrors((prev) => ({ ...prev, "pu-yearOfPassing": yearError }));
+      hasError = true;
+    }
+
+    if (!currentData.resultFormat) {
+      setErrors((prev) => ({ ...prev, "pu-resultFormat": "Result Format is required" }));
+      hasError = true;
+    }
+
+    if (!currentData.result) {
+      setErrors((prev) => ({ ...prev, "pu-result": "Result is required" }));
+      hasError = true;
+    } else if (currentData.resultFormat) {
+      const resultError = validateResult(currentData.result, currentData.resultFormat);
+      if (resultError) {
+        setErrors((prev) => ({ ...prev, "pu-result": resultError }));
+        hasError = true;
+      }
+    }
+
+    if (hasError) return;
+
+    // Check for any remaining validation errors
+    if (errors["pu-institutionName"] || errors["pu-boardType"] || errors["pu-yearOfPassing"] || errors["pu-resultFormat"] || errors["pu-result"]) return;
 
     try {
       let payload: Record<string, any> = {};
@@ -870,9 +1078,44 @@ export default function EducationDetailsForm({
     const prefix = isExtra
       ? `extra-${extraEducations.findIndex((e) => e.id === edu.id)}`
       : `higher-${higherEducations.findIndex((e) => e.id === edu.id)}`;
+    const resultError = validateResult(edu.result, edu.resultFormat);
+    const fieldOfStudyError = validateAlphabetField(edu.fieldOfStudy || "", "Field of Study");
+    const institutionError = validateInstitutionName(edu.institutionName);
+    const universityBoardError = validateAlphabetField(edu.universityBoard, "University/Board");
+    const startYearError = edu.startYear ? validateMonthFormat(edu.startYear) : "";
+    const endYearFormatError = edu.endYear ? validateMonthFormat(edu.endYear) : "";
+    const dateRangeError = validateDateRange(edu.startYear, edu.endYear);
 
-    // Check for validation errors in current card
+    let hasError = false;
+    const newErrors: Record<string, string> = {};
+
+    if (edu.degree || isEducationCardFilled(edu)) {
+      if (!edu.fieldOfStudy) { newErrors[`${prefix}-fieldOfStudy`] = "Field of Study is required"; hasError = true; }
+      else if (fieldOfStudyError) { newErrors[`${prefix}-fieldOfStudy`] = fieldOfStudyError; hasError = true; }
+      if (!edu.institutionName) { newErrors[`${prefix}-institutionName`] = "Institution Name is required"; hasError = true; }
+      else if (institutionError) { newErrors[`${prefix}-institutionName`] = institutionError; hasError = true; }
+      if (!edu.universityBoard) { newErrors[`${prefix}-universityBoard`] = "University/Board is required"; hasError = true; }
+      else if (universityBoardError) { newErrors[`${prefix}-universityBoard`] = universityBoardError; hasError = true; }
+      if (!edu.startYear) { newErrors[`${prefix}-startYear`] = "Start Year is required"; hasError = true; }
+      else if (startYearError) { newErrors[`${prefix}-startYear`] = startYearError; hasError = true; }
+      if (!edu.currentlyPursuing && !edu.endYear) { newErrors[`${prefix}-endYear`] = "End Year is required"; hasError = true; }
+      else if (!edu.currentlyPursuing && (endYearFormatError || dateRangeError)) {
+        newErrors[`${prefix}-endYear`] = endYearFormatError || dateRangeError;
+        hasError = true;
+      }
+      if (!edu.resultFormat) { newErrors[`${prefix}-resultFormat`] = "Result Format is required"; hasError = true; }
+      if (!edu.result) { newErrors[`${prefix}-result`] = "Result is required"; hasError = true; }
+      if (resultError) { newErrors[`${prefix}-result`] = resultError; hasError = true; }
+    }
+
+    if (hasError) {
+      setErrors((prev) => ({ ...prev, ...newErrors }));
+      return;
+    }
+
+    // Check for any other pre-existing validation errors
     if (
+      errors[`${prefix}-fieldOfStudy`] ||
       errors[`${prefix}-result`] ||
       errors[`${prefix}-resultFormat`] ||
       errors[`${prefix}-institutionName`] ||
@@ -881,6 +1124,7 @@ export default function EducationDetailsForm({
       errors[`${prefix}-endYear`]
     )
       return;
+
     const isNew = !edu.education_id;
     // Handle initial save or update
     try {
@@ -960,7 +1204,7 @@ export default function EducationDetailsForm({
               payload.degree = edu.degree;
               break;
             case "fieldOfStudy":
-              payload.field_of_study = edu.fieldOfStudy;
+              payload.field_of_study = edu.fieldOfStudy || "";
               break;
             case "institutionName":
               payload.institution_name = edu.institutionName;
@@ -1037,9 +1281,9 @@ export default function EducationDetailsForm({
     const newEdu: HigherEducation = {
       id: Date.now().toString(),
       degree: "",
+      fieldOfStudy: "",
       institutionName: "",
       universityBoard: "",
-      fieldOfStudy: "",
       startYear: "",
       endYear: "",
       resultFormat: "",
@@ -1179,9 +1423,9 @@ export default function EducationDetailsForm({
             ? {
               ...edu,
               degree: "",
+              fieldOfStudy: "",
               institutionName: "",
               universityBoard: "",
-              fieldOfStudy: "",
               startYear: "",
               endYear: "",
               resultFormat: "",
@@ -1238,6 +1482,60 @@ export default function EducationDetailsForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    const resultErrors: { [key: string]: string } = {};
+    const sslcBoardTypeError =
+      sslcData.boardType ||
+        !(sslcData.institutionName || sslcData.resultFormat || sslcData.yearOfPassing || sslcData.result)
+        ? ""
+        : "Board Type is required";
+    const puBoardTypeError =
+      puData.boardType ||
+        !(puData.institutionName || puData.subjectStream || puData.resultFormat || puData.yearOfPassing || puData.result)
+        ? ""
+        : "Board Type is required";
+    const sslcResultError = validateResult(sslcData.result, sslcData.resultFormat);
+    const puResultError = validateResult(puData.result, puData.resultFormat);
+
+    const sslcResultFormatError =
+      sslcData.resultFormat ||
+        !(sslcData.institutionName || sslcData.boardType || sslcData.yearOfPassing || sslcData.result)
+        ? ""
+        : "Result Format is required";
+    const puResultFormatError =
+      puData.resultFormat ||
+        !(puData.institutionName || puData.boardType || puData.subjectStream || puData.yearOfPassing || puData.result)
+        ? ""
+        : "Result Format is required";
+
+    if (sslcBoardTypeError) resultErrors["sslc-boardType"] = sslcBoardTypeError;
+    if (puBoardTypeError) resultErrors["pu-boardType"] = puBoardTypeError;
+    if (sslcResultError) resultErrors["sslc-result"] = sslcResultError;
+    if (puResultError) resultErrors["pu-result"] = puResultError;
+    if (sslcResultFormatError) resultErrors["sslc-resultFormat"] = sslcResultFormatError;
+    if (puResultFormatError) resultErrors["pu-resultFormat"] = puResultFormatError;
+
+    higherEducations.forEach((edu, index) => {
+      const resultError = validateResult(edu.result, edu.resultFormat);
+      if (resultError) resultErrors[`higher-${index}-result`] = resultError;
+      if (!edu.resultFormat && (edu.degree || isEducationCardFilled(edu))) {
+        resultErrors[`higher-${index}-resultFormat`] = "Result Format is required";
+      }
+    });
+
+    extraEducations.forEach((edu, index) => {
+      const resultError = validateResult(edu.result, edu.resultFormat);
+      if (resultError) resultErrors[`extra-${index}-result`] = resultError;
+      if (!edu.resultFormat && (edu.degree || isEducationCardFilled(edu))) {
+        resultErrors[`extra-${index}-resultFormat`] = "Result Format is required";
+      }
+    });
+
+    if (Object.keys(resultErrors).length > 0) {
+      setErrors((prev) => ({ ...prev, ...resultErrors }));
+      setSubmitError("Please enter the result for each selected result format.");
+      return;
+    }
+
     // 1️⃣ Validation errors
     if (Object.values(errors).some((err) => err.length > 0)) {
       setSubmitError("Please fix validation errors before proceeding.");
@@ -1292,10 +1590,10 @@ export default function EducationDetailsForm({
       sslc: sslcData,
       pu: puData,
       higherEducations: higherEducations.filter(
-        (e) => e.degree || e.institutionName || e.education_id
+        (e) => e.degree || e.fieldOfStudy || e.institutionName || e.education_id
       ),
       extraEducations: extraEducations.filter(
-        (e) => e.degree || e.institutionName || e.education_id
+        (e) => e.degree || e.fieldOfStudy || e.institutionName || e.education_id
       ),
       deletedEducationIds: deletedEducationIds.current,
     });
@@ -1394,39 +1692,25 @@ export default function EducationDetailsForm({
               {/* Field of Study */}
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                  Field Of Study
+                  Field of Study
                 </label>
-                {branchesByDegree[education.degree] ? (
-                  <div className="relative">
-                    <select
-                      value={education.fieldOfStudy}
-                      onChange={(e) =>
-                        handleChange("fieldOfStudy", e.target.value)
-                      }
-                      className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
-                    >
-                      <option value="">Select Branch</option>
-                      {branchesByDegree[education.degree].map((b) => (
-                        <option key={b} value={b}>
-                          {b}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                  </div>
-                ) : (
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={education.fieldOfStudy}
-                      onChange={(e) => handleChange("fieldOfStudy", e.target.value)}
-                      placeholder="Enter Field Of Study"
-                      className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${errors[`${prefix}-fieldOfStudy`]
-                        ? "border-red-500 focus:ring-red-400"
-                        : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
-                        }`}
-                    />
-                  </div>
+                <input
+                  type="text"
+                  value={education.fieldOfStudy || ""}
+                  onChange={(e) =>
+                    handleChange("fieldOfStudy", e.target.value)
+                  }
+                  maxLength={50}
+                  placeholder="Enter Field of Study"
+                  className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${errors[`${prefix}-fieldOfStudy`]
+                    ? "border-red-500 focus:ring-red-400"
+                    : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                    }`}
+                />
+                {errors[`${prefix}-fieldOfStudy`] && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors[`${prefix}-fieldOfStudy`]}
+                  </p>
                 )}
               </div>
 
@@ -1441,6 +1725,7 @@ export default function EducationDetailsForm({
                   onChange={(e) =>
                     handleChange("institutionName", e.target.value)
                   }
+                  maxLength={100}
                   placeholder="Enter Institution Name"
                   className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${errors[`${prefix}-institutionName`]
                     ? "border-red-500 focus:ring-red-400"
@@ -1465,6 +1750,7 @@ export default function EducationDetailsForm({
                   onChange={(e) =>
                     handleChange("universityBoard", e.target.value)
                   }
+                  maxLength={50}
                   placeholder="Enter University/ Board Name"
                   className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${errors[`${prefix}-universityBoard`]
                     ? "border-red-500 focus:ring-red-400"
@@ -1489,8 +1775,13 @@ export default function EducationDetailsForm({
                     value={education.startYear}
                     onChange={(e) => handleChange("startYear", e.target.value)}
                     max={getCurrentMonth()}
-                    min="1960-01"
-                    className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm"
+                    min="1961-01"
+                    onKeyDown={(e) => e.preventDefault()}
+                    onPaste={(e) => e.preventDefault()}
+                    className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${errors[`${prefix}-startYear`]
+                      ? "border-red-500 focus:ring-red-400"
+                      : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                      }`}
                   />
                 </div>
                 {errors[`${prefix}-startYear`] && (
@@ -1511,7 +1802,9 @@ export default function EducationDetailsForm({
                     value={education.endYear}
                     onChange={(e) => handleChange("endYear", e.target.value)}
                     max={getCurrentMonth()}
-                    min="1960-01"
+                    min="1961-01"
+                    onKeyDown={(e) => e.preventDefault()}
+                    onPaste={(e) => e.preventDefault()}
                     disabled={education.currentlyPursuing}
                     className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm disabled:bg-gray-100 ${errors[`${prefix}-endYear`]
                       ? "border-red-500 focus:ring-red-400"
@@ -1554,11 +1847,11 @@ export default function EducationDetailsForm({
                     onChange={(e) =>
                       handleChange("resultFormat", e.target.value)
                     }
-                    className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm appearance-none bg-white pr-8 ${
-                      errors[`${prefix}-resultFormat`]
-                        ? "border-red-500 focus:ring-red-400"
-                        : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
-                    }`}
+                    required
+                    className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm appearance-none bg-white pr-8 ${errors[`${prefix}-resultFormat`]
+                      ? "border-red-500 focus:ring-red-400"
+                      : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                      }`}
                   >
                     <option value="">Select Result Format</option>
                     <option value="Percentage">Percentage</option>
@@ -1717,6 +2010,7 @@ export default function EducationDetailsForm({
                     name="institutionName"
                     value={sslcData.institutionName}
                     onChange={handleSslcChange}
+                    maxLength={100}
                     placeholder="Enter Institute Name"
                     className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${errors["sslc-institutionName"]
                       ? "border-red-500 focus:ring-red-400"
@@ -1738,7 +2032,10 @@ export default function EducationDetailsForm({
                       name="boardType"
                       value={sslcData.boardType}
                       onChange={handleSslcChange}
-                      className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
+                      className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm appearance-none bg-white pr-8 ${errors["sslc-boardType"]
+                        ? "border-red-500 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                        }`}
                     >
                       <option value="">Select Board Type</option>
                       <option value="CBSE">CBSE</option>
@@ -1747,6 +2044,11 @@ export default function EducationDetailsForm({
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
+                  {errors["sslc-boardType"] && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors["sslc-boardType"]}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
@@ -1758,9 +2060,19 @@ export default function EducationDetailsForm({
                     value={sslcData.yearOfPassing}
                     onChange={handleSslcChange}
                     max={getCurrentMonth()}
-                    min="1960-01"
-                    className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm"
+                    min="1961-01"
+                    onKeyDown={(e) => e.preventDefault()}
+                    onPaste={(e) => e.preventDefault()}
+                    className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${errors["sslc-yearOfPassing"]
+                      ? "border-red-500 focus:ring-red-400"
+                      : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                      }`}
                   />
+                  {errors["sslc-yearOfPassing"] && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors["sslc-yearOfPassing"]}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
@@ -1771,7 +2083,11 @@ export default function EducationDetailsForm({
                       name="resultFormat"
                       value={sslcData.resultFormat}
                       onChange={handleSslcChange}
-                      className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
+                      required
+                      className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm appearance-none bg-white pr-8 ${errors["sslc-resultFormat"]
+                        ? "border-red-500 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                        }`}
                     >
                       <option value="">Select Result Format</option>
                       <option value="Percentage">Percentage</option>
@@ -1780,6 +2096,11 @@ export default function EducationDetailsForm({
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
+                  {errors["sslc-resultFormat"] && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors["sslc-resultFormat"]}
+                    </p>
+                  )}
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
@@ -1864,6 +2185,7 @@ export default function EducationDetailsForm({
                     name="institutionName"
                     value={puData.institutionName}
                     onChange={handlePuChange}
+                    maxLength={100}
                     placeholder="Enter Institute Name"
                     className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${errors["pu-institutionName"]
                       ? "border-red-500 focus:ring-red-400"
@@ -1885,7 +2207,10 @@ export default function EducationDetailsForm({
                       name="boardType"
                       value={puData.boardType}
                       onChange={handlePuChange}
-                      className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
+                      className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm appearance-none bg-white pr-8 ${errors["pu-boardType"]
+                        ? "border-red-500 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                        }`}
                     >
                       <option value="">Select Board Type</option>
                       <option value="CBSE">CBSE</option>
@@ -1894,6 +2219,11 @@ export default function EducationDetailsForm({
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
+                  {errors["pu-boardType"] && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors["pu-boardType"]}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
@@ -1924,9 +2254,19 @@ export default function EducationDetailsForm({
                     value={puData.yearOfPassing}
                     onChange={handlePuChange}
                     max={getCurrentMonth()}
-                    min="1960-01"
-                    className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm"
+                    min="1961-01"
+                    onKeyDown={(e) => e.preventDefault()}
+                    onPaste={(e) => e.preventDefault()}
+                    className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${errors["pu-yearOfPassing"]
+                      ? "border-red-500 focus:ring-red-400"
+                      : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                      }`}
                   />
+                  {errors["pu-yearOfPassing"] && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors["pu-yearOfPassing"]}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
@@ -1937,7 +2277,11 @@ export default function EducationDetailsForm({
                       name="resultFormat"
                       value={puData.resultFormat}
                       onChange={handlePuChange}
-                      className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
+                      required
+                      className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm appearance-none bg-white pr-8 ${errors["pu-resultFormat"]
+                        ? "border-red-500 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                        }`}
                     >
                       <option value="">Select Result Format</option>
                       <option value="Percentage">Percentage</option>
@@ -1946,6 +2290,11 @@ export default function EducationDetailsForm({
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
+                  {errors["pu-resultFormat"] && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors["pu-resultFormat"]}
+                    </p>
+                  )}
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">

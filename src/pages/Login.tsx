@@ -41,7 +41,12 @@ export default function Login() {
         })
       );
 
-      navigate("/dashboard");
+      // Hard redirect: replaceState changes the browser's current history
+      // entry to /dashboard, then reload() forces a full page refresh so
+      // React Router re-initialises with a completely empty in-memory stack.
+      // This mirrors navigation.reset() — no old session pages survive.
+      window.history.replaceState(null, "", "/dashboard");
+      window.location.reload();
     } catch (err) {
       setError(err.response?.data?.message || "Login error");
     } finally {
@@ -168,9 +173,13 @@ export default function Login() {
             </button>
 
             <div className="text-right text-sm">
-              {/* <button type="button" className="text-orange-500 hover:underline">
+              <button
+                type="button"
+                onClick={() => navigate("/forgot-password")}
+                className="text-orange-500 hover:underline"
+              >
                 Forgot Password?
-              </button> */}
+              </button>
             </div>
 
             <p className="text-center text-sm text-gray-600 cursor-pointer">

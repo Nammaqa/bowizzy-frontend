@@ -48,9 +48,15 @@ export default function Dashboard() {
       })
       .catch((error) => {
         if (error.response?.status === 401) {
-          // Clear user data and logout
           localStorage.removeItem("user");
-          navigate("/login");
+          localStorage.removeItem("token");
+          // Flood history so back-button can't reach old session pages
+          const depth = window.history.length + 10;
+          window.history.replaceState(null, "", "/login");
+          for (let i = 0; i < depth; i++) {
+            window.history.pushState(null, "", "/login");
+          }
+          window.location.reload();
         }
       });
 
@@ -315,7 +321,7 @@ export default function Dashboard() {
       <DashNav heading={"Welcome to BoWizzy"} />
 
       {showCancelModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-[200]">
           <div className="bg-white w-[420px] rounded-2xl shadow-xl p-10 relative text-center">
 
             <button
@@ -445,6 +451,7 @@ export default function Dashboard() {
                 )}
               </div>
             </div>
+
 
             <div className="space-y-4">
               <div className="bg-white rounded-lg p-4 shadow-sm">
@@ -709,7 +716,7 @@ export default function Dashboard() {
               </p>
               <div className="flex gap-2">
                 <button
-                  onClick={() => window.open('https://nammaqa.com', '_blank', 'noopener,noreferrer')}
+                  onClick={() => window.open('https://whatsapp.com/channel/0029VaBY9Vl6GcGDnAzEQY1N', '_blank', 'noopener,noreferrer')}
                   aria-label="Join NammaQA Community (opens in new tab)"
                   className="px-4 py-1.5 rounded-lg text-white text-sm font-medium"
                   style={{ background: gradientColor }}

@@ -1,6 +1,7 @@
 import React from 'react';
 import DOMPurify from 'dompurify';
 import type { ResumeData } from '@/types/resume';
+import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 
 interface Template20DisplayProps {
   data: ResumeData
@@ -56,14 +57,21 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
     return y ? y[1] : '';
   };
 
+  const formatEducationDateRange = (edu: any) => {
+    const start = formatYear(edu?.startYear || edu?.startDate || '');
+    const end = formatYear(edu?.endYear || edu?.yearOfPassing || '');
+    if (start && end) return `${start} - ${end}`;
+    return start || end || '';
+  };
+
   const contactItems = [personal.mobileNumber && `Phone: ${formatMobile(personal.mobileNumber)}`, personal.email && `Email: ${personal.email}`, personal.address && `Address: ${personal.address}`, skillsLinks && skillsLinks.links && skillsLinks.links.portfolioEnabled && skillsLinks.links.portfolioUrl && `Portfolio: ${skillsLinks.links.portfolioUrl}`].filter(Boolean);
 
   return (
     <div style={{ width: '210mm', minHeight: '297mm', fontFamily: fontFamily, background: '#fff', padding: 24, boxSizing: 'border-box' }}>
       <div style={{ paddingBottom: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 style={{ margin: 0, fontFamily: fontFamily, fontSize: 28, color: primaryColor, }}>{personal.firstName} {personal.middleName || ''} {personal.lastName}</h1>
-          {(experience && (experience as any).jobRole) && <div style={{ fontSize: 14, color: primaryColor, fontFamily: 'monospace' }}>{(experience as any).jobRole}</div>}
+          <h1 style={{ margin: 0, width: '50%', flexShrink: 0, paddingRight: 12, fontFamily: fontFamily, fontSize: 28, lineHeight: 1.05, color: primaryColor, }}>{personal.firstName} {personal.middleName || ''} {personal.lastName}</h1>
+          {(experience && (experience as any).jobRole) && <div style={{ width: '50%', textAlign: 'right', flexShrink: 0, fontSize: 14, color: primaryColor, fontFamily: 'monospace' }}>{(experience as any).jobRole}</div>}
         </div>
       </div>
 
@@ -80,7 +88,7 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
               fontWeight: 800,
               textTransform: 'uppercase',
               letterSpacing: 1.2,
-              color: primaryColor, // ✅ headline accent
+              color: primaryColor,
             }}
           >
             Contact
@@ -90,6 +98,40 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
             </div>
           </div>
         </div>
+
+        {(personal.aboutCareerObjective || (skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled)) && (
+          <div style={{ height: 1, background: '#ddd', margin: '12px 0' }} />
+        )}
+
+        {/* SUMMARY row */}
+        {(personal.aboutCareerObjective || (skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled)) && (
+          <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+            <div
+              style={{
+                width: 170,
+                paddingRight: 12,
+                fontSize: 11,
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                letterSpacing: 1.2,
+                color: primaryColor,
+              }}
+            >
+              Summary
+            </div>          <div style={{ flex: 1, fontSize: 12, color: '#333', lineHeight: 1.6 }}>
+              {personal.aboutCareerObjective && (
+                <div style={{ marginBottom: (skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled) ? 8 : 0 }}>
+                  {DOMPurify.sanitize(personal.aboutCareerObjective).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s{2,}/g, ' ').trim()}
+                </div>
+              )}
+              {skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled && (
+                <div>
+                  {DOMPurify.sanitize(skillsLinks.technicalSummary).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s{2,}/g, ' ').trim()}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {experience.workExperiences.filter((w: any) => w.enabled).length > 0 && (
           <div style={{ height: 1, background: '#ddd', margin: '12px 0' }} />
@@ -154,7 +196,7 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 800, color: '#000' }}>{edu.instituteName}</div>
                     <div style={{ color: '#000', fontWeight: 800 }}>
-                      {(edu.startYear || edu.endYear) ? `${edu.startYear ? formatYear(edu.startYear) : ''} - ${edu.currentlyPursuing ? 'Present' : (edu.endYear ? formatYear(edu.endYear) : '')}` : ''}
+                      {edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}
                     </div>
                   </div>
                   <div style={{ color: '#000', marginTop: 6 }}>{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</div>
@@ -176,7 +218,7 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 800, color: '#000' }}>{education.preUniversity.instituteName || 'Pre University'}</div>
-                    <div style={{ color: '#000', fontWeight: 800 }}>{education.preUniversity.yearOfPassing ? formatYear(education.preUniversity.yearOfPassing) : ''}</div>
+                    <div style={{ color: '#000', fontWeight: 800 }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
                   </div>
                   <div style={{ color: '#000', marginTop: 6 }}>Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}{education.preUniversity.boardType ? ` — ${education.preUniversity.boardType}` : ''}</div>
                   {education.preUniversity.resultFormat && education.preUniversity.result && (
@@ -189,7 +231,7 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 800, color: '#000' }}>{education.sslc.instituteName || 'SSLC'}</div>
-                    <div style={{ color: '#000', fontWeight: 800 }}>{education.sslc.yearOfPassing ? formatYear(education.sslc.yearOfPassing) : ''}</div>
+                    <div style={{ color: '#000', fontWeight: 800 }}>{formatResumeEducationDateRange(education.sslc)}</div>
                   </div>
                   <div style={{ color: '#000', marginTop: 6 }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</div>
                   {education.sslc.resultFormat && education.sslc.result && (

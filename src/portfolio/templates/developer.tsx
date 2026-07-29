@@ -3,6 +3,7 @@ import {
   Github, Linkedin, Twitter, ExternalLink, Briefcase,
   Code2, Mail, Globe, Rocket, ChevronRight, ArrowUpRight, Sparkles, Download
 } from "lucide-react";
+import { formatPortfolioDuration } from "./dateFormat";
 
 export interface PortfolioData {
   portfolioName: string;
@@ -28,8 +29,14 @@ export interface PortfolioData {
     link: string;
     role: string;
   }>;
-  projects: Array<{ title: string; description: string; link: string; tech: string }>;
-  experiences: Array<{ role: string; company: string; duration: string; details: string }>;
+  projects: Array<{
+    title: string;
+    description: string;
+    link: string;
+    tech: string;
+    imageUrl?: string; // Optional project cover image
+  }>;
+  experiences: Array<{ role: string; company: string; startDate?: string; endDate?: string; duration: string; details: string }>;
   skills: string[];
 }
 
@@ -101,7 +108,7 @@ function StatusBadge() {
         <span className="ping-anim absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
         <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
       </span>
-      Available for new opportunities
+      {/* Available for new opportunities */}
     </div>
   );
 }
@@ -163,6 +170,7 @@ function SkillChip({ skill }: { skill: string }) {
 function ExpCard({ exp, index }: { exp: PortfolioData["experiences"][0]; index: number }) {
   const icons = [<Briefcase />, <Rocket />, <Code2 />, <Globe />];
   const Icon = icons[index % icons.length];
+  const displayDuration = formatPortfolioDuration(exp.duration);
   return (
     <div
       className="exp-card py-6 flex gap-4 @sm:gap-5 transition-all duration-200"
@@ -184,12 +192,12 @@ function ExpCard({ exp, index }: { exp: PortfolioData["experiences"][0]; index: 
             <p className="text-sm font-semibold" style={{ color: "var(--exp-title)" }}>{exp.role || "Role"}</p>
             <p className="text-xs font-medium mt-0.5" style={{ color: "var(--exp-subtitle)" }}>{exp.company || "Company"}</p>
           </div>
-          {exp.duration && (
+          {displayDuration && (
             <span
               className="text-xs whitespace-nowrap px-2.5 py-1 rounded-full flex-shrink-0"
               style={{ color: "var(--exp-meta-text)", background: "var(--exp-meta-bg)", border: "0.5px solid var(--exp-meta-border)" }}
             >
-              {exp.duration}
+              {displayDuration}
             </span>
           )}
         </div>
@@ -219,6 +227,20 @@ function ProjectCard({ proj, index }: { proj: PortfolioData["projects"][0]; inde
       <div className="project-accent absolute top-0 left-0 right-0 h-0.5 transition-all duration-300"
         style={{ background: "linear-gradient(90deg, var(--accent), var(--accent-2))", transform: "scaleX(0)", transformOrigin: "left" }}
       />
+      {proj.imageUrl && (
+        <div
+          className="w-full h-36 rounded-xl overflow-hidden mb-4"
+          style={{ border: "0.5px solid var(--card-border)", background: "var(--accent-soft)" }}
+        >
+          <img
+            src={proj.imageUrl}
+            alt={proj.title || "Project cover"}
+            className="w-full h-full object-cover"
+            draggable={false}
+            onDragStart={(event) => event.preventDefault()}
+          />
+        </div>
+      )}
       <div className="flex items-start justify-between mb-3">
         <div
           className="w-9 h-9 rounded-lg flex items-center justify-center"
@@ -263,19 +285,18 @@ function HeroWithImage({ data, scrollTo }: { data: PortfolioData; scrollTo: (id:
       {/* Two-column layout: text left, image right */}
       <div className="flex flex-col-reverse @md:flex-row items-center gap-8 @md:gap-12">
         {/* Left: text content */}
-        <div className="flex-1 text-center @md:text-left">
+        <div className="flex-1 min-w-0 text-center @md:text-left">
           <div className="anim-1 mb-5 flex justify-center @md:justify-start">
             <StatusBadge />
           </div>
-          <h1 className="anim-2 text-4xl @sm:text-5xl font-semibold mb-4"
+          <h1 className="anim-2 portfolio-text-wrap text-4xl @sm:text-5xl font-semibold mb-4"
             style={{ letterSpacing: "-1.5px", lineHeight: 1.1, color: "var(--text-primary)" }}>
             {data.portfolioName || "Anonymous Developer"}
-            <span className="cursor-blink inline-block w-0.5 h-9 ml-1 rounded align-middle" style={{ background: "var(--accent-2)" }} />
           </h1>
           {data.tagline && (
             <p className="anim-2 text-sm font-medium mb-3" style={{ color: "var(--accent-2)" }}>{data.tagline}</p>
           )}
-          <p className="anim-3 text-sm leading-relaxed mb-8" style={{ color: "var(--text-secondary)" }}>
+          <p className="anim-3 portfolio-text-wrap text-sm leading-relaxed mb-8" style={{ color: "var(--text-secondary)" }}>
             {data.portfolioDescription || "Passionate about building scalable software and creating elegant solutions to complex problems."}
           </p>
           <div className="anim-3 flex flex-wrap gap-3 mb-8 justify-center @md:justify-start">
@@ -328,6 +349,8 @@ function HeroWithImage({ data, scrollTo }: { data: PortfolioData; scrollTo: (id:
                 src={data.avatarUrl}
                 alt={data.portfolioName}
                 className="w-full h-full object-cover"
+                draggable={false}
+                onDragStart={(event) => event.preventDefault()}
                 style={{ display: "block" }}
               />
             </div>
@@ -368,17 +391,16 @@ function HeroWithoutImage({ data, scrollTo }: { data: PortfolioData; scrollTo: (
       </div>
 
       {/* Name — large editorial */}
-      <h1 className="anim-2 font-semibold mb-3"
+      <h1 className="anim-2 portfolio-text-wrap font-semibold mb-3"
         style={{ fontSize: "clamp(2.4rem, 7vw, 4.5rem)", letterSpacing: "-2px", lineHeight: 1.05, color: "var(--text-primary)" }}>
         {data.portfolioName || "Anonymous Developer"}
-        <span className="cursor-blink inline-block w-0.5 h-10 ml-1 rounded align-middle" style={{ background: "var(--accent-2)" }} />
       </h1>
 
       {data.tagline && (
         <p className="anim-2 text-base font-medium mb-4" style={{ color: "var(--accent-2)" }}>{data.tagline}</p>
       )}
 
-      <p className="anim-3 text-sm @sm:text-base leading-relaxed max-w-xl mx-auto mb-10" style={{ color: "var(--text-secondary)" }}>
+      <p className="anim-3 portfolio-text-wrap text-sm @sm:text-base leading-relaxed max-w-xl mx-auto mb-10" style={{ color: "var(--text-secondary)" }}>
         {data.portfolioDescription || "Passionate about building scalable software and creating elegant solutions to complex problems."}
       </p>
 
@@ -466,6 +488,13 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
     { id: "projects", label: "Projects" },
     { id: "contact", label: "Contact" },
   ];
+  const hasContactInfo = Boolean(
+    data.githubUrl ||
+    data.linkedinUrl ||
+    data.customUrl ||
+    data.twitterUrl ||
+    data.email
+  );
 
   return (
     <div
@@ -537,6 +566,25 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
         .anim-4 { animation: fadeUp 0.65s 0.35s ease both; }
         .cursor-blink { animation: blink 1s step-end infinite; }
         .mobile-menu { animation: slideDown 0.2s ease both; }
+        .portfolio-root,
+        .portfolio-root * {
+          min-width: 0;
+        }
+        .portfolio-text-wrap,
+        .portfolio-root h1,
+        .portfolio-root h2,
+        .portfolio-root h3,
+        .portfolio-root p,
+        .skill-chip,
+        .rich-html-content,
+        .rich-html-content * {
+          overflow-wrap: anywhere;
+          word-break: break-word;
+        }
+        .portfolio-root img {
+          -webkit-user-drag: none;
+          user-select: none;
+        }
 
         .social-link:hover { color: var(--accent-2) !important; border-color: var(--accent-2) !important; transform: translateY(-3px); }
         .cta-primary { background: var(--accent); border: none; cursor: pointer; font-family: inherit; }
@@ -577,7 +625,17 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
         .rich-html-content ul { list-style-type: disc; }
         .rich-html-content ol { list-style-type: decimal; }
         .rich-html-content li { margin: 0.15em 0; }
-        .rich-html-content strong, .rich-html-content b { font-weight: 600; color: var(--text-secondary); }
+        .rich-html-content strong, .rich-html-content b {
+          display: inline;
+          padding: 0.05em 0.28em;
+          border-radius: 0.32em;
+          background: color-mix(in srgb, var(--accent) 72%, #111827);
+          color: #f8fafc;
+          font-weight: 700;
+          box-decoration-break: clone;
+          -webkit-box-decoration-break: clone;
+          text-shadow: 0 1px 1px rgba(0,0,0,0.24);
+        }
         .rich-html-content em, .rich-html-content i { font-style: italic; }
         .rich-html-content a { color: var(--accent-2); text-decoration: underline; }
         .rich-html-content div { margin: 0; }
@@ -593,12 +651,12 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
         }}
       >
         {/* Logo */}
-        <div className="text-base font-semibold tracking-tight flex-shrink-0" style={{ color: "var(--text-primary)" }}>
+        <div className="text-base font-semibold tracking-tight min-w-0 max-w-[40%] truncate" style={{ color: "var(--text-primary)" }}>
           {data.portfolioName}
         </div>
 
         {/* Desktop nav */}
-        <div className="hidden @md:flex items-center gap-7">
+        <div className="hidden @md:flex items-center gap-7 flex-shrink-0">
           {navItems.map(({ id, label }) => (
             <button key={id} onClick={() => scrollTo(id)}
               className="nav-btn text-xs tracking-wide transition-colors duration-200 capitalize"
@@ -610,7 +668,7 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
           ))}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-shrink-0">
           {/* Hire me */}
           <button onClick={() => scrollTo("contact")}
             className="hidden @sm:block text-xs px-4 py-2 rounded-lg text-white transition-all duration-200 hover:scale-105"
@@ -732,12 +790,14 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
             Have a project in mind? I'm always open to discussing new opportunities.
           </p>
           <div className="flex justify-center flex-wrap gap-3">
-            {(data.customUrl || data.githubUrl) ? (
+            {hasContactInfo ? (
               <>
-                <a href={`mailto:${data.email || "hello@example.com"}`}
-                  className="cta-primary flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white no-underline transition-all duration-200">
-                  <Mail className="w-4 h-4" /> Send an email
-                </a>
+                {data.email && (
+                  <a href={`mailto:${data.email}`}
+                    className="cta-primary flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white no-underline transition-all duration-200">
+                    <Mail className="w-4 h-4" /> Send an email
+                  </a>
+                )}
                 {data.linkedinUrl && (
                   <a href={data.linkedinUrl} target="_blank" rel="noreferrer"
                     className="cta-secondary flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium no-underline transition-all duration-200"
@@ -750,6 +810,20 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
                     className="cta-secondary flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium no-underline transition-all duration-200"
                     style={{ background: "transparent", border: "0.5px solid var(--border-soft)", color: "var(--text-secondary)" }}>
                     <Github className="w-4 h-4" /> GitHub
+                  </a>
+                )}
+                {data.customUrl && (
+                  <a href={data.customUrl} target="_blank" rel="noreferrer"
+                    className="cta-secondary flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium no-underline transition-all duration-200"
+                    style={{ background: "transparent", border: "0.5px solid var(--border-soft)", color: "var(--text-secondary)" }}>
+                    <Globe className="w-4 h-4" /> Website
+                  </a>
+                )}
+                {data.twitterUrl && (
+                  <a href={data.twitterUrl} target="_blank" rel="noreferrer"
+                    className="cta-secondary flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium no-underline transition-all duration-200"
+                    style={{ background: "transparent", border: "0.5px solid var(--border-soft)", color: "var(--text-secondary)" }}>
+                    <Twitter className="w-4 h-4" /> Twitter
                   </a>
                 )}
               </>

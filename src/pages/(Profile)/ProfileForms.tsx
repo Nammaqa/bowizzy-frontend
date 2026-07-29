@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import DashNav from "@/components/dashnav/dashnav";
 import ProfileStepper from "./components/ProfileStepper";
@@ -17,6 +17,7 @@ import { getExperienceByUserId } from "@/services/experienceService";
 import { getProjectsByUserId } from "@/services/projectService"; 
 import { getSkillsByUserId, getLinksByUserId } from "@/services/skillsLinksService"; 
 import { getCertificatesByUserId } from "@/services/certificateService"; 
+import { getProfileProgress } from "@/services/dashboardServices"; 
 
 export default function ProfileForm() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -34,6 +35,10 @@ export default function ProfileForm() {
   const [personalDetailsId, setPersonalDetailsId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingError, setLoadingError] = useState(null);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [profileCompletionPercentage, setProfileCompletionPercentage] = useState<number | null>(null);
+  const [completionLoading, setCompletionLoading] = useState(false);
+  const [completionError, setCompletionError] = useState("");
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -58,13 +63,8 @@ export default function ProfileForm() {
     "Certification",
   ];
 
-  // Handler for fetching all profile data on mount
-  useEffect(() => {
-    fetchAllProfileData();
-  }, []);
-
   // Handler for fetching all profile data
-  const fetchAllProfileData = async () => {
+  const fetchAllProfileData = useCallback(async () => {
     try {
       setLoading(true);
       setLoadingError(null);
@@ -162,7 +162,18 @@ export default function ProfileForm() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, userId]);
+
+  // Handler for fetching all profile data on mount and whenever the education step is opened
+  useEffect(() => {
+    if (!userId || !token) return;
+    void fetchAllProfileData();
+  }, [userId, token, fetchAllProfileData]);
+
+  useEffect(() => {
+    if (!userId || !token || currentStep !== 1) return;
+    void fetchAllProfileData();
+  }, [currentStep, userId, token, fetchAllProfileData]);
 
   // Map API response to form structure (Personal)
   const mapPersonalDetailsFromAPI = (apiData) => {
@@ -390,9 +401,6 @@ export default function ProfileForm() {
 
     if (skillsForm.skills.length === 0) {
       skillsForm.skills.push({ id: "1", skillName: "", skillLevel: "" });
-      skillsForm.skills.push({ id: "2", skillName: "", skillLevel: "" });
-    } else if (skillsForm.skills.length === 1) {
-         skillsForm.skills.push({ id: Date.now().toString(), skillName: "", skillLevel: "" });
     }
 
     // Map Links
@@ -496,6 +504,19 @@ export default function ProfileForm() {
         if (!data.firstName || !data.lastName) {
           return false;
         }
+        if (!Array.isArray(data.languages) || data.languages.length === 0) {
+          return false;
+        }
+        if (
+          !data.address ||
+          !data.country ||
+          !data.state ||
+          !data.city ||
+          !data.pincode ||
+          !data.nationality
+        ) {
+          return false;
+        }
         if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
           return false;
         }
@@ -515,19 +536,18 @@ export default function ProfileForm() {
         break;
 
       case 2: // Experience
+        if (isCurrentlyPursuingEducation(formData.education)) {
+          return true;
+        }
         if (!data.jobRole) {
           return false;
         }
         break;
 
       case 3: // Projects
-        const hasValidProject = data.projects.some(
-          (p) => p.projectTitle
-        );
-        if (!hasValidProject) {
-          return false;
-        }
-        break;
+        // Projects are optional, so an empty selection should still allow
+        // the user to move to the next profile step.
+        return true;
 
       case 4: // Skills & Links
         // Access skills and links arrays directly
@@ -535,16 +555,17 @@ export default function ProfileForm() {
         const linksArray = data.links || [];
 
         const hasValidSkill = skillsArray.some(
-          (skill: any) => skill.skillName
+          (skill: any) => skill.skillName && skill.skillName.trim() && skill.skillLevel
         );
         if (!hasValidSkill) {
           return false;
         }
         
-        // Check if at least one link field is filled in the first link object
-        const linkData = linksArray[0];
-        if (!linkData || (!linkData.linkedinProfile && !linkData.githubProfile && !linkData.portfolioUrl && !linkData.publicationUrl)) {
-           return false;
+        const hasLinkedIn = linksArray.some(
+          (link: any) => link.linkedinProfile && link.linkedinProfile.trim()
+        );
+        if (!hasLinkedIn) {
+          return false;
         }
         break;
 
@@ -554,6 +575,38 @@ export default function ProfileForm() {
     }
 
     return true;
+  };
+
+  const fetchProfileCompletion = async () => {
+    if (!userId || !token) {
+      setCompletionError("Unable to determine profile completion.");
+      return;
+    }
+
+    setCompletionLoading(true);
+    setCompletionError("");
+
+    try {
+      const progress = await getProfileProgress(userId, token);
+      if (progress && typeof progress.percentage === "number") {
+        setProfileCompletionPercentage(progress.percentage);
+      } else if (progress && progress.percentage) {
+        setProfileCompletionPercentage(Number(progress.percentage));
+      } else {
+        setProfileCompletionPercentage(0);
+      }
+    } catch (error) {
+      console.error("Error fetching profile completion:", error);
+      setCompletionError("Unable to fetch profile completion. Please try again.");
+      setProfileCompletionPercentage(null);
+    } finally {
+      setCompletionLoading(false);
+    }
+  };
+
+  const openCompletionModal = async () => {
+    await fetchProfileCompletion();
+    setShowCompletionModal(true);
   };
 
   const handleNext = async (data: any) => {
@@ -588,8 +641,8 @@ export default function ProfileForm() {
       return;
     }
 
-    // Final step - navigate to dashboard
-    navigate("/dashboard");
+    // Final step - show completion modal before navigating
+    await openCompletionModal();
   };
 
   const handleBack = () => {
@@ -600,6 +653,24 @@ export default function ProfileForm() {
 
   const handleStepClick = (stepIndex: number) => {
     setCurrentStep(stepIndex);
+  };
+
+  const closeCompletionModal = () => {
+    setShowCompletionModal(false);
+  };
+
+  const handleConfirmDashboard = () => {
+    setShowCompletionModal(false);
+    navigate("/dashboard");
+  };
+
+  const isCurrentlyPursuingEducation = (educationData: any) => {
+    const higherList = [
+      ...(educationData?.higherEducations || []),
+      ...(educationData?.extraEducations || []),
+    ];
+
+    return higherList.some((edu: any) => edu.currentlyPursuing);
   };
 
   const renderStepContent = () => {
@@ -661,6 +732,7 @@ export default function ProfileForm() {
             initialData={formData.experience}
             userId={userId}
             token={token}
+            isOptional={isCurrentlyPursuingEducation(formData.education)}
           />
         );
       case 3:
@@ -721,6 +793,62 @@ export default function ProfileForm() {
           <div className="flex-1 overflow-auto">{renderStepContent()}</div>
         </div>
       </div>
+
+      {showCompletionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4 py-6">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="px-6 py-5 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">
+                Profile Completion
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Review your completion percentage before going to the dashboard.
+              </p>
+            </div>
+            <div className="px-6 py-6">
+              {completionLoading ? (
+                <div className="text-center text-gray-600">Fetching completion...</div>
+              ) : completionError ? (
+                <div className="text-sm text-red-600">{completionError}</div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="rounded-3xl bg-orange-50 p-4">
+                    <p className="text-sm text-gray-700">Your profile is</p>
+                    <p className="text-4xl font-bold text-orange-600">
+                      {profileCompletionPercentage ?? 0}%
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      This reflects the percentage of profile details completed.
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl bg-gray-100 p-4">
+                    <p className="text-sm text-gray-700">
+                      Complete more sections to improve your dashboard recommendations.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col gap-3 px-6 py-4 border-t border-gray-200 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={closeCompletionModal}
+                className="w-full sm:w-auto px-4 py-2 rounded-xl border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 transition"
+              >
+                Continue Editing
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDashboard}
+                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-orange-500 text-white hover:bg-orange-600 transition"
+              >
+                Go to Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

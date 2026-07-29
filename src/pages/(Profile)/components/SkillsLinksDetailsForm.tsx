@@ -25,6 +25,10 @@ interface Skill {
   skill_id?: number;
 }
 
+const SKILL_NAME_MAX_LENGTH = 50;
+
+const normalizeSkillName = (value: string) => value.trim().toLowerCase();
+
 interface Link {
   id: string;
   linkedinProfile: string;
@@ -56,7 +60,6 @@ export default function SkillsLinksDetailsForm({
       }))
       : [
         { id: "1", skillName: "", skillLevel: "" },
-        { id: "2", skillName: "", skillLevel: "" },
       ];
 
   const [skills, setSkills] = useState<Skill[]>(initialSkills);
@@ -78,6 +81,7 @@ export default function SkillsLinksDetailsForm({
       ];
 
   const [links, setLinks] = useState<Link[]>(initialLinks);
+  const [hasAttemptedProceed, setHasAttemptedProceed] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [skillsExpanded, setSkillsExpanded] = useState(true);
   const [linksExpanded, setLinksExpanded] = useState(true);
@@ -154,15 +158,23 @@ export default function SkillsLinksDetailsForm({
   }, [links]);
 
   // Validation functions
-  const validateSkillName = (value: string) => {
-    if (value && !/^[a-zA-Z0-9\s.+#-]+$/.test(value)) {
-      return "Invalid characters in skill name";
+  const validateSkillName = (value: string, currentIndex?: number) => {
+    const trimmedValue = value.trim();
+    if (!trimmedValue) return "";
+    if (trimmedValue.length > SKILL_NAME_MAX_LENGTH) {
+      return `Skill must be at most ${SKILL_NAME_MAX_LENGTH} characters`;
     }
-    if (value && !/[A-Za-z]/.test(value)) {
-      return "Skill must contain at least one letter";
+    const normalizedValue = normalizeSkillName(trimmedValue);
+    const isDuplicate = skills.some(
+      (skill, index) =>
+        index !== currentIndex &&
+        normalizeSkillName(skill.skillName) === normalizedValue
+    );
+    if (isDuplicate) {
+      return "Skill name already exists";
     }
-    if (value && value.length > 13) {
-      return "Max 13 characters allowed";
+    if (/^\d+$/.test(trimmedValue)) {
+      return "Skill cannot be only numbers";
     }
     return "";
   };
@@ -170,6 +182,10 @@ export default function SkillsLinksDetailsForm({
   // Handler for validating URLs
   const validateUrl = (value: string, type: string) => {
     if (!value) return "";
+
+    if (value.length > 100) {
+      return `${type} URL must be at most 100 characters`;
+    }
 
     const urlPattern =
       /^(https?:\/\/)?([\w\-]+(\.[\w\-]+)+)([\w\-\.,@?^=%&:/~\+#]*[\w\-@?^=%&/~\+#])?$/i;
@@ -192,17 +208,34 @@ export default function SkillsLinksDetailsForm({
   // --- SKILLS HANDLERS ---
 
   const handleSkillChange = (index: number, field: string, value: string) => {
-    if (field === "skillName" && value.length > 13) return;
+    if (field === "skillName" && value.length > SKILL_NAME_MAX_LENGTH) return;
 
     const updated = [...skills];
     updated[index] = { ...updated[index], [field]: value };
     setSkills(updated);
 
     if (field === "skillName") {
-      const error = validateSkillName(value);
+      const trimmedValue = value.trim();
+      const normalizedValue = normalizeSkillName(trimmedValue);
+      const isDuplicate = trimmedValue
+        ? updated.some(
+          (skill, skillIndex) =>
+            skillIndex !== index &&
+            normalizeSkillName(skill.skillName) === normalizedValue
+        )
+        : false;
+      const error = isDuplicate
+        ? "Skill name already exists"
+        : validateSkillName(value, index);
       setErrors((prev) => {
         const next = { ...prev, [`skill-${index}-skillName`]: error };
         if (value.trim()) delete next.skills;
+        return next;
+      });
+    } else if (field === "skillLevel") {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[`skill-${index}-skillLevel`];
         return next;
       });
     }
@@ -212,6 +245,35 @@ export default function SkillsLinksDetailsForm({
     const changesToSave = Object.keys(skillChanges);
     if (changesToSave.length === 0) {
       setSkillFeedback({ ["1"]: "No changes to save." });
+      setTimeout(() => setSkillFeedback({}), 3000);
+      return;
+    }
+
+    let hasError = false;
+    const newErrors = { ...errors };
+    skills.forEach((s, index) => {
+      const skillNameKey = `skill-${index}-skillName`;
+      const skillLevelKey = `skill-${index}-skillLevel`;
+      const nameError = validateSkillName(s.skillName, index);
+      if (!s.skillName || !s.skillName.trim()) {
+        newErrors[skillNameKey] = "Skill Name is required";
+        hasError = true;
+      } else if (nameError) {
+        newErrors[skillNameKey] = nameError;
+        hasError = true;
+      } else {
+        delete newErrors[skillNameKey];
+      }
+      if (!s.skillLevel) {
+        newErrors[skillLevelKey] = "Skill Level is required";
+        hasError = true;
+      } else {
+        delete newErrors[skillLevelKey];
+      }
+    });
+    setErrors(newErrors);
+    if (hasError) {
+      setSkillFeedback({ ["1"]: "Please provide both name and level for all skills." });
       setTimeout(() => setSkillFeedback({}), 3000);
       return;
     }
@@ -229,7 +291,7 @@ export default function SkillsLinksDetailsForm({
       if (isNew && !skill.skillName) continue;
 
       const index = skills.indexOf(skill);
-      if (errors[`skill-${index}-skillName`]) {
+      if (validateSkillName(skill.skillName, index)) {
         failCount++;
         continue;
       }
@@ -296,7 +358,7 @@ export default function SkillsLinksDetailsForm({
   const removeSkill = async (index: number) => {
     const skill = skills[index];
 
-    if (skills.length <= 2) return;
+    if (skills.length <= 1) return;
 
     if (skill.skill_id) {
       try {
@@ -386,6 +448,12 @@ export default function SkillsLinksDetailsForm({
         ...prev,
         [`link-${linkIndex}-githubProfile`]: error,
       }));
+    } else if (field === "portfolioUrl") {
+      const error = validateUrl(value, "Portfolio");
+      setErrors((prev) => ({
+        ...prev,
+        [`link-${linkIndex}-portfolioUrl`]: error,
+      }));
     } else if (field === "publicationUrl") {
       const error = validateUrl(value, "Publication");
       setErrors((prev) => ({
@@ -430,24 +498,17 @@ export default function SkillsLinksDetailsForm({
         field: "portfolioUrl",
         dbId: "link_id_portfolio",
         apiType: "portfolio",
-        descField: "portfolioDescription",
-      },
-      {
-        field: "publicationUrl",
-        dbId: "link_id_publication",
-        apiType: "publication",
-        descField: "publicationDescription",
       },
     ];
 
-    for (const { field, dbId, apiType, descField } of fieldsToSync) {
+    for (const { field, dbId, apiType } of fieldsToSync) {
       let url = link[field as keyof Link] as string;
       if (url) {
         url = cleanUrl(url);
         link[field as keyof Link] = url;
       }
       const dbIdValue = link[dbId as keyof Link];
-      const description = descField ? link[descField as keyof Link] : null;
+      const description = null;
       const linkIndex = 0;
 
       if (errors[`link-${linkIndex}-${field}`]) {
@@ -489,7 +550,6 @@ export default function SkillsLinksDetailsForm({
           deleteLink(userId, token, dbIdValue as string)
             .then(() => {
               link[dbId as keyof Link] = undefined;
-              if (descField) link[descField as keyof Link] = "";
               link[field as keyof Link] = "";
               successCount++;
             })
@@ -553,10 +613,27 @@ export default function SkillsLinksDetailsForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setHasAttemptedProceed(true);
 
-    const hasSkill = skills.some((s) => s.skillName && s.skillName.trim());
-    if (!hasSkill) {
-      setErrors((prev) => ({ ...prev, skills: "At least one skill is required" }));
+    let hasError = false;
+    skills.forEach((s, index) => {
+      const nameError = validateSkillName(s.skillName, index);
+      if (!s.skillName || !s.skillName.trim()) {
+        setErrors((prev) => ({ ...prev, [`skill-${index}-skillName`]: "Skill Name is required" }));
+        hasError = true;
+      } else if (nameError) {
+        setErrors((prev) => ({ ...prev, [`skill-${index}-skillName`]: nameError }));
+        hasError = true;
+      }
+      if (!s.skillLevel) {
+        setErrors((prev) => ({ ...prev, [`skill-${index}-skillLevel`]: "Skill Level is required" }));
+        hasError = true;
+      }
+    });
+
+    const hasCompleteSkill = skills.some((s) => s.skillName && s.skillName.trim() && s.skillLevel);
+    if (!hasCompleteSkill || hasError) {
+      setErrors((prev) => ({ ...prev, skills: "At least one complete skill (with name and level) is required, and all added skills must be complete." }));
       setSkillsExpanded(true);
       const firstSkill = document.querySelector(
         '#skills-links-details-form-root input[aria-required="true"]'
@@ -628,6 +705,7 @@ export default function SkillsLinksDetailsForm({
               required={fieldName === "linkedinProfile"}
               aria-required={fieldName === "linkedinProfile"}
               aria-invalid={!!errors[`link-${linkIndex}-${fieldName}`]}
+              maxLength={fieldName === "linkedinProfile" || fieldName === "githubProfile" || fieldName === "portfolioUrl" ? 100 : undefined}
               placeholder={`Enter ${label}...`}
               className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm pr-8 ${errors[`link-${linkIndex}-${fieldName}`]
                   ? "border-red-500 focus:ring-red-400"
@@ -722,7 +800,7 @@ export default function SkillsLinksDetailsForm({
           {/* Skills Header */}
           <div className="flex items-center justify-between px-4 sm:px-5 md:px-6 py-3 md:py-4 border-b border-gray-200">
             <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">
-              Skills <span className="text-red-500">*</span>
+              Skills
             </h3>
             <div className="flex gap-2 items-center">
               <button
@@ -776,6 +854,7 @@ export default function SkillsLinksDetailsForm({
                                   errors[`skill-${index}-skillName`] || errors.skills
                                 )
                               }
+                              maxLength={SKILL_NAME_MAX_LENGTH}
                               placeholder="Enter Skill Name..."
                               className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm pr-8 ${errors[`skill-${index}-skillName`] || errors.skills
                                   ? "border-red-500 focus:ring-red-400"
@@ -802,7 +881,11 @@ export default function SkillsLinksDetailsForm({
                                 onChange={(e) =>
                                   handleSkillChange(index, "skillLevel", e.target.value)
                                 }
-                                className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
+                                className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm appearance-none bg-white pr-8 ${
+                                  errors[`skill-${index}-skillLevel`] || errors.skills
+                                    ? "border-red-500 focus:ring-red-400"
+                                    : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                                }`}
                               >
                                 <option value="">Select Skill Level</option>
                                 <option value="Beginner">Beginner</option>
@@ -814,9 +897,14 @@ export default function SkillsLinksDetailsForm({
                                 <ChevronDown className="w-4 h-4 text-gray-400 pointer-events-none" />
                               </div>
                             </div>
+                            {errors[`skill-${index}-skillLevel`] && (
+                              <p className="mt-1 text-xs text-red-500">
+                                {errors[`skill-${index}-skillLevel`]}
+                              </p>
+                            )}
                           </div>
 
-                          {skills.length > 2 && (
+                          {skills.length > 1 && (
                             <button
                               type="button"
                               onClick={() => removeSkill(index)}
@@ -908,9 +996,6 @@ export default function SkillsLinksDetailsForm({
                   {renderLinkField(link, linkIndex, "LinkedIn Profile", "linkedinProfile", "link_id_linkedin")}
                   {renderLinkField(link, linkIndex, "GitHub Profile", "githubProfile", "link_id_github")}
                   {renderLinkField(link, linkIndex, "Portfolio URL", "portfolioUrl", "link_id_portfolio")}
-                  {renderLinkField(link, linkIndex, "Portfolio Description", "portfolioDescription", "link_id_portfolio", true)}
-                  {renderLinkField(link, linkIndex, "Publication URL", "publicationUrl", "link_id_publication")}
-                  {renderLinkField(link, linkIndex, "Publication Description", "publicationDescription", "link_id_publication", true)}
                 </div>
 
                 {/* Links Save Row — inside the expanded content div */}
@@ -944,11 +1029,12 @@ export default function SkillsLinksDetailsForm({
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-4">
-          {skills && skills.length < 2 ? (
+          {hasAttemptedProceed &&
+          !skills.some((s) => s.skillName && s.skillName.trim()) ? (
             <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm font-medium text-red-800">Missing mandatory field:</p>
               <ul className="text-xs text-red-700 space-y-1 ml-4 mt-1">
-                <li>• Skills (at least 2 skills are required)</li>
+                <li>• Skills (at least 1 skill is required)</li>
               </ul>
             </div>
           ) : null}

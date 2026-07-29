@@ -47,6 +47,23 @@ const ALL_LANGUAGES = [
   "Hebrew",
 ];
 
+const PERSONAL_DETAIL_FIELDS = [
+  "firstName",
+  "middleName",
+  "lastName",
+  "email",
+  "mobileNumber",
+  "dateOfBirth",
+];
+
+const CURRENT_LOCATION_FIELDS = ["address", "country", "state", "city", "pincode", "nationality"];
+
+const MAX_ADDRESS_LENGTH = 250;
+const MAX_CITY_LENGTH = 60;
+
+// Sentinel for the "Other" city choice — never stored as an actual city name.
+const OTHER_CITY = "__other__";
+
 interface PersonalDetailsFormProps {
   onNext: (data: any) => void;
   onBack?: () => void;
@@ -81,7 +98,6 @@ export default function PersonalDetailsForm({
     city: initialData.city || "",
     pincode: initialData.pincode || "",
     nationality: initialData.nationality || "",
-    passportNumber: initialData.passportNumber || "",
     uploadedPhotoURL: initialData.uploadedPhotoURL || "",
     uploadedPublicId: initialData.uploadedPublicId || "",
     profilePhoto: initialData.profilePhoto || null,
@@ -101,7 +117,9 @@ export default function PersonalDetailsForm({
   const [loadingCountries, setLoadingCountries] = useState(false);
   const [loadingStates, setLoadingStates] = useState(false);
   const [loadingCities, setLoadingCities] = useState(false);
+  const [isCustomCity, setIsCustomCity] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [hasAttemptedProceed, setHasAttemptedProceed] = useState(false);
 
   // Fetch countries on mount
   useEffect(() => {
@@ -203,6 +221,15 @@ export default function PersonalDetailsForm({
       setFormData((prev) => ({ ...prev, city: "" }));
     }
   }, [formData.state, formData.country, countryOptions, stateOptions]);
+
+  // A saved city that isn't in the fetched list was typed via "Other" — show it in the free-text field.
+  useEffect(() => {
+    if (isCustomCity || loadingCities) return;
+    if (!formData.city || cityOptions.length === 0) return;
+    if (!cityOptions.some((city) => city.name === formData.city)) {
+      setIsCustomCity(true);
+    }
+  }, [cityOptions, loadingCities, formData.city, isCustomCity]);
   const [newLanguage, setNewLanguage] = useState("");
   const [personalDetailsExpanded, setPersonalDetailsExpanded] = useState(true);
   const initialPersonalDetails = useRef({
@@ -253,7 +280,6 @@ export default function PersonalDetailsForm({
     city: initialData.city || "",
     pincode: initialData.pincode || "",
     nationality: initialData.nationality || "",
-    passportNumber: initialData.passportNumber || "",
   });
 
   const [changedLanguages, setChangedLanguages] = useState(false);
@@ -284,8 +310,6 @@ export default function PersonalDetailsForm({
       changedFields.push("pincode");
     if (formData.nationality !== initialLocation.current.nationality)
       changedFields.push("nationality");
-    if (formData.passportNumber !== initialLocation.current.passportNumber)
-      changedFields.push("passportNumber");
 
     setChangedLocationFields(changedFields);
     setLocationChanged(changedFields.length > 0);
@@ -296,7 +320,6 @@ export default function PersonalDetailsForm({
     formData.city,
     formData.pincode,
     formData.nationality,
-    formData.passportNumber,
   ]);
 
   useEffect(() => {
@@ -327,17 +350,16 @@ export default function PersonalDetailsForm({
 
   const validateField = (name: string, value: string) => {
     let error = "";
+    const trimmedValue = value.trim();
+    const currentYear = new Date().getFullYear();
 
     switch (name) {
       case "firstName":
-      case "lastName":
-        if (value && !/^[a-zA-Z\s]+$/.test(value)) {
-          error = "Only letters allowed";
-        }
-        break;
-
       case "middleName":
-        if (value && !/^[a-zA-Z\s]+$/.test(value)) {
+      case "lastName":
+        if (value.length > 50) {
+          error = "Maximum 50 characters allowed";
+        } else if (value && !/^[A-Za-z]+$/.test(value)) {
           error = "Only letters allowed";
         }
         break;
@@ -345,54 +367,91 @@ export default function PersonalDetailsForm({
       case "dateOfBirth":
         if (value) {
           const dob = new Date(value);
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          if (dob >= today) {
-            error = "Date of birth cannot be today or a future date";
+          const year = dob.getFullYear();
+
+          if (Number.isNaN(dob.getTime())) {
+            error = "Enter a valid date of birth";
+          } else if (year <= 1930 || year >= currentYear) {
+            error = `Date of birth year must be after 1930 and before ${currentYear}`;
           }
         }
         break;
 
       case "email":
-        if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-          error = "Invalid email format";
+        if (value.length > 150) {
+          error = "Maximum 150 characters allowed";
+        } else if (
+          value &&
+          !/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(value)
+        ) {
+          error = "Enter a valid email address";
         }
         break;
 
       case "mobileNumber":
-        if (value && !/^\d{0,10}$/.test(value)) {
-          error = "Only 10 digits allowed";
-        } else if (value && value.length > 0 && value.length < 10) {
-          error = "Must be 10 digits";
+        if (value && !/^[6-9]\d{9}$/.test(value)) {
+          error = "Mobile number must be 10 digits and start with 6, 7, 8, or 9";
         }
         break;
 
       case "pincode":
-        // Error check for partial input (user can't type letters, but if data exists it must be digits)
-        if (value && !/^\d*$/.test(value)) {
-          error = "Only digits allowed";
-        } else if (value && value.length > 0 && value.length < 6) {
-          error = "Must be 6 digits";
+        if (value && !/^\d{6}$/.test(value)) {
+          error = "Pincode must be exactly 6 digits";
         }
         break;
 
       case "address":
-        if (value && !/(?=.*[A-Za-z])(?=.*\d)/.test(value)) {
-          error = "Address must include both letters and numbers";
-        } else if (value && value.trim().length < 5) {
-          error = "Address is too short";
+        if (!trimmedValue) {
+          error = "Address is required";
+        } else if (value.length > MAX_ADDRESS_LENGTH) {
+          error = "Maximum 250 characters allowed";
         }
         break;
 
-      case "passportNumber":
-        if (value && !/^[A-Z][0-9]{7}$/.test(value)) {
-          error = "Invalid Passport Number: Must contain 1 uppercase letter followed by 7 digits";
+      case "country":
+        if (!trimmedValue) {
+          error = "Country is required";
         }
+        break;
+
+      case "state":
+        if (!trimmedValue) {
+          error = "State is required";
+        }
+        break;
+
+      case "city":
+        if (!trimmedValue) {
+          error = "City is required";
+        }
+        break;
+
+      case "nationality":
+        if (value.length > 50) {
+          error = "Maximum 50 characters allowed";
+        } else if (value && !/^[A-Za-z]+$/.test(value)) {
+          error = "Only letters allowed";
+        }
+        break;
+      default:
         break;
     }
 
     return error;
   };
+
+  const validateFields = (fieldNames: string[]) => {
+    const nextErrors = fieldNames.reduce((acc, fieldName) => {
+      acc[fieldName] = validateField(fieldName, String((formData as Record<string, any>)[fieldName] || ""));
+      return acc;
+    }, {} as { [key: string]: string });
+
+    setErrors((prev) => ({ ...prev, ...nextErrors }));
+    return nextErrors;
+  };
+
+  const hasErrors = (fieldErrors: { [key: string]: string }) =>
+    Object.values(fieldErrors).some(Boolean);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -403,57 +462,99 @@ export default function PersonalDetailsForm({
     let newValue = value;
     let error = "";
 
-    // 1. First Name, Middle Name, Last Name: Filter to allow only letters and spaces
     if (name === "firstName" || name === "middleName" || name === "lastName") {
-      // Remove any non-letter and non-space characters
-      newValue = value.replace(/[^a-zA-Z\s]/g, "");
+      newValue = value.replace(/[^A-Za-z]/g, "");
+      if (newValue.length > 50) return;
       if (newValue !== value) {
-        error = "Only letters and spaces allowed";
+        error = "Only letters allowed";
       }
     }
-    // 2. Pincode: Allow only digits, max 6
     else if (name === "pincode") {
       if (!/^\d*$/.test(value)) {
-        // Block non-digit input
         error = "Only digits allowed";
         setErrors((prev) => ({ ...prev, [name]: error }));
         return;
       }
       if (value.length > 6) return;
     } 
-    // 3. Mobile Number: Allow only digits, max 10
     else if (name === "mobileNumber") {
       if (!/^\d*$/.test(value)) {
+        setErrors((prev) => ({ ...prev, [name]: "Only digits allowed" }));
         return;
       }
       if (value.length > 10) return;
     } 
-    // 4. Passport Number: Convert to uppercase, allow only A-Z and 0-9, max 8
-    else if (name === "passportNumber") {
-      const upperValue = value.toUpperCase();
-      if (!/^[A-Z0-9]*$/.test(upperValue)) {
-        // Block special characters / non-alphanumeric input
-        error = "Only uppercase letters and numbers allowed";
-        setErrors((prev) => ({ ...prev, [name]: error }));
+    else if (name === "nationality") {
+      if (!/^[A-Za-z]*$/.test(value)) {
+        setErrors((prev) => ({ ...prev, [name]: "Only letters allowed" }));
         return;
       }
-      if (upperValue.length > 8) return;
-      newValue = upperValue;
+      if (value.length > 50) return;
+    }
+    else if (name === "email") {
+      if (value.length > 250) return;
+    }
+    else if (name === "address") {
+      if (value.length > MAX_ADDRESS_LENGTH) return;
     }
 
-    // Update formData only if input was valid or non-restricted
     setFormData((prev) => ({ ...prev, [name]: newValue }));
 
-    // Run full validation and update error state (only if error wasn't already set during filtering)
     if (!error) {
       error = validateField(name, newValue);
     }
     setErrors((prev) => ({ ...prev, [name]: error }));
   };
 
+  const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+
+    // "Other" swaps the dropdown for a free-text field the user fills in themselves.
+    if (value === OTHER_CITY) {
+      setIsCustomCity(true);
+      setFormData((prev) => ({ ...prev, city: "" }));
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next.city;
+        return next;
+      });
+      return;
+    }
+
+    setIsCustomCity(false);
+    setFormData((prev) => ({ ...prev, city: value }));
+    setErrors((prev) => ({ ...prev, city: validateField("city", value) }));
+  };
+
+  const handleCustomCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.slice(0, MAX_CITY_LENGTH);
+    setFormData((prev) => ({ ...prev, city: value }));
+    setErrors((prev) => ({ ...prev, city: validateField("city", value) }));
+  };
+
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp"];
+    const maxSizeBytes = 5 * 1024 * 1024; // 5MB
+
+    const isTypeAllowed = allowedTypes.includes(file.type);
+    const fileName = file.name.toLowerCase();
+    const isExtensionAllowed = allowedExtensions.some(ext => fileName.endsWith(ext));
+
+    if (!isTypeAllowed && !isExtensionAllowed) {
+      alert("Only JPG, JPEG, PNG, and WEBP images are allowed.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    if (file.size > maxSizeBytes) {
+      alert("Image size must be 5 MB or less.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
 
     const prev = formData.profilePhotoPreview;
     if (prev && typeof prev === "string" && prev.startsWith("blob:")) {
@@ -563,13 +664,12 @@ export default function PersonalDetailsForm({
       city: initialLocation.current.city,
       pincode: initialLocation.current.pincode,
       nationality: initialLocation.current.nationality,
-      passportNumber: initialLocation.current.passportNumber,
     }));
     setErrors((prev) => {
       const newErrors = { ...prev };
       delete newErrors.pincode;
-      delete newErrors.passportNumber;
       delete newErrors.address;
+      delete newErrors.nationality;
       return newErrors;
     });
   };
@@ -617,6 +717,12 @@ export default function PersonalDetailsForm({
       return;
     }
 
+    const locationErrors = validateFields(CURRENT_LOCATION_FIELDS);
+    if (hasErrors(locationErrors)) {
+      setSubmitError("Please fix validation errors in Current Location before saving.");
+      return;
+    }
+
     try {
       const payload: any = {};
 
@@ -640,9 +746,6 @@ export default function PersonalDetailsForm({
           case "nationality":
             payload.nationality = formData.nationality;
             break;
-          case "passportNumber":
-            payload.passport_number = formData.passportNumber;
-            break;
         }
       });
 
@@ -655,7 +758,6 @@ export default function PersonalDetailsForm({
         city: formData.city,
         pincode: formData.pincode,
         nationality: formData.nationality,
-        passportNumber: formData.passportNumber,
       };
 
       setLocationChanged(false);
@@ -697,6 +799,12 @@ export default function PersonalDetailsForm({
 
   const handleSubmitOtp = async () => {
     try {
+      const personalErrors = validateFields(PERSONAL_DETAIL_FIELDS);
+      if (hasErrors(personalErrors)) {
+        setOtpError("Please fix validation errors in Personal Details.");
+        return;
+      }
+
       // Validate OTP input
       if (!otpValue || otpValue.length < 4) {
         setOtpError("Please enter a valid OTP.");
@@ -766,6 +874,23 @@ export default function PersonalDetailsForm({
   };
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setHasAttemptedProceed(true);
+
+    const formErrors = validateFields([
+      ...PERSONAL_DETAIL_FIELDS,
+      ...CURRENT_LOCATION_FIELDS,
+    ]);
+
+    if (hasErrors(formErrors)) {
+      if (PERSONAL_DETAIL_FIELDS.some((fieldName) => formErrors[fieldName])) {
+        setPersonalDetailsExpanded(true);
+      }
+      if (CURRENT_LOCATION_FIELDS.some((fieldName) => formErrors[fieldName])) {
+        setCurrentLocationExpanded(true);
+      }
+      setSubmitError("Please fix validation errors before proceeding.");
+      return;
+    }
 
     // 🔹 Unsaved changes check with section names
     if (languagesChanged || locationChanged) {
@@ -784,12 +909,31 @@ export default function PersonalDetailsForm({
     }
 
     // 🔹 Validation errors check
-    if (
-      Object.keys(errors).some(
-        (key) => key !== "pincode" && key !== "passportNumber" && errors[key]
-      )
-    ) {
+    if (Object.keys(errors).some((key) => errors[key])) {
       setSubmitError("Please fix validation errors before proceeding.");
+      return;
+    }
+
+    if (!formData.languages || formData.languages.length === 0) {
+      setLanguagesExpanded(true);
+      languageInputRef.current?.focus();
+      return;
+    }
+
+    const missingLocationFields: string[] = [];
+
+    if (!formData.address?.trim()) missingLocationFields.push("Address");
+    if (!formData.country?.trim()) missingLocationFields.push("Country");
+    if (!formData.state?.trim()) missingLocationFields.push("State");
+    if (!formData.city?.trim()) missingLocationFields.push("City");
+    if (!formData.pincode?.trim()) missingLocationFields.push("Pincode");
+    if (!formData.nationality?.trim()) missingLocationFields.push("Nationality");
+
+    if (missingLocationFields.length > 0) {
+      setCurrentLocationExpanded(true);
+      setSubmitError(
+        `Please fill in all required Current Location fields before proceeding:\n\n• ${missingLocationFields.join("\n• ")}`
+      );
       return;
     }
 
@@ -816,6 +960,7 @@ export default function PersonalDetailsForm({
   return (
     <form
       onSubmit={handleSubmit}
+      noValidate
       className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6"
     >
       {submitError && (
@@ -905,25 +1050,6 @@ export default function PersonalDetailsForm({
                   strokeWidth={2.5}
                 />
               </button>
-              {personalDetailsChanged && (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const dobError = validateField("dateOfBirth", formData.dateOfBirth);
-                    if (dobError) {
-                      setErrors((prev) => ({ ...prev, dateOfBirth: dobError }));
-                      return;
-                    }
-                    handlePersonalDetailsOtpSent();
-                    setShowOtpPopup(true);
-                  }}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-md text-sm font-medium shadow-sm hover:from-orange-500 hover:to-orange-600 transition cursor-pointer"
-                  aria-label="Save personal details"
-                >
-                  <Save className="w-4 h-4" strokeWidth={2} />
-                  Save
-                </button>
-              )}
             </div>
           </div>
 
@@ -1041,7 +1167,7 @@ export default function PersonalDetailsForm({
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept="image/*"
+                      accept="image/png,image/jpeg,image/webp"
                       onChange={handlePhotoUpload}
                       className="hidden"
                     />
@@ -1058,8 +1184,12 @@ export default function PersonalDetailsForm({
                       name="firstName"
                       value={formData.firstName}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg text-xs sm:text-sm"
+                      maxLength={50}
+                      className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg text-xs sm:text-sm ${errors.firstName ? "border-red-500" : "border-gray-300"}`}
                     />
+                    {errors.firstName && (
+                      <p className="mt-1 text-xs text-red-500">{errors.firstName}</p>
+                    )}
                   </div>
 
                   <div>
@@ -1071,8 +1201,12 @@ export default function PersonalDetailsForm({
                       name="middleName"
                       value={formData.middleName}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg text-xs sm:text-sm"
+                      maxLength={50}
+                      className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg text-xs sm:text-sm ${errors.middleName ? "border-red-500" : "border-gray-300"}`}
                     />
+                    {errors.middleName && (
+                      <p className="mt-1 text-xs text-red-500">{errors.middleName}</p>
+                    )}
                   </div>
 
                   <div>
@@ -1084,8 +1218,12 @@ export default function PersonalDetailsForm({
                       name="lastName"
                       value={formData.lastName}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg text-xs sm:text-sm"
+                      maxLength={50}
+                      className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg text-xs sm:text-sm ${errors.lastName ? "border-red-500" : "border-gray-300"}`}
                     />
+                    {errors.lastName && (
+                      <p className="mt-1 text-xs text-red-500">{errors.lastName}</p>
+                    )}
                   </div>
 
                   <div className="sm:col-span-2">
@@ -1097,8 +1235,12 @@ export default function PersonalDetailsForm({
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg text-xs sm:text-sm"
+                      maxLength={250}
+                      className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg text-xs sm:text-sm ${errors.email ? "border-red-500" : "border-gray-300"}`}
                     />
+                    {errors.email && (
+                      <p className="mt-1 text-xs text-red-500">{errors.email}</p>
+                    )}
                   </div>
 
                   <div>
@@ -1117,9 +1259,14 @@ export default function PersonalDetailsForm({
                         name="mobileNumber"
                         value={formData.mobileNumber}
                         onChange={handleInputChange}
-                        className="flex-1 px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg text-xs sm:text-sm tracking-wider"
+                        inputMode="numeric"
+                        maxLength={10}
+                        className={`flex-1 px-3 py-2 sm:py-2.5 border rounded-lg text-xs sm:text-sm tracking-wider ${errors.mobileNumber ? "border-red-500" : "border-gray-300"}`}
                       />
                     </div>
+                    {errors.mobileNumber && (
+                      <p className="mt-1 text-xs text-red-500">{errors.mobileNumber}</p>
+                    )}
                   </div>
 
                   <div>
@@ -1131,6 +1278,8 @@ export default function PersonalDetailsForm({
                       name="dateOfBirth"
                       value={formData.dateOfBirth}
                       onChange={handleInputChange}
+                      min="1931-01-01"
+                      max={`${new Date().getFullYear() - 1}-12-31`}
                       className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg text-xs sm:text-sm ${errors.dateOfBirth ? "border-red-500" : "border-gray-300"}`}
                     />
                     {errors.dateOfBirth && (
@@ -1157,6 +1306,29 @@ export default function PersonalDetailsForm({
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 mt-8 pt-4 border-t border-gray-200">
+                {personalDetailsChanged && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const personalErrors = validateFields(PERSONAL_DETAIL_FIELDS);
+                      if (hasErrors(personalErrors)) {
+                        setPersonalDetailsExpanded(true);
+                        setSubmitError("Please fix validation errors in Personal Details before saving.");
+                        return;
+                      }
+                      handlePersonalDetailsOtpSent();
+                      setShowOtpPopup(true);
+                    }}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-md text-sm font-medium shadow-sm hover:from-orange-500 hover:to-orange-600 transition cursor-pointer"
+                    aria-label="Save personal details"
+                  >
+                    <Save className="w-4 h-4" strokeWidth={2} />
+                    Save
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -1206,18 +1378,6 @@ export default function PersonalDetailsForm({
               Communication Language <span className="text-red-500">*</span>
             </h3>
             <div className="flex gap-2 items-center">
-              {languagesChanged && (
-                <button
-                  type="button"
-                  onClick={handleUpdateLanguages}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-md text-sm font-medium shadow-sm hover:from-orange-500 hover:to-orange-600 transition cursor-pointer"
-                  aria-pressed="false"
-                  aria-label="Save language changes"
-                >
-                  <Save className="w-4 h-4" strokeWidth={2} />
-                  Save
-                </button>
-              )}
               <button
                 type="button"
                 onClick={() => setLanguagesExpanded(!languagesExpanded)}
@@ -1235,17 +1395,6 @@ export default function PersonalDetailsForm({
 
           {languagesExpanded && (
             <div className="p-4 sm:p-5 md:p-6">
-              {languagesFeedback && (
-                <div
-                  className={`mb-4 p-3 rounded-lg text-sm ${languagesFeedback.includes("success")
-                    ? "bg-green-50 text-green-700 border border-green-200"
-                    : "bg-red-50 text-red-700 border border-red-200"
-                    }`}
-                >
-                  {languagesFeedback}
-                </div>
-              )}
-
               <div
                 ref={languageContainerRef}
                 className="relative w-full overflow-visible"
@@ -1299,6 +1448,31 @@ export default function PersonalDetailsForm({
                   </div>
                 )}
               </div>
+
+              <div className="flex items-center justify-end gap-2 mt-8 pt-4 border-t border-gray-200">
+                {languagesFeedback && (
+                  <span
+                    className={`text-xs px-2 py-1 rounded-full ${languagesFeedback.includes("success")
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                      }`}
+                  >
+                    {languagesFeedback}
+                  </span>
+                )}
+                {languagesChanged && (
+                  <button
+                    type="button"
+                    onClick={handleUpdateLanguages}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-md text-sm font-medium shadow-sm hover:from-orange-500 hover:to-orange-600 transition cursor-pointer"
+                    aria-pressed="false"
+                    aria-label="Save language changes"
+                  >
+                    <Save className="w-4 h-4" strokeWidth={2} />
+                    Save
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -1309,18 +1483,6 @@ export default function PersonalDetailsForm({
               Current Location
             </h3>
             <div className="flex gap-2 items-center">
-              {locationChanged && (
-                <button
-                  type="button"
-                  onClick={handleUpdateLocation}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-md text-sm font-medium shadow-sm hover:from-orange-500 hover:to-orange-600 transition cursor-pointer"
-                  aria-pressed="false"
-                  aria-label="Save location changes"
-                >
-                  <Save className="w-4 h-4" strokeWidth={2} />
-                  Save
-                </button>
-              )}
               <button
                 type="button"
                 onClick={() =>
@@ -1340,16 +1502,6 @@ export default function PersonalDetailsForm({
 
           {currentLocationExpanded && (
             <div className="p-4 sm:p-5 md:p-6">
-              {locationFeedback && (
-                <div
-                  className={`mb-4 p-3 rounded-lg text-sm ${locationFeedback.includes("success")
-                    ? "bg-green-50 text-green-700 border border-green-200"
-                    : "bg-red-50 text-red-700 border border-red-200"
-                    }`}
-                >
-                  {locationFeedback}
-                </div>
-              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 <div className="sm:col-span-2 lg:col-span-3">
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
@@ -1359,8 +1511,9 @@ export default function PersonalDetailsForm({
                     name="address"
                     value={formData.address}
                     onChange={handleInputChange}
-                    placeholder="Enter your address (must include letters & numbers)"
+                    placeholder="Enter your address"
                     rows={3}
+                    maxLength={MAX_ADDRESS_LENGTH}
                     className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-xs sm:text-sm resize-none ${errors.address
                       ? "border-red-500 focus:ring-red-400"
                       : "border-gray-300 focus:ring-orange-400"
@@ -1380,7 +1533,11 @@ export default function PersonalDetailsForm({
                       name="country"
                       value={formData.country}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
+                      aria-invalid={!!errors.country}
+                      className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8 ${errors.country
+                        ? "border-red-500 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-orange-400"
+                        }`}
                       disabled={loadingCountries}
                     >
                       <option value="">{loadingCountries ? "Loading..." : "Select Country"}</option>
@@ -1390,6 +1547,9 @@ export default function PersonalDetailsForm({
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
+                  {errors.country && (
+                    <p className="mt-1 text-xs text-red-500">{errors.country}</p>
+                  )}
                 </div>
 
                 <div>
@@ -1401,7 +1561,11 @@ export default function PersonalDetailsForm({
                       name="state"
                       value={formData.state}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
+                      aria-invalid={!!errors.state}
+                      className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8 ${errors.state
+                        ? "border-red-500 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-orange-400"
+                        }`}
                       disabled={loadingStates || !formData.country}
                     >
                       <option value="">{loadingStates ? "Loading..." : "Select State"}</option>
@@ -1411,6 +1575,9 @@ export default function PersonalDetailsForm({
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
+                  {errors.state && (
+                    <p className="mt-1 text-xs text-red-500">{errors.state}</p>
+                  )}
                 </div>
 
                 <div>
@@ -1420,18 +1587,45 @@ export default function PersonalDetailsForm({
                   <div className="relative">
                     <select
                       name="city"
-                      value={formData.city}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
+                      value={isCustomCity ? OTHER_CITY : formData.city}
+                      onChange={handleCityChange}
+                      aria-required="true"
+                      aria-invalid={!!errors.city}
+                      className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8 ${errors.city
+                        ? "border-red-500 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-orange-400"
+                        }`}
                       disabled={loadingCities || !formData.state}
                     >
                       <option value="">{loadingCities ? "Loading..." : "Select City"}</option>
                       {cityOptions.map((city) => (
                         <option key={city.name} value={city.name}>{city.name}</option>
                       ))}
+                      <option value={OTHER_CITY}>Other</option>
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
+
+                  {isCustomCity && (
+                    <input
+                      type="text"
+                      value={formData.city}
+                      onChange={handleCustomCityChange}
+                      maxLength={MAX_CITY_LENGTH}
+                      placeholder="Enter your city"
+                      autoFocus
+                      aria-required="true"
+                      aria-invalid={!!errors.city}
+                      className={`mt-2 w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-xs sm:text-sm ${errors.city
+                        ? "border-red-500 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-orange-400"
+                        }`}
+                    />
+                  )}
+
+                  {errors.city && (
+                    <p className="mt-1 text-xs text-red-500">{errors.city}</p>
+                  )}
                 </div>
 
                 <div>
@@ -1444,6 +1638,8 @@ export default function PersonalDetailsForm({
                     value={formData.pincode}
                     onChange={handleInputChange}
                     placeholder="Enter Pin code"
+                    inputMode="numeric"
+                    maxLength={6}
                     className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${errors.pincode
                       ? "border-red-500 focus:ring-red-400"
                       : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
@@ -1460,50 +1656,55 @@ export default function PersonalDetailsForm({
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
                     Nationality <span className="text-red-500">*</span>
                   </label>
-                  <div className="relative">
-                    <select
-                      name="nationality"
-                      value={formData.nationality}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
-                    >
-                      <option value="">Select Nationality</option>
-                      <option value="Indian">Indian</option>
-                      <option value="American">American</option>
-                      <option value="British">British</option>
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                    Passport Number
-                  </label>
                   <input
                     type="text"
-                    name="passportNumber"
-                    value={formData.passportNumber}
+                    name="nationality"
+                    value={formData.nationality}
                     onChange={handleInputChange}
-                    placeholder="Enter Passport Number (letters + numbers required)"
-                    className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${errors.passportNumber
+                    placeholder="Enter Nationality"
+                    maxLength={50}
+                    className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-xs sm:text-sm bg-white ${errors.nationality
                       ? "border-red-500 focus:ring-red-400"
-                      : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                      : "border-gray-300 focus:ring-orange-400"
                       }`}
                   />
-                  {errors.passportNumber && (
-                    <p className="mt-1 text-xs text-red-500">
-                      {errors.passportNumber}
-                    </p>
+                  {errors.nationality && (
+                    <p className="mt-1 text-xs text-red-500">{errors.nationality}</p>
                   )}
                 </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 mt-8 pt-4 border-t border-gray-200">
+                {locationFeedback && (
+                  <span
+                    className={`text-xs px-2 py-1 rounded-full ${locationFeedback.includes("success")
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                      }`}
+                  >
+                    {locationFeedback}
+                  </span>
+                )}
+                {locationChanged && (
+                  <button
+                    type="button"
+                    onClick={handleUpdateLocation}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-md text-sm font-medium shadow-sm hover:from-orange-500 hover:to-orange-600 transition cursor-pointer"
+                    aria-pressed="false"
+                    aria-label="Save location changes"
+                  >
+                    <Save className="w-4 h-4" strokeWidth={2} />
+                    Save
+                  </button>
+                )}
               </div>
             </div>
           )}
         </div>
 
         <div className="flex flex-col gap-4">
-          {!formData.languages || formData.languages.length === 0 ? (
+          {hasAttemptedProceed &&
+          (!formData.languages || formData.languages.length === 0) ? (
             <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm font-medium text-red-800">Missing mandatory field:</p>
               <ul className="text-xs text-red-700 space-y-1 ml-4 mt-1">

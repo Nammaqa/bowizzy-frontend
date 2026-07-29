@@ -2,6 +2,7 @@ import React from 'react';
 import DOMPurify from 'dompurify';
 import { Document, Page, View, Text, StyleSheet, Link } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
+import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 
 const styles = StyleSheet.create({
   page: { paddingTop: 28, paddingBottom: 24, paddingLeft: 36, paddingRight: 36, fontSize: 10 },
@@ -16,19 +17,73 @@ const styles = StyleSheet.create({
   bullet: { fontSize: 10, color: '#444', marginTop: 4 },
 });
 
-const htmlToPlainText = (html?: string) => {
-  if (!html) return '';
-  const sanitized = DOMPurify.sanitize(html || '');
-  const withBreaks = sanitized.replace(/<br\s*\/?/gi, '\n').replace(/<\/p>|<\/li>/gi, '\n');
-  const decoded = withBreaks.replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-  try {
-    if (typeof document !== 'undefined') {
-      const tmp = document.createElement('div');
-      tmp.innerHTML = decoded;
-      return (tmp.textContent || tmp.innerText || '').trim();
+type RichTextSegment = {
+  text: string;
+  bold: boolean;
+};
+
+const decodeHtmlEntities = (text: string) =>
+  text
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
+
+const htmlToRichTextLines = (html?: string): RichTextSegment[][] => {
+  if (!html) return [];
+
+  const sanitized = DOMPurify.sanitize(html || '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<li[^>]*>/gi, '• ')
+    .replace(/<p[^>]*>/gi, '');
+
+  const lines: RichTextSegment[][] = [];
+  let currentLine: RichTextSegment[] = [];
+  let boldDepth = 0;
+
+  const addText = (rawText: string) => {
+    const decoded = decodeHtmlEntities(rawText);
+    const parts = decoded.split(/\r?\n/);
+
+    parts.forEach((part, index) => {
+      if (part) {
+        currentLine.push({ text: part, bold: boldDepth > 0 });
+      }
+
+      if (index < parts.length - 1) {
+        if (currentLine.some((segment) => segment.text.trim())) {
+          lines.push(currentLine);
+        }
+        currentLine = [];
+      }
+    });
+  };
+
+  sanitized.split(/(<\/?(?:strong|b)\b[^>]*>|<[^>]+>)/gi).forEach((part) => {
+    if (!part) return;
+
+    if (/^<\s*(strong|b)\b/i.test(part)) {
+      boldDepth += 1;
+      return;
     }
-  } catch (e) { /* ignore */ }
-  return decoded.replace(/<[^>]+>/g, '').trim();
+
+    if (/^<\s*\/\s*(strong|b)\s*>/i.test(part)) {
+      boldDepth = Math.max(0, boldDepth - 1);
+      return;
+    }
+
+    if (/^<[^>]+>$/.test(part)) return;
+
+    addText(part);
+  });
+
+  if (currentLine.some((segment) => segment.text.trim())) {
+    lines.push(currentLine);
+  }
+
+  return lines;
 };
 
 const renderBulletedParagraph = (html?: string) => {
@@ -94,6 +149,13 @@ const formatYear = (s?: string) => {
   return y ? y[1] : str;
 };
 
+const formatEducationDateRange = (edu: any) => {
+  const start = formatMonthYear(edu?.startYear || edu?.startDate || '');
+  const end = formatMonthYear(edu?.endYear || edu?.yearOfPassing || '');
+  if (start && end) return `${start} — ${end}`;
+  return start || end || '';
+};
+
 interface Template15PDFProps {
   data: ResumeData;
   primaryColor?: string;
@@ -135,6 +197,24 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
   const pdfFontFamily = getPdfFontFamily(fontFamily);
   const pdfFontFamilyBold = getPdfFontFamilyBold(fontFamily);
 
+  const renderRichText = (html?: string, style: Record<string, string | number> = {}) => {
+    const lines = htmlToRichTextLines(html);
+    if (lines.length === 0) return null;
+
+    return lines.map((line, lineIndex) => (
+      <Text key={lineIndex} style={{ ...style, marginTop: lineIndex === 0 ? 0 : 2 }}>
+        {line.map((segment, segmentIndex) => (
+          <Text
+            key={segmentIndex}
+            style={segment.bold ? { fontFamily: pdfFontFamilyBold } : undefined}
+          >
+            {segment.text}
+          </Text>
+        ))}
+      </Text>
+    ));
+  };
+
   const role = (experience && (experience as any).jobRole) || (experience.workExperiences && experience.workExperiences.find((w: any) => w.enabled && w.jobTitle) && experience.workExperiences.find((w: any) => w.enabled && w.jobTitle).jobTitle) || '';
 
   const mobile = personal.mobileNumber;
@@ -143,6 +223,14 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
   const linkedinPresent = linksEnabled && (skillsLinks?.links?.linkedinEnabled ?? true) ? (skillsLinks?.links?.linkedinProfile || (personal as any).linkedinProfile) : null;
   const githubPresent = linksEnabled && (skillsLinks?.links?.githubEnabled ?? true) ? (skillsLinks?.links?.githubProfile || (personal as any).githubProfile) : null;
   const portfolioPresent = linksEnabled && (skillsLinks?.links?.portfolioEnabled ?? true) ? skillsLinks?.links?.portfolioUrl : null;
+  const publicationPresent = linksEnabled && (skillsLinks?.links?.publicationEnabled ?? true) ? skillsLinks?.links?.publicationUrl : null;
+
+  const normalizeLinkUrl = (url?: string | null) => {
+    if (!url) return '';
+    const trimmed = String(url).trim();
+    if (!trimmed) return '';
+    return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  };
 
   const extractHandle = (s?: string) => {
     if (!s) return '';
@@ -161,6 +249,13 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
   const linkedinLabel = linkedinPresent ? extractHandle(linkedinPresent) : null;
   const githubLabel = githubPresent ? extractHandle(githubPresent) : null;
   const portfolioLabel = portfolioPresent ? extractHandle(portfolioPresent) : null;
+  const publicationLabel = publicationPresent ? extractHandle(publicationPresent) : null;
+  const contactLinks = [
+    linkedinPresent && { href: normalizeLinkUrl(linkedinPresent), label: linkedinLabel, color: '#0a66c2' },
+    githubPresent && { href: normalizeLinkUrl(githubPresent), label: githubLabel, color: '#111' },
+    portfolioPresent && { href: normalizeLinkUrl(portfolioPresent), label: portfolioLabel, color: '#000' },
+    publicationPresent && { href: normalizeLinkUrl(publicationPresent), label: publicationLabel, color: '#000' },
+  ].filter(Boolean) as Array<{ href: string; label: string | null; color: string }>;
 
   return (
     <Document>
@@ -172,24 +267,15 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
             {mobile && <Text style={styles.contact}>{mobile}</Text>}
             {mobile && email && <Text style={styles.contact}> | </Text>}
             {email && <Text style={styles.contact}>{email}</Text>}
-            {(mobile || email) && linkedinPresent && <Text style={styles.contact}> | </Text>}
-            {linkedinPresent && (
-              <Link src={linkedinPresent} style={{ ...styles.contact, color: '#0a66c2' }}>
-                {linkedinLabel}
-              </Link>
-            )}
-            {linkedinPresent && githubPresent && <Text style={styles.contact}> | </Text>}
-            {githubPresent && (
-              <Link src={githubPresent} style={{ ...styles.contact, color: '#111' }}>
-                {githubLabel}
-              </Link>
-            )}
-            {githubPresent && portfolioPresent && <Text style={styles.contact}> | </Text>}
-            {portfolioPresent && (
-              <Link src={portfolioPresent} style={{ ...styles.contact, color: '#000' }}>
-                {portfolioLabel}
-              </Link>
-            )}
+            {(mobile || email) && contactLinks.length > 0 && <Text style={styles.contact}> | </Text>}
+            {contactLinks.map((link, index) => (
+              <React.Fragment key={`${link.href}-${index}`}>
+                {index > 0 && <Text style={styles.contact}> | </Text>}
+                <Link src={link.href} style={{ ...styles.contact, color: link.color }}>
+                  {link.label || link.href}
+                </Link>
+              </React.Fragment>
+            ))}
           </View>
         </View>
 
@@ -197,7 +283,21 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
           <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>OBJECTIVE</Text>
           <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginTop: 4, marginBottom: 0 }} />
         </View>
-        {personal.aboutCareerObjective ? <Text style={{ fontSize: 10, color: '#444', marginTop: 6 }}>{htmlToPlainText(personal.aboutCareerObjective)}</Text> : null}
+        {personal.aboutCareerObjective ? (
+          <View style={{ marginTop: 6 }}>
+            {renderRichText(personal.aboutCareerObjective, { fontSize: 10, color: '#444' })}
+          </View>
+        ) : null}
+
+        {(skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled) && (<>
+          <View style={{ marginTop: 12 }}>
+            <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>SUMMARY</Text>
+            <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginTop: 4, marginBottom: 0 }} />
+          </View>
+          <View style={{ marginTop: 6 }}>
+            {skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled && renderRichText(skillsLinks.technicalSummary, { fontSize: 10, color: '#444' })}
+          </View>
+        </>)}
 
         {(education.higherEducation.some(edu => edu.enabled) || education.preUniversityEnabled || education.sslcEnabled) && (<>
           <View style={{ marginTop: 12 }}>
@@ -210,12 +310,12 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
               <View key={`he-${i}`} style={{ marginBottom: 8 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>{edu.instituteName}</Text>
-                  <Text style={{ fontSize: 11, color: '#101113ff', fontFamily: pdfFontFamilyBold }}>{formatMonthYear(edu.startYear)} — {edu.currentlyPursuing ? 'Present' : formatMonthYear(edu.endYear)}</Text>
+                    <Text style={{ fontSize: 11, color: '#101113ff', fontFamily: pdfFontFamilyBold }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}</Text>
                 </View>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
                   <Text style={{ fontSize: 11, color: '#6b7280' }}>{edu.degree}{edu.fieldOfStudy ? ` — ${edu.fieldOfStudy}` : ''}</Text>
                   {edu.resultFormat && edu.result ? (
-                    <Text style={{ fontSize: 11, color: '#6b7280' }}>{edu.resultFormat}: {edu.result}</Text>
+                    <Text style={{ fontSize: 11, color: '#6b7280', fontFamily: pdfFontFamilyBold }}>{edu.resultFormat}: {edu.result}</Text>
                   ) : null}
                 </View>
                 {edu.universityBoard ? <Text style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>{edu.universityBoard}</Text> : null}
@@ -227,12 +327,12 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
               <View style={{ marginBottom: 8 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
-                  <Text style={{ fontSize: 12, color: '#101113ff', fontFamily: pdfFontFamilyBold }}>{formatMonthYear(education.preUniversity.yearOfPassing) || ''}</Text>
+                  <Text style={{ fontSize: 12, color: '#101113ff', fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
                 </View>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
                   <Text style={{ fontSize: 11, color: '#6b7280' }}>Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}</Text>
                   {education.preUniversity.resultFormat && education.preUniversity.result ? (
-                    <Text style={{ fontSize: 11, color: '#6b7280' }}>{education.preUniversity.resultFormat}: {education.preUniversity.result}</Text>
+                    <Text style={{ fontSize: 11, color: '#6b7280', fontFamily: pdfFontFamilyBold }}>{education.preUniversity.resultFormat}: {education.preUniversity.result}</Text>
                   ) : null}
                 </View>
               </View>
@@ -243,12 +343,12 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
               <View style={{ marginBottom: 8 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>{education.sslc.instituteName || 'SSLC'}</Text>
-                  <Text style={{ fontSize: 11, color: '#101113ff', fontFamily: pdfFontFamilyBold }}>{education.sslc.yearOfPassing ? formatMonthYear(education.sslc.yearOfPassing) : ''}</Text>
+                  <Text style={{ fontSize: 11, color: '#101113ff', fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.sslc)}</Text>
                 </View>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
                   <Text style={{ fontSize: 11, color: '#6b7280' }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</Text>
                   {education.sslc.resultFormat && education.sslc.result ? (
-                    <Text style={{ fontSize: 11, color: '#6b7280' }}>{education.sslc.resultFormat}: {education.sslc.result}</Text>
+                    <Text style={{ fontSize: 11, color: '#6b7280', fontFamily: pdfFontFamilyBold }}>{education.sslc.resultFormat}: {education.sslc.result}</Text>
                   ) : null}
                 </View>
               </View>
@@ -359,7 +459,7 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
         </>)}
 
         {/* Footer */}
-        <View style={{
+        {/* <View style={{
           position: 'absolute',
           left: 0,
           right: 0,
@@ -374,7 +474,7 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
         }} fixed>
           <Text style={{ color: '#B0B0B0', fontSize: 10, letterSpacing: 0.5 }}>bowizzy.com</Text>
           <Text style={{ color: '#B0B0B0', fontSize: 10, letterSpacing: 0.5 }}>Powered by Wizzybox</Text>
-        </View>
+        </View> */}
       </Page>
     </Document>
   );

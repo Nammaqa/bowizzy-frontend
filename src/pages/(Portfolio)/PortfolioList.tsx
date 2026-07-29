@@ -13,6 +13,7 @@ import {
   Clock,
   X,
   AlertCircle,
+  ArrowLeft,
 } from "lucide-react";
 
 import api from "@/api";
@@ -68,38 +69,48 @@ function PortfolioCard({
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-xl border border-gray-100 p-5 flex flex-col gap-3 hover:shadow-md transition-shadow group relative cursor-pointer"
+      className="h-full min-h-[205px] bg-white rounded-xl border border-gray-100 p-5 flex flex-col gap-3 hover:shadow-md transition-shadow group relative cursor-pointer"
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center shrink-0">
             <Globe className="w-5 h-5 text-violet-500" />
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-gray-800 leading-snug">{portfolio.portfolio_name}</h3>
+          <div className="min-w-0">
+            <h3 className="text-sm font-bold text-gray-800 leading-snug break-words">{portfolio.portfolio_name}</h3>
             <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 bg-violet-50 text-violet-600 uppercase tracking-wider">
               {displayType}
             </span>
           </div>
         </div>
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(portfolio.portfolio_id);
-          }}
-          className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 transition cursor-pointer shrink-0 relative z-10"
-          title="Delete Portfolio"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-1.5 shrink-0 relative z-10">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick();
+            }}
+            className="p-1.5 rounded-lg text-gray-400 hover:bg-violet-50 hover:text-violet-600 transition cursor-pointer"
+            title="Edit Portfolio"
+          >
+            <Edit3 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(portfolio.portfolio_id);
+            }}
+            className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 transition cursor-pointer"
+            title="Delete Portfolio"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
-      {portfolio.description && (
-        <p className="text-xs text-gray-500 leading-relaxed line-clamp-3 mt-1">
-          {portfolio.description}
-        </p>
-      )}
+      <p className="min-h-[54px] text-xs text-gray-500 leading-relaxed line-clamp-3 break-words mt-1">
+        {portfolio.description || ""}
+      </p>
 
       {/* Buttons: Manage & Preview */}
       <div className="mt-auto pt-4 flex gap-2">
@@ -163,12 +174,26 @@ export default function PortfolioList() {
 
   const handleDelete = async (id: number | string) => {
     if (!window.confirm("Are you sure you want to delete this portfolio?")) return;
-    setDeleting(String(id));
-    // TODO: call DELETE API
-    setTimeout(() => {
+    const userData = JSON.parse(localStorage.getItem("user") || "null");
+
+    if (!userData || !userData.token) {
+      alert("User not authenticated.");
+      return;
+    }
+
+    try {
+      setDeleting(String(id));
+      await api.delete(`/portfolio/${id}`, {
+        headers: { Authorization: `Bearer ${userData.token}` },
+      });
+
       setPortfolios((prev) => prev.filter((p) => String(p.portfolio_id) !== String(id)));
+    } catch (err: any) {
+      console.error("Failed to delete portfolio:", err);
+      alert(err.response?.data?.message || "Failed to delete portfolio. Please try again.");
+    } finally {
       setDeleting(null);
-    }, 600);
+    }
   };
 
   const handleManage = (p: Portfolio) => {
@@ -267,7 +292,14 @@ export default function PortfolioList() {
     <div className="flex flex-col min-h-screen bg-gray-50">
       <DashNav heading="My Portfolios" />
 
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-8">
+      <main className="flex-1 w-full max-w-7xl px-6 py-8">
+        <button
+          onClick={() => navigate("/portfolio")}
+          className="inline-flex items-center gap-2 mb-5 text-sm font-semibold text-gray-600 hover:text-violet-600 transition cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Portfolio Page
+        </button>
 
         {/* Header row */}
         <div className="flex items-center justify-between mb-6">
@@ -305,7 +337,7 @@ export default function PortfolioList() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {portfolios.map((p) => (
-              <div key={p.portfolio_id} className={deleting === String(p.portfolio_id) ? "opacity-50 pointer-events-none" : ""}>
+              <div key={p.portfolio_id} className={`h-full ${deleting === String(p.portfolio_id) ? "opacity-50 pointer-events-none" : ""}`}>
                 <PortfolioCard
                   portfolio={p}
                   onDelete={handleDelete}
@@ -330,7 +362,7 @@ export default function PortfolioList() {
               <X className="w-5 h-5" />
             </button>
             <h2 className="text-xl font-bold text-gray-900 mb-1">Manage Domain</h2>
-            <p className="text-sm text-gray-500 mb-5">
+            <p className="text-sm text-gray-500 mb-5 break-words">
               Choose a custom subdomain for <strong>{managePortfolio.portfolio_name}</strong>.
             </p>
 
@@ -348,6 +380,8 @@ export default function PortfolioList() {
                       setDomainError("");
                     }}
                     placeholder="my-portfolio"
+                    min={3}
+                    max={63}
                     className="flex-1 min-w-0 text-sm px-4 py-2.5 outline-none text-gray-800"
                   />
                   <div className="bg-gray-50 border-l border-gray-200 px-4 py-2.5 text-sm text-gray-500 font-medium flex items-center">

@@ -2,6 +2,7 @@ import React from "react";
 import DOMPurify from 'dompurify';
 import { Document, Page, Text, View, StyleSheet, Svg, Path, Image } from "@react-pdf/renderer";
 import type { ResumeData } from "@/types/resume";
+import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 import logo from '@/assets/bowizzy.png';
 
 const styles = StyleSheet.create({
@@ -63,6 +64,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#444',
     marginTop: 6,
+    textAlign: 'justify',
   },
   linkText: {
     fontSize: 9,
@@ -94,6 +96,7 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontWeight: 'normal',
     marginBottom: 4,
+    textAlign: 'justify',
   }
 });
 
@@ -142,20 +145,142 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
   const pdfFontFamily = getPdfFontFamily(fontFamily);
   const pdfFontFamilyBold = getPdfFontFamilyBold(fontFamily);
 
-  const htmlToPlainText = (html?: string) => {
-    if (!html) return '';
-    const sanitized = DOMPurify.sanitize(html || '');
-    const withBreaks = sanitized.replace(/<br\s*\/?/gi, '\n').replace(/<\/p>|<\/li>/gi, '\n');
-    try {
-      if (typeof document !== 'undefined') {
-        const tmp = document.createElement('div');
-        tmp.innerHTML = withBreaks;
-        return (tmp.textContent || tmp.innerText || '').trim();
-      }
-    } catch (e) {
-      return withBreaks.replace(/<[^>]+>/g, '').trim();
+  // Pick the standard PDF font matching the requested bold/italic combination.
+  // react-pdf ships Times and Helvetica in all four variants.
+  const getPdfFontVariant = (bold: boolean, italic: boolean) => {
+    if (pdfFontFamily === 'Helvetica') {
+      if (bold && italic) return 'Helvetica-BoldOblique';
+      if (bold) return 'Helvetica-Bold';
+      if (italic) return 'Helvetica-Oblique';
+      return 'Helvetica';
     }
-    return withBreaks.replace(/<[^>]+>/g, '').trim();
+    if (bold && italic) return 'Times-BoldItalic';
+    if (bold) return 'Times-Bold';
+    if (italic) return 'Times-Italic';
+    return 'Times-Roman';
+  };
+
+  const decodeHtmlEntities = (value: string) =>
+    value
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#0?39;/g, "'")
+      .replace(/&apos;/g, "'")
+      .replace(/&amp;/g, '&'); // keep last so "&amp;lt;" doesn't double-decode
+
+  const stripTags = (html: string) => decodeHtmlEntities(html.replace(/<[^>]+>/g, '')).trim();
+
+  // Tags that may carry inline formatting are kept; every other tag is dropped.
+  const INLINE_TAG_PATTERN = 'b|strong|i|em|u|span|font';
+  const stripNonInlineTags = (html: string) =>
+    html.replace(new RegExp(`<(?!\\/?(?:${INLINE_TAG_PATTERN})\\b)[^>]*>`, 'gi'), '');
+
+  const VOID_TAGS = new Set(['br', 'img', 'hr', 'input', 'meta', 'link', 'source']);
+
+  // Some editors emit <span style="font-weight:700"> instead of <b>.
+  const readStyleFlags = (rawTag: string) => {
+    const styleMatch =
+      rawTag.match(/style\s*=\s*"([^"]*)"/i) || rawTag.match(/style\s*=\s*'([^']*)'/i);
+    const css = (styleMatch?.[1] || '').toLowerCase();
+    return {
+      bold: /font-weight\s*:\s*(bold(er)?|[6-9]00)/.test(css),
+      italic: /font-style\s*:\s*italic/.test(css),
+      underline: /text-decoration[^:]*:[^;]*underline/.test(css),
+    };
+  };
+
+  type InlineSegment = { text: string; bold: boolean; italic: boolean; underline: boolean };
+
+  /** Split a fragment of inline HTML into runs that each carry their own styling. */
+  const parseInlineSegments = (html: string): InlineSegment[] => {
+    const segments: InlineSegment[] = [];
+    const stack: { tag: string; bold: boolean; italic: boolean; underline: boolean }[] = [];
+    const activeFlags = () => ({
+      bold: stack.some((entry) => entry.bold),
+      italic: stack.some((entry) => entry.italic),
+      underline: stack.some((entry) => entry.underline),
+    });
+
+    const pushText = (raw: string) => {
+      if (!raw) return;
+      const text = decodeHtmlEntities(raw);
+      if (!text) return;
+      segments.push({ text, ...activeFlags() });
+    };
+
+    const tagRegex = /<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/g;
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = tagRegex.exec(html)) !== null) {
+      pushText(html.slice(lastIndex, match.index));
+
+      const rawTag = match[0];
+      const tag = match[1].toLowerCase();
+      const isClosing = rawTag.startsWith('</');
+
+      if (isClosing) {
+        for (let i = stack.length - 1; i >= 0; i--) {
+          if (stack[i].tag === tag) {
+            stack.splice(i, 1);
+            break;
+          }
+        }
+      } else if (!VOID_TAGS.has(tag) && !/\/>\s*$/.test(rawTag)) {
+        const flags = readStyleFlags(rawTag);
+        stack.push({
+          tag,
+          bold: flags.bold || tag === 'b' || tag === 'strong',
+          italic: flags.italic || tag === 'i' || tag === 'em',
+          underline: flags.underline || tag === 'u',
+        });
+      }
+
+      lastIndex = tagRegex.lastIndex;
+    }
+
+    pushText(html.slice(lastIndex));
+    return segments;
+  };
+
+  /** Render one line of inline HTML as styled <Text> runs. */
+  const renderInlineRuns = (html: string) =>
+    parseInlineSegments(html).map((segment, idx) => (
+      <Text
+        key={idx}
+        style={{
+          fontFamily: getPdfFontVariant(segment.bold, segment.italic),
+          ...(segment.underline ? { textDecoration: 'underline' as const } : {}),
+        }}
+      >
+        {segment.text}
+      </Text>
+    ));
+
+  /** Break rich text into bullet items (from <li>) or plain lines, keeping inline tags. */
+  const splitIntoBlocks = (sanitized: string): { html: string; bullet: boolean }[] => {
+    const liRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
+    const items: { html: string; bullet: boolean }[] = [];
+    let match: RegExpExecArray | null;
+
+    while ((match = liRegex.exec(sanitized)) !== null) {
+      const inner = stripNonInlineTags(match[1] || '').trim();
+      if (stripTags(inner)) items.push({ html: inner, bullet: true });
+    }
+
+    if (items.length > 0) return items;
+
+    const withBreaks = sanitized
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/(p|div|h[1-6])>/gi, '\n');
+
+    return stripNonInlineTags(withBreaks)
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => stripTags(line))
+      .map((html) => ({ html, bullet: false }));
   };
 
   // Build contact parts including optional links — respects enabled flags
@@ -172,50 +297,50 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
     return parts.filter(Boolean);
   })();
 
-  const renderBulletedParagraph = (html?: string, textStyle?: any) => {
+  /**
+   * Renders rich text (bold / italic / underline / bullets) authored in the
+   * resume builder's editor. Inline formatting is preserved by emitting one
+   * styled <Text> run per formatting change.
+   */
+  const renderBulletedParagraph = (
+    html?: string,
+    textStyle?: { fontSize?: number; lineHeight?: number; color?: string }
+  ) => {
     if (!html) return null;
     const sanitized = DOMPurify.sanitize(html || '');
+    const blocks = splitIntoBlocks(sanitized);
+    if (blocks.length === 0) return null;
 
-    // Try to extract list items first
-    const liRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
-    const items: string[] = [];
-    let m: RegExpExecArray | null;
-    while ((m = liRegex.exec(sanitized)) !== null) {
-      let inner = m[1] || '';
-      inner = inner.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').trim();
-      if (inner) items.push(inner);
-    }
+    const fontSize = textStyle?.fontSize ?? 10;
+    const color = textStyle?.color ?? '#000000';
+    const isBulleted = blocks[0].bullet;
+    const lineHeight = textStyle?.lineHeight ?? (isBulleted ? 1.3 : 1.35);
 
-    // If we found list items, render them as bullets
-    if (items.length > 0) {
+    if (isBulleted) {
       return (
         <View style={{ marginTop: 6, width: '100%' }}>
-          {items.map((it, idx) => (
-            <View key={idx} style={{ flexDirection: 'row', marginTop: idx > 0 ? 4 : 0, alignItems: 'flex-start', width: '100%' }}>
-              <Text style={{ width: 10, color: '#000000', fontSize: 10, flexShrink: 0 }}>•</Text>
-              <Text style={{ flex: 1, color: '#000000', fontSize: 10, lineHeight: 1.3, textAlign: 'justify' }}>{it}</Text>
+          {blocks.map((block, idx) => (
+            <View
+              key={idx}
+              style={{ flexDirection: 'row', marginTop: idx > 0 ? 4 : 0, alignItems: 'flex-start', width: '100%' }}
+            >
+              <Text style={{ width: 10, color, fontSize, flexShrink: 0 }}>•</Text>
+              <Text style={{ flex: 1, color, fontSize, lineHeight, textAlign: 'justify', fontFamily: pdfFontFamily }}>
+                {renderInlineRuns(block.html)}
+              </Text>
             </View>
           ))}
         </View>
       );
     }
 
-    // Fallback: convert paragraphs and line breaks into lines
-    let text = sanitized
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<\/p>/gi, '\n')
-      .replace(/<[^>]+>/g, '')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .trim();
-
-    const lines = text.split('\n').map((l: string) => l.trim()).filter(Boolean);
-
     return (
       <View style={{ marginTop: 6, width: '100%' }}>
-        {lines.map((line: string, idx: number) => (
+        {blocks.map((block, idx) => (
           <View key={idx} style={{ marginTop: idx > 0 ? 6 : 0, width: '100%' }}>
-            <Text style={{ color: '#000000', fontSize: 10, lineHeight: 1.35, textAlign: 'justify' }}>{line}</Text>
+            <Text style={{ color, fontSize, lineHeight, textAlign: 'justify', fontFamily: pdfFontFamily }}>
+              {renderInlineRuns(block.html)}
+            </Text>
           </View>
         ))}
       </View>
@@ -271,6 +396,21 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
     }
   };
 
+  const formatEducationDateRange = (edu: any) => {
+    const start = formatMonthYear(edu?.startYear || edu?.startDate || '');
+    const end = formatMonthYear(edu?.endYear || edu?.yearOfPassing || '');
+    if (start && end) return `${start} - ${end}`;
+    return start || end || '';
+  };
+
+  // Always show both start and end for a degree when both exist (no single-date collapse).
+  const formatHigherEducationRange = (edu: any) => {
+    const start = formatResumeEducationMonthYear(edu?.startYear || edu?.startDate || '');
+    const end = formatResumeEducationMonthYear(edu?.endYear || edu?.yearOfPassing || edu?.endDate || '');
+    if (start && end) return `${start} - ${end}`;
+    return start || end || '';
+  };
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -309,22 +449,22 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
 
           {/* Career Objective */}
           {personal.aboutCareerObjective && personal.aboutCareerObjective.trim() !== '' && (
-            <View style={{ marginBottom: 12 }}>
+            <View style={{ marginBottom: 12 }} minPresenceAhead={60}>
               <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>CAREER OBJECTIVE</Text>
               <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 6 }} />
-              <Text style={{ fontSize: 11, color: '#000000', fontFamily: pdfFontFamily, lineHeight: 1.6 }}>
-                {htmlToPlainText(personal.aboutCareerObjective)}
-              </Text>
+              {renderBulletedParagraph(personal.aboutCareerObjective, { fontSize: 11, lineHeight: 1.6 })}
             </View>
           )}
 
           {/* Experience */}
           {experience.workExperiences.filter((w: any) => w.enabled).length > 0 && (
             <View style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>EXPERIENCE</Text>
-              <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
+              <View minPresenceAhead={90}>
+                <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>EXPERIENCE</Text>
+                <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
+              </View>
               {experience.workExperiences.filter((w: any) => w.enabled).map((w: any, i: number) => (
-                <View key={i} style={{ marginBottom: 12 }}>
+                <View key={i} style={{ marginBottom: 12 }} wrap={false}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
                     <Text style={{ fontSize: 12, fontFamily: pdfFontFamilyBold, color: '#111827', flex: 1, marginRight: 8 }}>{w.companyName}</Text>
                     <Text style={{ fontSize: 11, color: '#111827', fontFamily: pdfFontFamilyBold, textAlign: 'right' }}>
@@ -337,7 +477,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
                   </View>
                   {w.description ? (
                     <View style={{ width: '100%' }}>
-                      {renderBulletedParagraph(w.description, { fontSize: 11, color: '#000000' })}
+                      {renderBulletedParagraph(w.description)}
                     </View>
                   ) : null}
                 </View>
@@ -348,8 +488,10 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
           {/* Education */}
           {(education.higherEducation.some(edu => edu.enabled) || education.preUniversityEnabled || education.sslcEnabled) && (
             <View style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>EDUCATION</Text>
-              <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
+              <View minPresenceAhead={70}>
+                <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>EDUCATION</Text>
+                <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
+              </View>
 
               {education.higherEducation.some(edu => edu.enabled) && (
                 <>
@@ -365,11 +507,11 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
                     const bKey = parseYearKey(b.endYear || b.startYear || '');
                     return aKey - bKey;
                   }).map((edu: any, idx: number) => (
-                    <View key={idx} style={{ marginBottom: 8 }}>
+                    <View key={idx} style={{ marginBottom: 8 }} wrap={false}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{edu.instituteName}</Text>
                         <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>
-                          {formatMonthYear(edu.startYear)} - {edu.currentlyPursuing ? 'Present' : formatMonthYear(edu.endYear)}
+                              {edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatHigherEducationRange(edu)}
                         </Text>
                       </View>
                       <Text style={{ fontSize: 11, color: '#000000', fontFamily: pdfFontFamily, marginTop: 3 }}>
@@ -387,13 +529,13 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
 
               {/* Pre University */}
               {education.preUniversityEnabled && (
-                <View style={{ marginBottom: 8 }}>
+                <View style={{ marginBottom: 8 }} wrap={false}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
-                    <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>{formatMonthYear(education.preUniversity.yearOfPassing) || ''}</Text>
+                      <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
                   </View>
                   <Text style={{ fontSize: 11, color: '#000000', fontFamily: pdfFontFamily, marginTop: 3 }}>
-                    Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}
+                    Pre University (12th Standard){education.preUniversity.boardType ? ` — ${education.preUniversity.boardType}` : ''} {education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}
                   </Text>
                   {education.preUniversity.resultFormat && education.preUniversity.result ? (
                     <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamily, marginTop: 3 }}>
@@ -405,10 +547,10 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
 
               {/* SSLC */}
               {education.sslcEnabled && (
-                <View style={{ marginBottom: 8 }}>
+                <View style={{ marginBottom: 8 }} wrap={false}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{education.sslc.instituteName || 'SSLC'}</Text>
-                    <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>{education.sslc.yearOfPassing || ''}</Text>
+                      <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.sslc)}</Text>
                   </View>
                   <Text style={{ fontSize: 11, color: '#000000', fontFamily: pdfFontFamily, marginTop: 3 }}>
                     SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}
@@ -426,10 +568,12 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
           {/* Projects */}
           {projects && projects.filter((p: any) => p.enabled).length > 0 && (
             <View style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>PROJECTS</Text>
-              <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
+              <View minPresenceAhead={100}>
+                <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>PROJECTS</Text>
+                <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
+              </View>
               {projects.filter((p: any) => p.enabled).map((proj: any, idx: number) => (
-                <View key={idx} style={{ marginBottom: 12 }}>
+                <View key={idx} style={{ marginBottom: 12 }} wrap={false}>
                   {/* Title + dates */}
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 3 }}>
                     <Text style={{ fontSize: 12, fontFamily: pdfFontFamilyBold, color: '#111827', flex: 1, marginRight: 8 }}>{proj.projectTitle}</Text>
@@ -444,7 +588,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
                   {/* Description */}
                   {proj.description && proj.description.replace(/<[^>]*>/g, '').trim() ? (
                     <View style={{ marginBottom: 4 }}>
-                      {renderBulletedParagraph(proj.description, { fontSize: 11, color: '#000000' })}
+                      {renderBulletedParagraph(proj.description)}
                     </View>
                   ) : null}
                   {/* Roles & Responsibilities */}
@@ -452,7 +596,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
                     <View style={{ marginTop: 3 }}>
                       <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', marginBottom: 2 }}>Role:</Text>
                       <View style={{ marginLeft: 8 }}>
-                        {renderBulletedParagraph(proj.rolesResponsibilities, { fontSize: 11, color: '#000000' })}
+                        {renderBulletedParagraph(proj.rolesResponsibilities)}
                       </View>
                     </View>
                   ) : null}
@@ -462,21 +606,19 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
           )}
 
           {/* Certifications */}
-          {certifications.filter((c: any) => c.enabled).length > 0 && (
+          {certifications.filter((c: any) => c.enabled && c.certificateTitle && c.certificateTitle.trim()).length > 0 && (
             <View style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>TECHNICAL CERTIFICATIONS</Text>
-              <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
-              {certifications.filter((c: any) => c.enabled).map((cert: any, idx: number) => (
-                <View key={idx} style={{ marginBottom: 8 }}>
+              <View minPresenceAhead={60}>
+                <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>TECHNICAL CERTIFICATIONS</Text>
+                <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
+              </View>
+              {certifications.filter((c: any) => c.enabled && c.certificateTitle && c.certificateTitle.trim()).map((cert: any, idx: number) => (
+                <View key={idx} style={{ marginBottom: 8 }} wrap={false}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{cert.certificateTitle}</Text>
                     <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>{cert.date}</Text>
                   </View>
-                  {cert.description ? (
-                    <Text style={{ fontSize: 11, color: '#000000', fontFamily: pdfFontFamily, marginTop: 3 }}>
-                      {htmlToPlainText(cert.description)}
-                    </Text>
-                  ) : null}
+                  {cert.description ? renderBulletedParagraph(cert.description) : null}
                 </View>
               ))}
             </View>
@@ -486,12 +628,10 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
           {skillsLinks.technicalSummaryEnabled &&
             skillsLinks.technicalSummary &&
             skillsLinks.technicalSummary.replace(/<[^>]*>/g, '').trim() !== '' && (
-              <View style={{ marginBottom: 12 }}>
+              <View style={{ marginBottom: 12 }} minPresenceAhead={60}>
                 <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>TECHNICAL SUMMARY</Text>
                 <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
-                <Text style={{ fontSize: 11, color: '#000000', fontFamily: pdfFontFamily, lineHeight: 1.6 }}>
-                  {htmlToPlainText(skillsLinks.technicalSummary)}
-                </Text>
+                {renderBulletedParagraph(skillsLinks.technicalSummary)}
               </View>
             )}
 
@@ -530,29 +670,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
             </View>
           )}
 
-          {/* Links */}
-          {skillsLinks.linksEnabled && (() => {
-            const links = skillsLinks.links || {} as any;
-            const activeLinks = [
-              links.linkedinEnabled && links.linkedinProfile ? { label: 'LinkedIn', url: links.linkedinProfile } : null,
-              links.githubEnabled && links.githubProfile ? { label: 'GitHub', url: links.githubProfile } : null,
-              links.portfolioEnabled && links.portfolioUrl ? { label: 'Portfolio', url: links.portfolioUrl } : null,
-              links.publicationEnabled && links.publicationUrl ? { label: 'Publication', url: links.publicationUrl } : null,
-            ].filter(Boolean) as { label: string; url: string }[];
 
-            return activeLinks.length > 0 ? (
-              <View style={{ marginBottom: 12 }}>
-                <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>LINKS</Text>
-                <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
-                {activeLinks.map((link, idx) => (
-                  <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 4 }}>
-                    <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', minWidth: 80 }}>{link.label}: </Text>
-                    <Text style={{ fontSize: 11, color: '#1a56db', fontFamily: pdfFontFamily, flex: 1 }}>{link.url}</Text>
-                  </View>
-                ))}
-              </View>
-            ) : null;
-          })()}
 
         </View>
 

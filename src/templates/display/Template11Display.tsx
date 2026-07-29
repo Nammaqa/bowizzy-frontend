@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import DOMPurify from 'dompurify';
 import { FiPhone, FiMail, FiMapPin, FiLinkedin, FiGithub } from 'react-icons/fi';
 import type { ResumeData } from '@/types/resume';
+import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 import logo from '@/assets/bowizzy.png';
 
 interface Template11DisplayProps {
@@ -45,7 +46,6 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
       return aKey - bKey;
     });
   }, [education.higherEducation]);
-  console.log('skill links', skillsLinks)
   const getYear = (s?: string) => (s ? s.split('-')[0] : '');
 
   const degreeMap: Record<string, string> = {
@@ -103,6 +103,21 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
     }
   };
 
+  const formatEducationDateRange = (edu: any) => {
+    const start = formatMonthYear(edu?.startYear || edu?.startDate || '');
+    const end = formatMonthYear(edu?.endYear || edu?.yearOfPassing || '');
+    if (start && end) return `${start} - ${end}`;
+    return start || end || '';
+  };
+
+  // Always show both start and end for a degree when both exist (no single-date collapse).
+  const formatHigherEducationRange = (edu: any) => {
+    const start = formatResumeEducationMonthYear(edu?.startYear || edu?.startDate || '');
+    const end = formatResumeEducationMonthYear(edu?.endYear || edu?.yearOfPassing || edu?.endDate || '');
+    if (start && end) return `${start} - ${end}`;
+    return start || end || '';
+  };
+
   const htmlToLines = (s?: string) => {
     if (!s) return [] as string[];
     try {
@@ -134,9 +149,35 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
 
     return items;
   }, [personal, skillsLinks]);
-  console.log("edu", education.preUniversityEnabled, education.preUniversity.instituteName)
   return (
     <div className="w-[210mm] bg-white relative" style={{ minHeight: '297mm', fontFamily: fontFamily, }}>
+      {/* Scoped styles: justify paragraphs and bullet points inside rich-text (dangerouslySetInnerHTML) blocks */}
+      <style>{`
+        .t11-justify {
+          text-align: justify;
+          text-justify: inter-word;
+        }
+        .t11-justify p,
+        .t11-justify li,
+        .t11-justify div {
+          text-align: justify;
+          text-justify: inter-word;
+        }
+        .t11-justify ul,
+        .t11-justify ol {
+          margin: 0;
+          padding-left: 18px;
+        }
+        .t11-justify li {
+          margin-bottom: 2px;
+        }
+        /* Avoid ugly justify rag on the very last line of a block */
+        .t11-justify p:last-child,
+        .t11-justify li:last-child {
+          text-align-last: left;
+        }
+      `}</style>
+
       {/* Tiled Watermark Pattern — 4 cols × 6 rows */}
       <div style={{
         position: 'absolute',
@@ -197,7 +238,11 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
             <section style={{ marginBottom: 22 }}>
               <h2 style={{ fontSize: 13, fontWeight: 700, color: primaryColor, letterSpacing: 1.2, marginBottom: 8 }}>CAREER OBJECTIVE</h2>
               <div style={{ height: 1, background: '#333', width: '100%', marginBottom: 12 }} />
-              <div style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', lineHeight: 1.6 }} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(personal.aboutCareerObjective || '') }} />
+              <div
+                className="t11-justify"
+                style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', lineHeight: 1.6, textAlign: 'justify' }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(personal.aboutCareerObjective || '') }}
+              />
             </section>
           )}
 
@@ -228,7 +273,9 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                     {exp.location && <div style={{ fontSize: 11, fontWeight: 700, color: '#000000' }}>{exp.location}</div>}
                   </div>
                   {exp.description && (
-                    <div style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', lineHeight: 1.6 }}
+                    <div
+                      className="t11-justify"
+                      style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', lineHeight: 1.6, textAlign: 'justify' }}
                       dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(exp.description || '') }}
                     />
                   )}
@@ -248,10 +295,10 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                     <div key={idx} style={{ marginBottom: 10 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
                         <div style={{ fontSize: 11, fontWeight: 700, color: '#000000', flex: 1, marginRight: 8 }}>{edu.instituteName}</div>
-                        <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{formatMonthYear(edu.startYear)} - {edu.currentlyPursuing ? 'Present' : formatMonthYear(edu.endYear)}</div>
+          <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear)} - Present` : formatHigherEducationRange(edu)}</div>
                       </div>
                       <div style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', marginTop: 4 }}>
-                        {getFullDegreeName(edu.degree)}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}
+                          {getFullDegreeName(edu.degree)}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}
                       </div>
                       {edu.resultFormat && edu.result && (
                         <div style={{ marginTop: 6, color: '#000000', fontSize: 11 }}>{edu.resultFormat}: {edu.result}</div>
@@ -266,10 +313,10 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                 <div style={{ marginBottom: 10 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#000000', flex: 1, marginRight: 8 }}>{education.preUniversity.instituteName || 'Pre University'}</div>
-                    <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{formatMonthYear(education.preUniversity.yearOfPassing) || ''}</div>
+                  <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', marginTop: 4 }}>
-                    Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}
+                    Pre University (12th Standard){education.preUniversity.boardType ? ` — ${education.preUniversity.boardType}` : ''} {education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}
                   </div>
                   {education.preUniversity.resultFormat && education.preUniversity.result && (
                     <div style={{ marginTop: 6, color: '#000000', fontSize: 11 }}>{education.preUniversity.resultFormat}: {education.preUniversity.result}</div>
@@ -282,7 +329,7 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                 <div style={{ marginBottom: 10 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#000000', flex: 1, marginRight: 8 }}>{education.sslc.instituteName || 'SSLC'}</div>
-                    <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{education.sslc.yearOfPassing || ''}</div>
+                  <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{formatResumeEducationDateRange(education.sslc)}</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', marginTop: 4 }}>
                     SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}
@@ -352,11 +399,13 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                     {/* Description */}
                     {proj.description && (
                       <div
+                        className="t11-justify"
                         style={{
                           fontSize: 11,
                           color: '#000000',
                           fontWeight: 'normal',
                           lineHeight: 1.6,
+                          textAlign: 'justify',
                         }}
                         dangerouslySetInnerHTML={{
                           __html: DOMPurify.sanitize(proj.description),
@@ -373,11 +422,15 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                           >
                             Role:{' '}
                           </span>
-                          <span
+                          <div
+                            className="t11-justify"
                             style={{
                               fontSize: 11,
                               color: '#000000',
                               fontWeight: 'normal',
+                              lineHeight: 1.6,
+                              textAlign: 'justify',
+                              display: 'inline',
                             }}
                             dangerouslySetInnerHTML={{
                               __html: DOMPurify.sanitize(proj.rolesResponsibilities),
@@ -391,18 +444,22 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
           )}
 
           {/* Certifications Section */}
-          {certifications.filter(c => c.enabled).length > 0 && (
+          {certifications.filter(c => c.enabled && c.certificateTitle && c.certificateTitle.trim()).length > 0 && (
             <section style={{ marginBottom: 22 }}>
               <h2 style={{ fontSize: 13, fontWeight: 700, color: primaryColor, letterSpacing: 1.2, marginBottom: 8 }}>TECHNICAL CERTIFICATIONS</h2>
               <div style={{ height: 1, background: '#333', width: '100%', marginBottom: 12 }} />
-              {certifications.filter(c => c.enabled).map((cert, idx) => (
+              {certifications.filter(c => c.enabled && c.certificateTitle && c.certificateTitle.trim()).map((cert, idx) => (
                 <div key={idx} style={{ marginBottom: 10 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#000000', flex: 1, marginRight: 8 }}>{cert.certificateTitle}</div>
                     <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{cert.date}</div>
                   </div>
                   {cert.description && (
-                    <div style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', marginTop: 4 }} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(cert.description) }} />
+                    <div
+                      className="t11-justify"
+                      style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', marginTop: 4, textAlign: 'justify' }}
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(cert.description) }}
+                    />
                   )}
                 </div>
               ))}
@@ -419,7 +476,8 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                 </h2>
                 <div style={{ height: 1, background: '#333', width: '100%', marginBottom: 12 }} />
                 <div
-                  style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', lineHeight: 1.6 }}
+                  className="t11-justify"
+                  style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', lineHeight: 1.6, textAlign: 'justify' }}
                   dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(skillsLinks.technicalSummary) }}
                 />
               </section>
@@ -463,40 +521,6 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
               </div>
             </section>
           )}
-          {/* Links Section */}
-          {skillsLinks.linksEnabled && (
-            () => {
-              const links = skillsLinks.links;
-              const activeLinks = [
-                links.linkedinEnabled && links.linkedinProfile ? { label: 'LinkedIn', url: links.linkedinProfile } : null,
-                links.githubEnabled && links.githubProfile ? { label: 'GitHub', url: links.githubProfile } : null,
-                links.portfolioEnabled && links.portfolioUrl ? { label: 'Portfolio', url: links.portfolioUrl } : null,
-                links.publicationEnabled && links.publicationUrl ? { label: 'Publication', url: links.publicationUrl } : null,
-              ].filter(Boolean) as { label: string; url: string }[];
-
-              return activeLinks.length > 0 ? (
-                <section style={{ marginBottom: 22 }}>
-                  <h2 style={{ fontSize: 13, fontWeight: 700, color: primaryColor, letterSpacing: 1.2, marginBottom: 8 }}>
-                    LINKS
-                  </h2>
-                  <div style={{ height: 1, background: '#333', width: '100%', marginBottom: 12 }} />
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {activeLinks.map((link, idx) => (
-                      <div key={idx} style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: '#000000', minWidth: 80 }}>
-                          {link.label}:
-                        </span>
-                        <span style={{ fontSize: 11, color: '#1a56db', fontWeight: 'normal', wordBreak: 'break-all' }}>
-                          {link.url}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              ) : null;
-            }
-          )()
-          }
         </div>
       </div>
     </div>

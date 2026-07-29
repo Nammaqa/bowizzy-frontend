@@ -9,6 +9,116 @@ import {
 } from "@/services/experienceService";
 import RichTextEditor from "@/pages/(ResumeBuilder)/components/ui/RichTextEditor";
 
+const CURRENT_YEAR = new Date().getFullYear();
+const MIN_EXPERIENCE_MONTH = "1960-01";
+const MAX_COMPANY_NAME_LENGTH = 100;
+const MAX_JOB_TITLE_LENGTH = 100;
+const MAX_DESCRIPTION_LENGTH = 500;
+const MAX_JOB_ROLE_LENGTH = 100;
+
+// Sentinel value for the "Other" choice — never stored as an actual job role.
+const OTHER_JOB_ROLE = "__other__";
+
+const JOB_ROLE_GROUPS: { label: string; roles: string[] }[] = [
+  {
+    label: "Software Engineering",
+    roles: [
+      "Software Engineer",
+      "Software Developer",
+      "Senior Software Engineer",
+      "Full Stack Developer",
+      "Frontend Developer",
+      "Backend Developer",
+      "Mobile App Developer",
+      "iOS Developer",
+      "Android Developer",
+      "Embedded Systems Engineer",
+    ],
+  },
+  {
+    label: "Data & AI",
+    roles: [
+      "Data Scientist",
+      "Data Analyst",
+      "Data Engineer",
+      "Machine Learning Engineer",
+      "AI Engineer",
+      "Deep Learning Engineer",
+      "NLP Engineer",
+      "Business Intelligence Analyst",
+    ],
+  },
+  {
+    label: "Infrastructure & DevOps",
+    roles: [
+      "DevOps Engineer",
+      "Site Reliability Engineer",
+      "Cloud Engineer",
+      "Cloud Architect",
+      "System Administrator",
+      "Network Engineer",
+      "Database Administrator",
+      "Platform Engineer",
+    ],
+  },
+  {
+    label: "Security",
+    roles: [
+      "Security Analyst",
+      "Cybersecurity Engineer",
+      "Penetration Tester",
+      "Security Architect",
+      "SOC Analyst",
+    ],
+  },
+  {
+    label: "Quality Assurance",
+    roles: [
+      "QA Engineer",
+      "Test Engineer",
+      "Automation Test Engineer",
+      "Performance Test Engineer",
+      "SDET",
+    ],
+  },
+  {
+    label: "Design",
+    roles: [
+      "UI/UX Designer",
+      "Product Designer",
+      "Graphic Designer",
+      "Interaction Designer",
+    ],
+  },
+  {
+    label: "Product & Management",
+    roles: [
+      "Product Manager",
+      "Technical Lead",
+      "Engineering Manager",
+      "Solution Architect",
+      "IT Manager",
+      "Scrum Master",
+      "Project Manager",
+      "Project Coordinator",
+    ],
+  },
+  {
+    label: "Business & Analytics",
+    roles: [
+      "Business Analyst",
+      "Systems Analyst",
+      "ERP Consultant",
+      "Salesforce Developer",
+    ],
+  },
+];
+
+const PREDEFINED_JOB_ROLES = new Set(JOB_ROLE_GROUPS.flatMap((group) => group.roles));
+
+// Anything saved that isn't one of the listed roles is treated as a custom entry.
+const isCustomRoleValue = (value: string) => !!value.trim() && !PREDEFINED_JOB_ROLES.has(value);
+
 interface ExperienceDetailsFormProps {
   onNext: (data: any) => void;
   onBack: () => void;
@@ -17,6 +127,7 @@ interface ExperienceDetailsFormProps {
   token: string;
   hideHeader?: boolean;
   hideJobRole?: boolean;
+  isOptional?: boolean;
 }
 
 interface WorkExperience {
@@ -42,8 +153,12 @@ export default function ExperienceDetailsForm({
   token,
   hideHeader = false,
   hideJobRole = false,
+  isOptional = false,
 }: ExperienceDetailsFormProps) {
   const [jobRole, setJobRole] = useState(initialData.jobRole || "");
+  const [isCustomJobRole, setIsCustomJobRole] = useState(() =>
+    isCustomRoleValue(initialData.jobRole || "")
+  );
   const [jobRoleExpanded, setJobRoleExpanded] = useState(true);
   const [experienceLevel, setExperienceLevel] = useState(initialData.experienceLevel || "experienced");
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -114,6 +229,7 @@ export default function ExperienceDetailsForm({
 
             if (fetched.length > 0) {
               setJobRole(fetchedJobRole);
+              setIsCustomJobRole(isCustomRoleValue(fetchedJobRole));
               setWorkExperiences(fetched);
               fetched.forEach((exp) => {
                 initialExperiencesRef.current[exp.id] = { ...exp };
@@ -161,6 +277,7 @@ export default function ExperienceDetailsForm({
 
   const validateCompanyName = (value: string) => {
     if (!value.trim()) return "Company name is required";
+    if (value.length > MAX_COMPANY_NAME_LENGTH) return "Max 100 characters allowed";
     const regex = /^[a-zA-Z0-9\s.,&'-]+$/;
     if (!regex.test(value)) return "Invalid company name";
     if (!/[a-zA-Z]/.test(value)) return "Company name must include a letter";
@@ -169,22 +286,10 @@ export default function ExperienceDetailsForm({
 
   const validateJobTitle = (value: string) => {
     if (!value.trim()) return "Job title is required";
+    if (value.length > MAX_JOB_TITLE_LENGTH) return "Max 100 characters allowed";
     const regex = /^[a-zA-Z0-9\s./-]+$/;
     if (!regex.test(value)) return "Invalid job title";
     if (!/[a-zA-Z]/.test(value)) return "Job title must contain at least one letter";
-    return "";
-  };
-
-  const validateDateRange = (startDate: string, endDate: string) => {
-    if (startDate && startDate < "1960-01") {
-      return "Start date cannot be before 1960";
-    }
-    if (endDate && endDate < "1960-01") {
-      return "End date cannot be before 1960";
-    }
-    if (startDate && endDate && endDate < startDate) {
-      return "End date cannot be before start date";
-    }
     return "";
   };
 
@@ -195,14 +300,141 @@ export default function ExperienceDetailsForm({
     return `${year}-${month}`;
   };
 
+  const getPlainTextLength = (value: string) => {
+    if (!value) return 0;
+    return value
+      .replace(/<[^>]*>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .trim().length;
+  };
+
+  const validateDescription = (value: string) => {
+    if (getPlainTextLength(value) > MAX_DESCRIPTION_LENGTH) {
+      return "Description must be 500 characters or less";
+    }
+    return "";
+  };
+
+  const validateMonthDate = (value: string, label: string) => {
+    if (!value) return "";
+    if (!/^\d{4}-\d{2}$/.test(value)) return `Select a valid ${label.toLowerCase()}`;
+
+    const [year, month] = value.split("-").map(Number);
+    if (year < 1960) return `${label} cannot be before 1960`;
+    if (year > CURRENT_YEAR) return `${label} cannot be after ${CURRENT_YEAR}`;
+    if (month < 1 || month > 12) return `Select a valid ${label.toLowerCase()}`;
+    if (value > getCurrentMonth()) return `${label} cannot be in the future`;
+
+    return "";
+  };
+
+  const validateDateRange = (startDate: string, endDate: string) => {
+    const startError = validateMonthDate(startDate, "Start date");
+    if (startError) return startError;
+
+    const endError = validateMonthDate(endDate, "End date");
+    if (endError) return endError;
+
+    if (startDate && endDate && endDate < startDate) {
+      return "End date cannot be before start date";
+    }
+
+    return "";
+  };
+
+  const validateExperience = (exp: WorkExperience) => {
+    const nextErrors: Record<string, string> = {};
+
+    const companyNameError = validateCompanyName(exp.companyName);
+    if (companyNameError) nextErrors.companyName = companyNameError;
+
+    const jobTitleError = validateJobTitle(exp.jobTitle);
+    if (jobTitleError) nextErrors.jobTitle = jobTitleError;
+
+    const startDateError = exp.startDate
+      ? validateMonthDate(exp.startDate, "Start date")
+      : "Start date is required";
+    if (startDateError) nextErrors.startDate = startDateError;
+
+    if (!exp.currentlyWorking) {
+      const endDateError = !exp.endDate
+        ? "End date is required"
+        : startDateError
+          ? validateMonthDate(exp.endDate, "End date")
+          : validateDateRange(exp.startDate, exp.endDate);
+      if (endDateError) nextErrors.endDate = endDateError;
+    }
+
+    const descriptionError = validateDescription(exp.description);
+    if (descriptionError) nextErrors.description = descriptionError;
+
+    return nextErrors;
+  };
+
+  const isExperienceFilled = (exp: WorkExperience) => {
+    return !!(
+      exp.companyName ||
+      exp.jobTitle ||
+      exp.employmentType ||
+      exp.location ||
+      exp.workMode ||
+      exp.startDate ||
+      exp.endDate ||
+      exp.description ||
+      exp.experience_id
+    );
+  };
+
+  const setExperienceValidationErrors = (index: number, validationErrors: Record<string, string>) => {
+    setErrors((prev) => {
+      const next = { ...prev };
+      ["companyName", "jobTitle", "startDate", "endDate", "description"].forEach((field) => {
+        const key = `exp-${index}-${field}`;
+        if (validationErrors[field]) {
+          next[key] = validationErrors[field];
+        } else {
+          delete next[key];
+        }
+      });
+      return next;
+    });
+  };
+
+  const clampTextValue = (value: string, maxLength: number) => {
+    return value.length > maxLength ? value.slice(0, maxLength) : value;
+  };
+
   const normalizeMonthToDate = (val: string): string | null => {
     if (!val) return null;
     if (typeof val === "string" && /^\d{4}-\d{2}$/.test(val)) return `${val}-01`;
     return val;
   };
 
+  const validateCustomJobRole = (value: string) => {
+    if (!value.trim()) return "Job role is required";
+    if (value.length > MAX_JOB_ROLE_LENGTH) return "Max 100 characters allowed";
+    if (!/^[a-zA-Z0-9\s./&'-]+$/.test(value)) return "Invalid job role";
+    if (!/[a-zA-Z]/.test(value)) return "Job role must contain at least one letter";
+    return "";
+  };
+
   const handleJobRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
+
+    // "Other" swaps the dropdown for a free-text field the user fills in themselves.
+    if (val === OTHER_JOB_ROLE) {
+      setIsCustomJobRole(true);
+      setJobRole("");
+      setJobRoleFeedback("");
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next.jobRole;
+        return next;
+      });
+      return;
+    }
+
+    setIsCustomJobRole(false);
     setJobRole(val);
     if (val.trim()) {
       setErrors((prev) => {
@@ -214,7 +446,22 @@ export default function ExperienceDetailsForm({
     }
   };
 
+  const handleCustomJobRoleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = clampTextValue(e.target.value, MAX_JOB_ROLE_LENGTH);
+    setJobRole(val);
+    setJobRoleFeedback("");
+    setErrors((prev) => ({ ...prev, jobRole: validateCustomJobRole(val) }));
+  };
+
   const handleSaveJobRole = async () => {
+    if (isCustomJobRole) {
+      const customError = validateCustomJobRole(jobRole);
+      if (customError) {
+        setErrors((prev) => ({ ...prev, jobRole: customError }));
+        return;
+      }
+    }
+
     if (!jobRoleChanged) {
       setJobRoleFeedback("No changes to save.");
       setTimeout(() => setJobRoleFeedback(""), 3000);
@@ -235,10 +482,26 @@ export default function ExperienceDetailsForm({
 
   const handleExperienceChange = (index: number, field: string, value: string | boolean) => {
     const updated = [...workExperiences];
-    updated[index] = { ...updated[index], [field]: value, isExpanded: true };
+    let finalValue = value;
 
-    if (field === "currentlyWorking" && value === true) {
+    if (field === "companyName" && typeof value === "string") {
+      finalValue = clampTextValue(value, MAX_COMPANY_NAME_LENGTH);
+    } else if (field === "jobTitle" && typeof value === "string") {
+      finalValue = clampTextValue(value, MAX_JOB_TITLE_LENGTH);
+    }
+
+    updated[index] = { ...updated[index], [field]: finalValue, isExpanded: true };
+
+    if (field === "currentlyWorking" && finalValue === true) {
       updated[index].endDate = "";
+
+      // Only one experience can be the current one — untick it everywhere else.
+      updated.forEach((exp, i) => {
+        if (i !== index && exp.currentlyWorking) {
+          updated[i] = { ...exp, currentlyWorking: false };
+        }
+      });
+
       setErrors((prevErrors) => {
         const newErrors = { ...prevErrors };
         delete newErrors[`exp-${index}-endDate`];
@@ -248,18 +511,29 @@ export default function ExperienceDetailsForm({
 
     setWorkExperiences(updated);
 
-    if (field === "companyName" && typeof value === "string") {
-      const error = validateCompanyName(value);
+    if (field === "companyName" && typeof finalValue === "string") {
+      const error = validateCompanyName(finalValue);
       setErrors((prev) => ({ ...prev, [`exp-${index}-companyName`]: error }));
-    } else if (field === "jobTitle" && typeof value === "string") {
-      const error = validateJobTitle(value);
+    } else if (field === "jobTitle" && typeof finalValue === "string") {
+      const error = validateJobTitle(finalValue);
       setErrors((prev) => ({ ...prev, [`exp-${index}-jobTitle`]: error }));
-    } else if (field === "startDate" && typeof value === "string") {
-      const error = validateDateRange(value, updated[index].endDate);
+    } else if (field === "startDate" && typeof finalValue === "string") {
+      const startError = validateMonthDate(finalValue, "Start date");
+      const endError =
+        !startError && !updated[index].currentlyWorking && updated[index].endDate
+          ? validateDateRange(finalValue, updated[index].endDate)
+          : "";
+      setErrors((prev) => ({
+        ...prev,
+        [`exp-${index}-startDate`]: startError,
+        [`exp-${index}-endDate`]: endError,
+      }));
+    } else if (field === "endDate" && typeof finalValue === "string") {
+      const error = validateDateRange(updated[index].startDate, finalValue);
       setErrors((prev) => ({ ...prev, [`exp-${index}-endDate`]: error }));
-    } else if (field === "endDate" && typeof value === "string") {
-      const error = validateDateRange(updated[index].startDate, value);
-      setErrors((prev) => ({ ...prev, [`exp-${index}-endDate`]: error }));
+    } else if (field === "description" && typeof finalValue === "string") {
+      const error = validateDescription(finalValue);
+      setErrors((prev) => ({ ...prev, [`exp-${index}-description`]: error }));
     }
   };
 
@@ -268,11 +542,19 @@ export default function ExperienceDetailsForm({
     const expChanges = experienceChanges[exp.id];
     const index = workExperiences.findIndex((e) => e.id === exp.id);
     const prefix = `exp-${index}`;
+    const validationErrors = validateExperience(exp);
+
+    if (Object.keys(validationErrors).length > 0) {
+      setExperienceValidationErrors(index, validationErrors);
+      return;
+    }
 
     if (
       errors[`${prefix}-companyName`] ||
       errors[`${prefix}-jobTitle`] ||
-      errors[`${prefix}-endDate`]
+      errors[`${prefix}-startDate`] ||
+      errors[`${prefix}-endDate`] ||
+      errors[`${prefix}-description`]
     )
       return;
 
@@ -436,7 +718,9 @@ export default function ExperienceDetailsForm({
       const newErrors = { ...prev };
       delete newErrors[`exp-${index}-companyName`];
       delete newErrors[`exp-${index}-jobTitle`];
+      delete newErrors[`exp-${index}-startDate`];
       delete newErrors[`exp-${index}-endDate`];
+      delete newErrors[`exp-${index}-description`];
       return newErrors;
     });
     setExperienceFeedback((prev) => {
@@ -465,7 +749,7 @@ export default function ExperienceDetailsForm({
 
   const removeWorkExperience = async (index: number) => {
     const exp = workExperiences[index];
-    if (workExperiences.length === 1) return;
+    if (!exp) return;
 
     if (exp.experience_id) {
       try {
@@ -498,7 +782,26 @@ export default function ExperienceDetailsForm({
     }
 
     const id = exp.id;
-    setWorkExperiences(workExperiences.filter((_, i) => i !== index));
+    setWorkExperiences((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      if (next.length === 0) {
+        return [{
+          id: Date.now().toString(),
+          companyName: "",
+          jobTitle: "",
+          employmentType: "",
+          location: "",
+          workMode: "",
+          startDate: "",
+          endDate: "",
+          description: "",
+          currentlyWorking: false,
+          isExpanded: true,
+        }];
+      }
+      return next;
+    });
+
     delete initialExperiencesRef.current[id];
     setExperienceChanges((prev) => {
       const updated = { ...prev };
@@ -508,8 +811,23 @@ export default function ExperienceDetailsForm({
     setErrors((prev) => {
       const newErrors = { ...prev };
       Object.keys(newErrors).forEach((key) => {
-        if (key.startsWith(`exp-${index}-`)) delete newErrors[key];
+        const prefix = `exp-${index}-`;
+        if (key.startsWith(prefix)) {
+          delete newErrors[key];
+        }
       });
+
+      Object.keys(newErrors).forEach((key) => {
+        const match = key.match(/^exp-(\d+)-(.*)$/);
+        if (!match) return;
+        const currentIndex = Number(match[1]);
+        if (currentIndex > index) {
+          const nextKey = `exp-${currentIndex - 1}-${match[2]}`;
+          newErrors[nextKey] = newErrors[key];
+          delete newErrors[key];
+        }
+      });
+
       return newErrors;
     });
   };
@@ -519,18 +837,37 @@ export default function ExperienceDetailsForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!hideJobRole && !jobRole.trim()) {
+    if (!hideJobRole && !isOptional && !jobRole.trim()) {
       setSubmitError("Job Role is required before proceeding.");
       setJobRoleExpanded(true);
       return;
     }
 
-    if (Object.values(errors).some((err) => err.length > 0)) {
+    if (!isOptional && (experienceLevel === "intern" || experienceLevel === "experienced")) {
+      const validationErrors: Record<string, string> = {};
+
+      workExperiences.forEach((exp, index) => {
+        if (!isExperienceFilled(exp)) return;
+
+        const expErrors = validateExperience(exp);
+        Object.entries(expErrors).forEach(([field, message]) => {
+          validationErrors[`exp-${index}-${field}`] = message;
+        });
+      });
+
+      if (Object.keys(validationErrors).length > 0) {
+        setErrors((prev) => ({ ...prev, ...validationErrors }));
+        setSubmitError("Please fix validation errors before proceeding.");
+        return;
+      }
+    }
+
+    if (!isOptional && Object.values(errors).some((err) => err.length > 0)) {
       setSubmitError("Please fix validation errors before proceeding.");
       return;
     }
 
-    if (hasUnsavedChanges && (experienceLevel === "intern" || experienceLevel === "experienced")) {
+    if (!isOptional && hasUnsavedChanges && (experienceLevel === "intern" || experienceLevel === "experienced")) {
       let message = "Please save your changes before proceeding:\n\n";
       if (jobRoleChanged) message += "• Job Role (unsaved changes)\n";
       workExperiences.forEach((exp, index) => {
@@ -542,13 +879,13 @@ export default function ExperienceDetailsForm({
         setSubmitError(message);
         return;
       }
-    } else if (jobRoleChanged) {
+    } else if (!isOptional && jobRoleChanged) {
       setSubmitError("Please save your Job Role changes before proceeding.");
       return;
     }
 
     let validExperiences: WorkExperience[] = [];
-    if (experienceLevel === "intern" || experienceLevel === "experienced") {
+    if (!isOptional && (experienceLevel === "intern" || experienceLevel === "experienced")) {
       validExperiences = workExperiences.filter((exp) => exp.companyName || exp.experience_id);
     }
 
@@ -629,6 +966,7 @@ export default function ExperienceDetailsForm({
                   type="text"
                   value={experience.companyName}
                   onChange={(e) => handleExperienceChange(index, "companyName", e.target.value)}
+                  maxLength={MAX_COMPANY_NAME_LENGTH}
                   placeholder="Enter Company Name"
                   className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${errors[`exp-${index}-companyName`]
                       ? "border-red-500 focus:ring-red-400"
@@ -649,6 +987,7 @@ export default function ExperienceDetailsForm({
                   type="text"
                   value={experience.jobTitle}
                   onChange={(e) => handleExperienceChange(index, "jobTitle", e.target.value)}
+                  maxLength={MAX_JOB_TITLE_LENGTH}
                   placeholder="Enter Job Title"
                   className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${errors[`exp-${index}-jobTitle`]
                       ? "border-red-500 focus:ring-red-400"
@@ -735,10 +1074,19 @@ export default function ExperienceDetailsForm({
                   value={experience.startDate}
                   onChange={(e) => handleExperienceChange(index, "startDate", e.target.value)}
                   max={getCurrentMonth()}
-                  min="1960-01"
+                  min={MIN_EXPERIENCE_MONTH}
+                  onKeyDown={(e) => e.preventDefault()}
+                  onPaste={(e) => e.preventDefault()}
+                  required={!isOptional}
                   placeholder="Select Start Date"
-                  className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm pr-8"
+                  className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm pr-8 ${errors[`exp-${index}-startDate`]
+                      ? "border-red-500 focus:ring-red-400"
+                      : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                    }`}
                 />
+                {errors[`exp-${index}-startDate`] && (
+                  <p className="mt-1 text-xs text-red-500">{errors[`exp-${index}-startDate`]}</p>
+                )}
               </div>
 
               {/* End Date */}
@@ -751,7 +1099,10 @@ export default function ExperienceDetailsForm({
                   value={experience.endDate}
                   onChange={(e) => handleExperienceChange(index, "endDate", e.target.value)}
                   max={getCurrentMonth()}
-                  min="1960-01"
+                  min={MIN_EXPERIENCE_MONTH}
+                  onKeyDown={(e) => e.preventDefault()}
+                  onPaste={(e) => e.preventDefault()}
+                  required={!isOptional && !experience.currentlyWorking}
                   placeholder="Select End Date"
                   disabled={experience.currentlyWorking}
                   className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm pr-8 disabled:bg-gray-100 ${errors[`exp-${index}-endDate`]
@@ -790,6 +1141,9 @@ export default function ExperienceDetailsForm({
                   placeholder="Provide Description / Projects of your Work"
                   rows={6}
                 />
+                {errors[`exp-${index}-description`] && (
+                  <p className="mt-1 text-xs text-red-500">{errors[`exp-${index}-description`]}</p>
+                )}
               </div>
             </div>
 
@@ -893,20 +1247,9 @@ export default function ExperienceDetailsForm({
           <div className="bg-white border border-gray-200 rounded-xl mb-4 md:mb-5 overflow-hidden">
             <div className="flex items-center justify-between px-4 sm:px-5 md:px-6 py-3 md:py-4 border-b border-gray-200">
               <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">
-                Job Role <span className="text-red-500">*</span>
+                Job Role{!isOptional ? <span className="text-red-500"> *</span> : ""}
               </h3>
               <div className="flex gap-2 items-center">
-                {jobRoleChanged && (
-                  <button
-                    type="button"
-                    onClick={handleSaveJobRole}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-md text-sm font-medium shadow-sm hover:from-orange-500 hover:to-orange-600 transition cursor-pointer"
-                    aria-label="Save job role changes"
-                  >
-                    <Save className="w-4 h-4" strokeWidth={2} />
-                    Save
-                  </button>
-                )}
                 <button
                   type="button"
                   onClick={() => setJobRoleExpanded(!jobRoleExpanded)}
@@ -921,30 +1264,24 @@ export default function ExperienceDetailsForm({
               </div>
             </div>
 
-            {jobRoleFeedback && (
-              <div
-                className={`p-4 text-sm ${jobRoleFeedback.includes("successfully")
-                    ? "bg-green-50 text-green-700 border border-green-200"
-                    : "bg-red-50 text-red-700 border border-red-200"
-                  }`}
-              >
-                {jobRoleFeedback}
-              </div>
-            )}
-
             {jobRoleExpanded && (
               <div className="p-4 sm:p-5 md:p-6">
+                {isOptional && (
+                  <p className="text-xs sm:text-sm text-amber-600 mb-4">
+                    This section is optional because you selected “Currently Pursuing” in education. You can update it later if you want.
+                  </p>
+                )}
                 <p className="text-xs sm:text-sm text-gray-600 mb-4">
                   We'll use your job role to tailor resumes, prep, and interviews for you. Make
                   sure it's entered correctly so everything matches.
                 </p>
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                    Job Role <span className="text-red-500">*</span>
+                    Job Role{!isOptional ? <span className="text-red-500"> *</span> : ""}
                   </label>
                   <div className="relative">
                     <select
-                      value={jobRole}
+                      value={isCustomJobRole ? OTHER_JOB_ROLE : jobRole}
                       onChange={handleJobRoleChange}
                       aria-required="true"
                       aria-invalid={!!errors.jobRole}
@@ -954,86 +1291,69 @@ export default function ExperienceDetailsForm({
                         } text-xs sm:text-sm appearance-none bg-white pr-8`}
                     >
                       <option value="">Select Job Role</option>
-                      <optgroup label="Software Engineering">
-                        <option value="Software Engineer">Software Engineer</option>
-                        <option value="Software Developer">Software Developer</option>
-                        <option value="Senior Software Engineer">Senior Software Engineer</option>
-                        <option value="Full Stack Developer">Full Stack Developer</option>
-                        <option value="Frontend Developer">Frontend Developer</option>
-                        <option value="Backend Developer">Backend Developer</option>
-                        <option value="Mobile App Developer">Mobile App Developer</option>
-                        <option value="iOS Developer">iOS Developer</option>
-                        <option value="Android Developer">Android Developer</option>
-                        <option value="Embedded Systems Engineer">Embedded Systems Engineer</option>
-                      </optgroup>
-                      <optgroup label="Data & AI">
-                        <option value="Data Scientist">Data Scientist</option>
-                        <option value="Data Analyst">Data Analyst</option>
-                        <option value="Data Engineer">Data Engineer</option>
-                        <option value="Machine Learning Engineer">Machine Learning Engineer</option>
-                        <option value="AI Engineer">AI Engineer</option>
-                        <option value="Deep Learning Engineer">Deep Learning Engineer</option>
-                        <option value="NLP Engineer">NLP Engineer</option>
-                        <option value="Business Intelligence Analyst">Business Intelligence Analyst</option>
-                      </optgroup>
-                      <optgroup label="Infrastructure & DevOps">
-                        <option value="DevOps Engineer">DevOps Engineer</option>
-                        <option value="Site Reliability Engineer">Site Reliability Engineer</option>
-                        <option value="Cloud Engineer">Cloud Engineer</option>
-                        <option value="Cloud Architect">Cloud Architect</option>
-                        <option value="System Administrator">System Administrator</option>
-                        <option value="Network Engineer">Network Engineer</option>
-                        <option value="Database Administrator">Database Administrator</option>
-                        <option value="Platform Engineer">Platform Engineer</option>
-                      </optgroup>
-                      <optgroup label="Security">
-                        <option value="Security Analyst">Security Analyst</option>
-                        <option value="Cybersecurity Engineer">Cybersecurity Engineer</option>
-                        <option value="Penetration Tester">Penetration Tester</option>
-                        <option value="Security Architect">Security Architect</option>
-                        <option value="SOC Analyst">SOC Analyst</option>
-                      </optgroup>
-                      <optgroup label="Quality Assurance">
-                        <option value="QA Engineer">QA Engineer</option>
-                        <option value="Test Engineer">Test Engineer</option>
-                        <option value="Automation Test Engineer">Automation Test Engineer</option>
-                        <option value="Performance Test Engineer">Performance Test Engineer</option>
-                        <option value="SDET">SDET</option>
-                      </optgroup>
-                      <optgroup label="Design">
-                        <option value="UI/UX Designer">UI/UX Designer</option>
-                        <option value="Product Designer">Product Designer</option>
-                        <option value="Graphic Designer">Graphic Designer</option>
-                        <option value="Interaction Designer">Interaction Designer</option>
-                      </optgroup>
-                      <optgroup label="Product & Management">
-                        <option value="Product Manager">Product Manager</option>
-                        <option value="Technical Lead">Technical Lead</option>
-                        <option value="Engineering Manager">Engineering Manager</option>
-                        <option value="Solution Architect">Solution Architect</option>
-                        <option value="IT Manager">IT Manager</option>
-                        <option value="Scrum Master">Scrum Master</option>
-                        <option value="Project Manager">Project Manager</option>
-                        <option value="Project Coordinator">Project Coordinator</option>
-                      </optgroup>
-                      <optgroup label="Business & Analytics">
-                        <option value="Business Analyst">Business Analyst</option>
-                        <option value="Systems Analyst">Systems Analyst</option>
-                        <option value="ERP Consultant">ERP Consultant</option>
-                        <option value="Salesforce Developer">Salesforce Developer</option>
-                      </optgroup>
-                      <optgroup label="Other">
-                        <option value="Technical Writer">Technical Writer</option>
-                        <option value="Support Engineer">Support Engineer</option>
-                        <option value="IT Consultant">IT Consultant</option>
-                        <option value="Research Engineer">Research Engineer</option>
-                      </optgroup>
+                      {JOB_ROLE_GROUPS.map((group) => (
+                        <optgroup key={group.label} label={group.label}>
+                          {group.roles.map((role) => (
+                            <option key={role} value={role}>
+                              {role}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                      <option value={OTHER_JOB_ROLE}>Other</option>
                     </select>
-                    {errors.jobRole && (
-                      <p className="mt-1 text-xs text-red-500">{errors.jobRole}</p>
-                    )}
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
+
+                  {isCustomJobRole && (
+                    <div className="mt-3">
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
+                        Enter your job role <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={jobRole}
+                        onChange={handleCustomJobRoleChange}
+                        maxLength={MAX_JOB_ROLE_LENGTH}
+                        placeholder="Type your job role"
+                        autoFocus
+                        aria-required={!isOptional}
+                        aria-invalid={!!errors.jobRole}
+                        className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none text-xs sm:text-sm ${errors.jobRole
+                            ? "border-red-300 ring-2 ring-red-100"
+                            : "border-gray-300 focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+                          }`}
+                      />
+                    </div>
+                  )}
+
+                  {errors.jobRole && (
+                    <p className="mt-1 text-xs text-red-500">{errors.jobRole}</p>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-end gap-2 mt-8 pt-4 border-t border-gray-200">
+                  {jobRoleFeedback && (
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full ${jobRoleFeedback.includes("successfully")
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                        }`}
+                    >
+                      {jobRoleFeedback}
+                    </span>
+                  )}
+                  {jobRoleChanged && (
+                    <button
+                      type="button"
+                      onClick={handleSaveJobRole}
+                      className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-md text-sm font-medium shadow-sm hover:from-orange-500 hover:to-orange-600 transition cursor-pointer"
+                      aria-label="Save job role changes"
+                    >
+                      <Save className="w-4 h-4" strokeWidth={2} />
+                      Save
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -1044,7 +1364,7 @@ export default function ExperienceDetailsForm({
         {(experienceLevel === "intern" || experienceLevel === "experienced") && (
           <>
             {workExperiences.map((exp, index) =>
-              renderExperienceCard(exp, index, workExperiences.length > 1)
+              renderExperienceCard(exp, index, true)
             )}
 
             <button

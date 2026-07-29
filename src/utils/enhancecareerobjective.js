@@ -106,6 +106,8 @@ Generate exactly TWO enhanced versions:
 2. "elaborate" - Detailed, rich narrative that showcases depth. 4-6 sentences. Highlights specific skills and achievements.
 
 Both versions should naturally incorporate relevant details from the provided context.
+
+STRICT LENGTH LIMIT: Each version MUST NOT exceed 500 characters (including spaces and punctuation). Count the characters of every version before responding, and if a version is longer than 500 characters, rewrite it shorter until it fits. Aim for 450-490 characters for "elaborate" so it stays safely under the limit. A version longer than 500 characters is invalid.
 Respond ONLY with a valid JSON object in this exact format (no markdown, no explanation, no code fences):
 {
   "professional": "...",
@@ -118,7 +120,7 @@ Respond ONLY with a valid JSON object in this exact format (no markdown, no expl
 Resume Context:
 ${context || "No additional context provided."}
 
-Generate two enhanced versions as specified.`;
+Generate two enhanced versions as specified. Remember: each version must be 500 characters or fewer.`;
 
   const fetchWithRetry = async (retries = 3, delayMs = 1000) => {
     for (let i = 0; i < retries; i++) {

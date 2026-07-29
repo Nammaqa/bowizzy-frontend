@@ -2,13 +2,14 @@ import React from 'react';
 import DOMPurify from 'dompurify';
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
+import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 
 const styles = StyleSheet.create({
   page: { padding: 24, fontSize: 10 },
   header: { marginBottom: 12 },
-  nameRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  name: { fontSize: 20 },
-  role: { fontSize: 12 },
+  nameRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  name: { width: '50%', fontSize: 20, paddingRight: 12, lineHeight: 1.05 },
+  role: { width: '50%', fontSize: 12, textAlign: 'right' },
   dividerThick: { height: 1, backgroundColor: '#000', marginBottom: 12 },
   leftCol: { width: 170, paddingRight: 12 },
   rightCol: { flex: 1 },
@@ -127,6 +128,13 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
     return y ? y[1] : '';
   };
 
+  const formatEducationDateRange = (edu: any) => {
+    const start = formatYear(edu?.startYear || edu?.startDate || '');
+    const end = formatYear(edu?.endYear || edu?.yearOfPassing || '');
+    if (start && end) return `${start} - ${end}`;
+    return start || end || '';
+  };
+
   const contactItems = [personal.mobileNumber && `Phone: ${formatMobile(personal.mobileNumber)}`, personal.email && `Email: ${personal.email}`, personal.address && `Address: ${personal.address}`, skillsLinks && skillsLinks.links && skillsLinks.links.portfolioEnabled && skillsLinks.links.portfolioUrl && `Portfolio: ${skillsLinks.links.portfolioUrl}`].filter(Boolean);
 
   return (
@@ -144,7 +152,7 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
         {/* CONTACT row */}
         <View style={{ flexDirection: 'row', marginTop: 6 }}>
           <View style={{ width: 150 }}>
-            <Text style={styles.sectionHeading}>CONTACT</Text>
+            <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold }}>CONTACT</Text>
           </View>
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -160,12 +168,33 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
 
         <View style={{ height: 1, backgroundColor: primaryColor, marginTop: 12, marginBottom: 12 }} />
 
+        {/* SUMMARY row */}
+        {(personal.aboutCareerObjective || (skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled)) && (
+          <>
+            <View style={{ flexDirection: 'row' }}>
+              <View style={{ width: 150 }}><Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold }}>SUMMARY</Text></View>
+              <View style={{ flex: 1 }}>
+                {personal.aboutCareerObjective && (
+                  <Text style={{ fontSize: 11, color: '#333', marginBottom: (skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled) ? 6 : 0 }}>
+                    {htmlToPlainText(personal.aboutCareerObjective).replace(/\s{2,}/g, ' ')}
+                  </Text>
+                )}
+                {skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled && (
+                  <Text style={{ fontSize: 11, color: '#333' }}>
+                    {htmlToPlainText(skillsLinks.technicalSummary).replace(/\s{2,}/g, ' ')}
+                  </Text>
+                )}
+              </View>
+            </View>
+            <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 12, marginBottom: 12 }} />
+          </>
+        )}
+
         {/* PROFESSIONAL EXPERIENCE row */}
         {experience.workExperiences.filter((w: any) => w.enabled).length > 0 && (
           <>
-            <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 12, marginBottom: 12 }} />
             <View style={{ flexDirection: 'row' }}>
-              <View style={{ width: 150 }}><Text style={styles.sectionHeading}>PROFESSIONAL EXPERIENCE</Text></View>
+              <View style={{ width: 150 }}><Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold }}>PROFESSIONAL EXPERIENCE</Text></View>
               <View style={{ flex: 1 }}>
                 {experience.workExperiences.filter((w: any) => w.enabled).map((w: any, i: number) => (
                   <View key={i} style={{ marginBottom: 10 }}>
@@ -187,14 +216,14 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
           <>
             <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 12, marginBottom: 12 }} />
             <View style={{ flexDirection: 'row' }}>
-              <View style={{ width: 150 }}><Text style={styles.sectionHeading}>EDUCATION</Text></View>
+              <View style={{ width: 150 }}><Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold }}>EDUCATION</Text></View>
               <View style={{ flex: 1 }}>
                 {education.higherEducation.filter(edu => edu.enabled).reverse().map((edu: any, i: number) => (
                   <View key={i} style={{ marginBottom: 12 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                       <Text>{edu.instituteName}</Text>
                       <Text style={{ fontSize: 11, color: '#000' }}>
-                        {(edu.startYear || edu.endYear) ? `${edu.startYear ? formatYear(edu.startYear) : ''} - ${edu.currentlyPursuing ? 'Present' : (edu.endYear ? formatYear(edu.endYear) : '')}` : ''}
+                        {edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}
                       </Text>
                     </View>
                     <Text style={{ fontSize: 11, color: '#000', marginTop: 6 }}>{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</Text>
@@ -213,7 +242,7 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
                   <View style={{ marginBottom: 12 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                       <Text>{education.preUniversity.instituteName || 'Pre University'}</Text>
-                      <Text style={{ fontSize: 11, color: '#000' }}>{education.preUniversity.yearOfPassing ? formatYear(education.preUniversity.yearOfPassing) : ''}</Text>
+                      <Text style={{ fontSize: 11, color: '#000' }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
                     </View>
                     <Text style={{ fontSize: 11, color: '#000', marginTop: 6 }}>Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}{education.preUniversity.boardType ? ` — ${education.preUniversity.boardType}` : ''}</Text>
                     {education.preUniversity.resultFormat && education.preUniversity.result && (
@@ -227,7 +256,7 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
                   <View style={{ marginBottom: 12 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                       <Text>{education.sslc.instituteName || 'SSLC'}</Text>
-                      <Text style={{ fontSize: 11, color: '#000' }}>{education.sslc.yearOfPassing ? formatYear(education.sslc.yearOfPassing) : ''}</Text>
+                      <Text style={{ fontSize: 11, color: '#000' }}>{formatResumeEducationDateRange(education.sslc)}</Text>
                     </View>
                     <Text style={{ fontSize: 11, color: '#000', marginTop: 6 }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</Text>
                     {education.sslc.resultFormat && education.sslc.result && (
@@ -245,7 +274,7 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
           <>
             <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 12, marginBottom: 12 }} />
             <View style={{ flexDirection: 'row' }}>
-              <View style={{ width: 150 }}><Text style={styles.sectionHeading}>SKILLS</Text></View>
+              <View style={{ width: 150 }}><Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold }}>SKILLS</Text></View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 11, color: '#000', lineHeight: 1.6 }}>
                   {(skillsLinks?.skills || []).filter((s: any) => s.enabled && s.skillName).map((s: any) => s.skillName).join(', ')}
@@ -260,7 +289,7 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
           <>
             <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 12, marginBottom: 12 }} />
             <View style={{ flexDirection: 'row' }}>
-              <View style={{ width: 150 }}><Text style={styles.sectionHeading}>CERTIFICATES</Text></View>
+              <View style={{ width: 150 }}><Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold }}>CERTIFICATES</Text></View>
               <View style={{ flex: 1 }}>
                 <View style={{ marginTop: 6, flexDirection: 'row', flexWrap: 'wrap' }}>
                   {(certifications || []).filter((c: any) => c.enabled && c.certificateTitle).map((c: any, i: number) => (
@@ -276,7 +305,7 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
         )}
 
         {/* Footer */}
-        <View style={{
+        {/* <View style={{
           position: 'absolute',
           left: 0,
           right: 0,
@@ -291,7 +320,7 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
         }} fixed>
           <Text style={{ color: '#B0B0B0', fontSize: 10, letterSpacing: 0.5 }}>bowizzy.com</Text>
           <Text style={{ color: '#B0B0B0', fontSize: 10, letterSpacing: 0.5 }}>Powered by Wizzybox</Text>
-        </View>
+        </View> */}
       </Page>
     </Document>
   );

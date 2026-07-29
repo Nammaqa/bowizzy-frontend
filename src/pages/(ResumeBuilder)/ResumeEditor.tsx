@@ -11,7 +11,20 @@ import CertificationsForm from "./components/forms/CertificationsForm";
 import { initialResumeData } from "../../types/resume";
 import type { ResumeData } from "../../types/resume";
 import DashNav from "@/components/dashnav/dashnav";
-import { getTemplateById } from "@/templates/templateRegistry";
+import { getTemplateById, getAllTemplates } from "@/templates/templateRegistry";
+import { LayoutTemplate, Heart, X } from "lucide-react";
+
+// Preview images for the template picker modal
+import template11Img from "@/templates/preview/imgs/template11.jpg";
+import template12Img from "@/templates/preview/imgs/template12.png";
+import template13Img from "@/templates/preview/imgs/template13.png";
+import template14Img from "@/templates/preview/imgs/template14.png";
+import template15Img from "@/templates/preview/imgs/template15.png";
+import template16Img from "@/templates/preview/imgs/template16.png";
+import template17Img from "@/templates/preview/imgs/template17.png";
+import template18Img from "@/templates/preview/imgs/template18.png";
+import template19Img from "@/templates/preview/imgs/template19.png";
+import template20Img from "@/templates/preview/imgs/template20.png";
 import ResumePreviewModal from "./components/ui/ResumePreviewModal";
 import PageBreakMarkers from "./components/PageBreakMarkers";
 import { usePageMarkers } from "@/hooks/usePageMarkers";
@@ -26,9 +39,23 @@ import {
   getTechnicalSummary,
 } from "@/services/skillsLinksService";
 import { getResumeTemplateById, uploadResume } from "@/services/resumeServices";
+import api from "@/api";
 
 // Import print styles
 import "@/styles/print.css";
+
+const TEMPLATE_PICKER_PREVIEW_IMAGES: Record<number, string> = {
+  11: template11Img,
+  12: template12Img,
+  13: template13Img,
+  14: template14Img,
+  15: template15Img,
+  16: template16Img,
+  17: template17Img,
+  18: template18Img,
+  19: template19Img,
+  20: template20Img,
+};
 
 const steps = [
   "Personal",
@@ -78,17 +105,21 @@ const mapEducationApiToLocal = (apiData: any[]) => {
     };
 
     if (item.education_type === "sslc") {
-      educationData.sslc = { ...educationData.sslc, ...baseData, yearOfPassing: item.end_year || "" };
+      educationData.sslc = { ...educationData.sslc, ...baseData, startYear: item.start_year || "", endYear: item.end_year || "", yearOfPassing: item.end_year || "" };
       educationData.sslcEnabled = true;
     } else if (item.education_type === "puc") {
       educationData.preUniversity = {
         ...educationData.preUniversity,
         ...baseData,
         subjectStream: item.subject_stream || "",
+        startYear: item.start_year || "",
+        endYear: item.end_year || "",
         yearOfPassing: item.end_year || "",
       };
       educationData.preUniversityEnabled = true;
     } else if (item.education_type === "higher") {
+      const currentlyPursuing = item.currently_pursuing ?? item.currently_working_here ?? false;
+
       higherEducations.push({
         id: localId,
         education_id: item.education_id,
@@ -97,12 +128,12 @@ const mapEducationApiToLocal = (apiData: any[]) => {
         instituteName: item.institution_name || "",
         universityBoard: item.university_name || "",
         startYear: item.start_year || "",
-        endYear: item.end_year || "",
+        endYear: currentlyPursuing ? "" : item.end_year || "",
         resultFormat: item.result_format
           ? item.result_format.charAt(0).toUpperCase() + item.result_format.slice(1)
           : "",
         result: item.result?.toString() || "",
-        currentlyPursuing: item.currently_working_here || false,
+        currentlyPursuing,
         enabled: true,
       });
     }
@@ -299,11 +330,19 @@ export const ResumeEditor: React.FC = () => {
   const [technicalSummaryId, setTechnicalSummaryId] = useState<number | null>(
     null
   );
+  const [enhanceStatus, setEnhanceStatus] = useState<{isBonus_enhance_used: boolean; enhance_usage_left: number; purchased_credits?: number | string} | null>(null);
+  const [purchasedCreditsBalance, setPurchasedCreditsBalance] = useState<number>(0);
+  const [redeemingEnhance, setRedeemingEnhance] = useState(false);
+  const [showPurchasedCreditsModal, setShowPurchasedCreditsModal] = useState(false);
+  const [selectedPurchasedCredits, setSelectedPurchasedCredits] = useState(1);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const allTemplates = getAllTemplates();
 
   const previewContentRef = useRef<HTMLDivElement>(null);
   const formScrollRef = useRef<HTMLDivElement>(null);
   const { markers, totalPages } = usePageMarkers(previewContentRef, [resumeData, selectedTemplate]);
   const DisplayComponent = selectedTemplate?.displayComponent || selectedTemplate?.component;
+  const disableAiEnhance = templateId === "template11";
   // Pagination UI disabled by default to avoid triggering heavy rendering.
   // To re-enable pagination, set the initial state to `true` and uncomment
   // the Paginate toggle in the preview pane below.
@@ -600,6 +639,84 @@ export const ResumeEditor: React.FC = () => {
     }
   }, [userId, token, fetchAllData, importReady]);
 
+  const fetchEnhanceStatus = useCallback(async (currentUserId: string, currentToken: string) => {
+    try {
+      const [enhanceResponse, profileResponse] = await Promise.all([
+        api.get(`/users/${currentUserId}/check-enhance-used`, {
+          headers: { Authorization: `Bearer ${currentToken}` }
+        }),
+        api.get('/personal-details/profile-data', {
+          headers: { Authorization: `Bearer ${currentToken}` }
+        })
+      ]);
+
+      if (enhanceResponse.data) {
+        setEnhanceStatus({
+          isBonus_enhance_used: enhanceResponse.data.isBonus_enhance_used,
+          enhance_usage_left: enhanceResponse.data.enhance_usage_left,
+          purchased_credits: enhanceResponse.data.purchased_credits ?? enhanceResponse.data.purchasedCredits ?? enhanceResponse.data.purchased_credits_balance ?? 0,
+        });
+      }
+
+      const profileData = profileResponse?.data ?? profileResponse;
+      const profilePurchasedCredits = Number(profileData?.purchased_credits ?? profileData?.credits ?? 0);
+      setPurchasedCreditsBalance(Number.isFinite(profilePurchasedCredits) ? profilePurchasedCredits : 0);
+    } catch (err) {
+      console.error("Failed to fetch enhance status:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (userId && token) {
+      fetchEnhanceStatus(userId, token);
+    }
+  }, [userId, token, fetchEnhanceStatus]);
+
+  const handleRedeemEnhance = async () => {
+    if (!userId || !token) return;
+    setRedeemingEnhance(true);
+    try {
+      await api.post(`/users/${userId}/redeem-enhance-with-bonus`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      await fetchEnhanceStatus(userId, token);
+      window.dispatchEvent(new CustomEvent("credits:refresh", { detail: { reason: "redeem_enhance" } }));
+    } catch (err) {
+      console.error("Failed to redeem enhance with bonus:", err);
+    } finally {
+      setRedeemingEnhance(false);
+    }
+  };
+
+  const handleRedeemEnhanceWithPurchasedCredits = () => {
+    if (!userId || !token) return;
+
+    const purchasedCredits = Number(purchasedCreditsBalance || enhanceStatus?.purchased_credits || 0);
+    const maxCredits = Math.min(50, Math.max(1, Math.floor(purchasedCredits || 1)));
+    setSelectedPurchasedCredits(maxCredits);
+    setShowPurchasedCreditsModal(true);
+  };
+
+  const confirmPurchasedCreditRedeem = async () => {
+    if (!userId || !token) return;
+
+    setRedeemingEnhance(true);
+    try {
+      await api.post(`/users/${userId}/redeem-enhance-with-purchased-credits`, {
+        credits: selectedPurchasedCredits,
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setShowPurchasedCreditsModal(false);
+      await fetchEnhanceStatus(userId, token);
+      window.dispatchEvent(new CustomEvent("credits:refresh", { detail: { reason: "redeem_enhance_purchased" } }));
+    } catch (err) {
+      console.error("Failed to redeem enhance with purchased credits:", err);
+    } finally {
+      setRedeemingEnhance(false);
+    }
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (fontDropdownRef.current && !fontDropdownRef.current.contains(event.target as Node)) {
@@ -722,6 +839,12 @@ export const ResumeEditor: React.FC = () => {
             token={token}
             personalDetailsId={personalDetailsId}
             supportsPhoto={selectedTemplate?.supportsPhoto ?? false}
+            disableAiEnhance={disableAiEnhance}
+            enhanceStatus={enhanceStatus}
+            onRedeemEnhance={handleRedeemEnhance}
+            onRedeemEnhanceWithPurchasedCredits={handleRedeemEnhanceWithPurchasedCredits}
+            onEnhanceStatusChange={setEnhanceStatus}
+            redeemingEnhance={redeemingEnhance}
           />
         );
       case 1:
@@ -757,6 +880,12 @@ export const ResumeEditor: React.FC = () => {
             onChange={updateProjectsData}
             userId={userId}
             token={token}
+            disableAiEnhance={disableAiEnhance}
+            enhanceStatus={enhanceStatus}
+            onRedeemEnhance={handleRedeemEnhance}
+            onRedeemEnhanceWithPurchasedCredits={handleRedeemEnhanceWithPurchasedCredits}
+            onEnhanceStatusChange={setEnhanceStatus}
+            redeemingEnhance={redeemingEnhance}
           />
         );
       case 4:
@@ -767,6 +896,12 @@ export const ResumeEditor: React.FC = () => {
             userId={userId}
             token={token}
             technicalSummaryId={technicalSummaryId}
+            disableAiEnhance={disableAiEnhance}
+            enhanceStatus={enhanceStatus}
+            onRedeemEnhance={handleRedeemEnhance}
+            onRedeemEnhanceWithPurchasedCredits={handleRedeemEnhanceWithPurchasedCredits}
+            onEnhanceStatusChange={setEnhanceStatus}
+            redeemingEnhance={redeemingEnhance}
           />
         );
       case 5:
@@ -808,7 +943,7 @@ export const ResumeEditor: React.FC = () => {
       <DashNav heading="Resume Builder" />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 flex flex-col bg-white rounded-lg overflow-hidden m-4">
+        <div className="flex-1 flex flex-col bg-white rounded-lg overflow-hidden ">
           <div className="bg-white">
             <ProfileStepper
               steps={steps}
@@ -820,34 +955,46 @@ export const ResumeEditor: React.FC = () => {
           <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
             <div className="flex-1 lg:w-[50%] overflow-auto scrollbar-hide min-w-0" ref={formScrollRef}>
               <div className="p-4 md:p-6 w-full max-w-full">
-                <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-lg font-semibold text-[#1A1A43]">
+                {/* LHS header: title row + controls row stacked to prevent overflow */}
+                <div className="mb-5 space-y-3">
+                  {/* Row 1 — step title */}
+                  <h2 className="text-lg font-semibold text-[#1A1A43] truncate">
                     {stepTitles[currentStep]}
                   </h2>
 
-                  {/* Style controls */}
-                  <div className="flex gap-3 items-center">
+                  {/* Row 2 — compact toolbar controls */}
+                  <div className="flex flex-wrap gap-2 items-center">
+                    {/* Choose Template */}
+                    <button
+                      onClick={() => setShowTemplateModal(true)}
+                      className="border border-orange-400 rounded-lg px-3 py-1.5 text-xs font-semibold bg-white hover:bg-orange-50 text-orange-500 transition-colors flex items-center gap-1.5 shadow-sm whitespace-nowrap"
+                    >
+                      <LayoutTemplate className="w-3.5 h-3.5 shrink-0" />
+                      Choose Template
+                    </button>
+
                     {/* Font Selector */}
                     <div className="relative" ref={fontDropdownRef}>
                       <button
                         onClick={() => setFontDropdownOpen(!fontDropdownOpen)}
-                        className="border border-gray-300 rounded-lg px-4 py-2.5 text-sm font-medium bg-white hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm"
+                        className="border border-gray-300 rounded-lg px-3 py-1.5 text-xs font-medium bg-white hover:bg-gray-50 transition-colors flex items-center gap-1.5 shadow-sm whitespace-nowrap"
                         style={{ fontFamily: fontFamily }}
                       >
-                        <span className="font-semibold">{fontName}</span>
+                        <svg className="w-3.5 h-3.5 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h8m-8 6h16" />
+                        </svg>
+                        <span className="font-semibold max-w-[90px] truncate">{fontName.split(' ')[0]}</span>
                         <svg
-                          className={`w-4 h-4 text-gray-600 transition-transform ${fontDropdownOpen ? 'rotate-180' : ''}`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                          className={`w-3 h-3 text-gray-500 transition-transform shrink-0 ${fontDropdownOpen ? 'rotate-180' : ''}`}
+                          fill="none" stroke="currentColor" viewBox="0 0 24 24"
                         >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </button>
                       {fontDropdownOpen && (
-                        <div className="absolute top-full right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-20">
-                          <div className="p-3 max-h-80 overflow-y-auto">
-                            <div className="text-xs font-semibold text-gray-500 px-3 py-2">SELECT FONT</div>
+                        <div className="absolute top-full left-0 mt-1.5 w-60 bg-white border border-gray-200 rounded-lg shadow-xl z-20">
+                          <div className="p-3 max-h-72 overflow-y-auto">
+                            <div className="text-xs font-semibold text-gray-400 px-2 pb-2 uppercase tracking-wide">Select Font</div>
                             {FONT_OPTIONS.map((font) => (
                               <button
                                 key={font.label}
@@ -856,10 +1003,11 @@ export const ResumeEditor: React.FC = () => {
                                   setFontFamily(font.value);
                                   setFontDropdownOpen(false);
                                 }}
-                                className={`w-full text-left px-4 py-3 rounded-lg text-sm transition-all mb-2 font-medium ${fontName === font.label
-                                    ? "bg-orange-500 text-white shadow-md"
-                                    : "hover:bg-orange-50 text-gray-700 border border-transparent hover:border-orange-200"
-                                  }`}
+                                className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all mb-1 font-medium ${
+                                  fontName === font.label
+                                    ? 'bg-orange-500 text-white shadow-sm'
+                                    : 'hover:bg-orange-50 text-gray-700'
+                                }`}
                                 style={{ fontFamily: font.value }}
                               >
                                 {font.label}
@@ -874,27 +1022,27 @@ export const ResumeEditor: React.FC = () => {
                     <div className="relative" ref={colorDropdownRef}>
                       <button
                         onClick={() => setColorDropdownOpen(!colorDropdownOpen)}
-                        className="border border-gray-300 rounded-lg px-4 py-2.5 text-sm font-medium bg-white hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm"
+                        className="border border-gray-300 rounded-lg px-3 py-1.5 text-xs font-medium bg-white hover:bg-gray-50 transition-colors flex items-center gap-1.5 shadow-sm whitespace-nowrap"
                       >
                         <div
-                          className="w-6 h-6 rounded-lg border-2 border-white shadow-md"
+                          className="w-4 h-4 rounded border border-gray-300 shadow-sm shrink-0"
                           style={{ backgroundColor: primaryColor }}
                         />
-                        <span className="font-semibold text-gray-700">{COLOR_OPTIONS.find(c => c.value === primaryColor)?.label}</span>
+                        <span className="font-semibold text-gray-700">
+                          {COLOR_OPTIONS.find(c => c.value === primaryColor)?.label}
+                        </span>
                         <svg
-                          className={`w-4 h-4 text-gray-600 transition-transform ${colorDropdownOpen ? 'rotate-180' : ''}`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                          className={`w-3 h-3 text-gray-500 transition-transform shrink-0 ${colorDropdownOpen ? 'rotate-180' : ''}`}
+                          fill="none" stroke="currentColor" viewBox="0 0 24 24"
                         >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </button>
                       {colorDropdownOpen && (
-                        <div className="absolute top-full right-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-xl z-20">
-                          <div className="p-4">
-                            <div className="text-xs font-semibold text-gray-500 px-2 pb-3">SELECT COLOR</div>
-                            <div className="grid grid-cols-2 gap-3">
+                        <div className="absolute top-full left-0 mt-1.5 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-20">
+                          <div className="p-3">
+                            <div className="text-xs font-semibold text-gray-400 px-2 pb-2 uppercase tracking-wide">Select Color</div>
+                            <div className="grid grid-cols-2 gap-2">
                               {COLOR_OPTIONS.map((color) => (
                                 <button
                                   key={color.value}
@@ -902,16 +1050,19 @@ export const ResumeEditor: React.FC = () => {
                                     setPrimaryColor(color.value);
                                     setColorDropdownOpen(false);
                                   }}
-                                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${primaryColor === color.value
-                                      ? "bg-orange-100 border-2 border-orange-500 shadow-md"
-                                      : "hover:bg-gray-50 border border-gray-200 hover:border-gray-300"
-                                    }`}
+                                  className={`flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all ${
+                                    primaryColor === color.value
+                                      ? 'bg-orange-50 border-2 border-orange-500'
+                                      : 'hover:bg-gray-50 border border-gray-200'
+                                  }`}
                                 >
                                   <div
-                                    className="w-10 h-10 rounded-lg border-2 border-white shadow-md flex-shrink-0"
+                                    className="w-7 h-7 rounded border border-gray-200 shrink-0"
                                     style={{ backgroundColor: color.value }}
                                   />
-                                  <span className={`text-sm font-medium ${primaryColor === color.value ? 'text-orange-700' : 'text-gray-700'}`}>
+                                  <span className={`text-xs font-medium ${
+                                    primaryColor === color.value ? 'text-orange-700' : 'text-gray-700'
+                                  }`}>
                                     {color.label}
                                   </span>
                                 </button>
@@ -956,62 +1107,58 @@ export const ResumeEditor: React.FC = () => {
             </div>
 
 
-            <div className="hidden lg:flex lg:w-[50%] bg-white overflow-auto scrollbar-hide p-4">
-              <div className="flex-1 overflow-auto scrollbar-hide border border-gray-300 rounded-lg">
-                <div className="relative w-full h-full flex items-start justify-center">
-                  {/* Page info */}
-                  {totalPages > 1 && (
-                    <>
-                      <div className="absolute top-2 right-4 bg-white px-3 py-1 rounded-full shadow-md text-sm font-medium z-10">
+            <div className="hidden lg:flex lg:w-[50%] bg-white overflow-hidden p-4">
+              <div className="flex-1 flex flex-col border border-gray-300 rounded-lg overflow-hidden bg-white min-w-0">
+                {/* RHS toolbar */}
+                <div className="flex justify-between items-center px-4 py-3 bg-gray-50 border-b border-gray-200 shrink-0 min-h-[48px]">
+                  <div className="flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-gray-500" />
+                    <span className="text-xs text-gray-500 font-medium">Preview</span>
+                  </div>
+                  <div>
+                    {totalPages > 1 && (
+                      <div className="bg-white px-3 py-1 rounded-full shadow-sm text-xs font-medium text-gray-600 border border-gray-200">
                         {paginatePreview ? (
-                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                            <button onClick={() => paginatedRef.current?.prev()} disabled={!paginatePreview} style={{ padding: '6px 8px', borderRadius: '6px' }}>‹</button>
+                          <div className="flex gap-1.5 items-center">
+                            <button onClick={() => paginatedRef.current?.prev()} disabled={!paginatePreview} className="px-1 rounded">‹</button>
                             <span>{previewCurrentPage}/{previewPageCount} {previewPageCount === 1 ? 'Page' : 'Pages'}</span>
-                            <button onClick={() => paginatedRef.current?.next()} disabled={!paginatePreview} style={{ padding: '6px 8px', borderRadius: '6px' }}>›</button>
+                            <button onClick={() => paginatedRef.current?.next()} disabled={!paginatePreview} className="px-1 rounded">›</button>
                           </div>
                         ) : (
                           <>{totalPages} {totalPages === 1 ? 'Page' : 'Pages'}</>
                         )}
                       </div>
+                    )}
+                  </div>
+                </div>
 
-                      {/* Paginate toggle disabled while we stabilize pagination behavior.
-                          To re-enable, uncomment this block and set paginatePreview default to true. */}
-                    </>
-                  )}
-
-                  {/* Preview content with markers */}
-                  {/* Lock icon for template12 to template20 */}
-                  {(() => {
-                    const templateIdStr = selectedTemplate?.id || templateId;
-                    const match = templateIdStr && templateIdStr.match(/^template(\d+)$/);
-                    const num = match ? parseInt(match[1], 10) : null;
-                    if (num && num >= 12 && num <= 20) {
-                      return (
-                        <div className="absolute top-4 left-4 z-20 flex items-center">
-                          <Lock className="w-8 h-8 text-gray-500" />
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
-                  <div
-                    className="relative transform scale-75 origin-top -mt-4"
-                    style={{ fontFamily: fontFamily }}
-                  >
-                    <div ref={previewContentRef} className="relative">
-                      {selectedTemplate && (
-                        <DisplayComponent
-                          data={resumeData}
-                          supportsPhoto={selectedTemplate.supportsPhoto ?? false}
-                          fontFamily={fontFamily}
-                          primaryColor={primaryColor}
-                          showPageBreaks={paginatePreview && !loading}
-                          onPageCountChange={(n: number) => setPreviewPageCount(n)}
-                          onPageChange={(i: number) => setPreviewCurrentPage(i)}
-                          pageControllerRef={paginatedRef}
-                        />
-                      )}
-                      {/* <PageBreakMarkers markers={markers} /> */}
+                {/* Scaled resume preview — overflow-hidden prevents bleed */}
+                <div className="flex-1 overflow-auto scrollbar-hide bg-gray-50/50">
+                  <div className="w-full flex justify-center items-start p-4">
+                    <div
+                      className="origin-top shrink-0"
+                      style={{
+                        transform: 'scale(0.68)',
+                        transformOrigin: 'top center',
+                        fontFamily: fontFamily,
+                        width: '794px',          /* A4 width */
+                        marginBottom: '-26%',    /* compensate scale shrink so container height follows */
+                      }}
+                    >
+                      <div ref={previewContentRef}>
+                        {selectedTemplate && (
+                          <DisplayComponent
+                            data={resumeData}
+                            supportsPhoto={selectedTemplate.supportsPhoto ?? false}
+                            fontFamily={fontFamily}
+                            primaryColor={primaryColor}
+                            showPageBreaks={paginatePreview && !loading}
+                            onPageCountChange={(n: number) => setPreviewPageCount(n)}
+                            onPageChange={(i: number) => setPreviewCurrentPage(i)}
+                            pageControllerRef={paginatedRef}
+                          />
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1044,9 +1191,143 @@ export const ResumeEditor: React.FC = () => {
         autoShowPdfPreview={true}
         onPreviewComplete={() => setPreviewLoading(false)}
         onSaveAndExit={handleSaveAndExit}
+        onSaveAndDownloadComplete={() => navigate("/ResumeBuilder")}
         primaryColor={primaryColor}
         fontFamily={fontFamily}
       />
+
+      {showPurchasedCreditsModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-gray-900">Redeem with purchased credits</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Choose how many purchased credits to use for this enhancement. The amount is capped at 50.
+            </p>
+
+            <div className="mt-6">
+              <div className="flex items-center justify-between text-sm font-medium text-gray-700">
+                <span>Credits to use</span>
+                <span className="text-orange-600">{selectedPurchasedCredits}</span>
+              </div>
+              <input
+                type="range"
+                min={1}
+                max={Math.min(50, Math.max(1, Number(purchasedCreditsBalance || enhanceStatus?.purchased_credits || 0)))}
+                value={selectedPurchasedCredits}
+                onChange={(e) => setSelectedPurchasedCredits(Number(e.target.value))}
+                className="mt-3 h-2 w-full cursor-pointer appearance-none rounded-full bg-orange-100 accent-orange-500"
+              />
+              <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
+                <span>1</span>
+                <span>Max {Math.min(50, Math.max(1, Number(purchasedCreditsBalance || enhanceStatus?.purchased_credits || 0)))}</span>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowPurchasedCreditsModal(false)}
+                className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmPurchasedCreditRedeem}
+                disabled={redeemingEnhance}
+                className="rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {redeemingEnhance ? "Redeeming..." : "Redeem"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Template Picker Modal */}
+      {showTemplateModal && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowTemplateModal(false)}
+          />
+
+          {/* Modal panel */}
+          <div className="relative z-[301] w-full max-w-5xl mx-4 max-h-[90vh] flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white">
+              <div>
+                <h2 className="text-xl font-bold text-[#1A1A43]">Choose a Template</h2>
+                <p className="text-sm text-gray-500 mt-0.5">Select a template to switch — your data will be preserved</p>
+              </div>
+              <button
+                onClick={() => setShowTemplateModal(false)}
+                className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Grid */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+                {allTemplates.map((template) => {
+                  const tNum = parseInt(template.id.replace("template", ""), 10);
+                  const previewSrc = TEMPLATE_PICKER_PREVIEW_IMAGES[tNum] || template.thumbnail;
+                  const isActive = template.id === templateId;
+
+                  return (
+                    <div
+                      key={template.id}
+                      onClick={() => {
+                        navigate(`/resume-editor?templateId=${template.id}`);
+                        setShowTemplateModal(false);
+                      }}
+                      className={`relative group cursor-pointer rounded-xl overflow-hidden transition-all duration-200 hover:shadow-xl hover:scale-[1.02] ${
+                        isActive
+                          ? "ring-2 ring-orange-500 shadow-lg"
+                          : "ring-1 ring-gray-200"
+                      }`}
+                    >
+                      {/* Thumbnail */}
+                      <img
+                        src={previewSrc}
+                        alt={template.name}
+                        className="w-full h-48 object-cover object-top bg-gray-50"
+                      />
+
+                      {/* Hover overlay with CTA */}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                        <span className="px-4 py-2 bg-orange-500 text-white text-sm font-semibold rounded-lg shadow-md">
+                          {isActive ? "Current Template" : "Use This Template"}
+                        </span>
+                      </div>
+
+                      {/* Active badge */}
+                      {isActive && (
+                        <div className="absolute top-2 right-2 bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          Active
+                        </div>
+                      )}
+
+                      {/* Label */}
+                      <div className="px-3 py-2 bg-white">
+                        <div className="flex items-center gap-1.5">
+                          <Heart size={10} className="text-orange-500 shrink-0" />
+                          <span className="text-xs font-semibold text-[#1A1A43] truncate">
+                            {template.label || template.name}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

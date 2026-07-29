@@ -14,6 +14,7 @@ import {
   Twitter,
 } from "lucide-react";
 import type { PortfolioData } from "./developer";
+import { formatPortfolioDuration } from "./dateFormat";
 
 function hexToRgb(hex: string) {
   const normalized = hex.replace("#", "").trim();
@@ -99,7 +100,7 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
 
   return (
     <main
-      className="@container min-h-screen overflow-hidden"
+      className="@container designer-root min-h-screen overflow-hidden"
       style={
         {
           background: bg,
@@ -123,6 +124,24 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
           max-width: 1180px;
           margin: 0 auto;
         }
+        .designer-root,
+        .designer-root * {
+          min-width: 0;
+        }
+        .designer-text-wrap,
+        .designer-root h1,
+        .designer-root h2,
+        .designer-root h3,
+        .designer-root p,
+        .designer-rich,
+        .designer-rich * {
+          overflow-wrap: anywhere;
+          word-break: break-word;
+        }
+        .designer-root img {
+          -webkit-user-drag: none;
+          user-select: none;
+        }
         .designer-rich p { margin: 0 0 0.45rem; }
         .designer-rich p:last-child { margin-bottom: 0; }
         .designer-rich ul, .designer-rich ol { margin: 0.35rem 0; padding-left: 1.15rem; }
@@ -130,7 +149,17 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
         .designer-rich ol { list-style: decimal; }
         .designer-rich li { margin: 0.2rem 0; }
         .designer-rich a { color: var(--designer-accent); text-decoration: underline; }
-        .designer-rich strong, .designer-rich b { color: var(--designer-ink); font-weight: 800; }
+        .designer-rich strong, .designer-rich b {
+          display: inline;
+          padding: 0.05em 0.28em;
+          border-radius: 0.32em;
+          background: color-mix(in srgb, var(--designer-accent) 72%, #111827);
+          color: #f8fafc;
+          font-weight: 800;
+          box-decoration-break: clone;
+          -webkit-box-decoration-break: clone;
+          text-shadow: 0 1px 1px rgba(0,0,0,0.24);
+        }
         .designer-hover {
           transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
         }
@@ -163,7 +192,7 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
             </span>
           </a>
 
-          <div className="hidden @md:flex items-center gap-7 text-xs font-extrabold uppercase">
+          <div className="hidden @md:flex items-center gap-7 text-xs font-extrabold uppercase shrink-0">
             {["work", "experience", "process", "contact"].map((item) => (
               <a key={item} href={`#${item}`} className="no-underline" style={{ color: muted }}>
                 {item}
@@ -173,15 +202,15 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
         </nav>
 
         <header id="top" className="min-h-[660px] grid grid-cols-1 @lg:grid-cols-[1.08fr_0.92fr] gap-9 py-12 @lg:py-16 items-center border-b" style={{ borderColor: line }}>
-          <div>
+          <div className="min-w-0">
             <div className="inline-flex items-center gap-2 text-xs font-extrabold uppercase mb-6" style={{ color: accent }}>
               <Sparkles className="w-4 h-4" />
               Designer Portfolio
             </div>
-            <h1 className="text-5xl @md:text-6xl @lg:text-7xl leading-none font-extrabold max-w-3xl">
+            <h1 className="designer-text-wrap text-5xl @md:text-6xl @lg:text-7xl leading-none font-extrabold max-w-3xl">
               {data.portfolioName || "Creative Mind"}
             </h1>
-            <p className="mt-7 max-w-2xl text-base @md:text-lg leading-8 font-medium" style={{ color: muted }}>
+            <p className="designer-text-wrap mt-7 max-w-2xl text-base @md:text-lg leading-8 font-medium" style={{ color: muted }}>
               {data.tagline ||
                 data.portfolioDescription ||
                 "I design sharp, human digital products with expressive visuals, clean systems, and careful interaction craft."}
@@ -234,6 +263,8 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
                   src={data.avatarUrl}
                   alt={data.portfolioName || "Designer"}
                   className="absolute inset-0 h-full w-full object-cover"
+                  draggable={false}
+                  onDragStart={(event) => event.preventDefault()}
                 />
               ) : (
                 <div
@@ -289,7 +320,7 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
             </h2>
           </div>
           <div>
-            <p className="text-xl @md:text-2xl leading-10 font-bold">
+            <p className="designer-text-wrap text-xl @md:text-2xl leading-10 font-bold">
               {data.portfolioDescription ||
                 "I help teams turn rough ideas into clear, polished digital experiences that feel considered from the first impression to the final interaction."}
             </p>
@@ -341,6 +372,8 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
                         src={study.imageUrl}
                         alt={study.title || "Case study cover"}
                         className="absolute inset-0 h-full w-full object-cover"
+                        draggable={false}
+                        onDragStart={(event) => event.preventDefault()}
                       />
                     ) : (
                       <div className="absolute inset-5 grid grid-cols-5 grid-rows-4 gap-3">
@@ -352,7 +385,7 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
                   </div>
                   <div className="p-5 @md:p-6">
                     <div className="flex items-start justify-between gap-4 mb-3">
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-xs font-extrabold uppercase mb-2" style={{ color: accent }}>
                           {study.role || "UI/UX Design"}
                         </p>
@@ -408,22 +441,32 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
                   style={{ borderColor: line, background: panelStrong, borderRadius: 8 }}
                 >
                   <div
-                    className="h-56 relative designer-cover-grid border-b"
+                    className="h-56 relative overflow-hidden designer-cover-grid border-b"
                     style={{
                       borderColor: line,
                       backgroundColor: index % 2 ? ink : accent,
                     }}
                   >
-                    <div className="absolute inset-5 grid grid-cols-6 grid-rows-4 gap-3">
-                      <span className="col-span-4 row-span-2" style={{ background: "rgba(255,255,255,0.72)", borderRadius: 8 }} />
-                      <span className="col-span-2 row-span-2" style={{ background: accentTwo, borderRadius: 8 }} />
-                      <span className="col-span-2 row-span-2" style={{ background: "rgba(255,255,255,0.32)", borderRadius: 8 }} />
-                      <span className="col-span-4 row-span-2" style={{ background: "rgba(255,255,255,0.18)", borderRadius: 8 }} />
-                    </div>
+                    {project.imageUrl ? (
+                      <img
+                        src={project.imageUrl}
+                        alt={project.title || "Project cover"}
+                        className="absolute inset-0 h-full w-full object-cover"
+                        draggable={false}
+                        onDragStart={(event) => event.preventDefault()}
+                      />
+                    ) : (
+                      <div className="absolute inset-5 grid grid-cols-6 grid-rows-4 gap-3">
+                        <span className="col-span-4 row-span-2" style={{ background: "rgba(255,255,255,0.72)", borderRadius: 8 }} />
+                        <span className="col-span-2 row-span-2" style={{ background: accentTwo, borderRadius: 8 }} />
+                        <span className="col-span-2 row-span-2" style={{ background: "rgba(255,255,255,0.32)", borderRadius: 8 }} />
+                        <span className="col-span-4 row-span-2" style={{ background: "rgba(255,255,255,0.18)", borderRadius: 8 }} />
+                      </div>
+                    )}
                   </div>
                   <div className="p-5 @md:p-6">
                     <div className="flex items-start justify-between gap-4 mb-4">
-                      <h3 className="text-2xl font-extrabold">{project.title || "Project Name"}</h3>
+                      <h3 className="min-w-0 text-2xl font-extrabold">{project.title || "Project Name"}</h3>
                       {project.link && (
                         <a
                           href={project.link}
@@ -466,36 +509,41 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
 
           <div className="space-y-4">
             {data.experiences.length ? (
-              data.experiences.map((exp, index) => (
-                <article
-                  key={`${exp.role}-${index}`}
-                  className="grid grid-cols-[2.75rem_1fr] gap-4 border-b pb-6"
-                  style={{ borderColor: line }}
-                >
-                  <span
-                    className="h-11 w-11 grid place-items-center border"
-                    style={{ borderColor: line, background: panel, borderRadius: 8 }}
+              data.experiences.map((exp, index) => {
+                const displayDuration = formatPortfolioDuration(exp.duration);
+                return (
+                  <article
+                    key={`${exp.role}-${index}`}
+                    className="grid grid-cols-[2.75rem_1fr] gap-4 border-b pb-6"
+                    style={{ borderColor: line }}
                   >
-                    <Briefcase className="w-4 h-4" style={{ color: accent }} />
-                  </span>
-                  <div>
-                    <div className="flex flex-wrap justify-between gap-3 mb-1">
-                      <h3 className="text-lg font-extrabold">{exp.role || "Lead Designer"}</h3>
-                      <span className="text-xs font-extrabold uppercase" style={{ color: muted }}>
-                        {exp.duration}
-                      </span>
+                    <span
+                      className="h-11 w-11 grid place-items-center border"
+                      style={{ borderColor: line, background: panel, borderRadius: 8 }}
+                    >
+                      <Briefcase className="w-4 h-4" style={{ color: accent }} />
+                    </span>
+                    <div>
+                      <div className="flex flex-wrap justify-between gap-3 mb-1">
+                        <h3 className="text-lg font-extrabold">{exp.role || "Lead Designer"}</h3>
+                        {displayDuration && (
+                          <span className="text-xs font-extrabold uppercase" style={{ color: muted }}>
+                            {displayDuration}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm font-extrabold mb-3" style={{ color: accent }}>
+                        {exp.company || "Creative Studio"}
+                      </p>
+                      <RichText
+                        html={exp.details}
+                        fallback="Experience details..."
+                        className="text-sm leading-7"
+                      />
                     </div>
-                    <p className="text-sm font-extrabold mb-3" style={{ color: accent }}>
-                      {exp.company || "Creative Studio"}
-                    </p>
-                    <RichText
-                      html={exp.details}
-                      fallback="Experience details..."
-                      className="text-sm leading-7"
-                    />
-                  </div>
-                </article>
-              ))
+                  </article>
+                );
+              })
             ) : (
               <p className="text-sm" style={{ color: muted }}>
                 Add experience in the editor to show the career timeline.
@@ -531,20 +579,42 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
           <div className="grid grid-cols-1 @lg:grid-cols-[1fr_auto] gap-7 items-center">
             <div>
               <p className="text-xs font-extrabold uppercase mb-4" style={{ color: accent }}>
-                Contact
+                Contact & Profiles
               </p>
               <h2 className="text-4xl @md:text-6xl font-extrabold leading-none">
                 Let's build something with taste.
               </h2>
+              <p className="mt-4 text-sm leading-7" style={{ color: muted, maxWidth: 560 }}>
+                Reach out via email or connect through my professional profiles for design, process, and project details.
+              </p>
             </div>
-            <a
-              href={`mailto:${data.email || "hello@example.com"}`}
-              className="designer-hover inline-flex items-center justify-center gap-2 px-6 py-4 text-sm font-extrabold no-underline"
-              style={{ background: accent, color: "#ffffff", borderRadius: 8 }}
-            >
-              <Mail className="w-4 h-4" />
-              Get in touch
-            </a>
+            <div className="flex flex-col items-start gap-4">
+              <a
+                href={`mailto:${data.email || "hello@example.com"}`}
+                className="designer-hover inline-flex items-center justify-center gap-2 px-6 py-4 text-sm font-extrabold no-underline"
+                style={{ background: accent, color: "#ffffff", borderRadius: 8 }}
+              >
+                <Mail className="w-4 h-4" />
+                Get in touch
+              </a>
+              {socialLinks.length > 0 && (
+                <div className="flex flex-wrap items-center gap-3">
+                  {socialLinks.map(({ href, label, icon: Icon }) => (
+                    <a
+                      key={label}
+                      href={href}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={label}
+                      className="designer-hover h-11 w-11 border inline-flex items-center justify-center no-underline"
+                      style={{ color: ink, borderColor: line, background: panel, borderRadius: 8 }}
+                    >
+                      <Icon className="w-4 h-4" />
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </section>
       </section>

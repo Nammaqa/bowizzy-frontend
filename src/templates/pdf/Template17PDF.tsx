@@ -2,6 +2,7 @@ import React from 'react';
 import DOMPurify from 'dompurify';
 import { Document, Page, View, Text, StyleSheet, Svg, Path, Link } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
+import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 
 const styles = StyleSheet.create({
   page: { flexDirection: 'row', padding: 0, fontSize: 10, },
@@ -161,17 +162,17 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
             {personal.email && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconEmail /><Text style={{ fontSize: 9, color: '#000' }}>{personal.email}</Text></View>}
             {personal.mobileNumber && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconPhone /><Text style={{ fontSize: 9, color: '#000' }}>{personal.mobileNumber}</Text></View>}
             {(personal.address || personal.city || personal.state) && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconLocation /><Text style={{ fontSize: 9, color: '#000' }}>{[personal.address, personal.city, personal.state, personal.pincode].filter(Boolean).join(', ')}</Text></View>}
-            {linkedinUrl && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconLinkedin /><Link src={linkedinUrl} style={linkTextStyle}>{linkedinUrl}</Link></View>}
-            {githubUrl && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconGithub /><Link src={githubUrl} style={linkTextStyle}>{githubUrl}</Link></View>}
-            {portfolioUrl && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconGlobe /><Link src={portfolioUrl} style={linkTextStyle}>{portfolioUrl}</Link></View>}
-            {publicationUrl && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconExternalLink /><Link src={publicationUrl} style={linkTextStyle}>{publicationUrl}</Link></View>}
+            {linkedinUrl && <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6, width: '100%' }}><IconLinkedin /><Text style={{ ...linkTextStyle, fontSize: 7, flex: 1, flexWrap: 'wrap' }}>{linkedinUrl}</Text></View>}
+            {githubUrl && <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6, width: '100%' }}><IconGithub /><Text style={{ ...linkTextStyle, fontSize: 7, flex: 1, flexWrap: 'wrap' }}>{githubUrl}</Text></View>}
+            {portfolioUrl && <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6, width: '100%' }}><IconGlobe /><Text style={{ ...linkTextStyle, fontSize: 7, flex: 1, flexWrap: 'wrap' }}>{portfolioUrl}</Text></View>}
+            {publicationUrl && <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6, width: '100%' }}><IconExternalLink /><Text style={{ ...linkTextStyle, fontSize: 7, flex: 1, flexWrap: 'wrap' }}>{publicationUrl}</Text></View>}
           </View>
 
           {(skillsLinks.skills || []).some((s: any) => s.enabled && s.skillName) && (
             <View style={{ marginTop: 18 }}>
               <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Skills</Text>
               <View style={{ ...styles.divider, backgroundColor: primaryColor }} />
-              {(skillsLinks.skills || []).filter((s: any) => s.enabled && s.skillName).slice(0, 6).map((s: any, i: number) => (<View key={i} style={{ marginTop: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}><Text style={{ fontSize: 9, color: '#000', flex: 1 }}>• {s.skillName}</Text><Text style={{ fontSize: 9, color: '#000' }}>{getSkillStars(s.skillLevel)}</Text></View>))}
+              {(skillsLinks.skills || []).filter((s: any) => s.enabled && s.skillName).map((s: any, i: number) => (<View key={i} style={{ marginTop: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}><Text style={{ fontSize: 9, color: '#000', flex: 1 }}>• {s.skillName}</Text><Text style={{ fontSize: 9, color: '#000' }}>{getSkillStars(s.skillLevel)}</Text></View>))}
             </View>
           )}
 
@@ -184,16 +185,23 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
         </View>
 
         <View style={styles.content}>
-          <View>
-            <Text style={styles.sectionHeading}>Technical Summary</Text>
-            <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
-            {personal.aboutCareerObjective ? <Text style={{ marginTop: 8, fontSize: 9, color: '#444' }}>{htmlToPlainText(personal.aboutCareerObjective).replace(/\s{2,}/g, ' ')}</Text> : null}
-            {skillsLinks.technicalSummaryEnabled && skillsLinks.technicalSummary ? (
-              <Text style={{ marginTop: personal.aboutCareerObjective ? 6 : 8, fontSize: 9, color: '#444' }}>
+          {personal.aboutCareerObjective ? (
+            <View>
+              <Text style={styles.sectionHeading}>About</Text>
+              <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
+              <Text style={{ marginTop: 8, fontSize: 9, color: '#444' }}>{htmlToPlainText(personal.aboutCareerObjective).replace(/\s{2,}/g, ' ')}</Text>
+            </View>
+          ) : null}
+
+          {skillsLinks.technicalSummaryEnabled && skillsLinks.technicalSummary ? (
+            <View style={{ marginTop: personal.aboutCareerObjective ? 18 : 0 }}>
+              <Text style={styles.sectionHeading}>Technical Summary</Text>
+              <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
+              <Text style={{ marginTop: 8, fontSize: 9, color: '#444' }}>
                 {htmlToPlainText(skillsLinks.technicalSummary).replace(/\s{2,}/g, ' ')}
               </Text>
-            ) : null}
-          </View>
+            </View>
+          ) : null}
 
           {experience.workExperiences.filter((w: any) => w.enabled).length > 0 && (
             <View style={{ marginTop: 18 }}>
@@ -202,9 +210,9 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
               <View style={{ marginTop: 8 }}>
                 {experience.workExperiences.filter((w: any) => w.enabled).map((w: any, i: number) => (
                   <View key={i} style={{ marginBottom: 10 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold }}>{w.companyName}</Text>
-                      <Text style={{ fontSize: 10, color: '#000' }}>{formatMonthYear(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYear(w.endDate)}</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, flex: 1, paddingRight: 16 }}>{w.companyName}</Text>
+                      <Text style={{ fontSize: 10, color: '#000', flexShrink: 0, textAlign: 'right' }}>{formatMonthYear(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYear(w.endDate)}</Text>
                     </View>
                     <Text style={{ marginTop: 6, fontSize: 9, color: '#000' }}>{w.jobTitle}{w.location ? ` — ${w.location}` : ''}</Text>
                     {w.description && <View style={{ marginTop: 6, paddingLeft: 10 }}>{htmlToPlainText(w.description).split('\n').filter(Boolean).map((line, idx) => <Text key={idx} style={{ fontSize: 9, color: '#444', marginTop: 6 }}>• {line}</Text>)}</View>}
@@ -221,9 +229,9 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
               <View style={{ marginTop: 8 }}>
                 {projects.filter((p: any) => p.enabled).map((p: any, i: number) => (
                   <View key={i} style={{ marginBottom: 10 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold }}>{p.projectTitle}</Text>
-                      <Text style={{ fontSize: 10, color: '#000' }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, flex: 1, paddingRight: 16 }}>{p.projectTitle}</Text>
+                      <Text style={{ fontSize: 10, color: '#000', flexShrink: 0, textAlign: 'right' }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</Text>
                     </View>
                     {p.description && <Text style={{ marginTop: 6, fontSize: 9, color: '#000' }}>{htmlToPlainText(p.description)}</Text>}
                     {p.rolesResponsibilities && <View style={{ marginTop: 6, paddingLeft: 10 }}>{htmlToPlainText(p.rolesResponsibilities).split('\n').filter(Boolean).map((line, idx) => <Text key={idx} style={{ fontSize: 9, color: '#444', marginTop: 6 }}>• {line}</Text>)}</View>}
@@ -240,9 +248,9 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
               <View style={{ marginTop: 8 }}>
                 {education.higherEducation.filter(edu => edu.enabled).reverse().map((edu: any, i: number) => (
                   <View key={i} style={{ marginBottom: 10 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold }}>{edu.instituteName}</Text>
-                      <Text style={{ fontSize: 9, color: '#000' }}>{formatYear(edu.endYear)}</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, flex: 1, paddingRight: 16 }}>{edu.instituteName}</Text>
+                      <Text style={{ fontSize: 9, color: '#000', flexShrink: 0, textAlign: 'right' }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}</Text>
                     </View>
                     <Text style={{ marginTop: 4, fontSize: 9, color: '#000' }}>
                       {edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}
@@ -257,9 +265,9 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
                 {/* Pre University */}
                 {education.preUniversityEnabled && (
                   <View style={{ marginBottom: 10 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
-                      <Text style={{ fontSize: 9, color: '#000' }}>{education.preUniversity.yearOfPassing ? String(education.preUniversity.yearOfPassing).match(/(\d{4})/)?.[1] : ''}</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, flex: 1, paddingRight: 16 }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
+                      <Text style={{ fontSize: 9, color: '#000', flexShrink: 0, textAlign: 'right' }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
                     </View>
                     <Text style={{ marginTop: 4, fontSize: 9, color: '#000' }}>
                       Pre University (12th Standard)
@@ -275,9 +283,9 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
                 {/* SSLC */}
                 {education.sslcEnabled && (
                   <View style={{ marginBottom: 10 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold }}>{education.sslc.instituteName || 'SSLC'}</Text>
-                      <Text style={{ fontSize: 9, color: '#000' }}>{education.sslc.yearOfPassing ? String(education.sslc.yearOfPassing).match(/(\d{4})/)?.[1] : ''}</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, flex: 1, paddingRight: 16 }}>{education.sslc.instituteName || 'SSLC'}</Text>
+                      <Text style={{ fontSize: 9, color: '#000', flexShrink: 0, textAlign: 'right' }}>{formatResumeEducationDateRange(education.sslc)}</Text>
                     </View>
                     <Text style={{ marginTop: 4, fontSize: 9, color: '#000' }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</Text>
                     {education.sslc.resultFormat && education.sslc.result && (
@@ -296,9 +304,9 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
               <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
               <View style={{ marginTop: 8 }}>
                 {(certifications || []).filter((c: any) => c.enabled && c.certificateTitle).map((c: any, i: number) => (
-                  <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <Text style={{ fontSize: 9, width: '75%' }}>{c.certificateTitle}{c.providedBy ? ` — ${c.providedBy}` : ''}</Text>
-                    {c.date && <Text style={{ fontSize: 9, textAlign: 'right', width: '25%' }}>{formatMonthYear(c.date)}</Text>}
+                  <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6, alignItems: 'flex-start' }}>
+                    <Text style={{ fontSize: 9, flex: 1, paddingRight: 16 }}>{c.certificateTitle}{c.providedBy ? ` — ${c.providedBy}` : ''}</Text>
+                    {c.date && <Text style={{ fontSize: 9, flexShrink: 0, textAlign: 'right' }}>{formatMonthYear(c.date)}</Text>}
                   </View>
                 ))}
               </View>
@@ -307,9 +315,9 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
 
         </View>
         {/* Footer */}
-        <View style={{
+        {/* <View style={{
           position: 'absolute',
-          left: 0,
+          left: 220,
           right: 0,
           bottom: 12,
           paddingHorizontal: 36,
@@ -320,9 +328,9 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
           fontSize: 10,
           color: '#B0B0B0',
         }} fixed>
-          <Text style={{ color: '#B0B0B0', fontSize: 10, letterSpacing: 0.5 }}>bowizzy.com</Text>
-          <Text style={{ color: '#B0B0B0', fontSize: 10, letterSpacing: 0.5 }}>Powered by Wizzybox</Text>
-        </View>
+          <Text style={{ color: '#B0B0B0', fontSize: 7, letterSpacing: 0.5 }}>bowizzy.com</Text>
+          <Text style={{ color: '#B0B0B0', fontSize: 7, letterSpacing: 0.5 }}>Powered by Wizzybox</Text>
+        </View> */}
       </Page>
     </Document>
   );

@@ -87,7 +87,7 @@ const MockInterview = () => {
                                     </div>
                                     <div className="p-4">
                                         <h3 className="text-[#FF8351] text-lg sm:text-xl font-semibold mb-3">
-                                            Take Interview
+                                            Book Mock Interview
                                         </h3>
                                         <p className="text-[#3A3A3A] text-sm sm:text-base leading-relaxed mb-4">
                                             Conduct interviews to guide aspiring professionals. Share your

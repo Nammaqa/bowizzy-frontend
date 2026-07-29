@@ -88,7 +88,7 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
       resumeData.education.higherEducation.forEach((edu) => {
         ctx.fillStyle = '#1a1a1a';
         ctx.font = 'bold 7px Arial, sans-serif';
-        ctx.fillText(`${edu.degree} ${edu.fieldOfStudy} | ${edu.instituteName}`, leftMargin, y);
+        ctx.fillText(`${edu.degree} | ${edu.instituteName}`, leftMargin, y);
         y += 10;
         ctx.fillStyle = '#666666';
         ctx.font = '6px Arial, sans-serif';

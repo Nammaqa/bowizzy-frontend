@@ -1,8 +1,7 @@
-
 import type { ChatSession, ChatMessage } from "@/pages/(AIResumeBuilder)/types";
 import api from "@/api";
 
-export async function getAiSessions(token: string): Promise<Pick<ChatSession, "id" | "title" | "mode" | "started" | "createdAt" | "messages" | "infoJson">[]> {
+export async function getAiSessions(token: string): Promise<Pick<ChatSession, "id" | "title" | "mode" | "started" | "createdAt" | "messages" | "infoJson" | "is_paid" | "jd_text">[]> {
     const res = await api.get("/user/sessions", {
         headers: { Authorization: `Bearer ${token}` },
     });
@@ -22,6 +21,8 @@ export async function getAiSessions(token: string): Promise<Pick<ChatSession, "i
             createdAt: item.created_at,
             messages: chats,
             infoJson: item.infoJson || item.info_json || null,
+            is_paid: item.is_paid ?? false,
+            jd_text: item.jd_text || "",
         };
     });
 }
@@ -68,6 +69,101 @@ export async function getSessionChats(sessionId: string, token: string): Promise
         content: chat.text || chat.content || chat.message || "",
         createdAt: chat.created_at || new Date().toISOString(),
     }));
+}
+
+export interface JdSkillItem {
+    skill_name: string;
+    skill_level: string;
+}
+
+export interface JdProjectItem {
+    project_id?: number;
+    project_title: string;
+    start_date?: string | null;
+    end_date?: string | null;
+    currently_working?: boolean;
+    enhanced_description: string[];
+    roles_responsibilities?: string[];
+}
+
+export interface JdExperienceItem {
+    experience_id?: number;
+    job_title: string;
+    company_name: string;
+    employment_type?: string;
+    location?: string;
+    work_mode?: string;
+    start_date?: string | null;
+    end_date?: string | null;
+    currently_working_here?: boolean;
+    enhanced_description: string[];
+}
+
+export interface JdEducationItem {
+    education_id?: number;
+    education_type: string;
+    institution_name: string;
+    degree?: string | null;
+    field_of_study?: string | null;
+    university_name?: string | null;
+    start_year?: string | null;
+    end_year?: string | null;
+    currently_pursuing?: boolean;
+    result_format?: string;
+    result?: string;
+}
+
+export interface JdCertificateItem {
+    certificate_id?: number;
+    certificate_title: string;
+    certificate_type?: string;
+    certificate_provided_by?: string;
+    domain?: string;
+    date?: string;
+}
+
+export interface JdLinkItem {
+    link_id?: number;
+    link_type: string;
+    url: string;
+}
+
+export interface JdResumeData {
+    personal_details?: Record<string, any>;
+    technical_summary_generated?: string;
+    projects?: JdProjectItem[];
+    work_experience?: { experiences: JdExperienceItem[] };
+    education?: JdEducationItem[];
+    skills?: JdSkillItem[];
+    ai_skills?: JdSkillItem[];
+    certificates?: JdCertificateItem[];
+    links?: JdLinkItem[];
+    [key: string]: any;
+}
+
+export async function analyzeJobDescription(
+    sessionId: string,
+    jdText: string,
+    token: string
+): Promise<JdResumeData> {
+    const res = await api.post(
+        "/resume-data/jd",
+        { session_id: Number(sessionId), jd_text: jdText },
+        { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return res.data?.data || res.data;
+}
+
+export async function saveJdResumeData(
+    sessionId: string,
+    data: JdResumeData,
+    token: string
+): Promise<void> {
+    await api.post(
+        "/resume-data/jd/save",
+        { session_id: Number(sessionId), data },
+        { headers: { Authorization: `Bearer ${token}` } }
+    );
 }
 
 export async function createChat(

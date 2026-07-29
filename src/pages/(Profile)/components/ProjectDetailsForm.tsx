@@ -29,6 +29,11 @@ interface Project {
   project_id?: number; // Database ID
 }
 
+const PROJECT_TITLE_MAX_LENGTH = 50;
+const DESCRIPTION_MAX_LENGTH = 500;
+const ROLES_MAX_LENGTH = 500;
+const MIN_YEAR = 1960;
+
 export default function ProjectDetailsForm({
   onNext,
   onBack,
@@ -42,6 +47,7 @@ export default function ProjectDetailsForm({
       ? initialData.projects.map((p: any) => ({
         ...p,
         id: p.id || p.project_id?.toString() || Date.now().toString(),
+        currentlyWorking: p.currentlyWorking ?? p.currently_working ?? false,
         isExpanded: p.isExpanded ?? false,
       }))
       : [
@@ -99,6 +105,7 @@ export default function ProjectDetailsForm({
         changedFields.push("endDate");
       if (current.currentlyWorking !== (initial?.currentlyWorking || false))
         changedFields.push("currentlyWorking");
+
       if (current.description !== (initial?.description || ""))
         changedFields.push("description");
       if (
@@ -122,6 +129,9 @@ export default function ProjectDetailsForm({
     if (value && !/^[a-zA-Z0-9\s.,-]+$/.test(value)) {
       return "Invalid characters in project title";
     }
+    if (value && value.length > PROJECT_TITLE_MAX_LENGTH) {
+      return `Project title cannot exceed ${PROJECT_TITLE_MAX_LENGTH} characters`;
+    }
     return "";
   };
 
@@ -139,6 +149,30 @@ export default function ProjectDetailsForm({
     return "";
   };
 
+  const validateMaxLength = (value: string, max: number, label: string) => {
+    const text = stripHtml(value);
+    if (text.length > max) {
+      return `${label} cannot exceed ${max} characters`;
+    }
+    return "";
+  };
+
+  const validateDescription = (value: string) => {
+    const numericError = validateNotNumericOnly(value);
+    if (numericError) return numericError;
+    return validateMaxLength(value, DESCRIPTION_MAX_LENGTH, "Description");
+  };
+
+  const validateRoles = (value: string) => {
+    const numericError = validateNotNumericOnly(value);
+    if (numericError) return numericError;
+    return validateMaxLength(
+      value,
+      ROLES_MAX_LENGTH,
+      "Roles & Responsibilities"
+    );
+  };
+
   const validateDateRange = (startDate: string, endDate: string) => {
     if (startDate && endDate) {
       if (endDate < startDate) {
@@ -148,12 +182,16 @@ export default function ProjectDetailsForm({
     return "";
   };
 
+  const getCurrentYear = (): number => new Date().getFullYear();
+
   const getCurrentMonth = (): string => {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
     return `${year}-${month}`;
   };
+
+  const getMinMonth = (): string => `${MIN_YEAR}-01`;
 
   const validateMonthFormat = (value: string) => {
     if (!value || value === "") return "";
@@ -162,9 +200,14 @@ export default function ProjectDetailsForm({
     }
     const [y, m] = value.split("-");
     if (y.length !== 4) return "Year must be 4 digits";
+    const yearNum = parseInt(y, 10);
     const monthNum = parseInt(m, 10);
     if (isNaN(monthNum) || monthNum < 1 || monthNum > 12)
       return "Invalid month";
+    const currentYear = getCurrentYear();
+    if (isNaN(yearNum) || yearNum < MIN_YEAR || yearNum > currentYear) {
+      return `Year must be between ${MIN_YEAR} and ${currentYear}`;
+    }
     return "";
   };
 
@@ -176,6 +219,50 @@ export default function ProjectDetailsForm({
     return val;
   };
 
+  // Prevent manual keyboard typing into month inputs; only allow navigation
+  // and the native date picker to set the value.
+  const blockManualDateTyping = (
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    const allowedKeys = [
+      "Tab",
+      "Shift",
+      "Escape",
+      "Enter",
+      "ArrowUp",
+      "ArrowDown",
+      "ArrowLeft",
+      "ArrowRight",
+    ];
+    if (!allowedKeys.includes(e.key)) {
+      e.preventDefault();
+    }
+  };
+
+  // Run full mandatory-field validation for a project whose title is filled
+  const validateMandatoryFields = (project: Project) => {
+    const fieldErrors: Record<string, string> = {};
+    if (!project.projectTitle) return fieldErrors;
+
+    if (!project.projectType) {
+      fieldErrors.projectType = "Project type is required";
+    }
+    if (!project.startDate) {
+      fieldErrors.startDate = "Start date is required";
+    }
+    if (!project.currentlyWorking && !project.endDate) {
+      fieldErrors.endDate = "End date is required";
+    }
+    if (!stripHtml(project.description)) {
+      fieldErrors.description = "Description is required";
+    }
+    if (!stripHtml(project.rolesAndResponsibilities)) {
+      fieldErrors.rolesAndResponsibilities =
+        "Roles & Responsibilities is required";
+    }
+    return fieldErrors;
+  };
+
   // Handler for individual Project card changes
   const handleProjectChange = (
     index: number,
@@ -185,13 +272,16 @@ export default function ProjectDetailsForm({
     const updated = [...projects];
     updated[index] = { ...updated[index], [field]: value, isExpanded: true };
 
-    if (field === "currentlyWorking" && value === true) {
-      updated[index].endDate = "";
-      setErrors((prevErrors) => {
-        const newErrors = { ...prevErrors };
-        delete newErrors[`project-${index}-endDate`];
-        return newErrors;
-      });
+    if (field === "currentlyWorking") {
+      updated[index].currentlyWorking = Boolean(value);
+      if (value === true) {
+        updated[index].endDate = "";
+        setErrors((prev) => {
+          const next = { ...prev };
+          delete next[`project-${index}-endDate`];
+          return next;
+        });
+      }
     }
 
     setProjects(updated);
@@ -203,11 +293,26 @@ export default function ProjectDetailsForm({
         ...prev,
         [`project-${index}-projectTitle`]: error,
       }));
+
+      // Once the title is cleared, the card is fully optional again —
+      // drop any lingering "required" errors on its other fields so an
+      // empty-title card never blocks the user from moving on.
+      if (!value) {
+        setErrors((prev) => {
+          const next = { ...prev };
+          delete next[`project-${index}-projectType`];
+          delete next[`project-${index}-startDate`];
+          delete next[`project-${index}-endDate`];
+          delete next[`project-${index}-description`];
+          delete next[`project-${index}-rolesAndResponsibilities`];
+          return next;
+        });
+      }
     } else if (field === "description" && typeof value === "string") {
-      const err = validateNotNumericOnly(value);
+      const err = validateDescription(value);
       setErrors((prev) => ({ ...prev, [`project-${index}-description`]: err }));
     } else if (field === "rolesAndResponsibilities" && typeof value === "string") {
-      const err = validateNotNumericOnly(value);
+      const err = validateRoles(value);
       setErrors((prev) => ({ ...prev, [`project-${index}-rolesAndResponsibilities`]: err }));
     } else if (field === "startDate" && typeof value === "string") {
       const fmtError = validateMonthFormat(value);
@@ -220,7 +325,9 @@ export default function ProjectDetailsForm({
           return updatedErr;
         });
       }
-      const rangeError = validateDateRange(value, updated[index].endDate);
+      const rangeError = updated[index].currentlyWorking
+        ? ""
+        : validateDateRange(value, updated[index].endDate);
       setErrors((prev) => ({ ...prev, [`project-${index}-endDate`]: rangeError }));
     } else if (field === "endDate" && typeof value === "string") {
       const fmtError = validateMonthFormat(value);
@@ -235,6 +342,11 @@ export default function ProjectDetailsForm({
         const rangeError = validateDateRange(updated[index].startDate, value);
         setErrors((prev) => ({ ...prev, [`project-${index}-endDate`]: rangeError }));
       }
+    } else if (field === "currentlyWorking" && value === false && updated[index].projectTitle) {
+      setErrors((prev) => ({
+        ...prev,
+        [`project-${index}-endDate`]: updated[index].endDate ? "" : "End date is required",
+      }));
     }
   };
 
@@ -249,9 +361,39 @@ export default function ProjectDetailsForm({
     if (
       errors[`${prefix}-projectTitle`] ||
       errors[`${prefix}-startDate`] ||
-      errors[`${prefix}-endDate`]
+      errors[`${prefix}-endDate`] ||
+      errors[`${prefix}-description`] ||
+      errors[`${prefix}-rolesAndResponsibilities`]
     )
       return;
+
+    // Mandatory field validation: once a title is present, every other
+    // field on the card becomes required.
+    const mandatoryErrors = validateMandatoryFields(project);
+    if (Object.keys(mandatoryErrors).length > 0) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        Object.entries(mandatoryErrors).forEach(([field, msg]) => {
+          next[`project-${index}-${field}`] = msg;
+        });
+        return next;
+      });
+      setProjectFeedback((prev) => ({
+        ...prev,
+        [project.id]:
+          "Please fill all required fields before saving.",
+      }));
+      setTimeout(
+        () =>
+          setProjectFeedback((prev) => {
+            const updated = { ...prev };
+            delete updated[project.id];
+            return updated;
+          }),
+        3000
+      );
+      return;
+    }
 
     try {
       let payload: Record<string, any> = {};
@@ -262,7 +404,7 @@ export default function ProjectDetailsForm({
           project_title: project.projectTitle || "",
           project_type: project.projectType || "",
           start_date: normalizeMonthToDate(project.startDate),
-          end_date: normalizeMonthToDate(project.endDate),
+          end_date: project.currentlyWorking ? null : normalizeMonthToDate(project.endDate),
           currently_working: project.currentlyWorking,
           description: project.description || "",
           roles_responsibilities: project.rolesAndResponsibilities || "",
@@ -286,9 +428,9 @@ export default function ProjectDetailsForm({
           return;
         }
 
-        // Validate description / roles are not numeric-only
-        const descError = validateNotNumericOnly(project.description);
-        const rolesError = validateNotNumericOnly(project.rolesAndResponsibilities);
+        // Validate description / roles are not numeric-only and within length limits
+        const descError = validateDescription(project.description);
+        const rolesError = validateRoles(project.rolesAndResponsibilities);
         if (descError || rolesError) {
           setErrors((prev) => ({
             ...prev,
@@ -384,7 +526,10 @@ export default function ProjectDetailsForm({
               );
               break;
             case "endDate":
-              minimalPayload.end_date = normalizeMonthToDate(project.endDate);
+              minimalPayload.end_date = project.currentlyWorking ? null : normalizeMonthToDate(project.endDate);
+              break;
+            case "currentlyWorking":
+              minimalPayload.currently_working = project.currentlyWorking;
               break;
             case "description":
               minimalPayload.description = project.description;
@@ -393,22 +538,15 @@ export default function ProjectDetailsForm({
               minimalPayload.roles_responsibilities =
                 project.rolesAndResponsibilities;
               break;
-            case "currentlyWorking":
-              minimalPayload.currently_working = project.currentlyWorking;
-              break;
+
           }
         });
 
-        // Handle date logic when currentlyWorking changes
-        if (minimalPayload.currently_working === true) {
-          minimalPayload.end_date = null;
-        } else if (minimalPayload.currently_working === false) {
-          minimalPayload.end_date = normalizeMonthToDate(project.endDate);
-        }
+        minimalPayload.end_date = project.currentlyWorking ? null : normalizeMonthToDate(project.endDate);
 
-        // Validate description / roles are not numeric-only before updating
-        const descError = validateNotNumericOnly(project.description);
-        const rolesError = validateNotNumericOnly(project.rolesAndResponsibilities);
+        // Validate description / roles are not numeric-only and within length limits
+        const descError = validateDescription(project.description);
+        const rolesError = validateRoles(project.rolesAndResponsibilities);
         if (descError || rolesError) {
           setErrors((prev) => ({
             ...prev,
@@ -512,7 +650,11 @@ export default function ProjectDetailsForm({
     setErrors((prev) => {
       const newErrors = { ...prev };
       delete newErrors[`project-${index}-projectTitle`];
+      delete newErrors[`project-${index}-startDate`];
       delete newErrors[`project-${index}-endDate`];
+      delete newErrors[`project-${index}-description`];
+      delete newErrors[`project-${index}-rolesAndResponsibilities`];
+      delete newErrors[`project-${index}-projectType`];
       return newErrors;
     });
     setProjectFeedback((prev) => {
@@ -609,13 +751,58 @@ export default function ProjectDetailsForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 1️⃣ Validation errors check
-    if (Object.values(errors).some((err) => err.length > 0)) {
+    // 0️⃣ Projects are optional. If no card has a title and nothing has
+    // ever been saved to the database for this section, skip every
+    // validation step and let the user proceed straight to the next
+    // profile section.
+    const hasAnyProjectData = projects.some(
+      (p) => (p.projectTitle && p.projectTitle.trim() !== "") || p.project_id
+    );
+    if (!hasAnyProjectData) {
+      setSubmitError("");
+      onNext({
+        projects: [],
+        deletedProjectIds: deletedProjectIds.current,
+      });
+      return;
+    }
+
+    // 1️⃣ Validation errors check — only fields on cards that actually have
+    // a project title filled in can block submission. An untitled card is
+    // entirely optional, so any leftover errors on it are ignored here.
+    const blockingValidationError = Object.entries(errors).some(
+      ([key, err]) => {
+        if (!err) return false;
+        const match = key.match(/^project-(\d+)-/);
+        if (!match) return true;
+        const idx = parseInt(match[1], 10);
+        return !!projects[idx]?.projectTitle;
+      }
+    );
+    if (blockingValidationError) {
       setSubmitError("Please fix validation errors before proceeding.");
       return;
     }
 
-    // 2️⃣ Unsaved changes check
+    // 2️⃣ Mandatory fields check for any card with a title filled in
+    const mandatoryFieldErrors: Record<string, string> = {};
+    let hasMandatoryErrors = false;
+    projects.forEach((project, index) => {
+      const mandatoryErrors = validateMandatoryFields(project);
+      Object.entries(mandatoryErrors).forEach(([field, msg]) => {
+        mandatoryFieldErrors[`project-${index}-${field}`] = msg;
+        hasMandatoryErrors = true;
+      });
+    });
+    if (hasMandatoryErrors) {
+      setErrors((prev) => ({ ...prev, ...mandatoryFieldErrors }));
+      setSubmitError(
+        "Please fill all required fields for each project that has a title before proceeding."
+      );
+      return;
+    }
+
+    // 3️⃣ Unsaved changes check
     if (hasUnsavedChanges) {
       let message = "Please save your changes before proceeding:\n\n";
 
@@ -629,7 +816,7 @@ export default function ProjectDetailsForm({
       return;
     }
 
-    // 3️⃣ Filter empty cards
+    // 4️⃣ Filter empty cards
     const validProjects = projects.filter(
       (p) => p.projectTitle || p.project_id
     );
@@ -645,30 +832,21 @@ export default function ProjectDetailsForm({
   const renderProjectCard = (project: Project, index: number) => {
     const changed = projectChanges[project.id]?.length > 0;
     const feedback = projectFeedback[project.id];
+    const isMandatory = !!project.projectTitle;
+    const descriptionLength = stripHtml(project.description).length;
+    const rolesLength = stripHtml(project.rolesAndResponsibilities).length;
 
     return (
       <div
         key={project.id}
         className="bg-white border border-gray-200 rounded-xl mb-4 md:mb-5 overflow-hidden"
       >
-        {/* Header */}
+        {/* Header — no Save button here anymore */}
         <div className="flex items-center justify-between px-4 sm:px-5 md:px-6 py-3 md:py-4 border-b border-gray-200">
           <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">
             Project {index + 1}
           </h3>
           <div className="flex gap-2 items-center">
-            {changed && (
-              <button
-                type="button"
-                onClick={() => handleSaveProject(project)}
-                className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-md text-sm font-medium shadow-sm hover:from-orange-500 hover:to-orange-600 transition cursor-pointer"
-                aria-pressed="false"
-                aria-label="Save project changes"
-              >
-                <Save className="w-4 h-4" strokeWidth={2} />
-                Save
-              </button>
-            )}
             <button
               type="button"
               onClick={() => toggleExpand(index)}
@@ -722,17 +900,25 @@ export default function ProjectDetailsForm({
                   onChange={(e) =>
                     handleProjectChange(index, "projectTitle", e.target.value)
                   }
+                  maxLength={PROJECT_TITLE_MAX_LENGTH}
                   placeholder="Enter Project Title"
                   className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${errors[`project-${index}-projectTitle`]
                     ? "border-red-500 focus:ring-red-400"
                     : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
                     }`}
                 />
-                {errors[`project-${index}-projectTitle`] && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors[`project-${index}-projectTitle`]}
-                  </p>
-                )}
+                <div className="flex items-center justify-between mt-1">
+                  {errors[`project-${index}-projectTitle`] ? (
+                    <p className="text-xs text-red-500">
+                      {errors[`project-${index}-projectTitle`]}
+                    </p>
+                  ) : (
+                    <span />
+                  )}
+                  <span className="text-[10px] sm:text-xs text-gray-400">
+                    {project.projectTitle.length}/{PROJECT_TITLE_MAX_LENGTH}
+                  </span>
+                </div>
               </div>
 
               {/* Project Type, Start Date, End Date Row */}
@@ -740,7 +926,7 @@ export default function ProjectDetailsForm({
                 {/* Project Type */}
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                    Project Type
+                    Project Type{isMandatory && <span className="text-red-500"> *</span>}
                   </label>
                   <div className="relative">
                     <select
@@ -752,7 +938,10 @@ export default function ProjectDetailsForm({
                           e.target.value
                         )
                       }
-                      className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
+                      className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm appearance-none bg-white pr-8 ${errors[`project-${index}-projectType`]
+                        ? "border-red-500 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                        }`}
                     >
                       <option value="">Select Project Type</option>
                       <option value="Personal">Personal</option>
@@ -763,12 +952,17 @@ export default function ProjectDetailsForm({
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
+                  {errors[`project-${index}-projectType`] && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors[`project-${index}-projectType`]}
+                    </p>
+                  )}
                 </div>
 
                 {/* Start Date */}
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                    Start Date
+                    Start Date{isMandatory && <span className="text-red-500"> *</span>}
                   </label>
                   <div className="relative">
                     <input
@@ -777,9 +971,15 @@ export default function ProjectDetailsForm({
                       onChange={(e) =>
                         handleProjectChange(index, "startDate", e.target.value)
                       }
+                      onKeyDown={blockManualDateTyping}
+                      onPaste={(e) => e.preventDefault()}
                       placeholder="Select Start Date"
+                      min={getMinMonth()}
                       max={getCurrentMonth()}
-                      className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm pr-8"
+                      className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm pr-8 ${errors[`project-${index}-startDate`]
+                        ? "border-red-500 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
+                        }`}
                     />
                   </div>
                   {errors[`project-${index}-startDate`] && (
@@ -792,16 +992,19 @@ export default function ProjectDetailsForm({
                 {/* End Date */}
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                    End Date
+                    End Date{isMandatory && !project.currentlyWorking && <span className="text-red-500"> *</span>}
                   </label>
                   <div className="relative">
                     <input
                       type="month"
-                      value={project.endDate}
+                      value={project.currentlyWorking ? "" : project.endDate}
                       onChange={(e) =>
                         handleProjectChange(index, "endDate", e.target.value)
                       }
+                      onKeyDown={blockManualDateTyping}
+                      onPaste={(e) => e.preventDefault()}
                       placeholder="Select End Date"
+                      min={getMinMonth()}
                       max={getCurrentMonth()}
                       disabled={project.currentlyWorking}
                       className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm pr-8 disabled:bg-gray-100 ${errors[`project-${index}-endDate`]
@@ -818,31 +1021,22 @@ export default function ProjectDetailsForm({
                 </div>
               </div>
 
-              {/* Currently Working Checkbox */}
-              <div className="flex items-center">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={project.currentlyWorking}
-                    onChange={(e) =>
-                      handleProjectChange(
-                        index,
-                        "currentlyWorking",
-                        e.target.checked
-                      )
-                    }
-                    className="w-4 h-4 text-orange-400 border-gray-300 rounded focus:ring-orange-400"
-                  />
-                  <span className="text-xs sm:text-sm text-gray-700">
-                    Currently Working
-                  </span>
-                </label>
-              </div>
+              <label className="mt-3 inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={project.currentlyWorking}
+                  onChange={(e) =>
+                    handleProjectChange(index, "currentlyWorking", e.target.checked)
+                  }
+                  className="h-4 w-4 rounded border-gray-300 text-orange-500 focus:ring-orange-400"
+                />
+                Currently pursuing
+              </label>
 
               {/* Description */}
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                  Description
+                  Description{isMandatory && <span className="text-red-500"> *</span>}
                 </label>
                 <RichTextEditor
                   value={project.description}
@@ -852,17 +1046,29 @@ export default function ProjectDetailsForm({
                   placeholder="Provide Description of your project.."
                   rows={6}
                 />
-                {errors[`project-${index}-description`] && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors[`project-${index}-description`]}
-                  </p>
-                )}
+                <div className="flex items-center justify-between mt-1">
+                  {errors[`project-${index}-description`] ? (
+                    <p className="text-xs text-red-500">
+                      {errors[`project-${index}-description`]}
+                    </p>
+                  ) : (
+                    <span />
+                  )}
+                  <span
+                    className={`text-[10px] sm:text-xs ${descriptionLength > DESCRIPTION_MAX_LENGTH
+                      ? "text-red-500"
+                      : "text-gray-400"
+                      }`}
+                  >
+                    {descriptionLength}/{DESCRIPTION_MAX_LENGTH}
+                  </span>
+                </div>
               </div>
 
               {/* Roles & Responsibilities */}
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                  Roles & Responsibilities
+                  Roles & Responsibilities{isMandatory && <span className="text-red-500"> *</span>}
                 </label>
                 <RichTextEditor
                   value={project.rolesAndResponsibilities}
@@ -876,12 +1082,49 @@ export default function ProjectDetailsForm({
                   placeholder="Provide your roles & responsibilities in the project.."
                   rows={6}
                 />
-                {errors[`project-${index}-rolesAndResponsibilities`] && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors[`project-${index}-rolesAndResponsibilities`]}
-                  </p>
-                )}
+                <div className="flex items-center justify-between mt-1">
+                  {errors[`project-${index}-rolesAndResponsibilities`] ? (
+                    <p className="text-xs text-red-500">
+                      {errors[`project-${index}-rolesAndResponsibilities`]}
+                    </p>
+                  ) : (
+                    <span />
+                  )}
+                  <span
+                    className={`text-[10px] sm:text-xs ${rolesLength > ROLES_MAX_LENGTH
+                      ? "text-red-500"
+                      : "text-gray-400"
+                      }`}
+                  >
+                    {rolesLength}/{ROLES_MAX_LENGTH}
+                  </span>
+                </div>
               </div>
+            </div>
+
+            {/* ── Save row at the bottom of the expanded card ── */}
+            <div className="flex items-center justify-end gap-2 mt-6 pt-4 border-t border-gray-200">
+              {feedback && (
+                <span
+                  className={`text-xs px-2 py-1 rounded-full ${feedback.includes("successfully")
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
+                    }`}
+                >
+                  {feedback}
+                </span>
+              )}
+              {changed && (
+                <button
+                  type="button"
+                  onClick={() => handleSaveProject(project)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-lg hover:from-orange-500 hover:to-orange-600 transition cursor-pointer"
+                  aria-label="Save project changes"
+                >
+                  <Save className="w-4 h-4" strokeWidth={2} />
+                  Save
+                </button>
+              )}
             </div>
           </div>
         )}
