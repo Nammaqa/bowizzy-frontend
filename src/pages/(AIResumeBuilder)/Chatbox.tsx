@@ -313,7 +313,7 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
                             <div className="flex items-center justify-between mb-2">
                               <span className="text-xs font-medium text-gray-600">Credits to apply</span>
                               <span className="text-sm font-bold text-orange-600">
-                                {creditsToApply} credits → −₹{(creditsToApply * CREDIT_VALUE).toFixed(2)}
+                                {creditsToApply} credits → ₹{(creditsToApply * CREDIT_VALUE).toFixed(2)}
                               </span>
                             </div>
                             <input
