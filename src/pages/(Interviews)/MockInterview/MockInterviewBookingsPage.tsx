@@ -202,6 +202,7 @@ const MockInterviewBookingsPage = () => {
       }
       setCancellingId(id);
       await cancelMockInterviewBooking(userId, token, id);
+      window.dispatchEvent(new Event("credits:refresh"));
       await loadBookings();
     } catch (err: any) {
       setError(err?.response?.data?.message || err?.message || "Failed to cancel booking.");
