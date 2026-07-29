@@ -133,6 +133,29 @@ export default function RichTextEditor({
     });
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    
+    // Get plain text from clipboard
+    const text = e.clipboardData.getData('text/plain');
+    if (!text) return;
+
+    // Split into lines and wrap each line in a div
+    const lines = text.split('\n');
+    const fragments = lines
+      .filter(line => line.trim().length > 0)
+      .map(line => `<div>${escapeHtml(line)}</div>`)
+      .join('');
+
+    if (fragments) {
+      insertHtmlAtCursor(fragments);
+      const el = editorRef.current;
+      if (el) {
+        onChange(el.innerHTML);
+      }
+    }
+  };
+
   return (
     <div className="space-y-2">
       <div className="flex gap-2 p-2 bg-gray-50 border border-gray-200 rounded-t-lg">
@@ -165,6 +188,7 @@ export default function RichTextEditor({
       <div
         ref={editorRef}
         onInput={onInput}
+        onPaste={handlePaste}
         contentEditable
         suppressContentEditableWarning
         role="textbox"

@@ -80,6 +80,9 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
   const linkedin = linksEnabled && (skillsLinks?.links?.linkedinEnabled ?? true) ? ((skillsLinks as any).links?.linkedinProfile || (personal as any).linkedinProfile) : null;
   const github = linksEnabled && (skillsLinks?.links?.githubEnabled ?? true) ? ((skillsLinks as any).links?.githubProfile || (personal as any).githubProfile) : null;
   const portfolio = linksEnabled && (skillsLinks?.links?.portfolioEnabled ?? true) ? (skillsLinks as any).links?.portfolioUrl : null;
+  const hasHigherEducation = education.higherEducation.some((edu: any) => edu.enabled);
+  const hasPreUniversity = Boolean(education.preUniversityEnabled && (education.preUniversity?.instituteName || education.preUniversity?.subjectStream || education.preUniversity?.boardType || education.preUniversity?.yearOfPassing || education.preUniversity?.result));
+  const hasSSLC = Boolean(education.sslcEnabled && (education.sslc?.instituteName || education.sslc?.boardType || education.sslc?.yearOfPassing || education.sslc?.result));
 
   // Extract a short handle to display for profile URLs (e.g., username from URL)
   const extractHandle = (s?: string) => {
@@ -152,7 +155,7 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
             </div>
           </>)}
 
-          {(education.higherEducation.some(edu => edu.enabled) || education.preUniversityEnabled || education.sslcEnabled) && (<>
+          {(hasHigherEducation || hasPreUniversity || hasSSLC) && (<>
             <div style={{ marginTop: 12 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Education</div>
               <div style={{ height: 1, background: '#ddd', marginTop: 4, width: '100%' }} />
@@ -176,7 +179,7 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
                 </div>
               ))}
 
-              {education.preUniversityEnabled && (
+              {hasPreUniversity && (
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 700 }}>{education.preUniversity.instituteName || 'Pre University'}</div>
@@ -189,7 +192,7 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
                 </div>
               )}
 
-              {education.sslcEnabled && (
+              {hasSSLC && (
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 700 }}>{education.sslc.instituteName || 'SSLC'}</div>
