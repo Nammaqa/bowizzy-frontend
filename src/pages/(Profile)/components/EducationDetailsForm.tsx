@@ -887,7 +887,7 @@ export default function EducationDetailsForm({
         isChanged = true;
       }
       if (currentData.resultFormat !== (initial.resultFormat || "")) {
-        payload.result_format = currentData.resultFormat?.toLowerCase();
+        payload.result_format = currentData.resultFormat;
         isChanged = true;
       }
       if (currentData.yearOfPassing !== (initial.yearOfPassing || "")) {
@@ -923,7 +923,7 @@ export default function EducationDetailsForm({
           institution_name: currentData.institutionName || "",
           board_type: currentData.boardType || "",
           end_year: buildYear(currentData.yearOfPassing),
-          result_format: (currentData.resultFormat || "").toLowerCase(),
+          result_format: currentData.resultFormat || "",
           result: currentData.result || "",
         };
         const response = await saveEducationDetails(userId, token, [
@@ -1030,7 +1030,7 @@ export default function EducationDetailsForm({
         isChanged = true;
       }
       if (currentData.resultFormat !== (initial.resultFormat || "")) {
-        payload.result_format = currentData.resultFormat?.toLowerCase();
+        payload.result_format = currentData.resultFormat;
         isChanged = true;
       }
       if (currentData.yearOfPassing !== (initial.yearOfPassing || "")) {
@@ -1067,7 +1067,7 @@ export default function EducationDetailsForm({
           board_type: currentData.boardType || "",
           subject_stream: currentData.subjectStream || "",
           end_year: buildYear(currentData.yearOfPassing),
-          result_format: (currentData.resultFormat || "").toLowerCase(),
+          result_format: currentData.resultFormat || "",
           result: currentData.result || "",
         };
         const response = await saveEducationDetails(userId, token, [
@@ -1166,7 +1166,7 @@ export default function EducationDetailsForm({
           university_name: edu.universityBoard || "",
           start_year: buildYear(edu.startYear),
           end_year: buildYear(edu.endYear),
-          result_format: (edu.resultFormat || "").toLowerCase(),
+          result_format: edu.resultFormat || "",
           result: edu.result || "",
           currently_pursuing: edu.currentlyPursuing || false,
         };
@@ -1245,7 +1245,7 @@ export default function EducationDetailsForm({
               payload.end_year = buildYear(edu.endYear);
               break;
             case "resultFormat":
-              payload.result_format = edu.resultFormat?.toLowerCase();
+              payload.result_format = edu.resultFormat;
               break;
             case "result":
               payload.result = edu.result;
@@ -2436,4 +2436,3 @@ export default function EducationDetailsForm({
     </form>
   );
 }
-// .
