@@ -40,6 +40,7 @@ const AiResumePreview: React.FC<AiResumePreviewProps> = ({ infoJson, onClose }) 
     }
   };
 
+  
   const handlePrev = () => setSelectedIndex((prev) => (prev === 0 ? aiTemplateRegistry.length - 1 : prev - 1));
   const handleNext = () => setSelectedIndex((prev) => (prev === aiTemplateRegistry.length - 1 ? 0 : prev + 1));
 
