@@ -1663,7 +1663,7 @@ export default function EducationDetailsForm({
       >
         <div className="flex items-center justify-between px-4 sm:px-5 md:px-6 py-3 md:py-4 border-b border-gray-200">
           <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">
-            {isExtra ? `Degree ${index + 1}` : "Degree"}
+            {isExtra ? `Degree / Diploma ${index + 1}` : "Degree / Diploma"}
           </h3>
           <div className="flex gap-2 items-center">
             <button
@@ -1699,7 +1699,7 @@ export default function EducationDetailsForm({
               {/* Degree */}
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                  Degree
+                  Degree / Diploma
                 </label>
                 <div className="relative">
                   <select
@@ -1707,7 +1707,7 @@ export default function EducationDetailsForm({
                     onChange={(e) => handleChange("degree", e.target.value)}
                     className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
                   >
-                    <option value="">Select Degree</option>
+                    <option value="">Select Degree / Diploma</option>
                     <option value="B.A">B.A</option>
                     <option value="B.Arch">B.Arch</option>
                     <option value="BBA">BBA</option>
