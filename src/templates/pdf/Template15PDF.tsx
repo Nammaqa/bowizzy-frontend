@@ -88,12 +88,41 @@ const htmlToRichTextLines = (html?: string): RichTextSegment[][] => {
 
 const renderBulletedParagraph = (html?: string) => {
   if (!html) return null;
+
+  const hasListTags = /<(ul|ol|li)[\s\/>]/i.test(html);
+
+  if (!hasListTags) {
+    const sanitized = DOMPurify.sanitize(html || '');
+    const plainText = sanitized
+      .replace(/<[^>]+>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .trim();
+
+    if (!plainText) return null;
+
+    return (
+      <View style={{ marginTop: 4 }}>
+        <Text style={{ color: '#2b2a2a', fontSize: 10, lineHeight: 1.4 }}>
+          {plainText}
+        </Text>
+      </View>
+    );
+  }
+
   const sanitized = DOMPurify.sanitize(html || '');
   let text = sanitized
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/p>/gi, '\n')
     .replace(/<\/li>/gi, '\n')
-    .replace(/<li>/gi, '• ')
+    .replace(/<li[^>]*>/gi, '• ')
+    .replace(/<p[^>]*>/gi, '')
+    .replace(/<span[^>]*>/gi, '')
+    .replace(/<\/span>/gi, '')
+    .replace(/<div[^>]*>/gi, '')
+    .replace(/<\/div>/gi, '')
     .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;/g, ' ')
     .replace(/&lt;/g, '<')
@@ -224,6 +253,9 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
   const githubPresent = linksEnabled && (skillsLinks?.links?.githubEnabled ?? true) ? (skillsLinks?.links?.githubProfile || (personal as any).githubProfile) : null;
   const portfolioPresent = linksEnabled && (skillsLinks?.links?.portfolioEnabled ?? true) ? skillsLinks?.links?.portfolioUrl : null;
   const publicationPresent = linksEnabled && (skillsLinks?.links?.publicationEnabled ?? true) ? skillsLinks?.links?.publicationUrl : null;
+  const hasHigherEducation = education.higherEducation.some((edu: any) => edu.enabled);
+  const hasPreUniversity = Boolean(education.preUniversityEnabled && (education.preUniversity?.instituteName || education.preUniversity?.subjectStream || education.preUniversity?.boardType || education.preUniversity?.yearOfPassing || education.preUniversity?.result));
+  const hasSSLC = Boolean(education.sslcEnabled && (education.sslc?.instituteName || education.sslc?.boardType || education.sslc?.yearOfPassing || education.sslc?.result));
 
   const normalizeLinkUrl = (url?: string | null) => {
     if (!url) return '';
@@ -299,7 +331,7 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
           </View>
         </>)}
 
-        {(education.higherEducation.some(edu => edu.enabled) || education.preUniversityEnabled || education.sslcEnabled) && (<>
+        {(hasHigherEducation || hasPreUniversity || hasSSLC) && (<>
           <View style={{ marginTop: 12 }}>
             <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>EDUCATION</Text>
             <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginTop: 4, marginBottom: 0 }} />
@@ -323,7 +355,7 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
             ))}
 
             {/* Pre University (PUC/12th) */}
-            {education.preUniversityEnabled && (
+            {hasPreUniversity && (
               <View style={{ marginBottom: 8 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
@@ -339,7 +371,7 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
             )}
 
             {/* SSLC (10th) */}
-            {education.sslcEnabled && (
+            {hasSSLC && (
               <View style={{ marginBottom: 8 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>{education.sslc.instituteName || 'SSLC'}</Text>

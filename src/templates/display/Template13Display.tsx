@@ -63,6 +63,51 @@ const educationPriority = (degree?: string) => {
   return 4;
 };
 
+const hasListTags = (html?: string) => {
+  if (!html) return false;
+  return /<(ul|ol|li)[\s\/>]/i.test(html) || html.includes('•');
+};
+
+const renderDescription = (html?: string) => {
+  if (!html) return null;
+
+  if (!hasListTags(html)) {
+    const plainText = String(html)
+      .replace(/<[^>]+>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .trim();
+    
+    if (!plainText) return null;
+    
+    return (
+      <div style={{ marginTop: 6, color: '#2b2a2a', lineHeight: 1.4 }}>
+        {plainText}
+      </div>
+    );
+  }
+
+  const lines = htmlToLines(html);
+  if (lines.length === 0) return null;
+
+  return (
+    <div style={{ marginTop: 6, color: '#2b2a2a' }}>
+      {lines.map((line, idx) => {
+        const isBullet = line.startsWith('•');
+        const cleanLine = isBullet ? line.replace(/^•\s*/, '') : line;
+        return (
+          <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', marginTop: idx > 0 ? 4 : 0 }}>
+            <span style={{ marginRight: 6, lineHeight: 1.4, opacity: isBullet ? 1 : 0, width: 6 }}>{isBullet ? '•' : ''}</span>
+            <div style={{ flex: 1, lineHeight: 1.4 }}>{cleanLine}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 const Template13Display: React.FC<Template13DisplayProps> = ({
   data,
   fontFamily = "Times New Roman, serif",
@@ -152,11 +197,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
                     <div style={{ fontSize: 12, fontWeight: 700 }}>{w.jobTitle} — <span style={{ fontWeight: 700 }}>{w.companyName}</span></div>
                     <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{formatMonthYear(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYear(w.endDate)}</div>
                   </div>
-                  {w.description && (
-                    <div style={{ marginTop: 6, color: '#2b2a2a' }}
-                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(w.description || '') }}
-                    />
-                  )}
+                  {w.description && renderDescription(w.description)}
                 </div>
               ))}
             </div>
@@ -174,15 +215,11 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
                     <div style={{ fontSize: 12, fontWeight: 700 }}>{p.projectTitle}</div>
                     <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</div>
                   </div>
-                  {p.description && (
-                    <div style={{ marginTop: 6, color: '#2b2a2a', fontSize: 11, fontWeight: 700 }}
-                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(p.description || '') }}
-                    />
-                  )}
+                  {p.description && renderDescription(p.description)}
                   {p.rolesResponsibilities && (
                     <div style={{ marginTop: 6, color: '#2b2a2a' }}>
                       <div style={{ fontWeight: 700, fontSize: 11, color: '#111827', marginBottom: 2 }}>Roles & Responsibilities:</div>
-                      <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(p.rolesResponsibilities || '') }} />
+                      {renderDescription(p.rolesResponsibilities)}
                     </div>
                   )}
                 </div>

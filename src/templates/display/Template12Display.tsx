@@ -47,15 +47,71 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
     if (!s) return [] as string[];
     try {
       const text = String(s)
-        .replace(/<\/p>|<\/li>/gi, '\n')
+        .replace(/<\/p>/gi, '\n')
+        .replace(/<\/li>/gi, '\n')
         .replace(/<br\s*\/?>(?:\s*)/gi, '\n')
+        .replace(/<li[^>]*>/gi, '• ')
+        .replace(/<p[^>]*>/gi, '')
+        .replace(/<span[^>]*>/gi, '')
+        .replace(/<\/span>/gi, '')
+        .replace(/<div[^>]*>/gi, '')
+        .replace(/<\/div>/gi, '')
         .replace(/<[^>]+>/g, '')
         .replace(/&nbsp;/g, ' ')
-        .replace(/&amp;/g, '&');
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>');
       return text.split(/\n|\r\n/).map(l => l.trim()).filter(Boolean);
     } catch (e) {
       return [String(s)];
     }
+  };
+
+  const hasListTags = (html?: string) => {
+    if (!html) return false;
+    return /<(ul|ol|li)[\s\/>]/i.test(html) || html.includes('•');
+  };
+
+  const renderDescription = (html?: string) => {
+    if (!html) return null;
+
+    // If no list tags, render as plain paragraph
+    if (!hasListTags(html)) {
+      const plainText = String(html)
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .trim();
+      
+      if (!plainText) return null;
+      
+      return (
+        <div style={{ marginTop: 6, color: '#2b2a2a', lineHeight: 1.5 }}>
+          {plainText}
+        </div>
+      );
+    }
+
+    // Has list tags - render as bullets
+    const lines = htmlToLines(html);
+    if (lines.length === 0) return null;
+
+    return (
+      <div style={{ marginTop: 6, color: '#2b2a2a' }}>
+        {lines.map((line, idx) => {
+          const isBullet = line.startsWith('•');
+          const cleanLine = isBullet ? line.replace(/^•\s*/, '') : line;
+          return (
+            <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', marginTop: idx > 0 ? 4 : 0 }}>
+              <span style={{ marginRight: 6, lineHeight: 1.4, opacity: isBullet ? 1 : 0, width: 6 }}>{isBullet ? '•' : ''}</span>
+              <div style={{ flex: 1, lineHeight: 1.4 }}>{cleanLine}</div>
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   return (
@@ -70,13 +126,21 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
             }}
           >
             {personal.firstName} {(personal.middleName || '')} {personal.lastName}
-          </h1>          {personal.aboutCareerObjective && (
-            <div style={{ marginTop: 8, fontSize: 11, color: '#333' }}>{htmlToLines(personal.aboutCareerObjective).join(' ')}</div>
-          )}
+          </h1>
           <div style={{ marginTop: 8, fontSize: 11, color: '#2b2a2a' }}>{[personal.email, personal.mobileNumber, personal.address].filter(Boolean).join(' | ')}</div>
         </div>
 
         <hr style={{ border: 'none', borderTop: '1px solid #333', margin: '18px 0' }} />
+
+        {personal.aboutCareerObjective && (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '16px', padding: '0 8px', marginBottom: 12 }}>
+              <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: primaryColor, fontWeight: 700 }}>Career Objective</div>
+              <div style={{ color: '#2b2a2a', fontSize: 11, lineHeight: 1.5 }}>{htmlToLines(personal.aboutCareerObjective).join(' ')}</div>
+            </div>
+            {experience.workExperiences.some(exp => exp.enabled) && <hr style={{ border: 'none', borderTop: '1px solid #aaa', margin: '18px 0' }} />}
+          </>
+        )}
 
         {experience.workExperiences.some(exp => exp.enabled) && (<>
           <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '16px', padding: '0 8px' }}>
@@ -88,11 +152,7 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
                     <div style={{ fontWeight: 700, color: '#111827' }}>{w.jobTitle} — <span style={{ fontWeight: 700 }}>{w.companyName}</span></div>
                     <div style={{ color: '#111827', fontSize: 11, fontWeight: 700 }}>{formatMonthYear(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYear(w.endDate)}</div>
                   </div>
-                  {w.description && (
-                    <div style={{ marginTop: 6, color: '#2b2a2a' }}
-                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(w.description || '') }}
-                    />
-                  )}
+                  {w.description && renderDescription(w.description)}
                 </div>
               ))}
               {/* divider after work experience */}
@@ -114,11 +174,7 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
                     <div style={{ fontWeight: 700, color: '#111827' }}>{p.projectTitle}</div>
                     <div style={{ color: '#111827', fontSize: 11, fontWeight: 700 }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</div>
                   </div>
-                  {p.description && (
-                    <div style={{ marginTop: 6, color: '#2b2a2a' }}
-                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(p.description || '') }}
-                    />
-                  )}
+                  {p.description && renderDescription(p.description)}
                 </div>
               ))}
             </div>

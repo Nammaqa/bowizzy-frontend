@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getAllTemplates, getTemplateById } from "@/templates/templateRegistry";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Check, Heart, Eye } from "lucide-react";
+import { Check, Heart, Eye, Info } from "lucide-react";
 import * as subscriptionService from "@/services/subscriptionService";
 import { Lock, Crown } from "lucide-react";
 import Credits from "@/pages/Credits";
@@ -37,6 +37,113 @@ const PREVIEW_IMAGES: Record<number, string> = {
   20: template20Img,
 };
 
+// Template metadata — name, sections included, and free/paid status.
+// NOTE: mapping assumes template11..template20 correspond to the list order given
+// (11 = Vijaynagara ... 20 = Maratha). Adjust the keys below if the actual
+// template IDs differ from this assumption.
+type TemplateSectionInfo = {
+  name: string;
+  sections: string[];
+  free: boolean;
+};
+
+const TEMPLATE_INFO: Record<string, TemplateSectionInfo> = {
+  template11: {
+    name: "Vijaynagara",
+    sections: ["Career Objective", "Experience", "Education", "Project"],
+    free: true,
+  },
+  template12: {
+    name: "Hoysala",
+    sections: [
+      "Career Objective",
+      "Experience",
+      "Projects",
+      "Education",
+      "Links",
+      "Skills",
+      "Certification",
+    ],
+    free: false,
+  },
+  template13: {
+    name: "Chalukya",
+    sections: [
+      "About / Career Objective",
+      "Experience",
+      "Projects",
+      "Education",
+      "Skills",
+      "Certification",
+    ],
+    free: false,
+  },
+  template14: {
+    name: "Rashtrakuta",
+    sections: ["Experience", "Project", "Education", "Skills", "Certification"],
+    free: false,
+  },
+  template15: {
+    name: "Kadamba",
+    sections: [
+      "Career Objective",
+      "Education",
+      "Skills",
+      "Certification",
+      "Experience",
+      "Projects",
+    ],
+    free: false,
+  },
+  template16: {
+    name: "Wodeyar",
+    sections: [
+      "Career Objective",
+      "Experience",
+      "Project",
+      "Education",
+      "Skills",
+      "Language",
+      "Certification",
+    ],
+    free: false,
+  },
+  template17: {
+    name: "Ganga",
+    sections: [
+      "Career Objective",
+      "Skill",
+      "Experience",
+      "Education",
+      "Certification",
+      "Project",
+    ],
+    free: false,
+  },
+  template18: {
+    name: "Maurya",
+    sections: ["Career Objective", "Experience", "Education", "Skills", "Certification"],
+    free: false,
+  },
+  template19: {
+    name: "Satvahna",
+    sections: [
+      "Career Objective",
+      "Skills",
+      "Experience",
+      "Education",
+      "Language",
+      "Certification",
+      "Project",
+    ],
+    free: false,
+  },
+  template20: {
+    name: "Maratha",
+    sections: ["Experience", "Education", "Certificate"],
+    free: false,
+  },
+};
 
 export default function TemplateSelection() {
   const navigate = useNavigate();
@@ -57,6 +164,7 @@ export default function TemplateSelection() {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState<any>(null);
   const [showCreditsModal, setShowCreditsModal] = useState(false);
+  const [hoveredInfoId, setHoveredInfoId] = useState<string | null>(null);
 
   const PAID_EXTRA_TEMPLATE_IDS = ["template9", "template10"];
   const EXTRA_PRICE = 100;
@@ -283,6 +391,99 @@ export default function TemplateSelection() {
     }
   }, [location.search]);
 
+  // Renders the price tag + info icon (with hover tooltip) shared by both
+  // locked and unlocked cards.
+  const renderInfoBadge = (templateId: string) => {
+    const info = TEMPLATE_INFO[templateId];
+    if (!info) return null;
+
+    return (
+      <div className="absolute top-3 left-3 z-30 flex items-center gap-2">
+        {/* Price tag */}
+        {info.free ? (
+          <span
+            className="relative flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-extrabold text-white shadow-lg animate-pulse"
+            style={{
+              background: "linear-gradient(135deg, #34d399 0%, #10b981 50%, #059669 100%)",
+              boxShadow: "0 0 0 2px rgba(255,255,255,0.6), 0 4px 10px rgba(16,185,129,0.5)",
+            }}
+          >
+            <span className="text-[12px] leading-none">✨</span>
+            FREE
+          </span>
+        ) : (
+          <span
+            className="relative flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-extrabold text-white shadow-lg"
+            style={{
+              background: "linear-gradient(135deg, #fb923c 0%, #f97316 45%, #ea580c 100%)",
+              boxShadow: "0 0 0 2px rgba(255,255,255,0.6), 0 4px 10px rgba(249,115,22,0.55)",
+            }}
+          >
+            <span className="text-[12px] leading-none">👑</span>
+            PREMIUM
+          </span>
+        )}
+
+        {/* Info icon + hover tooltip */}
+        <div
+          className="relative"
+          onMouseEnter={(e) => {
+            e.stopPropagation();
+            setHoveredInfoId(templateId);
+          }}
+          onMouseLeave={(e) => {
+            e.stopPropagation();
+            setHoveredInfoId(null);
+          }}
+        >
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            className="flex items-center justify-center w-7 h-7 rounded-full bg-white/95 text-[#1A1A43] shadow hover:bg-orange-500 hover:text-white transition-colors"
+            title="Template info"
+          >
+            <Info size={14} />
+          </button>
+
+          {hoveredInfoId === templateId && (
+            <div
+              className="absolute top-9 left-0 z-40 w-60 bg-white rounded-lg shadow-xl border border-gray-100 p-3 text-left"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold text-[#1A1A43]">{info.name}</span>
+                <span
+                  className="text-[10px] font-extrabold px-2 py-0.5 rounded-full text-white shadow-sm"
+                  style={{
+                    background: info.free
+                      ? "linear-gradient(135deg, #34d399 0%, #059669 100%)"
+                      : "linear-gradient(135deg, #fb923c 0%, #ea580c 100%)",
+                  }}
+                >
+                  {info.free ? "✨ FREE" : "👑 PREMIUM"}
+                </span>
+              </div>
+              <div className="text-[11px] text-gray-500 mb-1.5 font-medium">
+                Sections included:
+              </div>
+              <ul className="space-y-1">
+                {info.sections.map((sec) => (
+                  <li key={sec} className="flex items-start gap-1.5 text-xs text-gray-700">
+                    <Check size={12} className="text-orange-500 mt-0.5 flex-shrink-0" />
+                    <span>{sec}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col h-screen overflow-hidden font-['Baloo_2']">
       <DashNav heading="Resume Builder" />
@@ -436,6 +637,9 @@ export default function TemplateSelection() {
                         </div>
                       </div>
 
+                      {/* Info + price badge — sits above the lock overlay */}
+                      {renderInfoBadge(template.id)}
+
                       {/* Crown — top right */}
                       <div className="absolute top-3 right-3 z-10">
                         <div className="flex items-center justify-center w-10 h-10 rounded-full bg-yellow-500 text-white shadow-md">
@@ -475,6 +679,9 @@ export default function TemplateSelection() {
                       alt={template.name}
                       className="w-full h-[250px] md:h-[320px] lg:h-[439px] object-contain"
                     />
+
+                    {/* Info + price badge — top-left */}
+                    {renderInfoBadge(template.id)}
 
                     {/* Preview icon — top-center, appears on hover */}
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/20">
