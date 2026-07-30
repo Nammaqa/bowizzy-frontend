@@ -3,6 +3,7 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import api from '@/api';
 import { getResumeTemplates } from '@/services/resumeServices';
+import { buildSharedResumeUrl } from '@/pages/ResumeSharedPreview';
 interface ProfileData {
     name: {
         first_name: string;
@@ -342,7 +343,7 @@ export default function DashNav({ heading, zindex }: { heading: string; zindex?:
                                                     <button
                                                         onClick={async () => {
                                                             try {
-                                                                await navigator.clipboard.writeText(t.template_file_url);
+                                                                await navigator.clipboard.writeText(buildSharedResumeUrl(t.template_file_url));
                                                                 setCopiedId(templateId);
                                                                 setTimeout(() => setCopiedId(null), 2000);
                                                             } catch {
