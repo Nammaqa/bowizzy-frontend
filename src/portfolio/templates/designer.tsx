@@ -1,16 +1,20 @@
 import React from "react";
 import {
   ArrowUpRight,
+  Award,
   Briefcase,
   Download,
   Github,
   Globe,
   Image,
+  Languages,
   Linkedin,
   Link2,
   Mail,
   PenTool,
+  Phone,
   Sparkles,
+  Trophy,
   Twitter,
 } from "lucide-react";
 import type { PortfolioData } from "./developer";
@@ -97,6 +101,12 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
         },
       ];
   const caseStudies = data.caseStudies || [];
+  // Blank rows (added in the editor but never filled in) must not light up a section heading.
+  const certifications = (data.certifications || []).filter((cert) => (cert.name || "").trim());
+  const languages = (data.languages || []).filter((language) => (language || "").trim());
+  const achievements = (data.achievements || []).filter(
+    (achievement) => (achievement.title || "").trim() || (achievement.description || "").trim()
+  );
 
   return (
     <main
@@ -237,6 +247,16 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
                 <Mail className="w-4 h-4" />
                 Email
               </a>
+              {data.phone && (
+                <a
+                  href={`tel:${data.phone}`}
+                  className="designer-hover inline-flex items-center gap-2 px-5 py-3 text-sm font-extrabold no-underline border"
+                  style={{ color: ink, borderColor: line, background: panelStrong, borderRadius: 8 }}
+                >
+                  <Phone className="w-4 h-4" />
+                  {data.phone}
+                </a>
+              )}
               {socialLinks.map(({ href, label, icon: Icon }) => (
                 <a
                   key={label}
@@ -552,6 +572,130 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
           </div>
         </section>
 
+        {certifications.length > 0 && (
+          <section id="certifications" className="py-12 @lg:py-16 border-b" style={{ borderColor: line }}>
+            <div className="flex items-end justify-between gap-5 mb-8">
+              <div>
+                <p className="text-xs font-extrabold uppercase mb-3" style={{ color: accent }}>
+                  Credentials
+                </p>
+                <h2 className="text-4xl @md:text-5xl font-extrabold">Certifications</h2>
+              </div>
+              <Award className="hidden @md:block w-8 h-8" style={{ color: accentTwo }} />
+            </div>
+
+            <div className="grid grid-cols-1 @md:grid-cols-2 gap-4">
+              {certifications.map((cert, index) => (
+                <article
+                  key={`${cert.name}-${index}`}
+                  className="designer-hover border p-5 flex items-start gap-4"
+                  style={{ borderColor: line, background: panel, borderRadius: 8 }}
+                >
+                  <span
+                    className="h-11 w-11 shrink-0 grid place-items-center border"
+                    style={{ borderColor: line, background: panelStrong, borderRadius: 8 }}
+                  >
+                    <Award className="w-4 h-4" style={{ color: accent }} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="designer-text-wrap text-lg font-extrabold">
+                      {cert.name}
+                    </h3>
+                    {cert.issuer && (
+                      <p className="designer-text-wrap text-sm font-extrabold mt-1" style={{ color: accent }}>
+                        {cert.issuer}
+                      </p>
+                    )}
+                    {cert.year && (
+                      <p className="text-xs font-extrabold uppercase mt-2" style={{ color: muted }}>
+                        {cert.year}
+                      </p>
+                    )}
+                  </div>
+                  {cert.link && (
+                    <a
+                      href={cert.link}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`${cert.name || "Certification"} link`}
+                      className="h-10 w-10 shrink-0 border inline-flex items-center justify-center no-underline"
+                      style={{ color: ink, borderColor: line, borderRadius: 8 }}
+                    >
+                      <ArrowUpRight className="w-5 h-5" />
+                    </a>
+                  )}
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {achievements.length > 0 && (
+          <section id="achievements" className="grid grid-cols-1 @lg:grid-cols-[0.35fr_0.65fr] gap-8 py-12 @lg:py-16 border-b" style={{ borderColor: line }}>
+            <div>
+              <p className="text-xs font-extrabold uppercase mb-3" style={{ color: accent }}>
+                Recognition
+              </p>
+              <h2 className="text-4xl font-extrabold leading-tight">Achievements</h2>
+            </div>
+
+            <div className="space-y-4">
+              {achievements.map((achievement, index) => (
+                <article
+                  key={`${achievement.title}-${index}`}
+                  className="grid grid-cols-[2.75rem_1fr] gap-4 border-b pb-6"
+                  style={{ borderColor: line }}
+                >
+                  <span
+                    className="h-11 w-11 grid place-items-center border"
+                    style={{ borderColor: line, background: panel, borderRadius: 8 }}
+                  >
+                    <Trophy className="w-4 h-4" style={{ color: accent }} />
+                  </span>
+                  <div>
+                    {achievement.title && (
+                      <h3 className="designer-text-wrap text-lg font-extrabold mb-1">
+                        {achievement.title}
+                      </h3>
+                    )}
+                    {achievement.description && (
+                      <p className="designer-text-wrap text-sm leading-7" style={{ color: muted }}>
+                        {achievement.description}
+                      </p>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {languages.length > 0 && (
+          <section id="languages" className="grid grid-cols-1 @lg:grid-cols-[0.35fr_0.65fr] gap-8 py-12 @lg:py-16 border-b" style={{ borderColor: line }}>
+            <div>
+              <p className="text-xs font-extrabold uppercase mb-3" style={{ color: accent }}>
+                Communication
+              </p>
+              <h2 className="text-4xl font-extrabold leading-tight flex items-center gap-3">
+                <Languages className="w-7 h-7 shrink-0" style={{ color: accentTwo }} />
+                Languages
+              </h2>
+            </div>
+
+            <div className="flex flex-wrap gap-2 items-start">
+              {languages.map((language, index) => (
+                <span
+                  key={`${language}-${index}`}
+                  className="px-3 py-2 border text-xs font-extrabold uppercase"
+                  style={{ borderColor: line, background: panel, color: ink, borderRadius: 8 }}
+                >
+                  {language}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
+
         <section id="process" className="py-12 @lg:py-16 border-b" style={{ borderColor: line }}>
           <p className="text-xs font-extrabold uppercase mb-7" style={{ color: accent }}>
             Process
@@ -597,6 +741,16 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
                 <Mail className="w-4 h-4" />
                 Get in touch
               </a>
+              {data.phone && (
+                <a
+                  href={`tel:${data.phone}`}
+                  className="designer-hover inline-flex items-center justify-center gap-2 px-6 py-4 text-sm font-extrabold no-underline border"
+                  style={{ color: ink, borderColor: line, background: panelStrong, borderRadius: 8 }}
+                >
+                  <Phone className="w-4 h-4" />
+                  {data.phone}
+                </a>
+              )}
               {socialLinks.length > 0 && (
                 <div className="flex flex-wrap items-center gap-3">
                   {socialLinks.map(({ href, label, icon: Icon }) => (
