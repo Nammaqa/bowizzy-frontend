@@ -4,11 +4,13 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock,
+  Eye,
   ExternalLink,
   FileText,
   MessageSquareText,
   Plus,
   RefreshCw,
+  Star,
   XCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -79,6 +81,32 @@ const isInterviewerFeedbackGiven = (b: MockInterviewBooking) =>
   String(b?.interviewer_feedback_given).toLowerCase() === "true" ||
   String(b?.interviewerFeedbackGiven).toLowerCase() === "true";
 
+/** True once the interviewer has submitted feedback ABOUT this candidate. */
+const isCandidateFeedbackGiven = (b: MockInterviewBooking) =>
+  b?.candidate_feedback_given === true ||
+  b?.candidateFeedbackGiven === true ||
+  String(b?.candidate_feedback_given).toLowerCase() === "true" ||
+  String(b?.candidateFeedbackGiven).toLowerCase() === "true";
+
+const candidateReviewSections: { title: string; commentKey: string; ratingKey: string }[] = [
+  { title: "Communication Skills", commentKey: "communication_skills", ratingKey: "communication_skills_rating" },
+  { title: "Technical Knowledge", commentKey: "technical_knowledge", ratingKey: "technical_knowledge_rating" },
+  { title: "Problem-Solving & Analytical Skills", commentKey: "problem_solving_analytical_skills", ratingKey: "problem_solving_analytical_skills_rating" },
+  { title: "Relevant Experience & Skills", commentKey: "relevant_experience_skills", ratingKey: "relevant_experience_skills_rating" },
+  { title: "Adaptability & Learning Ability", commentKey: "adaptability_learning_ability", ratingKey: "adaptability_learning_ability_rating" },
+  { title: "Cultural & Team Fit", commentKey: "cultural_team_fit", ratingKey: "cultural_team_fit_rating" },
+  { title: "Overall Impression", commentKey: "overall_impression", ratingKey: "overall_impression_rating" },
+];
+
+const formatRecommendation = (value?: string) => {
+  if (!value) return "—";
+  return String(value)
+    .split("_")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
+
 /** True for ANY cancelled booking — used to strip them from Upcoming & Past. */
 const isCancelledBooking = (b: MockInterviewBooking) =>
   String(b?.interview_status || "").toLowerCase().includes("cancel");
@@ -139,6 +167,24 @@ const getStatusConfig = (status: string) => {
 };
 
 // ---------------------------------------------------------------------------
+// Read-only star rating row
+// ---------------------------------------------------------------------------
+const StarRatingDisplay = ({ rating }: { rating: number | string }) => {
+  const value = Math.round(Number(rating) || 0);
+  return (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star
+          key={star}
+          size={15}
+          className={star <= value ? "fill-[#F26D3A] text-[#F26D3A]" : "text-gray-200"}
+        />
+      ))}
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 const MockInterviewBookingsPage = () => {
@@ -149,6 +195,7 @@ const MockInterviewBookingsPage = () => {
   const [cancellingId, setCancellingId] = useState<string | number | null>(null);
   const [activeTab, setActiveTab]   = useState<Tab>("upcoming");
   const [cancelConfirmationBooking, setCancelConfirmationBooking] = useState<MockInterviewBooking | null>(null);
+  const [viewingFeedbackBooking, setViewingFeedbackBooking] = useState<MockInterviewBooking | null>(null);
 
   const getAuthUser = () => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -259,6 +306,7 @@ const MockInterviewBookingsPage = () => {
           ? "Waiting to be accepted"
           : rawStatus;
     const feedbackGiven = isInterviewerFeedbackGiven(booking);
+    const candidateFeedbackGiven = isCandidateFeedbackGiven(booking) && booking.candidate_review;
     const { badge: statusBadge, border } = getStatusConfig(displayStatus);
 
     return (
@@ -326,20 +374,31 @@ const MockInterviewBookingsPage = () => {
               {booking.cancelled_by ? `Cancelled by ${booking.cancelled_by}` : "Cancelled"}
             </span>
           ) : tab === "past" ? (
-            feedbackGiven ? (
-              <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 border border-emerald-100">
-                <CheckCircle2 size={13} />
-                Feedback given
-              </span>
-            ) : (
-              <button
-                onClick={() => navigateToInterviewerFeedback(booking)}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 transition"
-              >
-                <MessageSquareText size={13} />
-                Give feedback
-              </button>
-            )
+            <>
+              {candidateFeedbackGiven && (
+                <button
+                  onClick={() => setViewingFeedbackBooking(booking)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 shadow-sm hover:border-gray-300 hover:shadow transition"
+                >
+                  <Eye size={13} />
+                  View interviewer's feedback
+                </button>
+              )}
+              {feedbackGiven ? (
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 border border-emerald-100">
+                  <CheckCircle2 size={13} />
+                  Feedback given
+                </span>
+              ) : (
+                <button
+                  onClick={() => navigateToInterviewerFeedback(booking)}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 transition"
+                >
+                  <MessageSquareText size={13} />
+                  Give feedback
+                </button>
+              )}
+            </>
           ) : (
             <>
               {booking.meeting_link && (
@@ -530,6 +589,76 @@ const MockInterviewBookingsPage = () => {
                 className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {cancellingId ? "Cancelling…" : "Yes, cancel it"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {viewingFeedbackBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="relative max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
+            <button
+              type="button"
+              onClick={() => setViewingFeedbackBooking(null)}
+              className="absolute right-4 top-4 rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+            >
+              ✕
+            </button>
+
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#F26D3A]">
+              Interviewer's feedback
+            </p>
+            <h2 className="mt-1 text-xl font-bold text-[#1f1f1f]">
+              {viewingFeedbackBooking.job_role || "Mock Interview"}
+            </h2>
+
+            <div className="mt-5 space-y-4">
+              {candidateReviewSections.map((section) => {
+                const review = viewingFeedbackBooking.candidate_review || {};
+                const comment = review[section.commentKey];
+                const rating = review[section.ratingKey];
+
+                return (
+                  <div
+                    key={section.ratingKey}
+                    className="rounded-2xl border border-gray-100 bg-gray-50 p-4"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <h3 className="text-sm font-bold text-[#1f1f1f]">{section.title}</h3>
+                      <StarRatingDisplay rating={rating} />
+                    </div>
+                    {comment && (
+                      <p className="mt-2 text-sm leading-5 text-gray-600">{comment}</p>
+                    )}
+                  </div>
+                );
+              })}
+
+              <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                <h3 className="text-sm font-bold text-[#1f1f1f]">Overall recommendation</h3>
+                <p className="mt-2 text-sm font-semibold text-[#F26D3A]">
+                  {formatRecommendation(viewingFeedbackBooking.candidate_review?.final_recommendation)}
+                </p>
+              </div>
+
+              {viewingFeedbackBooking.candidate_review?.final_comments && (
+                <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                  <h3 className="text-sm font-bold text-[#1f1f1f]">Final comments</h3>
+                  <p className="mt-2 text-sm leading-5 text-gray-600">
+                    {viewingFeedbackBooking.candidate_review.final_comments}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setViewingFeedbackBooking(null)}
+                className="rounded-xl bg-[#F26D3A] px-4 py-2 text-sm font-semibold text-white hover:bg-[#e35f2f]"
+              >
+                Close
               </button>
             </div>
           </div>

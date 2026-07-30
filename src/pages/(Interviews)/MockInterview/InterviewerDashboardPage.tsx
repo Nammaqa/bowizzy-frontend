@@ -11,6 +11,7 @@ import {
   FileText,
   MessageSquareText,
   ShieldCheck,
+  ShieldX,
   Video,
   X,
 } from "lucide-react";
@@ -19,8 +20,10 @@ import { useNavigate } from "react-router-dom";
 import {
   acceptMockInterviewBooking,
   cancelMockInterviewBooking,
+  checkInterviewerBanStatus,
   fetchAvailableMockInterviews,
   getAcceptedMockInterviews,
+  isInterviewerBannedResponse,
   isPaymentPendingBooking,
   isVerifiedInterviewerResponse,
   validateInterviewer,
@@ -265,6 +268,8 @@ const InterviewerDashboardPage = () => {
   const [error, setError] = useState("");
   const [interviewsError, setInterviewsError] = useState("");
   const [acceptError, setAcceptError] = useState("");
+  const [isBanned, setIsBanned] = useState(false);
+  const [showBannedPopup, setShowBannedPopup] = useState(false);
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
   const currentUserId = currentUser?.user_id;
 
@@ -280,6 +285,14 @@ const InterviewerDashboardPage = () => {
         }
 
         setLoading(true);
+
+        const banStatus = await checkInterviewerBanStatus(userId, token);
+        if (isInterviewerBannedResponse(banStatus)) {
+          setIsBanned(true);
+          setShowBannedPopup(true);
+          return;
+        }
+
         const response = await validateInterviewer(userId, token);
         setValidation(response);
 
@@ -529,6 +542,20 @@ const InterviewerDashboardPage = () => {
           <div className="rounded-3xl bg-white p-8 text-center text-[#777777] shadow-sm">
             Validating interviewer status...
           </div>
+        ) : isBanned ? (
+          <section className="rounded-3xl bg-white p-8 text-center shadow-sm">
+            <div className="mx-auto inline-flex rounded-2xl bg-red-50 p-4 text-red-600">
+              <ShieldX size={30} />
+            </div>
+            <h1 className="mt-5 text-3xl font-bold text-[#2F2F2F]">
+              Account banned
+            </h1>
+            <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[#666666]">
+              Your interviewer account has been banned. You no longer have access to
+              the interviewer dashboard or any interview actions. Please contact
+              support if you believe this is a mistake.
+            </p>
+          </section>
         ) : isVerified ? (
           <section className="rounded-3xl bg-white p-4 shadow-sm sm:p-5">
             <div className="flex items-center gap-3">
@@ -1149,6 +1176,31 @@ const InterviewerDashboardPage = () => {
                 Yes, cancel
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Banned account popup */}
+      {showBannedPopup && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.55)" }}
+        >
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl">
+            <div className="mx-auto inline-flex rounded-full bg-red-50 p-3 text-red-600">
+              <ShieldX size={32} />
+            </div>
+            <h3 className="mt-4 text-lg font-bold text-[#2F2F2F]">Account banned</h3>
+            <p className="mt-2 text-sm text-[#666666]">
+              Your interviewer account has been banned. All interviewer actions are
+              disabled.
+            </p>
+            <button
+              onClick={() => setShowBannedPopup(false)}
+              className="mt-6 w-full rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 cursor-pointer"
+            >
+              Okay
+            </button>
           </div>
         </div>
       )}
