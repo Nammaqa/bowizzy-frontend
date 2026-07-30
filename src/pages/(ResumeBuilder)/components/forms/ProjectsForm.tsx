@@ -170,18 +170,6 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
     return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
   };
 
-  const validateDescription = (value: string) => {
-    const length = getPlainText(value).length;
-    if (length > 500) return "Description cannot exceed 500 characters";
-    return "";
-  };
-
-  const validateRolesResponsibilities = (value: string) => {
-    const length = getPlainText(value).length;
-    if (length > 500) return "Roles & Responsibilities cannot exceed 500 characters";
-    return "";
-  };
-
   // Helper to format date for API payload (YYYY-MM to YYYY-MM-01)
   const normalizeMonthToDate = (val: string): string | null => {
     if (!val) return null;
@@ -233,12 +221,6 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
         delete updated[`project-${id}-endDate`];
         return updated;
       });
-    } else if (field === "description" && typeof value === "string") {
-      const error = validateDescription(value);
-      setErrors((prev) => ({ ...prev, [`project-${id}-description`]: error }));
-    } else if (field === "rolesResponsibilities" && typeof value === "string") {
-      const error = validateRolesResponsibilities(value);
-      setErrors((prev) => ({ ...prev, [`project-${id}-rolesResponsibilities`]: error }));
     }
 
 
@@ -266,15 +248,11 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
     const endDateError = project.currentlyWorking
       ? ""
       : validateEndDate(project.endDate || "", project.startDate || "");
-    const descriptionError = validateDescription(project.description || "");
-    const rolesError = validateRolesResponsibilities(project.rolesResponsibilities || "");
 
     if (
       projectTitleError ||
       startDateError ||
       endDateError ||
-      descriptionError ||
-      rolesError ||
       errors[`project-${project.id}-projectTitle`] ||
       errors[`project-${project.id}-endDate`]
     ) {
@@ -283,8 +261,6 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
         [`project-${project.id}-projectTitle`]: projectTitleError,
         [`project-${project.id}-startDate`]: startDateError,
         [`project-${project.id}-endDate`]: endDateError,
-        [`project-${project.id}-description`]: descriptionError,
-        [`project-${project.id}-rolesResponsibilities`]: rolesError,
       }));
       return;
     }
@@ -715,11 +691,6 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
                   placeholder="Provide Description of your project.."
                   rows={4}
                 />
-                {errors[`project-${project.id}-description`] && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors[`project-${project.id}-description`]}
-                  </p>
-                )}
               </div>
             </div>
 
@@ -794,11 +765,6 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
                   }
                   placeholder="Provide your roles & responsibilities..."
                 />
-                {errors[`project-${project.id}-rolesResponsibilities`] && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors[`project-${project.id}-rolesResponsibilities`]}
-                  </p>
-                )}
 
                 {/* Error */}
                 {enhanceRolesError[project.id] && (

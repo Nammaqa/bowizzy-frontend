@@ -199,12 +199,6 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
     return "";
   };
 
-  const validateTechnicalSummary = (value: string) => {
-    const length = getPlainText(value).length;
-    if (length > 500) return "Technical summary cannot exceed 500 characters";
-    return "";
-  };
-
   // Handler for saving all skills
   const handleSaveAllSkills = async () => {
     const changesToSave = Object.keys(skillChanges);
@@ -500,12 +494,6 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
 
   // Handler for saving technical summary
   const handleSaveTechnicalSummary = async () => {
-    const technicalSummaryError = validateTechnicalSummary(data.technicalSummary || "");
-    if (technicalSummaryError) {
-      setErrors((prev) => ({ ...prev, technicalSummary: technicalSummaryError }));
-      return;
-    }
-
     if (!technicalSummaryChanges) {
       setTechnicalSummaryFeedback("No changes to save.");
       setTimeout(() => setTechnicalSummaryFeedback(""), 3000);
@@ -1028,18 +1016,8 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
               onChange({ ...data, technicalSummary: v });
               if (enhancedSummaryVersions) setEnhancedSummaryVersions(null);
               if (enhanceSummaryError) setEnhanceSummaryError("");
-              setErrors((prev) => {
-                const next = { ...prev };
-                delete next.technicalSummary;
-                return next;
-              });
             }}
           />
-          {errors.technicalSummary && (
-            <p className="mt-1 text-xs text-red-500">
-              {errors.technicalSummary}
-            </p>
-          )}
         </div>
 
         {/* Error */}

@@ -292,7 +292,6 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
 
   const careerObjectiveLength = getPlainText(data.aboutCareerObjective ?? "").length;
   const hasCareerObjectiveInput = careerObjectiveLength > 0;
-  const isCareerObjectiveTooLong = careerObjectiveLength > 500;
 
   const handleEnhanceCareerObjective = async () => {
     if (disableAiEnhance || !hasCareerObjectiveInput) return;
@@ -498,15 +497,6 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
             error = "Address cannot exceed 250 characters";
           } else if (!/[A-Za-z]/.test(value) || !/\d/.test(value)) {
             error = "Address must include at least one letter and one number";
-          }
-        }
-        break;
-
-      case "aboutCareerObjective":
-        if (value) {
-          const plainText = getPlainText(value);
-          if (plainText.length > 500) {
-            error = "Career objective cannot exceed 500 characters";
           }
         }
         break;
@@ -801,12 +791,6 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
 
     if (errors.aboutCareerObjective) {
       setCareerObjectiveFeedback("Fix career objective errors before saving");
-      setTimeout(() => setCareerObjectiveFeedback(""), 3000);
-      return;
-    }
-
-    if (isCareerObjectiveTooLong) {
-      setCareerObjectiveFeedback("Career objective cannot exceed 500 characters");
       setTimeout(() => setCareerObjectiveFeedback(""), 3000);
       return;
     }
@@ -1287,7 +1271,7 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
                 <button
                   type="button"
                   onClick={handleEnhanceCareerObjective}
-                  disabled={disableAiEnhance || !hasCareerObjectiveInput || isEnhancing || isCareerObjectiveTooLong || cannotEnhance}
+                  disabled={disableAiEnhance || !hasCareerObjectiveInput || isEnhancing || cannotEnhance}
                   title={
                     disableAiEnhance
                       ? "AI enhancement is disabled for this template"
@@ -1295,12 +1279,10 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
                       ? "You have already used the AI enhancement feature"
                       : !hasCareerObjectiveInput
                       ? "Add some text to enable AI enhancement"
-                      : isCareerObjectiveTooLong
-                      ? "Reduce career objective to 500 characters or less"
                       : "Enhance with AI"
                   }
                   className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
-              ${!disableAiEnhance && hasCareerObjectiveInput && !isEnhancing && !isCareerObjectiveTooLong && !cannotEnhance
+              ${!disableAiEnhance && hasCareerObjectiveInput && !isEnhancing && !cannotEnhance
                       ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-sm hover:from-violet-600 hover:to-purple-700 cursor-pointer"
                       : "bg-gray-100 text-gray-400 cursor-not-allowed"
                     }`}
@@ -1355,14 +1337,9 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
               placeholder="Provide Career Objective"
               rows={6}
             />
-            <div className="mt-2 flex items-center justify-between gap-3 flex-wrap">
-              <p className="text-xs text-gray-500">
-                {careerObjectiveLength}/500 characters
-              </p>
-              {errors.aboutCareerObjective && (
-                <p className="text-xs text-red-600">{errors.aboutCareerObjective}</p>
-              )}
-            </div>
+            {errors.aboutCareerObjective && (
+              <p className="mt-2 text-xs text-red-600">{errors.aboutCareerObjective}</p>
+            )}
 
             {/* Error */}
             {enhanceError && (

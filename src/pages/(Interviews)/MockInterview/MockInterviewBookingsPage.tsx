@@ -391,7 +391,7 @@ const MockInterviewBookingsPage = () => {
               <ArrowLeft size={16} />
             </button>
             <div>
-              <h1 className="text-base font-bold text-[#1f1f1f]">Your Bookings</h1>
+              <h1 className="text-base font-bold text-[#1f1f1f]">My Bookings</h1>
               <p className="mt-0.5 text-xs text-gray-400">Track status, timing, resume &amp; meeting links</p>
             </div>
           </div>
