@@ -267,7 +267,6 @@ export default function Profile() {
                 be extracted automatically, but you'll still need to review and
                 verify them for accuracy. If the resume is not in a structured
                 format, some fields may not be captured. Supported formats: PDF
-                and Word documents.
               </p>
 
               <div className="flex flex-col items-center gap-4 md:gap-5">
