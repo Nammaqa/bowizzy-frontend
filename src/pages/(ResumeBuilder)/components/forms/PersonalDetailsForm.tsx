@@ -492,12 +492,10 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
         break;
 
       case "address":
-        if (value) {
-          if (value.trim().length > 250) {
-            error = "Address cannot exceed 250 characters";
-          } else if (!/[A-Za-z]/.test(value) || !/\d/.test(value)) {
-            error = "Address must include at least one letter and one number";
-          }
+        if (!value.trim()) {
+          error = "Address is required";
+        } else if (value.trim().length > 250) {
+          error = "Address cannot exceed 250 characters";
         }
         break;
 
