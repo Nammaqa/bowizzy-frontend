@@ -17,7 +17,7 @@ const styles = StyleSheet.create({
 const htmlToPlainText = (html?: string) => {
   if (!html) return '';
   const sanitized = DOMPurify.sanitize(html || '');
-  const withBreaks = sanitized.replace(/<br\s*\/?/gi, '\n').replace(/<\/p>|<\/li>/gi, '\n');
+  const withBreaks = sanitized.replace(/<br\s*\/?/gi, '\n').replace(/<\/p>|<\/li>/gi, '\n').replace(/<ul[^>]*>|<ol[^>]*>/gi, '\n');
   const decoded = withBreaks.replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
   try {
     if (typeof document !== 'undefined') {
@@ -187,16 +187,20 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
         <View style={styles.content}>
           {personal.aboutCareerObjective ? (
             <View>
-              <Text style={styles.sectionHeading}>About</Text>
-              <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
+              <View wrap={false} minPresenceAhead={40}>
+                <Text style={styles.sectionHeading}>About</Text>
+                <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
+              </View>
               <Text style={{ marginTop: 8, fontSize: 9, color: '#444' }}>{htmlToPlainText(personal.aboutCareerObjective).replace(/\s{2,}/g, ' ')}</Text>
             </View>
           ) : null}
 
           {skillsLinks.technicalSummaryEnabled && skillsLinks.technicalSummary ? (
             <View style={{ marginTop: personal.aboutCareerObjective ? 18 : 0 }}>
-              <Text style={styles.sectionHeading}>Technical Summary</Text>
-              <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
+              <View wrap={false} minPresenceAhead={40}>
+                <Text style={styles.sectionHeading}>Technical Summary</Text>
+                <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
+              </View>
               <Text style={{ marginTop: 8, fontSize: 9, color: '#444' }}>
                 {htmlToPlainText(skillsLinks.technicalSummary).replace(/\s{2,}/g, ' ')}
               </Text>
@@ -205,8 +209,10 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
 
           {experience.workExperiences.filter((w: any) => w.enabled).length > 0 && (
             <View style={{ marginTop: 18 }}>
-              <Text style={styles.sectionHeading}>Experience</Text>
-              <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
+              <View wrap={false} minPresenceAhead={40}>
+                <Text style={styles.sectionHeading}>Experience</Text>
+                <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
+              </View>
               <View style={{ marginTop: 8 }}>
                 {experience.workExperiences.filter((w: any) => w.enabled).map((w: any, i: number) => (
                   <View key={i} style={{ marginBottom: 10 }}>
@@ -224,8 +230,10 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
 
           {projects.filter((p: any) => p.enabled).length > 0 && (
             <View style={{ marginTop: 18 }}>
-              <Text style={styles.sectionHeading}>Projects</Text>
-              <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
+              <View wrap={false} minPresenceAhead={40}>
+                <Text style={styles.sectionHeading}>Projects</Text>
+                <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
+              </View>
               <View style={{ marginTop: 8 }}>
                 {projects.filter((p: any) => p.enabled).map((p: any, i: number) => (
                   <View key={i} style={{ marginBottom: 10 }}>
@@ -234,7 +242,12 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
                       <Text style={{ fontSize: 10, color: '#000', flexShrink: 0, textAlign: 'right' }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</Text>
                     </View>
                     {p.description && <Text style={{ marginTop: 6, fontSize: 9, color: '#000' }}>{htmlToPlainText(p.description)}</Text>}
-                    {p.rolesResponsibilities && <View style={{ marginTop: 6, paddingLeft: 10 }}>{htmlToPlainText(p.rolesResponsibilities).split('\n').filter(Boolean).map((line, idx) => <Text key={idx} style={{ fontSize: 9, color: '#444', marginTop: 6 }}>• {line}</Text>)}</View>}
+                    {p.rolesResponsibilities && (
+                      <View style={{ marginTop: 6, paddingLeft: 10 }}>
+                        <Text style={{ fontSize: 9, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Roles & Responsibilities:</Text>
+                        {htmlToPlainText(p.rolesResponsibilities).split('\n').filter(Boolean).map((line, idx) => <Text key={idx} style={{ fontSize: 9, color: '#444', marginTop: 6 }}>• {line}</Text>)}
+                      </View>
+                    )}
                   </View>
                 ))}
               </View>
@@ -243,8 +256,10 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
 
           {(education.higherEducation.filter(edu => edu.enabled).length > 0 || education.preUniversityEnabled || education.sslcEnabled) && (
             <View style={{ marginTop: 18 }}>
-              <Text style={styles.sectionHeading}>Education</Text>
-              <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
+              <View wrap={false} minPresenceAhead={40}>
+                <Text style={styles.sectionHeading}>Education</Text>
+                <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
+              </View>
               <View style={{ marginTop: 8 }}>
                 {education.higherEducation.filter(edu => edu.enabled).reverse().map((edu: any, i: number) => (
                   <View key={i} style={{ marginBottom: 10 }}>
@@ -300,8 +315,10 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
 
           {(certifications || []).some((c: any) => c.enabled && c.certificateTitle) && (
             <View style={{ marginTop: 18 }}>
-              <Text style={styles.sectionHeading}>Achievements / Certifications</Text>
-              <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
+              <View wrap={false} minPresenceAhead={40}>
+                <Text style={styles.sectionHeading}>Achievements / Certifications</Text>
+                <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
+              </View>
               <View style={{ marginTop: 8 }}>
                 {(certifications || []).filter((c: any) => c.enabled && c.certificateTitle).map((c: any, i: number) => (
                   <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6, alignItems: 'flex-start' }}>

@@ -47,16 +47,16 @@ const AiTemplate8PDF: React.FC<Props> = ({ data, primaryColor = '#1e293b' }) => 
       <Page size="A4" style={{ paddingTop: 28, paddingBottom: 28, paddingLeft: 40, paddingRight: 40, fontSize: 9, fontFamily: 'Helvetica' }}>
         {/* Double-line header */}
         <View style={{ borderTopWidth: 3, borderTopColor: primaryColor, borderBottomWidth: 1, borderBottomColor: primaryColor, paddingVertical: 14, marginBottom: 8 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <View style={{ flex: 1, paddingRight: 16 }}>
               <Text style={{ fontSize: 26, fontFamily: 'Helvetica-Bold', color: primaryColor, letterSpacing: 1 }}>
                 {personal.firstName} {personal.middleName || ''} {personal.lastName}
               </Text>
               {experience.jobRole && <Text style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>{experience.jobRole}</Text>}
             </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              {contactParts.map((c, i) => <Text key={i} style={{ fontSize: 8.5, color: '#475569' }}>{c}</Text>)}
-              {[linkedin, github, portfolio].filter(Boolean).map((c, i) => <Text key={i} style={{ fontSize: 8, color: primaryColor }}>{c}</Text>)}
+            <View style={{ alignItems: 'flex-end', width: 200, flexShrink: 0 }}>
+              {contactParts.map((c, i) => <Text key={i} style={{ fontSize: 8.5, color: '#475569', textAlign: 'right' }}>{c}</Text>)}
+              {[linkedin, github, portfolio].filter(Boolean).map((c, i) => <Text key={i} style={{ fontSize: 8, color: primaryColor, textAlign: 'right' }}>{c}</Text>)}
             </View>
           </View>
         </View>

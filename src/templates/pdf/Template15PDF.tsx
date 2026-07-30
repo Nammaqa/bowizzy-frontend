@@ -36,6 +36,8 @@ const htmlToRichTextLines = (html?: string): RichTextSegment[][] => {
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/p>/gi, '\n')
     .replace(/<\/li>/gi, '\n')
+    .replace(/<ul[^>]*>/gi, '\n')
+    .replace(/<ol[^>]*>/gi, '\n')
     .replace(/<li[^>]*>/gi, '• ')
     .replace(/<p[^>]*>/gi, '');
 
@@ -117,6 +119,8 @@ const renderBulletedParagraph = (html?: string) => {
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/p>/gi, '\n')
     .replace(/<\/li>/gi, '\n')
+    .replace(/<ul[^>]*>/gi, '\n')
+    .replace(/<ol[^>]*>/gi, '\n')
     .replace(/<li[^>]*>/gi, '• ')
     .replace(/<p[^>]*>/gi, '')
     .replace(/<span[^>]*>/gi, '')
@@ -484,7 +488,12 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
                   <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</Text>
                 </View>
                 {p.description && renderBulletedParagraph(p.description)}
-                {p.rolesResponsibilities && renderBulletedParagraph(p.rolesResponsibilities)}
+                {p.rolesResponsibilities && (
+                  <View style={{ marginTop: 4 }}>
+                    <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Roles & Responsibilities:</Text>
+                    {renderBulletedParagraph(p.rolesResponsibilities)}
+                  </View>
+                )}
               </View>
             ))}
           </View>

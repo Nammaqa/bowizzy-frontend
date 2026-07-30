@@ -46,17 +46,17 @@ const AiTemplate5PDF: React.FC<Props> = ({ data, primaryColor = '#0f766e' }) => 
     <Document>
       <Page size="A4" style={{ paddingTop: 32, paddingBottom: 24, paddingLeft: 40, paddingRight: 40, fontSize: 9, fontFamily: 'Helvetica' }}>
         {/* Header — split layout */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 4 }}>
-          <View>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+          <View style={{ flex: 1, paddingRight: 16 }}>
             <Text style={{ fontSize: 24, fontFamily: 'Helvetica-Bold', color: primaryColor }}>
               {personal.firstName} {personal.middleName || ''} {personal.lastName}
             </Text>
             {experience.jobRole && <Text style={{ fontSize: 10, color: '#555', marginTop: 2 }}>{experience.jobRole}</Text>}
           </View>
-          <View style={{ alignItems: 'flex-end' }}>
-            {contactParts.map((c, i) => <Text key={i} style={{ fontSize: 9, color: '#555' }}>{c}</Text>)}
-            {personal.address && <Text style={{ fontSize: 9, color: '#555' }}>{personal.address}</Text>}
-            {[linkedin, github, portfolio].filter(Boolean).map((c, i) => <Text key={i} style={{ fontSize: 8, color: primaryColor }}>{c}</Text>)}
+          <View style={{ alignItems: 'flex-end', width: 200, flexShrink: 0 }}>
+            {contactParts.map((c, i) => <Text key={i} style={{ fontSize: 9, color: '#555', textAlign: 'right' }}>{c}</Text>)}
+            {personal.address && <Text style={{ fontSize: 9, color: '#555', textAlign: 'right', lineHeight: 1.4 }}>{personal.address}</Text>}
+            {[linkedin, github, portfolio].filter(Boolean).map((c, i) => <Text key={i} style={{ fontSize: 8, color: primaryColor, textAlign: 'right' }}>{c}</Text>)}
           </View>
         </View>
         <View style={{ height: 2, backgroundColor: primaryColor, marginBottom: 4 }} />

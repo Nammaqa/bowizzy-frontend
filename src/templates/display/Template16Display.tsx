@@ -17,6 +17,7 @@ const htmlToLines = (s?: string) => {
     const text = String(s)
       .replace(/<\/p>|<\/li>/gi, '\n')
       .replace(/<br\s*\/?>(?:\s*)/gi, '\n')
+      .replace(/<ul[^>]*>|<ol[^>]*>/gi, '\n')
       .replace(/<[^>]+>/g, '')
       .replace(/&nbsp;/g, ' ')
       .replace(/&amp;/g, '&');
@@ -168,9 +169,12 @@ const Template16Display: React.FC<Template16DisplayProps> = ({
                       />
                     )}
                     {p.rolesResponsibilities && (
-                      <div style={{ marginTop: 2, color: '#444', paddingLeft: 10 }}
-                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(p.rolesResponsibilities || '') }}
-                      />
+                      <div style={{ marginTop: 4, paddingLeft: 10 }}>
+                        <div style={{ fontWeight: 700, fontSize: 11, color: primaryColor }}>Roles & Responsibilities:</div>
+                        <div style={{ marginTop: 2, color: '#444' }}
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(p.rolesResponsibilities || '') }}
+                        />
+                      </div>
                     )}
 
                   </div>

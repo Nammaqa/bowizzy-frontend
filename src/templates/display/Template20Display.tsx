@@ -15,6 +15,7 @@ const htmlToLines = (s?: string) => {
     const text = String(s)
       .replace(/<br\s*\/?/gi, '\n')
       .replace(/<\/p>|<\/li>/gi, '\n')
+      .replace(/<ul[^>]*>|<ol[^>]*>/gi, '\n')
       .replace(/<[^>]+>/g, '')
       .replace(/&nbsp;/g, ' ')
       .replace(/&amp;/g, '&');
@@ -65,6 +66,8 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
   };
 
   const contactItems = [personal.mobileNumber && `Phone: ${formatMobile(personal.mobileNumber)}`, personal.email && `Email: ${personal.email}`, personal.address && `Address: ${personal.address}`, skillsLinks && skillsLinks.links && skillsLinks.links.portfolioEnabled && skillsLinks.links.portfolioUrl && `Portfolio: ${skillsLinks.links.portfolioUrl}`].filter(Boolean);
+  const hasPreUniversity = Boolean(education.preUniversityEnabled && (education.preUniversity?.instituteName || education.preUniversity?.subjectStream || education.preUniversity?.boardType || education.preUniversity?.yearOfPassing || education.preUniversity?.result));
+  const hasSSLC = Boolean(education.sslcEnabled && (education.sslc?.instituteName || education.sslc?.boardType || education.sslc?.yearOfPassing || education.sslc?.result));
 
   return (
     <div style={{ width: '210mm', minHeight: '297mm', fontFamily: fontFamily, background: '#fff', padding: 24, boxSizing: 'border-box' }}>
@@ -171,12 +174,12 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
           </div>
         )}
 
-        {(education.higherEducation.some(edu => edu.enabled) || education.preUniversityEnabled || education.sslcEnabled) && (
+        {(education.higherEducation.some(edu => edu.enabled) || hasPreUniversity || hasSSLC) && (
           <div style={{ height: 1, background: '#ddd', margin: '12px 0' }} />
         )}
 
         {/* EDUCATION row */}
-        {(education.higherEducation.some(edu => edu.enabled) || education.preUniversityEnabled || education.sslcEnabled) && (
+        {(education.higherEducation.some(edu => edu.enabled) || hasPreUniversity || hasSSLC) && (
           <div style={{ display: 'flex', alignItems: 'flex-start' }}>
             <div
               style={{
@@ -214,7 +217,7 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
                 </div>
               ))}
 
-              {education.preUniversityEnabled && (
+              {hasPreUniversity && (
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 800, color: '#000' }}>{education.preUniversity.instituteName || 'Pre University'}</div>
@@ -227,7 +230,7 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
                 </div>
               )}
 
-              {education.sslcEnabled && (
+              {hasSSLC && (
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 800, color: '#000' }}>{education.sslc.instituteName || 'SSLC'}</div>

@@ -20,7 +20,7 @@ const styles = StyleSheet.create({
 const htmlToPlainText = (html?: string) => {
   if (!html) return '';
   const sanitized = DOMPurify.sanitize(html || '');
-  const withBreaks = sanitized.replace(/<br\s*\/?/gi, '\n').replace(/<\/p>|<\/li>/gi, '\n');
+  const withBreaks = sanitized.replace(/<br\s*\/?/gi, '\n').replace(/<\/p>|<\/li>/gi, '\n').replace(/<ul[^>]*>|<ol[^>]*>/gi, '\n');
   const decoded = withBreaks.replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
   try {
     if (typeof document !== 'undefined') {
@@ -69,6 +69,8 @@ const renderBulletedParagraph = (html?: string) => {
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/p>/gi, '\n')
     .replace(/<\/li>/gi, '\n')
+    .replace(/<ul[^>]*>/gi, '\n')
+    .replace(/<ol[^>]*>/gi, '\n')
     .replace(/<li[^>]*>/gi, '• ')
     .replace(/<p[^>]*>/gi, '')
     .replace(/<span[^>]*>/gi, '')
@@ -118,6 +120,8 @@ interface Template20PDFProps { data: ResumeData; primaryColor?: string; fontFami
 
 const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#111827', fontFamily = 'Times-Roman, serif' }) => {
   const { personal, experience, education, certifications, skillsLinks } = data;
+  const hasPreUniversity = Boolean(education.preUniversityEnabled && (education.preUniversity?.instituteName || education.preUniversity?.subjectStream || education.preUniversity?.boardType || education.preUniversity?.yearOfPassing || education.preUniversity?.result));
+  const hasSSLC = Boolean(education.sslcEnabled && (education.sslc?.instituteName || education.sslc?.boardType || education.sslc?.yearOfPassing || education.sslc?.result));
   const getPdfFontFamily = (cssFont?: string): string => {
     if (!cssFont) return 'Times-Roman';
     const fontLower = cssFont.toLowerCase();
@@ -241,7 +245,7 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
         )}
 
         {/* EDUCATION row */}
-        {(education.higherEducation.some(edu => edu.enabled) || education.preUniversityEnabled || education.sslcEnabled) && (
+        {(education.higherEducation.some(edu => edu.enabled) || hasPreUniversity || hasSSLC) && (
           <>
             <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 12, marginBottom: 12 }} />
             <View style={{ flexDirection: 'row' }}>
@@ -267,7 +271,7 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
                 ))}
 
                 {/* Pre University */}
-                {education.preUniversityEnabled && (
+                {hasPreUniversity && (
                   <View style={{ marginBottom: 12 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                       <Text>{education.preUniversity.instituteName || 'Pre University'}</Text>
@@ -281,7 +285,7 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
                 )}
 
                 {/* SSLC */}
-                {education.sslcEnabled && (
+                {hasSSLC && (
                   <View style={{ marginBottom: 12 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                       <Text>{education.sslc.instituteName || 'SSLC'}</Text>

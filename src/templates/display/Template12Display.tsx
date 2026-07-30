@@ -50,6 +50,8 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
         .replace(/<\/p>/gi, '\n')
         .replace(/<\/li>/gi, '\n')
         .replace(/<br\s*\/?>(?:\s*)/gi, '\n')
+        .replace(/<ul[^>]*>/gi, '\n')
+        .replace(/<ol[^>]*>/gi, '\n')
         .replace(/<li[^>]*>/gi, '• ')
         .replace(/<p[^>]*>/gi, '')
         .replace(/<span[^>]*>/gi, '')

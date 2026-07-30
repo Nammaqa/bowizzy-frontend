@@ -19,7 +19,7 @@ const styles = StyleSheet.create({
 const htmlToPlainText = (html?: string) => {
   if (!html) return '';
   const sanitized = DOMPurify.sanitize(html || '');
-  const withBreaks = sanitized.replace(/<br\s*\/?/gi, '\n').replace(/<\/p>|<\/li>/gi, '\n');
+  const withBreaks = sanitized.replace(/<br\s*\/?/gi, '\n').replace(/<\/p>|<\/li>/gi, '\n').replace(/<ul[^>]*>|<ol[^>]*>/gi, '\n');
   const decoded = withBreaks.replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
   try {
     if (typeof document !== 'undefined') {
@@ -99,6 +99,8 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
   const pdfFontFamilyBold = getPdfFontFamilyBold(fontFamily);
   const role = (experience && (experience as any).jobRole) || (experience.workExperiences && experience.workExperiences.find((w: any) => w.enabled && w.jobTitle) && experience.workExperiences.find((w: any) => w.enabled && w.jobTitle).jobTitle) || '';
   const contactLine = [personal.email, personal.mobileNumber, personal.address, personal.dateOfBirth].filter(Boolean).join(' | ');
+  const hasPreUniversity = Boolean(education.preUniversityEnabled && (education.preUniversity?.instituteName || education.preUniversity?.subjectStream || education.preUniversity?.boardType || education.preUniversity?.yearOfPassing || education.preUniversity?.result));
+  const hasSSLC = Boolean(education.sslcEnabled && (education.sslc?.instituteName || education.sslc?.boardType || education.sslc?.yearOfPassing || education.sslc?.result));
 
   return (
     <Document>
@@ -132,7 +134,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
                 <View style={{ marginTop: 8 }}>{(skillsLinks.skills || []).filter((s: any) => s.enabled && s.skillName).map((s: any, i: number) => (<Text key={i} style={{ marginBottom: 6 }}>• {s.skillName}</Text>))}</View>
               </>)}
 
-              {(education.higherEducation.some(edu => edu.enabled) || education.preUniversityEnabled || education.sslcEnabled) && (
+              {(education.higherEducation.some(edu => edu.enabled) || hasPreUniversity || hasSSLC) && (
                 <View style={{ marginTop: 12 }}>
                   <Text style={styles.sectionHeading}>Education</Text>
                   <View style={{ ...styles.divider, backgroundColor: '#999' }} />
@@ -147,7 +149,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
                     </View>
                   ))}
 
-                    {education.preUniversityEnabled && (
+                    {hasPreUniversity && (
                       <View style={{ marginBottom: 8 }}>
                         <Text style={{ fontSize: 10, fontFamily: 'Helvetica' }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
                         <Text style={{ color: '#151616', marginTop: 4 }}>Pre University (12th Standard){education.preUniversity.boardType ? ` — ${education.preUniversity.boardType}` : ''}{education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}</Text>
@@ -158,7 +160,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
                       </View>
                     )}
 
-                    {education.sslcEnabled && (
+                    {hasSSLC && (
                       <View style={{ marginBottom: 8 }}>
                         <Text style={{ fontSize: 10, fontFamily: 'Helvetica' }}>{education.sslc.instituteName || 'SSLC'}</Text>
                         <Text style={{ color: '#151616', marginTop: 4 }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</Text>

@@ -41,7 +41,7 @@ interface Template12PDFProps {
 const htmlToPlainText = (html?: string) => {
   if (!html) return '';
   const sanitized = DOMPurify.sanitize(html || '');
-  const withBreaks = sanitized.replace(/<br\s*\/?/gi, '\n').replace(/<\/p>|<\/li>/gi, '\n');
+  const withBreaks = sanitized.replace(/<br\s*\/?/gi, '\n').replace(/<\/p>|<\/li>/gi, '\n').replace(/<ul[^>]*>|<ol[^>]*>/gi, '\n');
   try {
     if (typeof document !== 'undefined') {
       const tmp = document.createElement('div');
@@ -86,6 +86,8 @@ const renderBulletedParagraph = (html?: string) => {
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/p>/gi, '\n')
     .replace(/<\/li>/gi, '\n')
+    .replace(/<ul[^>]*>/gi, '\n')
+    .replace(/<ol[^>]*>/gi, '\n')
     .replace(/<li[^>]*>/gi, '• ')
     .replace(/<p[^>]*>/gi, '')
     .replace(/<span[^>]*>/gi, '')
