@@ -40,44 +40,43 @@ export default function ParsingSteps() {
   };
 
   useEffect(() => {
-  const uploadSuccess = location.state?.uploadSuccess;
+    const uploadSuccess = location.state?.uploadSuccess;
 
-  // Step-1: Uploading status
-  setSteps(prev =>
-    prev.map((s, i) =>
-      i === 0 
-        ? { ...s, completed: uploadSuccess, failed: !uploadSuccess } 
-        : s
-    )
-  );
+    // Step-1: Uploading status
+    setSteps(prev =>
+      prev.map((s, i) =>
+        i === 0
+          ? { ...s, completed: uploadSuccess, failed: !uploadSuccess }
+          : s
+      )
+    );
 
-  if (!uploadSuccess) {
-    setParsingError(" Resume upload failed — resume not accepted by server.");
-    return; 
-  }
+    if (!uploadSuccess) {
+      setParsingError(" Resume upload failed — resume not accepted by server.");
+      return;
+    }
 
-  // Continue previous parsing animation...
-  const interval = setInterval(() => {
-    setCurrentStepIndex(prev => {
-      const next = prev + 1;
-      if (next < steps.length) {
-        setSteps(prevSteps =>
-          prevSteps.map((step, i) =>
-            i === next ? { ...step, completed: true } : step
-          )
-        );
-        return next;
-      } else {
-        clearInterval(interval);
-        navigate("/profile/form");
-      }
-      return prev;
-    });
-  }, 800);
+    // Continue previous parsing animation...
+    const interval = setInterval(() => {
+      setCurrentStepIndex(prev => {
+        const next = prev + 1;
+        if (next < steps.length) {
+          setSteps(prevSteps =>
+            prevSteps.map((step, i) =>
+              i === next ? { ...step, completed: true } : step
+            )
+          );
+          return next;
+        } else {
+          clearInterval(interval);
+          navigate("/profile/form");
+        }
+        return prev;
+      });
+    }, 800);
 
-  return () => clearInterval(interval);
-}, []);
-
+    return () => clearInterval(interval);
+  }, []);
 
   const handleRetry = () => {
     // Reset state and try again
@@ -93,9 +92,9 @@ export default function ParsingSteps() {
     <div className="flex flex-col h-screen overflow-hidden font-['Baloo_2']">
       <DashNav heading="Profile" />
 
-      <div className="flex-1 bg-gray-50 overflow-hidden">
-        <div className="bg-white rounded-lg m-3 md:m-5 h-[calc(100vh-110px)] flex flex-col overflow-hidden hide-scrollbar">
-          <div className="flex-1 max-w-2xl mx-auto px-4 sm:px-6 md:px-8 flex flex-col justify-center py-6 overflow-auto hide-scrollbar">
+      <div className="flex-1 bg-gray-50 overflow-hidden min-h-0">
+        <div className="bg-white rounded-lg m-3 md:m-5 h-[calc(100vh-110px)] flex flex-col overflow-hidden">
+          <div className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 md:px-8 flex flex-col justify-center py-6 overflow-y-auto min-h-0 hide-scrollbar">
             <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 mb-3 text-center">
               {parsingError ? "Processing Failed" : "Processing Your Resume"}
             </h1>
@@ -121,12 +120,12 @@ export default function ParsingSteps() {
               </div>
             )}
 
-            {/* Steps List */}
-            <div className="space-y-2 mb-6">
+            {/* Steps List — 1 column on small screens, 2 columns from sm breakpoint up */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 mb-6">
               {steps.map((step, index) => (
                 <div
                   key={step.id}
-                  className="flex items-center gap-2.5 py-1.5 px-2 sm:px-0"
+                  className="flex items-center gap-2.5 py-1.5 px-2 sm:px-0 min-w-0"
                 >
                   {/* Status Indicator */}
                   <div
@@ -149,7 +148,7 @@ export default function ParsingSteps() {
 
                   {/* Label */}
                   <span
-                    className={`text-xs sm:text-sm font-normal transition-colors duration-300 flex-1 ${
+                    className={`text-xs sm:text-sm font-normal transition-colors duration-300 flex-1 truncate ${
                       step.failed
                         ? "text-red-600 font-medium"
                         : index === currentStepIndex
@@ -162,7 +161,7 @@ export default function ParsingSteps() {
 
                   {/* Loading spinner for current step */}
                   {index === currentStepIndex && !step.completed && !step.failed && (
-                    <div className="ml-auto">
+                    <div className="flex-shrink-0">
                       <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 border-2 border-orange-400 border-t-transparent rounded-full animate-spin"></div>
                     </div>
                   )}
