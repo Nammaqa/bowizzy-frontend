@@ -48,6 +48,13 @@ const RESULT_FORMATS: { label: string; value: string }[] = [
   { label: "Percentage", value: "percentage" },
 ];
 
+// School-level records have no degree or field of study — those only apply to
+// higher education, so the inputs are hidden for these types.
+const SCHOOL_EDUCATION_TYPES = ["sslc", "puc"];
+
+const isSchoolEducation = (educationType?: string) =>
+  SCHOOL_EDUCATION_TYPES.includes((educationType || "").toLowerCase());
+
 const fieldClass =
   "w-full text-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400 bg-white placeholder-gray-400 transition disabled:bg-gray-100 disabled:text-gray-400";
 const itemClass = "flex flex-col gap-2.5 p-3.5 rounded-xl border border-gray-100 bg-gray-50/60";
@@ -594,22 +601,24 @@ export default function JdResumeFlow({ sessionId, token, onComplete }: JdResumeF
                   onChange={(e) => updateEducation(i, { institution_name: e.target.value })}
                 />
               </Field>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Degree">
-                  <input
-                    className={fieldClass}
-                    value={edu.degree || ""}
-                    onChange={(e) => updateEducation(i, { degree: e.target.value })}
-                  />
-                </Field>
-                <Field label="Field of Study">
-                  <input
-                    className={fieldClass}
-                    value={edu.field_of_study || ""}
-                    onChange={(e) => updateEducation(i, { field_of_study: e.target.value })}
-                  />
-                </Field>
-              </div>
+              {!isSchoolEducation(edu.education_type) && (
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Degree">
+                    <input
+                      className={fieldClass}
+                      value={edu.degree || ""}
+                      onChange={(e) => updateEducation(i, { degree: e.target.value })}
+                    />
+                  </Field>
+                  <Field label="Field of Study">
+                    <input
+                      className={fieldClass}
+                      value={edu.field_of_study || ""}
+                      onChange={(e) => updateEducation(i, { field_of_study: e.target.value })}
+                    />
+                  </Field>
+                </div>
+              )}
               <Field label="University Name">
                 <input
                   className={fieldClass}
