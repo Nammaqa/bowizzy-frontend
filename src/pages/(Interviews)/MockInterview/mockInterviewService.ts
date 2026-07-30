@@ -332,6 +332,17 @@ export const fetchAvailableMockInterviews = async (
   return response.data;
 };
 
+export const deletePendingMockInterviewBooking = async (
+  userId: string | number,
+  token: string
+) => {
+  const response = await api.delete(
+    `/users/${userId}/mock-interview/bookings/delete-pending`,
+    authHeaders(token)
+  );
+  return response.data;
+};
+
 export const confirmMockInterviewCreditBooking = async (
   userId: string | number,
   token: string,

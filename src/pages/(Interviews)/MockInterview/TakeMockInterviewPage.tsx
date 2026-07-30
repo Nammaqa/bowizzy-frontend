@@ -9,6 +9,7 @@ import api from "@/api";
 import { jobRoleGroups } from "./mockInterviewOptions";
 import {
   createMockInterviewBooking,
+  deletePendingMockInterviewBooking,
   getMockInterviewBookingSlots,
   getMockInterviewUserType,
   isInterviewerUserResponse,
@@ -229,7 +230,6 @@ const TakeMockInterviewPage = () => {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [newSkill, setNewSkill] = useState("");
   const [skillError, setSkillError] = useState("");
-  const [loadingProfileSkills, setLoadingProfileSkills] = useState(false);
   const [skillImportError, setSkillImportError] = useState("");
   const [savedResumes, setSavedResumes] = useState<SavedResume[]>([]);
   const [loadingResumes, setLoadingResumes] = useState(false);
@@ -309,7 +309,6 @@ const TakeMockInterviewPage = () => {
       const { userId, token } = getAuthUser();
       if (!userId || !token) return;
 
-      setLoadingProfileSkills(true);
       setSkillImportError("");
       const response = await api.get(`/users/${userId}/skills`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -328,8 +327,6 @@ const TakeMockInterviewPage = () => {
           error?.message ||
           "Unable to import skills from your profile right now."
       );
-    } finally {
-      setLoadingProfileSkills(false);
     }
   };
 
@@ -638,6 +635,14 @@ const TakeMockInterviewPage = () => {
 
       await loadRazorpayScript();
 
+      const cleanupPendingBooking = async () => {
+        try {
+          await deletePendingMockInterviewBooking(userId, token);
+        } catch {
+          // Best-effort cleanup — surfacing the payment error takes priority.
+        }
+      };
+
       const options = {
         key: razorKey,
         amount: orderAmount < 1000 ? Math.round(finalPriceINR * 100) : orderAmount,
@@ -645,7 +650,12 @@ const TakeMockInterviewPage = () => {
         name: "Bowizzy",
         description: "Mock Interview Booking",
         order_id: orderId,
-        modal: { ondismiss: () => setPaying(false) },
+        modal: {
+          ondismiss: () => {
+            setPaying(false);
+            void cleanupPendingBooking();
+          },
+        },
         handler: async (response: any) => {
           try {
             await verifyMockInterviewPayment(userId, token, {
@@ -682,6 +692,7 @@ const TakeMockInterviewPage = () => {
         razorpay.on("payment.failed", () => {
           setPaymentError("Payment failed or was cancelled.");
           setPaying(false);
+          void cleanupPendingBooking();
         });
       }
       razorpay.open();
@@ -896,20 +907,11 @@ const TakeMockInterviewPage = () => {
             </section>
 
             <section className="rounded-3xl bg-white p-6 shadow-sm">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <h2 className="text-xl font-bold text-[#2F2F2F]">4. Skills</h2>
-                  <p className="mt-1 text-sm text-[#777777]">
-                    Add skills manually, or import the skills saved in your profile.
-                  </p>
-                </div>
-                {/* <button
-                  onClick={importProfileSkills}
-                  disabled={loadingProfileSkills}
-                  className="inline-flex items-center justify-center rounded-xl border border-[#F26D3A] px-4 py-3 text-sm font-semibold text-[#F26D3A] transition hover:bg-[#FFF0E3] disabled:cursor-not-allowed disabled:border-[#D9D9D9] disabled:text-[#AAAAAA]"
-                >
-                  {loadingProfileSkills ? "Importing..." : "Import profile skills"}
-                </button> */}
+              <div>
+                <h2 className="text-xl font-bold text-[#2F2F2F]">4. Skills</h2>
+                <p className="mt-1 text-sm text-[#777777]">
+                  Add skills manually. Skills saved in your profile are imported automatically.
+                </p>
               </div>
 
               <div className="mt-4 flex gap-2">
