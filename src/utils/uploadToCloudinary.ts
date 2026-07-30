@@ -1,3 +1,20 @@
+/**
+ * Cloudinary answers failures with a 4xx/5xx and an `error` body rather than a
+ * `secure_url`. Without this guard the caller silently receives
+ * `{ url: undefined }` and appears to "upload" an image that never existed.
+ */
+const readUploadResponse = async (res: Response) => {
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok || !data?.secure_url) {
+    throw new Error(
+      data?.error?.message || `Cloudinary upload failed (${res.status})`
+    );
+  }
+
+  return data;
+};
+
 export const uploadToCloudinary = async (file: File) => {
   const cloudName = (import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string) || undefined;
   const apiKey = (import.meta.env.VITE_CLOUDINARY_API_KEY as string) || undefined;
@@ -38,7 +55,7 @@ export const uploadToCloudinary = async (file: File) => {
       body: formData,
     });
 
-    const data = await res.json();
+    const data = await readUploadResponse(res);
     return {
       url: data.secure_url,
       publicId: data.public_id,
@@ -55,7 +72,7 @@ export const uploadToCloudinary = async (file: File) => {
     body: fd,
   });
 
-  const data = await res.json();
+  const data = await readUploadResponse(res);
   return {
     url: data.secure_url,
     publicId: data.public_id,

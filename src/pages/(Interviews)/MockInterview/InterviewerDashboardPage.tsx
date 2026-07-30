@@ -62,6 +62,24 @@ const calculateWorkingMonths = (experiences: any[]) =>
     );
   }, 0);
 
+// Months stay the unit of record (the interview search API expects
+// experience_months) — this is display only.
+const formatExperienceDuration = (totalMonths?: number | string | null) => {
+  const months = Math.max(0, Math.round(Number(totalMonths) || 0));
+  if (months === 0) return "0 months";
+
+  const years = Math.floor(months / 12);
+  const remainingMonths = months % 12;
+  const parts: string[] = [];
+
+  if (years > 0) parts.push(`${years} ${years === 1 ? "year" : "years"}`);
+  if (remainingMonths > 0) {
+    parts.push(`${remainingMonths} ${remainingMonths === 1 ? "month" : "months"}`);
+  }
+
+  return parts.join(" ");
+};
+
 const formatIndianDateTime = (value?: string) => {
   if (!value) return "Not scheduled";
 
@@ -833,10 +851,10 @@ const InterviewerDashboardPage = () => {
                   </div>
                   <div className="rounded-xl bg-white p-3">
                     <p className="text-[11px] font-semibold uppercase text-[#777777]">
-                      Working months
+                      Experience
                     </p>
                     <p className="mt-1 text-sm font-bold text-[#2F2F2F]">
-                      {workingMonths}
+                      {formatExperienceDuration(workingMonths)}
                     </p>
                   </div>
                   <div className="rounded-xl bg-white p-3">
@@ -940,7 +958,7 @@ const InterviewerDashboardPage = () => {
                     Experience
                   </p>
                   <p className="mt-2 text-xl font-bold text-[#2F2F2F]">
-                    {selectedInterview?.experience_months ?? 0} months
+                    {formatExperienceDuration(selectedInterview?.experience_months)}
                   </p>
                 </div>
                 <div className="rounded-2xl border border-[#EFEFEF] bg-[#FAFAFA] p-4 sm:col-span-2">
