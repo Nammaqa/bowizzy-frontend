@@ -23,6 +23,10 @@ import {
   Image,
   PenTool,
   Link2,
+  Phone,
+  Award,
+  Trophy,
+  Languages,
 } from "lucide-react";
 import RichTextEditor from "./RichTextEditor";
 import ImageCropModal from "./ImageCropModal";
@@ -63,6 +67,18 @@ interface CaseStudy {
   role: string;
 }
 
+interface Certification {
+  name: string;
+  issuer: string;
+  year: string;
+  link?: string;
+}
+
+interface Achievement {
+  title: string;
+  description: string;
+}
+
 interface UploadedAsset {
   url: string;
   publicId?: string | null;
@@ -94,6 +110,8 @@ export interface PortfolioEditorComponentProps {
   onProfileImageRemoved?: () => Promise<void>;
   email: string;
   setEmail: (val: string) => void;
+  phone: string;
+  setPhone: (val: string) => void;
   themeColor: string;
   setThemeColor: (val: string) => void;
   backgroundColor: string;
@@ -117,6 +135,12 @@ export interface PortfolioEditorComponentProps {
   setExperiences: React.Dispatch<React.SetStateAction<Experience[]>>;
   skills: string[];
   setSkills: React.Dispatch<React.SetStateAction<string[]>>;
+  certifications: Certification[];
+  setCertifications: React.Dispatch<React.SetStateAction<Certification[]>>;
+  languages: string[];
+  setLanguages: React.Dispatch<React.SetStateAction<string[]>>;
+  achievements: Achievement[];
+  setAchievements: React.Dispatch<React.SetStateAction<Achievement[]>>;
 
   onSave: () => void;
   saving: boolean;
@@ -153,6 +177,8 @@ export default function PortfolioEditorComponent({
   onProfileImageRemoved,
   email,
   setEmail,
+  phone,
+  setPhone,
   themeColor,
   setThemeColor,
   backgroundColor,
@@ -175,6 +201,12 @@ export default function PortfolioEditorComponent({
   setExperiences,
   skills,
   setSkills,
+  certifications,
+  setCertifications,
+  languages,
+  setLanguages,
+  achievements,
+  setAchievements,
   onSave,
   saving,
   success,
@@ -185,6 +217,7 @@ export default function PortfolioEditorComponent({
   importSuccess = false,
 }: PortfolioEditorComponentProps) {
   const [newSkill, setNewSkill] = useState("");
+  const [newLanguage, setNewLanguage] = useState("");
   const [removingProfileImage, setRemovingProfileImage] = useState(false);
   const [removingCv, setRemovingCv] = useState(false);
   const [removingCaseStudyImageIndex, setRemovingCaseStudyImageIndex] = useState<number | null>(null);
@@ -288,6 +321,12 @@ export default function PortfolioEditorComponent({
   const caseStudySubtitleMax = 250;
   const caseStudyDescriptionMax = 500;
   const experienceTextMax = 80;
+  const phoneMax = 20;
+  const languageMax = 50;
+  const certificationNameMax = 100;
+  const certificationIssuerMax = 100;
+  const achievementTitleMax = 100;
+  const achievementDescriptionMax = 250;
   const maxImageSizeBytes = 5 * 1024 * 1024;
   const allowedImageTypes = ["image/png", "image/jpeg", "image/webp"];
   const mmYYYYRegex = /^(0[1-9]|1[0-2])-\d{4}$/;
@@ -468,6 +507,49 @@ export default function PortfolioEditorComponent({
 
   const handleRemoveSkill = (skillName: string) => {
     setSkills(skills.filter((s) => s !== skillName));
+  };
+
+  // Languages helpers
+  const handleAddLanguage = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = newLanguage.trim();
+    if (!trimmed) return;
+    setLanguages([...languages, trimmed]);
+    setNewLanguage("");
+  };
+
+  const handleRemoveLanguage = (languageName: string) => {
+    setLanguages(languages.filter((l) => l !== languageName));
+  };
+
+  // Certifications helpers
+  const handleAddCertification = () => {
+    setCertifications([...certifications, { name: "", issuer: "", year: "" }]);
+  };
+
+  const handleUpdateCertification = (index: number, field: keyof Certification, val: string) => {
+    const updated = [...certifications];
+    updated[index] = { ...updated[index], [field]: val };
+    setCertifications(updated);
+  };
+
+  const handleRemoveCertification = (index: number) => {
+    setCertifications(certifications.filter((_, i) => i !== index));
+  };
+
+  // Achievements helpers
+  const handleAddAchievement = () => {
+    setAchievements([...achievements, { title: "", description: "" }]);
+  };
+
+  const handleUpdateAchievement = (index: number, field: keyof Achievement, val: string) => {
+    const updated = [...achievements];
+    updated[index] = { ...updated[index], [field]: val };
+    setAchievements(updated);
+  };
+
+  const handleRemoveAchievement = (index: number) => {
+    setAchievements(achievements.filter((_, i) => i !== index));
   };
 
   const handleAddProcessStep = () => {
@@ -917,6 +999,22 @@ export default function PortfolioEditorComponent({
           </div>
           <div>
             <label className="text-[10px] font-bold text-gray-400 flex items-center gap-1.5 mb-1.5 uppercase tracking-wider">
+              <Phone className="w-3.5 h-3.5 text-emerald-500" /> Contact Number
+            </label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value.replace(/[^0-9+\s()-]/g, "").slice(0, phoneMax))}
+              maxLength={phoneMax}
+              placeholder="+91 98765 43210"
+              className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-500 bg-white"
+            />
+            <div className="mt-1 text-[10px] text-gray-400 font-medium">
+              {phone.length}/{phoneMax}
+            </div>
+          </div>
+          <div>
+            <label className="text-[10px] font-bold text-gray-400 flex items-center gap-1.5 mb-1.5 uppercase tracking-wider">
               <Github className="w-3.5 h-3.5 text-gray-600" /> GitHub URL
             </label>
             <input
@@ -1069,6 +1167,228 @@ export default function PortfolioEditorComponent({
             ))
           )}
         </div>
+      </div>
+
+      {/* Section: Languages */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+        <h2 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+          <Languages className="w-4 h-4 text-violet-500" />
+          Languages
+        </h2>
+        <form onSubmit={handleAddLanguage} className="flex gap-2">
+          <input
+            type="text"
+            value={newLanguage}
+            onChange={(e) => setNewLanguage(e.target.value)}
+            placeholder="e.g. English, Hindi, Kannada"
+            maxLength={languageMax}
+            className="flex-1 text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+          />
+          <button
+            type="submit"
+            className="px-4 py-2 bg-gray-800 text-white rounded-lg text-xs font-bold hover:bg-gray-900 transition flex items-center gap-1 cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Add
+          </button>
+        </form>
+        <div className="flex flex-wrap gap-2 pt-1">
+          {languages.length === 0 ? (
+            <span className="text-xs text-gray-400">No languages added yet.</span>
+          ) : (
+            languages.map((l, idx) => (
+              <span
+                key={idx}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-red-50 hover:text-red-600 transition duration-150 cursor-pointer"
+                onClick={() => handleRemoveLanguage(l)}
+                title="Click to remove"
+              >
+                {l} <X className="w-3 h-3 text-gray-400 hover:text-red-500 shrink-0" />
+              </span>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Section: Certifications */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+            <Award className="w-4 h-4 text-violet-500" />
+            Certifications
+          </h2>
+          <button
+            onClick={handleAddCertification}
+            className="inline-flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 font-bold transition cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" /> Add Certification
+          </button>
+        </div>
+
+        {certifications.length === 0 ? (
+          <div className="text-center py-6 border border-dashed border-gray-200 rounded-xl">
+            <p className="text-xs text-gray-400 font-medium">No certifications added yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {certifications.map((cert, idx) => (
+              <div key={idx} className="p-4 border border-gray-150 rounded-xl space-y-3 relative">
+                <button
+                  onClick={() => handleRemoveCertification(idx)}
+                  className="absolute top-4 right-4 p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition cursor-pointer"
+                  title="Remove certification"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+
+                <div className="pr-8">
+                  <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
+                    Certification Name
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={certificationNameMax}
+                    value={cert.name}
+                    onChange={(e) => handleUpdateCertification(idx, "name", e.target.value)}
+                    placeholder="e.g. AWS Certified Solutions Architect"
+                    className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+                  />
+                  <div className="mt-1 text-[10px] text-gray-400 font-medium">
+                    {cert.name.length}/{certificationNameMax}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
+                      Issued By
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={certificationIssuerMax}
+                      value={cert.issuer}
+                      onChange={(e) => handleUpdateCertification(idx, "issuer", e.target.value)}
+                      placeholder="e.g. Amazon Web Services"
+                      className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+                    />
+                    <div className="mt-1 text-[10px] text-gray-400 font-medium">
+                      {cert.issuer.length}/{certificationIssuerMax}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
+                      Year
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={4}
+                      value={cert.year}
+                      onChange={(e) =>
+                        handleUpdateCertification(idx, "year", e.target.value.replace(/\D/g, "").slice(0, 4))
+                      }
+                      placeholder="e.g. 2024"
+                      className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
+                    Certification URL
+                  </label>
+                  <input
+                    type="url"
+                    value={cert.link || ""}
+                    onChange={(e) => handleUpdateCertification(idx, "link", e.target.value)}
+                    maxLength={linkMax}
+                    onBlur={() => {
+                      const trimmed = (cert.link || "").trim();
+                      if (trimmed && !/^https?:\/\//i.test(trimmed)) {
+                        handleUpdateCertification(idx, "link", `https://${trimmed}`);
+                      }
+                    }}
+                    placeholder="https://credential.example.com/..."
+                    className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+                  />
+                  <div className="mt-1 text-[10px] text-gray-400 font-medium">
+                    Link to the credential or verification page
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Section: Achievements */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+            <Trophy className="w-4 h-4 text-violet-500" />
+            Achievements
+          </h2>
+          <button
+            onClick={handleAddAchievement}
+            className="inline-flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 font-bold transition cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" /> Add Achievement
+          </button>
+        </div>
+
+        {achievements.length === 0 ? (
+          <div className="text-center py-6 border border-dashed border-gray-200 rounded-xl">
+            <p className="text-xs text-gray-400 font-medium">No achievements added yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {achievements.map((achievement, idx) => (
+              <div key={idx} className="p-4 border border-gray-150 rounded-xl space-y-3 relative">
+                <button
+                  onClick={() => handleRemoveAchievement(idx)}
+                  className="absolute top-4 right-4 p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition cursor-pointer"
+                  title="Remove achievement"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+
+                <div className="pr-8">
+                  <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
+                    Achievement Title
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={achievementTitleMax}
+                    value={achievement.title}
+                    onChange={(e) => handleUpdateAchievement(idx, "title", e.target.value)}
+                    placeholder="e.g. Winner, National Hackathon 2024"
+                    className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+                  />
+                  <div className="mt-1 text-[10px] text-gray-400 font-medium">
+                    {achievement.title.length}/{achievementTitleMax}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase tracking-wider">
+                    Description
+                  </label>
+                  <textarea
+                    maxLength={achievementDescriptionMax}
+                    value={achievement.description}
+                    onChange={(e) => handleUpdateAchievement(idx, "description", e.target.value)}
+                    placeholder="What did you accomplish, and why does it matter?"
+                    rows={3}
+                    className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 resize-y"
+                  />
+                  <div className="mt-1 text-[10px] text-gray-400 font-medium">
+                    {achievement.description.length}/{achievementDescriptionMax}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {portfolioType === "designer" && (

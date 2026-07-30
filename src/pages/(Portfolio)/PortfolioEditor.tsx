@@ -43,6 +43,18 @@ interface CaseStudy {
   role: string;
 }
 
+interface Certification {
+  name: string;
+  issuer: string;
+  year: string;
+  link?: string;
+}
+
+interface Achievement {
+  title: string;
+  description: string;
+}
+
 interface UploadedAsset {
   url: string;
   publicId?: string | null;
@@ -73,6 +85,7 @@ export default function PortfolioEditor() {
   const [profileImagePublicId, setProfileImagePublicId] = useState("");
   const [profileImageDeleteToken, setProfileImageDeleteToken] = useState<string | null>(null);
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [themeColor, setThemeColor] = useState("#4f46e5");
   const [backgroundColor, setBackgroundColor] = useState("#0a0f1e");
   const [behanceUrl, setBehanceUrl] = useState("");
@@ -81,6 +94,9 @@ export default function PortfolioEditor() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [skills, setSkills] = useState<string[]>([]);
+  const [certifications, setCertifications] = useState<Certification[]>([]);
+  const [languages, setLanguages] = useState<string[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [designProcess, setDesignProcess] = useState<DesignProcessStep[]>([]);
   const [caseStudies, setCaseStudies] = useState<CaseStudy[]>([]);
 
@@ -176,6 +192,7 @@ export default function PortfolioEditor() {
                 setProfileImagePublicId(cfg.profileImagePublicId || "");
                 setProfileImageDeleteToken(cfg.profileImageDeleteToken || null);
                 setEmail(cfg.email || "");
+                setPhone(cfg.phone || "");
                 setThemeColor(cfg.themeColor || cfgTheme.themeColor);
                 setBackgroundColor(cfg.backgroundColor || cfgTheme.backgroundColor);
                 setBehanceUrl(cfg.behanceUrl || "");
@@ -183,6 +200,9 @@ export default function PortfolioEditor() {
                 setProjects(Array.isArray(cfg.projects) ? cfg.projects : []);
                 setExperiences(Array.isArray(cfg.experiences) ? cfg.experiences : []);
                 setSkills(Array.isArray(cfg.skills) ? cfg.skills : []);
+                setCertifications(Array.isArray(cfg.certifications) ? cfg.certifications : []);
+                setLanguages(Array.isArray(cfg.languages) ? cfg.languages : []);
+                setAchievements(Array.isArray(cfg.achievements) ? cfg.achievements : []);
                 if (Array.isArray(cfg.designProcess)) setDesignProcess(cfg.designProcess);
                 setCaseStudies(Array.isArray(cfg.caseStudies) ? cfg.caseStudies : []);
               }
@@ -378,6 +398,15 @@ export default function PortfolioEditor() {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
   };
 
+  const isValidPhone = (value: string): boolean => {
+    const trimmed = value.trim();
+    if (!trimmed) return true;
+    if (trimmed.length > 20) return false;
+    if (!/^[0-9+\s()-]+$/.test(trimmed)) return false;
+    const digitCount = trimmed.replace(/\D/g, "").length;
+    return digitCount >= 7 && digitCount <= 15;
+  };
+
   const getPlainText = (html: string) => {
     if (!html) return "";
     return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
@@ -457,6 +486,7 @@ export default function PortfolioEditor() {
       profileImagePublicId,
       profileImageDeleteToken,
       email: email,
+      phone: phone,
       themeColor: themeColor,
       backgroundColor: backgroundColor,
       behanceUrl: behanceUrl,
@@ -466,6 +496,9 @@ export default function PortfolioEditor() {
       projects: projects,
       experiences: normalizedExperiences,
       skills: skills,
+      certifications: certifications,
+      languages: languages,
+      achievements: achievements,
       ...overrides,
     };
   };
@@ -677,6 +710,47 @@ export default function PortfolioEditor() {
       return;
     }
 
+    if (!isValidPhone(phone)) {
+      alert("Please enter a valid contact number with 7 to 15 digits.");
+      return;
+    }
+
+    const invalidCertification = certifications.find(
+      (cert) =>
+        cert.name.trim().length > 100 ||
+        cert.issuer.trim().length > 100 ||
+        (cert.year.trim() && !/^\d{4}$/.test(cert.year.trim()))
+    );
+    if (invalidCertification) {
+      alert("Certification name and issuer must be 100 characters or less, and the year must be a 4-digit year.");
+      return;
+    }
+
+    const invalidCertificationUrl = certifications.find((cert) => {
+      const trimmed = (cert.link || "").trim();
+      if (!trimmed) return false;
+      return trimmed.length > linkMaxLength || !isValidUrl(trimmed);
+    });
+    if (invalidCertificationUrl) {
+      alert("Please enter a valid certification URL under 100 characters.");
+      return;
+    }
+
+    const invalidAchievement = achievements.find(
+      (achievement) =>
+        achievement.title.trim().length > 100 || achievement.description.trim().length > 250
+    );
+    if (invalidAchievement) {
+      alert("Each achievement must have a title of 100 characters or less and a description of 250 characters or less.");
+      return;
+    }
+
+    const invalidLanguage = languages.find((language) => language.trim().length > 50);
+    if (invalidLanguage) {
+      alert("Each language must be 50 characters or less.");
+      return;
+    }
+
     const invalidStep = designProcess.find(
       (step) => step.title.trim().length > 100 || step.description.trim().length > 250
     );
@@ -810,6 +884,7 @@ export default function PortfolioEditor() {
         profileImagePublicId,
         profileImageDeleteToken,
         email: email,
+        phone: phone,
         themeColor: themeColor,
         backgroundColor: backgroundColor,
         behanceUrl: cleanBehance,
@@ -819,6 +894,9 @@ export default function PortfolioEditor() {
         projects: projects,
         experiences: normalizedExperiences,
         skills: skills,
+        certifications: certifications,
+        languages: languages,
+        achievements: achievements,
       };
 
       // Call API to save/edit portfolio details
@@ -874,6 +952,7 @@ export default function PortfolioEditor() {
     profileImageUrl,
     avatarUrl: profileImageUrl,
     email,
+    phone,
     themeColor,
     backgroundColor,
     behanceUrl,
@@ -883,6 +962,9 @@ export default function PortfolioEditor() {
     projects,
     experiences,
     skills,
+    certifications,
+    languages,
+    achievements,
   };
 
   return (
@@ -923,6 +1005,8 @@ export default function PortfolioEditor() {
             onProfileImageRemoved={handleProfileImageRemoved}
             email={email}
             setEmail={setEmail}
+            phone={phone}
+            setPhone={setPhone}
             themeColor={themeColor}
             setThemeColor={setThemeColor}
             backgroundColor={backgroundColor}
@@ -945,6 +1029,12 @@ export default function PortfolioEditor() {
             setExperiences={setExperiences}
             skills={skills}
             setSkills={setSkills}
+            certifications={certifications}
+            setCertifications={setCertifications}
+            languages={languages}
+            setLanguages={setLanguages}
+            achievements={achievements}
+            setAchievements={setAchievements}
             onSave={handleSave}
             saving={saving}
             success={success}

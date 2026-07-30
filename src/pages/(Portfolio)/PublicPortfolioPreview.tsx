@@ -24,9 +24,13 @@ const EMPTY_DATA: PortfolioData = {
   avatarUrl: "",
   cvUrl: "",
   email: "",
+  phone: "",
   projects: [],
   experiences: [],
   skills: [],
+  certifications: [],
+  languages: [],
+  achievements: [],
 };
 
 function parseMaybeJson(value: any) {
@@ -60,6 +64,7 @@ function mapToPreviewData(found: PortfolioRecord): PortfolioData {
     avatarUrl: cfg.profileImageUrl || "",
     cvUrl: cfg.cvUrl || "",
     email: cfg.email || "",
+    phone: cfg.phone || "",
     themeColor: cfg.themeColor || defaultTheme.themeColor,
     backgroundColor: cfg.backgroundColor || defaultTheme.backgroundColor,
     behanceUrl: cfg.behanceUrl || "",
@@ -69,6 +74,9 @@ function mapToPreviewData(found: PortfolioRecord): PortfolioData {
     projects: Array.isArray(cfg.projects) ? cfg.projects : [],
     experiences: Array.isArray(cfg.experiences) ? cfg.experiences : [],
     skills: Array.isArray(cfg.skills) ? cfg.skills : [],
+    certifications: Array.isArray(cfg.certifications) ? cfg.certifications : [],
+    languages: Array.isArray(cfg.languages) ? cfg.languages : [],
+    achievements: Array.isArray(cfg.achievements) ? cfg.achievements : [],
   };
 }
 

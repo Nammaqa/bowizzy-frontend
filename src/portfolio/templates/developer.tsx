@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   Github, Linkedin, Twitter, ExternalLink, Briefcase,
-  Code2, Mail, Globe, Rocket, ChevronRight, ArrowUpRight, Sparkles, Download
+  Code2, Mail, Globe, Rocket, ChevronRight, ArrowUpRight, Sparkles, Download,
+  Phone, Award, Trophy, Languages
 } from "lucide-react";
 import { formatPortfolioDuration } from "./dateFormat";
 
@@ -15,6 +16,7 @@ export interface PortfolioData {
   avatarUrl?: string; // Optional image URL — drives layout switch
   cvUrl?: string;
   email?: string;
+  phone?: string;
   tagline?: string;
   themeColor?: string;
   backgroundColor?: string;
@@ -38,6 +40,9 @@ export interface PortfolioData {
   }>;
   experiences: Array<{ role: string; company: string; startDate?: string; endDate?: string; duration: string; details: string }>;
   skills: string[];
+  certifications?: Array<{ name: string; issuer: string; year: string; link?: string }>;
+  languages?: string[];
+  achievements?: Array<{ title: string; description: string }>;
 }
 
 // ── Utility ────────────────────────────────────────────────────────────────
@@ -163,6 +168,75 @@ function SkillChip({ skill }: { skill: string }) {
     >
       <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "var(--accent-2)" }} />
       {skill}
+    </div>
+  );
+}
+
+function CertCard({ cert }: { cert: NonNullable<PortfolioData["certifications"]>[0] }) {
+  return (
+    <div
+      className="project-card rounded-2xl p-5 flex items-start gap-4 transition-all duration-250"
+      style={{ background: "var(--card-bg)", border: "0.5px solid var(--card-border)" }}
+    >
+      <div
+        className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+        style={{ background: "var(--accent-soft)", color: "var(--accent-2)" }}
+      >
+        <Award className="w-4 h-4" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold" style={{ color: "var(--card-text)" }}>
+          {cert.name}
+        </p>
+        {cert.issuer && (
+          <p className="text-xs mt-0.5" style={{ color: "var(--card-subtext)" }}>{cert.issuer}</p>
+        )}
+        {cert.year && (
+          <span className="inline-block text-xs mt-2 px-2.5 py-1 rounded-full"
+            style={{ color: "var(--exp-meta-text)", background: "var(--exp-meta-bg)", border: "0.5px solid var(--exp-meta-border)" }}>
+            {cert.year}
+          </span>
+        )}
+      </div>
+      {cert.link && (
+        <a href={cert.link} target="_blank" rel="noreferrer"
+          aria-label={`${cert.name || "Certification"} link`}
+          className="flex-shrink-0 transition-colors duration-200" style={{ color: "var(--card-subtext)" }}>
+          <ArrowUpRight className="w-4 h-4" />
+        </a>
+      )}
+    </div>
+  );
+}
+
+function AchievementCard({ achievement }: { achievement: NonNullable<PortfolioData["achievements"]>[0] }) {
+  return (
+    <div
+      className="exp-card py-6 flex gap-4 @sm:gap-5 transition-all duration-200"
+      style={{ borderBottom: "0.5px solid var(--card-border)" }}
+    >
+      <div
+        className="w-10 h-10 @sm:w-11 @sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+        style={{
+          background: "var(--accent-soft)",
+          border: "0.5px solid var(--border-soft)",
+          color: "var(--accent-2)",
+        }}
+      >
+        <Trophy className="w-4 h-4" />
+      </div>
+      <div className="flex-1 min-w-0">
+        {achievement.title && (
+          <p className="text-sm font-semibold" style={{ color: "var(--exp-title)" }}>
+            {achievement.title}
+          </p>
+        )}
+        {achievement.description && (
+          <p className={`text-xs leading-relaxed ${achievement.title ? "mt-2" : ""}`} style={{ color: "var(--exp-body)" }}>
+            {achievement.description}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -493,7 +567,14 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
     data.linkedinUrl ||
     data.customUrl ||
     data.twitterUrl ||
-    data.email
+    data.email ||
+    data.phone
+  );
+  // Blank rows (added in the editor but never filled in) must not light up a section heading.
+  const certifications = (data.certifications || []).filter((cert) => (cert.name || "").trim());
+  const languages = (data.languages || []).filter((language) => (language || "").trim());
+  const achievements = (data.achievements || []).filter(
+    (achievement) => (achievement.title || "").trim() || (achievement.description || "").trim()
   );
 
   return (
@@ -781,6 +862,48 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
         </div>
       </div>
 
+      {/* CERTIFICATIONS */}
+      {certifications.length > 0 && (
+        <div id="certifications" className="px-5 @sm:px-8 @md:px-10 py-12 @sm:py-16 max-w-4xl mx-auto"
+          style={{ borderBottom: "0.5px solid var(--border-soft)" }}>
+          <p className="text-xs tracking-widest uppercase mb-2" style={{ color: "var(--accent-2)" }}>What I've earned</p>
+          <h2 className="text-xl @sm:text-2xl font-semibold mb-1" style={{ letterSpacing: "-0.6px", color: "var(--text-primary)" }}>Certifications</h2>
+          <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>Credentials and courses I've completed</p>
+          <div className="projects-grid">
+            {certifications.map((cert, i) => <CertCard key={i} cert={cert} />)}
+          </div>
+        </div>
+      )}
+
+      {/* ACHIEVEMENTS */}
+      {achievements.length > 0 && (
+        <div id="achievements" className="px-5 @sm:px-8 @md:px-10 py-12 @sm:py-16 max-w-4xl mx-auto"
+          style={{ borderBottom: "0.5px solid var(--border-soft)" }}>
+          <p className="text-xs tracking-widest uppercase mb-2" style={{ color: "var(--accent-2)" }}>Highlights</p>
+          <h2 className="text-xl @sm:text-2xl font-semibold mb-1" style={{ letterSpacing: "-0.6px", color: "var(--text-primary)" }}>Achievements</h2>
+          <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>Recognition and milestones along the way</p>
+          <div>
+            {achievements.map((achievement, i) => <AchievementCard key={i} achievement={achievement} />)}
+          </div>
+        </div>
+      )}
+
+      {/* LANGUAGES */}
+      {languages.length > 0 && (
+        <div id="languages" className="px-5 @sm:px-8 @md:px-10 py-12 @sm:py-16 max-w-4xl mx-auto"
+          style={{ borderBottom: "0.5px solid var(--border-soft)" }}>
+          <p className="text-xs tracking-widest uppercase mb-2" style={{ color: "var(--accent-2)" }}>How I communicate</p>
+          <h2 className="text-xl @sm:text-2xl font-semibold mb-1 flex items-center gap-2" style={{ letterSpacing: "-0.6px", color: "var(--text-primary)" }}>
+            <Languages className="w-5 h-5" style={{ color: "var(--accent-2)" }} />
+            Languages
+          </h2>
+          <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>Languages I speak and work in</p>
+          <div className="flex flex-wrap gap-2 @sm:gap-2.5">
+            {languages.map((language, i) => <SkillChip key={i} skill={language} />)}
+          </div>
+        </div>
+      )}
+
       {/* CONTACT */}
       <div id="contact" className="px-5 @sm:px-8 @md:px-10 py-12 @sm:py-16 max-w-4xl mx-auto">
         <div className="rounded-2xl p-8 @sm:p-12 text-center"
@@ -796,6 +919,13 @@ export default function DeveloperPortfolio({ data }: { data: PortfolioData }) {
                   <a href={`mailto:${data.email}`}
                     className="cta-primary flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white no-underline transition-all duration-200">
                     <Mail className="w-4 h-4" /> Send an email
+                  </a>
+                )}
+                {data.phone && (
+                  <a href={`tel:${data.phone}`}
+                    className="cta-secondary flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium no-underline transition-all duration-200"
+                    style={{ background: "transparent", border: "0.5px solid var(--border-soft)", color: "var(--text-secondary)" }}>
+                    <Phone className="w-4 h-4" /> {data.phone}
                   </a>
                 )}
                 {data.linkedinUrl && (
