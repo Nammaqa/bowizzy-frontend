@@ -15,9 +15,26 @@ const MAX_COMPANY_NAME_LENGTH = 100;
 const MAX_JOB_TITLE_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 500;
 const MAX_JOB_ROLE_LENGTH = 100;
+const MAX_LOCATION_LENGTH = 100;
 
 // Sentinel value for the "Other" choice — never stored as an actual job role.
 const OTHER_JOB_ROLE = "__other__";
+
+// Same idea for the work experience location dropdown.
+const OTHER_LOCATION = "__other__";
+
+const LOCATION_OPTIONS = [
+  "Bangalore",
+  "Mumbai",
+  "Delhi",
+  "Hyderabad",
+  "Pune",
+  "Chennai",
+];
+
+// Anything saved that isn't one of the listed cities is treated as a custom entry.
+const isCustomLocationValue = (value: string) =>
+  !!value.trim() && !LOCATION_OPTIONS.includes(value);
 
 const JOB_ROLE_GROUPS: { label: string; roles: string[] }[] = [
   {
@@ -189,6 +206,9 @@ export default function ExperienceDetailsForm({
 
   const [workExperiences, setWorkExperiences] = useState<WorkExperience[]>(initialExperiences);
 
+  // Experience cards whose location was typed in manually via the "Other" option.
+  const [customLocationIds, setCustomLocationIds] = useState<Set<string>>(new Set());
+
   const [jobRoleChanged, setJobRoleChanged] = useState(false);
   const [jobRoleFeedback, setJobRoleFeedback] = useState("");
   const [experienceChanges, setExperienceChanges] = useState<Record<string, string[]>>({});
@@ -287,8 +307,8 @@ export default function ExperienceDetailsForm({
   const validateJobTitle = (value: string) => {
     if (!value.trim()) return "Job title is required";
     if (value.length > MAX_JOB_TITLE_LENGTH) return "Max 100 characters allowed";
-    const regex = /^[a-zA-Z0-9\s./-]+$/;
-    if (!regex.test(value)) return "Invalid job title";
+    // Special characters are allowed here — real titles look like
+    // "Sr. Engineer (Backend)", "R&D Specialist" or "C++ Developer".
     if (!/[a-zA-Z]/.test(value)) return "Job title must contain at least one letter";
     return "";
   };
@@ -537,6 +557,22 @@ export default function ExperienceDetailsForm({
     }
   };
 
+  const handleLocationChange = (index: number, id: string, value: string) => {
+    // "Other" swaps the dropdown for a free-text field the user fills in themselves.
+    if (value === OTHER_LOCATION) {
+      setCustomLocationIds((prev) => new Set(prev).add(id));
+      handleExperienceChange(index, "location", "");
+      return;
+    }
+
+    setCustomLocationIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    handleExperienceChange(index, "location", value);
+  };
+
   const handleSaveExperience = async (exp: WorkExperience) => {
     const isNew = !exp.experience_id;
     const expChanges = experienceChanges[exp.id];
@@ -709,6 +745,11 @@ export default function ExperienceDetailsForm({
       currentlyWorking: initialExperiencesRef.current[exp.id]?.currentlyWorking || false,
     };
     setWorkExperiences(updated);
+    setCustomLocationIds((prev) => {
+      const next = new Set(prev);
+      next.delete(exp.id);
+      return next;
+    });
     setExperienceChanges((prev) => {
       const updatedChanges = { ...prev };
       delete updatedChanges[exp.id];
@@ -803,6 +844,11 @@ export default function ExperienceDetailsForm({
     });
 
     delete initialExperiencesRef.current[id];
+    setCustomLocationIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
     setExperienceChanges((prev) => {
       const updated = { ...prev };
       delete updated[id];
@@ -906,6 +952,9 @@ export default function ExperienceDetailsForm({
   ) => {
     const changed = experienceChanges[experience.id]?.length > 0;
     const feedback = experienceFeedback[experience.id];
+    const isCustomLocation =
+      customLocationIds.has(experience.id) ||
+      isCustomLocationValue(experience.location);
 
     return (
       <div
@@ -1028,20 +1077,35 @@ export default function ExperienceDetailsForm({
                 </label>
                 <div className="relative">
                   <select
-                    value={experience.location}
-                    onChange={(e) => handleExperienceChange(index, "location", e.target.value)}
+                    value={isCustomLocation ? OTHER_LOCATION : experience.location}
+                    onChange={(e) =>
+                      handleLocationChange(index, experience.id, e.target.value)
+                    }
                     className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
                   >
                     <option value="">Select Location</option>
-                    <option value="Bangalore">Bangalore</option>
-                    <option value="Mumbai">Mumbai</option>
-                    <option value="Delhi">Delhi</option>
-                    <option value="Hyderabad">Hyderabad</option>
-                    <option value="Pune">Pune</option>
-                    <option value="Chennai">Chennai</option>
+                    {LOCATION_OPTIONS.map((city) => (
+                      <option key={city} value={city}>
+                        {city}
+                      </option>
+                    ))}
+                    <option value={OTHER_LOCATION}>Other</option>
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 </div>
+
+                {isCustomLocation && (
+                  <input
+                    type="text"
+                    value={experience.location}
+                    onChange={(e) =>
+                      handleExperienceChange(index, "location", e.target.value)
+                    }
+                    maxLength={MAX_LOCATION_LENGTH}
+                    placeholder="Enter Location"
+                    className="mt-2 w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm"
+                  />
+                )}
               </div>
 
               {/* Work Mode */}

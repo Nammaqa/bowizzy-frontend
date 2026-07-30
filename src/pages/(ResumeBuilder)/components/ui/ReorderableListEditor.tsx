@@ -7,8 +7,6 @@ interface ReorderableListEditorProps {
   placeholder?: string;
 }
 
-const MAX_ITEM_LENGTH = 200;
-
 const escapeHtml = (value: string) =>
   value
     .replace(/&/g, "&amp;")
@@ -21,8 +19,7 @@ const cleanListText = (value: string) =>
   value
     .replace(/^\s*([*-]|\u2022|\d+[.)])\s+/, "")
     .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, MAX_ITEM_LENGTH);
+    .trim();
 
 const parseListItems = (value: string): string[] => {
   if (!value) return [""];
@@ -93,16 +90,14 @@ export default function ReorderableListEditor({
   }, [items]);
 
   const commitItems = (nextItems: string[]) => {
-    const normalized = nextItems.length
-      ? nextItems.map((item) => item.slice(0, MAX_ITEM_LENGTH))
-      : [""];
+    const normalized = nextItems.length ? nextItems : [""];
     setItems(normalized);
     onChange(serializeListItems(normalized));
   };
 
   const updateItem = (index: number, nextValue: string) => {
     const nextItems = items.map((item, itemIndex) =>
-      itemIndex === index ? nextValue.slice(0, MAX_ITEM_LENGTH) : item
+      itemIndex === index ? nextValue : item
     );
     commitItems(nextItems);
   };
@@ -179,7 +174,6 @@ export default function ReorderableListEditor({
                 textarea.style.height = `${textarea.scrollHeight}px`;
               }}
               placeholder={placeholder}
-              maxLength={MAX_ITEM_LENGTH}
               rows={1}
               className="min-h-10 flex-1 resize-none overflow-hidden rounded-md border border-gray-200 px-3 py-2 text-sm leading-5 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
             />

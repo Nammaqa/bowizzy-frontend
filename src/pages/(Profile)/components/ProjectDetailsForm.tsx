@@ -30,8 +30,6 @@ interface Project {
 }
 
 const PROJECT_TITLE_MAX_LENGTH = 50;
-const DESCRIPTION_MAX_LENGTH = 500;
-const ROLES_MAX_LENGTH = 500;
 const MIN_YEAR = 1960;
 
 export default function ProjectDetailsForm({
@@ -149,29 +147,9 @@ export default function ProjectDetailsForm({
     return "";
   };
 
-  const validateMaxLength = (value: string, max: number, label: string) => {
-    const text = stripHtml(value);
-    if (text.length > max) {
-      return `${label} cannot exceed ${max} characters`;
-    }
-    return "";
-  };
+  const validateDescription = (value: string) => validateNotNumericOnly(value);
 
-  const validateDescription = (value: string) => {
-    const numericError = validateNotNumericOnly(value);
-    if (numericError) return numericError;
-    return validateMaxLength(value, DESCRIPTION_MAX_LENGTH, "Description");
-  };
-
-  const validateRoles = (value: string) => {
-    const numericError = validateNotNumericOnly(value);
-    if (numericError) return numericError;
-    return validateMaxLength(
-      value,
-      ROLES_MAX_LENGTH,
-      "Roles & Responsibilities"
-    );
-  };
+  const validateRoles = (value: string) => validateNotNumericOnly(value);
 
   const validateDateRange = (startDate: string, endDate: string) => {
     if (startDate && endDate) {
@@ -833,8 +811,6 @@ export default function ProjectDetailsForm({
     const changed = projectChanges[project.id]?.length > 0;
     const feedback = projectFeedback[project.id];
     const isMandatory = !!project.projectTitle;
-    const descriptionLength = stripHtml(project.description).length;
-    const rolesLength = stripHtml(project.rolesAndResponsibilities).length;
 
     return (
       <div
@@ -1046,23 +1022,11 @@ export default function ProjectDetailsForm({
                   placeholder="Provide Description of your project.."
                   rows={6}
                 />
-                <div className="flex items-center justify-between mt-1">
-                  {errors[`project-${index}-description`] ? (
-                    <p className="text-xs text-red-500">
-                      {errors[`project-${index}-description`]}
-                    </p>
-                  ) : (
-                    <span />
-                  )}
-                  <span
-                    className={`text-[10px] sm:text-xs ${descriptionLength > DESCRIPTION_MAX_LENGTH
-                      ? "text-red-500"
-                      : "text-gray-400"
-                      }`}
-                  >
-                    {descriptionLength}/{DESCRIPTION_MAX_LENGTH}
-                  </span>
-                </div>
+                {errors[`project-${index}-description`] && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors[`project-${index}-description`]}
+                  </p>
+                )}
               </div>
 
               {/* Roles & Responsibilities */}
@@ -1082,23 +1046,11 @@ export default function ProjectDetailsForm({
                   placeholder="Provide your roles & responsibilities in the project.."
                   rows={6}
                 />
-                <div className="flex items-center justify-between mt-1">
-                  {errors[`project-${index}-rolesAndResponsibilities`] ? (
-                    <p className="text-xs text-red-500">
-                      {errors[`project-${index}-rolesAndResponsibilities`]}
-                    </p>
-                  ) : (
-                    <span />
-                  )}
-                  <span
-                    className={`text-[10px] sm:text-xs ${rolesLength > ROLES_MAX_LENGTH
-                      ? "text-red-500"
-                      : "text-gray-400"
-                      }`}
-                  >
-                    {rolesLength}/{ROLES_MAX_LENGTH}
-                  </span>
-                </div>
+                {errors[`project-${index}-rolesAndResponsibilities`] && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors[`project-${index}-rolesAndResponsibilities`]}
+                  </p>
+                )}
               </div>
             </div>
 
