@@ -903,13 +903,13 @@ const TakeMockInterviewPage = () => {
                     Add skills manually, or import the skills saved in your profile.
                   </p>
                 </div>
-                <button
+                {/* <button
                   onClick={importProfileSkills}
                   disabled={loadingProfileSkills}
                   className="inline-flex items-center justify-center rounded-xl border border-[#F26D3A] px-4 py-3 text-sm font-semibold text-[#F26D3A] transition hover:bg-[#FFF0E3] disabled:cursor-not-allowed disabled:border-[#D9D9D9] disabled:text-[#AAAAAA]"
                 >
                   {loadingProfileSkills ? "Importing..." : "Import profile skills"}
-                </button>
+                </button> */}
               </div>
 
               <div className="mt-4 flex gap-2">
