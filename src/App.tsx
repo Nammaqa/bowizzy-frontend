@@ -76,6 +76,7 @@ import PortfolioList from "./pages/(Portfolio)/PortfolioList";
 import PortfolioLanding from "./pages/PortfolioLanding";
 import PortfolioEditor from "./pages/(Portfolio)/PortfolioEditor";
 import PublicPortfolioPreview from "./pages/(Portfolio)/PublicPortfolioPreview";
+import ResumeSharedPreview from "./pages/ResumeSharedPreview";
 import MockInterviewLanding from "./pages/(Interviews)/MockInterview/MockInterviewLanding";
 import TakeMockInterviewPage from "./pages/(Interviews)/MockInterview/TakeMockInterviewPage";
 import MockInterviewBookingsPage from "./pages/(Interviews)/MockInterview/MockInterviewBookingsPage";
@@ -841,6 +842,12 @@ function App() {
     {
       path: "portfolio-preview/:portfolioid",
       Component: () => <PublicPortfolioPreview />,
+    },
+    // Public on purpose — shared resume links are opened by recruiters who
+    // have no Bowizzy account. The splat swallows the embedded file URL.
+    {
+      path: "resume-shared-preview/*",
+      Component: () => <ResumeSharedPreview />,
     },
   ]);
 

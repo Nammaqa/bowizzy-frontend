@@ -4,6 +4,10 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/resume-shared-preview/(.*)",
+      "destination": "/index.html"
+    },
+    {
       "source": "/:path(.*\\..*)",
       "destination": "/:path"
     },
