@@ -25,6 +25,7 @@ import {
   Link2,
 } from "lucide-react";
 import RichTextEditor from "./RichTextEditor";
+import ImageCropModal from "./ImageCropModal";
 
 interface Project {
   title: string;
@@ -189,6 +190,10 @@ export default function PortfolioEditorComponent({
   const [removingCaseStudyImageIndex, setRemovingCaseStudyImageIndex] = useState<number | null>(null);
   const [removingProjectImageIndex, setRemovingProjectImageIndex] = useState<number | null>(null);
   const [uploadingProjectImageIndex, setUploadingProjectImageIndex] = useState<number | null>(null);
+  // Holds the picked file while the crop dialog is open — nothing is sent to
+  // Cloudinary until the user confirms the crop.
+  const [profileImageToCrop, setProfileImageToCrop] = useState<File | null>(null);
+  const [uploadingProfileImage, setUploadingProfileImage] = useState(false);
 
   // Block drag and drop into text fields in the portfolio editor
   useEffect(() => {
@@ -496,6 +501,24 @@ export default function PortfolioEditorComponent({
     setCaseStudies(caseStudies.filter((_, i) => i !== index));
   };
 
+  const uploadProfileImage = async (croppedFile: File) => {
+    try {
+      setUploadingProfileImage(true);
+      const result = await uploadToCloudinary(croppedFile);
+      if (onProfileImageUploaded) {
+        await onProfileImageUploaded(result);
+      } else {
+        setProfileImageUrl(result.url);
+      }
+      setProfileImageToCrop(null);
+    } catch (err) {
+      console.error("Profile image upload failed", err);
+      alert("Unable to upload profile image right now. Please try again.");
+    } finally {
+      setUploadingProfileImage(false);
+    }
+  };
+
   const removeProfileImage = async () => {
     try {
       setRemovingProfileImage(true);
@@ -546,6 +569,20 @@ export default function PortfolioEditorComponent({
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      {profileImageToCrop && (
+        <ImageCropModal
+          file={profileImageToCrop}
+          title="Crop profile image"
+          shape="circle"
+          busy={uploadingProfileImage}
+          onCancel={() => {
+            if (uploadingProfileImage) return;
+            setProfileImageToCrop(null);
+          }}
+          onCropped={uploadProfileImage}
+        />
+      )}
+
       {/* Header / Actions Row (Sticky top bar) */}
       <div className="sticky top-0 -mt-6 -mx-6 px-6 pt-6 pb-4 bg-gray-50 z-20 border-b border-gray-200 shadow-sm flex items-center justify-between">
         <button
@@ -794,30 +831,31 @@ export default function PortfolioEditorComponent({
               </button>
             </div>
           ) : (
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  if (!isValidImageFile(file)) {
-                    e.target.value = "";
-                    return;
-                  }
-                  try {
-                    const result = await uploadToCloudinary(file);
-                    if (onProfileImageUploaded) {
-                      await onProfileImageUploaded(result);
-                    } else {
-                      setProfileImageUrl(result.url);
-                    }
-                  } catch (err) {
-                    console.error('Profile image upload failed', err);
-                  }
-                }
-              }}
-              className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
-            />
+            <>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                disabled={uploadingProfileImage}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  // Always clear the input so re-picking the same file still fires.
+                  e.target.value = "";
+                  if (!file) return;
+                  if (!isValidImageFile(file)) return;
+                  setProfileImageToCrop(file);
+                }}
+                className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 disabled:opacity-60"
+              />
+              {uploadingProfileImage ? (
+                <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-violet-600">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Uploading…
+                </p>
+              ) : (
+                <p className="mt-1 text-[10px] text-gray-400 font-medium">
+                  You'll be able to crop the image before it's uploaded.
+                </p>
+              )}
+            </>
           )}
         </div>
 

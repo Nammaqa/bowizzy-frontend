@@ -12,7 +12,7 @@ import { initialResumeData } from "../../types/resume";
 import type { ResumeData } from "../../types/resume";
 import DashNav from "@/components/dashnav/dashnav";
 import { getTemplateById, getAllTemplates } from "@/templates/templateRegistry";
-import { LayoutTemplate, Heart, X } from "lucide-react";
+import { LayoutTemplate, Heart, X, Info } from "lucide-react";
 
 // Preview images for the template picker modal
 import template11Img from "@/templates/preview/imgs/template11.jpg";
@@ -945,6 +945,20 @@ export const ResumeEditor: React.FC = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="flex-1 flex flex-col bg-white rounded-lg overflow-hidden ">
           <div className="bg-white">
+            {/* Display-only settings (section toggles, font, colour) live in
+                component state, so a reload drops them back to defaults. */}
+            <div className="px-4 pt-3 md:px-6">
+              <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                <p className="text-xs leading-relaxed text-amber-800">
+                  <span className="font-semibold">Avoid refreshing while you edit.</span>{" "}
+                  Reloading this page resets your section toggles, font and
+                  colour back to the defaults.
+                  stay safe.
+                </p>
+              </div>
+            </div>
+
             <ProfileStepper
               steps={steps}
               currentStep={currentStep}
