@@ -97,7 +97,7 @@ const MockInterviewLanding = () => {
                     onClick={() => navigate("/interviews/mock-interview/bookings")}
                     className="inline-flex items-center justify-center rounded-xl border border-[#FF8251] bg-white px-6 py-3 text-base font-semibold text-[#FF8251] transition hover:bg-[#FFF3EA]"
                   >
-                    Your bookings
+                    My bookings
                   </button>
                 )}
                 {!isInterviewer && (
