@@ -86,6 +86,10 @@ const degrees = [
   { value: "PhD", label: "PhD" },
 ];
 
+const OTHER_DEGREE = "__other__";
+
+const degreeOptions = [...degrees, { value: OTHER_DEGREE, label: "Other" }];
+
 export const branchesByDegree: Record<string, string[]> = {
   Diploma: [
     "Mechanical",
@@ -315,6 +319,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
   const [higherEduFeedback, setHigherEduFeedback] = useState<Record<string, string>>({});
   const [hiddenSaveIds, setHiddenSaveIds] = useState<Set<string>>(new Set());
   const [lastModifiedEducationId, setLastModifiedEducationId] = useState<string | null>(null);
+  const [customDegreeIds, setCustomDegreeIds] = useState<Set<string>>(new Set());
 
   const initialDataRef = useRef(data);
 
@@ -625,6 +630,11 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       ),
     });
     setLastModifiedEducationId(null);
+    setCustomDegreeIds((prev) => {
+      const updated = new Set(prev);
+      updated.delete(id);
+      return updated;
+    });
 
     setErrors((prev) => {
       const updated = { ...prev };
@@ -1318,6 +1328,24 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     }
   };
 
+  const isCustomDegree = (edu: HigherEducation) =>
+    customDegreeIds.has(edu.id) ||
+    (!!edu.degree && !degrees.some((d) => d.value === edu.degree));
+
+  const updateDegree = (id: string, value: string) => {
+    if (value === OTHER_DEGREE) {
+      setCustomDegreeIds((prev) => new Set(prev).add(id));
+      updateHigherEducation(id, "degree", "");
+      return;
+    }
+    setCustomDegreeIds((prev) => {
+      const updated = new Set(prev);
+      updated.delete(id);
+      return updated;
+    });
+    updateHigherEducation(id, "degree", value);
+  };
+
   const addHigherEducation = () => {
     const newId = Date.now().toString();
     const newEdu: HigherEducation = {
@@ -1397,6 +1425,11 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       ),
     };
     setLastModifiedEducationId(null);
+    setCustomDegreeIds((prev) => {
+      const updated = new Set(prev);
+      updated.delete(id);
+      return updated;
+    });
     setErrors((prev) => {
       const newErrors = { ...prev };
       Object.keys(newErrors).forEach((key) => {
@@ -1417,6 +1450,7 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
     const isExpanded = expandedEducationIds.has(id);
     const isEnabled =
       education.enabled !== undefined ? education.enabled : true;
+    const isOtherDegree = isCustomDegree(education);
 
     const title = education.degree
       ? education.degree
@@ -1441,13 +1475,23 @@ export const EducationDetailsForm: React.FC<EducationDetailsFormProps> = ({
       >
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormSelect
-              label="Degree"
-              placeholder="Select Degree"
-              value={education.degree}
-              onChange={(v) => updateHigherEducation(id, "degree", v)}
-              options={degrees}
-            />
+            <div className="flex flex-col gap-2">
+              <FormSelect
+                label="Degree"
+                placeholder="Select Degree"
+                value={isOtherDegree ? OTHER_DEGREE : education.degree}
+                onChange={(v) => updateDegree(id, v)}
+                options={degreeOptions}
+              />
+              {isOtherDegree && (
+                <FormInput
+                  placeholder="Enter Degree"
+                  value={education.degree}
+                  onChange={(v) => updateHigherEducation(id, "degree", v)}
+                  maxLength={50}
+                />
+              )}
+            </div>
             <FormInput
               label="Field of Study"
               placeholder="Enter Field of Study"
