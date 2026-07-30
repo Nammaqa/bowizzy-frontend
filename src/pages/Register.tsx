@@ -89,6 +89,13 @@ export default function Register() {
     return value.replace(/[^A-Za-z0-9-]/g, "");
   };
 
+  const formatDateInputValue = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   const getAge = (dob: string) => {
     if (!dob) return 0;
 
@@ -107,8 +114,12 @@ export default function Register() {
 
   const isValidDob = (dob: string) => {
     const age = getAge(dob);
-    return age > 18 && age < 100;
+    return age >= 18 && age < 100;
   };
+
+  const today = new Date();
+  const minDob = formatDateInputValue(new Date(today.getFullYear() - 100, today.getMonth(), today.getDate()));
+  const maxDob = formatDateInputValue(new Date(today.getFullYear() - 18, today.getMonth(), today.getDate()));
 
   // Password rule
   const validPassword = (pwd) => {
@@ -444,8 +455,8 @@ export default function Register() {
                   <label>Date of Birth*</label>
                   <input
                     type="date"
-                    min={new Date(new Date().setFullYear(new Date().getFullYear() - 100)).toISOString().split("T")[0]}
-                    max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split("T")[0]}
+                    min={minDob}
+                    max={maxDob}
                     value={dateOfBirth}
                     onChange={(e) => {
                       const val = e.target.value;
