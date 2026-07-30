@@ -295,6 +295,20 @@ export const isPaymentPendingBooking = (booking: any) => {
   return pendingPaymentMarkers.some((marker) => status.includes(marker));
 };
 
+export const checkInterviewerBanStatus = async (
+  userId: string | number,
+  token: string
+) => {
+  const response = await api.get(
+    `/users/${userId}/mock-interview/interviewer-ban-status`,
+    authHeaders(token)
+  );
+  return response.data;
+};
+
+export const isInterviewerBannedResponse = (value: any) =>
+  value?.is_banned === true || String(value?.is_banned).toLowerCase() === "true";
+
 export const getMockInterviewUserType = async (
   userId: string | number,
   token: string

@@ -391,14 +391,6 @@ const InterviewerReviewsPage = () => {
   };
 
   // -------------------------------------------------------------------------
-  // Derived display values
-  // -------------------------------------------------------------------------
-
-  const displayInterviewId = getInterviewId(interview, id) ?? "N/A";
-  const displayCandidateId = routeCandidateId ?? interview?.candidate_id ?? currentUserId ?? "N/A";
-  const displayInterviewerId = routeInterviewerId ?? interview?.interviewer_id ?? "N/A";
-
-  // -------------------------------------------------------------------------
   // Render
   // -------------------------------------------------------------------------
 
@@ -436,18 +428,6 @@ const InterviewerReviewsPage = () => {
                         interview?.scheduled_time
                     )}
               </p>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <span className="rounded-full bg-[#FFF0E3] px-3 py-1 text-xs font-bold text-[#F26D3A]">
-                Interview #{displayInterviewId}
-              </span>
-              <span className="rounded-full bg-[#FAFAFA] px-3 py-1 text-xs font-bold text-[#666666]">
-                Candidate #{displayCandidateId}
-              </span>
-              <span className="rounded-full bg-[#FAFAFA] px-3 py-1 text-xs font-bold text-[#666666]">
-                Interviewer #{displayInterviewerId}
-              </span>
             </div>
           </div>
 
