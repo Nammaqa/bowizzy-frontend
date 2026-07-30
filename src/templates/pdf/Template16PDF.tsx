@@ -62,6 +62,8 @@ const renderBulletedParagraph = (html?: string) => {
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/p>/gi, '\n')
     .replace(/<\/li>/gi, '\n')
+    .replace(/<ul[^>]*>/gi, '\n')
+    .replace(/<ol[^>]*>/gi, '\n')
     .replace(/<li[^>]*>/gi, '• ')
     .replace(/<p[^>]*>/gi, '')
     .replace(/<span[^>]*>/gi, '')
@@ -248,7 +250,12 @@ const Template16PDF: React.FC<Template16PDFProps> = ({ data, primaryColor = '#11
                     <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold, color: '#000' }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</Text>
                   </View>
                   {p.description && renderBulletedParagraph(p.description)}
-                  {p.role && renderBulletedParagraph(p.role)}
+                  {p.rolesResponsibilities && (
+                    <View style={{ marginTop: 4 }}>
+                      <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Roles & Responsibilities:</Text>
+                      {renderBulletedParagraph(p.rolesResponsibilities)}
+                    </View>
+                  )}
                 </View>
               ))}
             </View>

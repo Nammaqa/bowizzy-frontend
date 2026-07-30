@@ -31,16 +31,16 @@ const AiTemplate8Display: React.FC<Props> = ({ data, primaryColor = '#1e293b' })
     <div style={{ width: '210mm', minHeight: '297mm', fontFamily: '"Source Sans 3", sans-serif', background: '#fff', padding: '28px 40px' }}>
       {/* Double-line header */}
       <div style={{ borderTop: `3px solid ${primaryColor}`, borderBottom: `1px solid ${primaryColor}`, padding: '14px 0', marginBottom: 8 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <h1 style={{ fontSize: 26, fontWeight: 700, color: primaryColor, margin: 0, letterSpacing: 1 }}>
               {personal.firstName} {personal.middleName || ''} {personal.lastName}
             </h1>
             {experience.jobRole && <p style={{ fontSize: 11, color: '#64748b', margin: '2px 0 0', fontWeight: 600 }}>{experience.jobRole}</p>}
           </div>
-          <div style={{ textAlign: 'right' }}>
-            {contactParts.map((c, i) => <p key={i} style={{ fontSize: 8.5, color: '#475569', margin: 0 }}>{c}</p>)}
-            {[linkedin, github, portfolio].filter(Boolean).map((c, i) => <p key={i} style={{ fontSize: 8, color: primaryColor, margin: 0 }}>{c}</p>)}
+          <div style={{ textAlign: 'right', width: 220, flexShrink: 0 }}>
+            {contactParts.map((c, i) => <p key={i} style={{ fontSize: 8.5, color: '#475569', margin: 0, wordBreak: 'break-word' }}>{c}</p>)}
+            {[linkedin, github, portfolio].filter(Boolean).map((c, i) => <p key={i} style={{ fontSize: 8, color: primaryColor, margin: 0, wordBreak: 'break-word' }}>{c}</p>)}
           </div>
         </div>
       </div>

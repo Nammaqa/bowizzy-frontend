@@ -48,19 +48,19 @@ const AiTemplate9PDF: React.FC<Props> = ({ data, primaryColor = '#334155' }) => 
     <Document>
       <Page size="A4" style={{ fontSize: 9, fontFamily: 'Helvetica' }}>
         {/* Top banner */}
-        <View style={{ backgroundColor: primaryColor, paddingVertical: 20, paddingHorizontal: 40, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+        <View style={{ backgroundColor: primaryColor, paddingVertical: 20, paddingHorizontal: 40, flexDirection: 'row', alignItems: 'flex-start', gap: 16 }}>
           <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' }}>
             <Text style={{ fontSize: 16, fontFamily: 'Helvetica-Bold', color: primaryColor }}>{initials}</Text>
           </View>
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, paddingRight: 16 }}>
             <Text style={{ fontSize: 24, fontFamily: 'Helvetica-Bold', color: '#fff', letterSpacing: 0.5 }}>
               {personal.firstName} {personal.middleName || ''} {personal.lastName}
             </Text>
             {experience.jobRole && <Text style={{ fontSize: 11, color: '#cbd5e1', marginTop: 2 }}>{experience.jobRole}</Text>}
           </View>
-          <View style={{ alignItems: 'flex-end' }}>
-            {contactParts.map((c, i) => <Text key={i} style={{ fontSize: 8.5, color: '#e2e8f0' }}>{c}</Text>)}
-            {[linkedin, github, portfolio].filter(Boolean).map((c, i) => <Text key={i} style={{ fontSize: 8, color: '#93c5fd' }}>{c}</Text>)}
+          <View style={{ alignItems: 'flex-end', width: 200, flexShrink: 0 }}>
+            {contactParts.map((c, i) => <Text key={i} style={{ fontSize: 8.5, color: '#e2e8f0', textAlign: 'right' }}>{c}</Text>)}
+            {[linkedin, github, portfolio].filter(Boolean).map((c, i) => <Text key={i} style={{ fontSize: 8, color: '#93c5fd', textAlign: 'right' }}>{c}</Text>)}
           </View>
         </View>
         <View style={{ paddingHorizontal: 40, paddingTop: 12, paddingBottom: 28 }}>

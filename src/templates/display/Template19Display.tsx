@@ -15,6 +15,7 @@ const htmlToLines = (s?: string) => {
     const text = String(s)
       .replace(/<br\s*\/?/gi, '\n')
       .replace(/<\/p>|<\/li>/gi, '\n')
+      .replace(/<ul[^>]*>|<ol[^>]*>/gi, '\n')
       .replace(/<[^>]+>/g, '')
       .replace(/&nbsp;/g, ' ')
       .replace(/&amp;/g, '&');
@@ -43,6 +44,8 @@ const Template19Display: React.FC<Template19DisplayProps> = ({
   const { personal, experience, education, projects, skillsLinks, certifications } = data;
   const role = (experience && (experience as any).jobRole) || (experience.workExperiences && experience.workExperiences.find((w: any) => w.enabled && w.jobTitle) && experience.workExperiences.find((w: any) => w.enabled && w.jobTitle).jobTitle) || '';
   const contactLine = [personal.email, personal.mobileNumber, (skillsLinks && skillsLinks.links && skillsLinks.links.linkedinProfile) || ''].filter(Boolean).join(' | ');
+  const hasPreUniversity = Boolean(education.preUniversityEnabled && (education.preUniversity?.instituteName || education.preUniversity?.subjectStream || education.preUniversity?.boardType || education.preUniversity?.yearOfPassing || education.preUniversity?.result));
+  const hasSSLC = Boolean(education.sslcEnabled && (education.sslc?.instituteName || education.sslc?.boardType || education.sslc?.yearOfPassing || education.sslc?.result));
 
   return (
     <div style={{ width: '210mm', minHeight: '297mm', fontFamily: fontFamily, background: '#fff', padding: 24, boxSizing: 'border-box' }}>
@@ -80,7 +83,7 @@ const Template19Display: React.FC<Template19DisplayProps> = ({
               </ul>
             </>)}
 
-            {(education.higherEducation.some(edu => edu.enabled) || education.preUniversityEnabled || education.sslcEnabled) && (
+            {(education.higherEducation.some(edu => edu.enabled) || hasPreUniversity || hasSSLC) && (
               <div style={{ marginTop: 18 }}>
                 <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Education</div>
                 <div style={{ height: 1, background: '#999', marginTop: 6, width: '80%' }} />
@@ -95,7 +98,7 @@ const Template19Display: React.FC<Template19DisplayProps> = ({
                       {(edu.resultFormat && edu.result) && <div style={{ color: '#151616', marginTop: 4 }}>{edu.resultFormat}: {edu.result}</div>}
                     </div>
                   ))}
-                  {education.preUniversityEnabled && (
+                  {hasPreUniversity && (
                     <div style={{ marginBottom: 12 }}>
                       <div style={{ fontFamily: 'Arial, sans-serif', fontWeight: 400 }}>{education.preUniversity.instituteName || 'Pre University'}</div>
                       <div style={{ color: '#151616', marginTop: 4 }}>Pre University (12th Standard){education.preUniversity.boardType ? ` — ${education.preUniversity.boardType}` : ''}{education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}</div>
@@ -106,7 +109,7 @@ const Template19Display: React.FC<Template19DisplayProps> = ({
                     </div>
                   )}
 
-                  {education.sslcEnabled && (
+                  {hasSSLC && (
                     <div style={{ marginBottom: 12 }}>
                       <div style={{ fontFamily: 'Arial, sans-serif', fontWeight: 400 }}>{education.sslc.instituteName || 'SSLC'}</div>
                       <div style={{ color: '#151616', marginTop: 4 }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</div>

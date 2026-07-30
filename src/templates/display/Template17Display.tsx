@@ -16,6 +16,7 @@ const htmlToLines = (s?: string) => {
     const text = String(s)
       .replace(/<br\s*\/?>/gi, '\n')
       .replace(/<\/p>|<\/li>/gi, '\n')
+      .replace(/<ul[^>]*>|<ol[^>]*>/gi, '\n')
       .replace(/<[^>]+>/g, '')
       .replace(/&nbsp;/g, ' ')
       .replace(/&amp;/g, '&');
@@ -170,7 +171,12 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
                       <div style={{ color: '#000', fontSize: 11, flexShrink: 0, textAlign: 'right' }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</div>
                     </div>
                     {p.description && <div style={{ color: '#000', marginTop: 6, fontSize: 11 }}>{DOMPurify.sanitize(p.description).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim()}</div>}
-                    {p.rolesResponsibilities && <div style={{ marginTop: 6, paddingLeft: 10 }}>{htmlToLines(p.rolesResponsibilities).map((ln, idx) => <div key={idx} style={{ marginTop: 6, fontSize: 11 }}>• {ln}</div>)}</div>}
+                    {p.rolesResponsibilities && (
+                      <div style={{ marginTop: 6, paddingLeft: 10 }}>
+                        <div style={{ fontWeight: 700, fontSize: 11, color: primaryColor }}>Roles & Responsibilities:</div>
+                        {htmlToLines(p.rolesResponsibilities).map((ln, idx) => <div key={idx} style={{ marginTop: 6, fontSize: 11 }}>• {ln}</div>)}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

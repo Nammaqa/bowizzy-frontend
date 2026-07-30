@@ -476,7 +476,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
                     {w.location ? <Text style={{ fontSize: 11, color: '#000000', fontFamily: pdfFontFamilyBold, textAlign: 'right' }}>{w.location}</Text> : null}
                   </View>
                   {w.description ? (
-                    <View style={{ width: '100%' }}>
+                    <View style={{ width: '100%'}}>
                       {renderBulletedParagraph(w.description)}
                     </View>
                   ) : null}

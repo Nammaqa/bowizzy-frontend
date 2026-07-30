@@ -17,6 +17,9 @@ const htmlToLines = (s?: string) => {
     const text = String(s)
       .replace(/<\/p>|<\/li>/gi, '\n')
       .replace(/<br\s*\/?>(?:\s*)/gi, '\n')
+      .replace(/<ul[^>]*>/gi, '\n')
+      .replace(/<ol[^>]*>/gi, '\n')
+      .replace(/<li[^>]*>/gi, '• ')
       .replace(/<[^>]+>/g, '')
       .replace(/&nbsp;/g, ' ')
       .replace(/&amp;/g, '&');

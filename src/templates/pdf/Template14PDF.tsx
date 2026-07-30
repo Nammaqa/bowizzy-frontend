@@ -48,6 +48,8 @@ const renderBulletedParagraph = (html?: string) => {
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/p>/gi, '\n')
     .replace(/<\/li>/gi, '\n')
+    .replace(/<ul[^>]*>/gi, '\n')
+    .replace(/<ol[^>]*>/gi, '\n')
     .replace(/<li[^>]*>/gi, '• ')
     .replace(/<p[^>]*>/gi, '')
     .replace(/<span[^>]*>/gi, '')

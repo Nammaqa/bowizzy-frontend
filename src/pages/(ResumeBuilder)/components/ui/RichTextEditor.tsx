@@ -135,20 +135,21 @@ export default function RichTextEditor({
 
   const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
     e.preventDefault();
-    
+
     // Get plain text from clipboard
     const text = e.clipboardData.getData('text/plain');
     if (!text) return;
 
-    // Split into lines and wrap each line in a div
-    const lines = text.split('\n');
-    const fragments = lines
-      .filter(line => line.trim().length > 0)
-      .map(line => `<div>${escapeHtml(line)}</div>`)
-      .join('');
+    // Strip all line breaks (and any stray <br> tags) so pasted text
+    // is inserted as one continuous line instead of separate lines/divs.
+    const singleLine = text
+      .replace(/<br\s*\/?>/gi, ' ')
+      .replace(/\r\n|\r|\n/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
 
-    if (fragments) {
-      insertHtmlAtCursor(fragments);
+    if (singleLine) {
+      insertHtmlAtCursor(escapeHtml(singleLine));
       const el = editorRef.current;
       if (el) {
         onChange(el.innerHTML);

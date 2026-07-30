@@ -34,19 +34,19 @@ const AiTemplate9Display: React.FC<Props> = ({ data, primaryColor = '#334155' })
   return (
     <div style={{ width: '210mm', minHeight: '297mm', fontFamily: '"Open Sans", sans-serif', background: '#fff' }}>
       {/* Top banner */}
-      <div style={{ backgroundColor: primaryColor, padding: '24px 40px', display: 'flex', alignItems: 'center', gap: 16 }}>
+      <div style={{ backgroundColor: primaryColor, padding: '24px 40px', display: 'flex', alignItems: 'flex-start', gap: 16 }}>
         <div style={{ width: 50, height: 50, borderRadius: '50%', backgroundColor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <span style={{ fontSize: 18, fontWeight: 700, color: primaryColor }}>{initials}</span>
         </div>
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <h1 style={{ fontSize: 24, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: 0.5 }}>
             {personal.firstName} {personal.middleName || ''} {personal.lastName}
           </h1>
           {experience.jobRole && <p style={{ fontSize: 11, color: '#cbd5e1', margin: '2px 0 0', fontWeight: 600 }}>{experience.jobRole}</p>}
         </div>
-        <div style={{ textAlign: 'right' }}>
-          {contactParts.map((c, i) => <p key={i} style={{ fontSize: 8.5, color: '#e2e8f0', margin: 0 }}>{c}</p>)}
-          {[linkedin, github, portfolio].filter(Boolean).map((c, i) => <p key={i} style={{ fontSize: 8, color: '#93c5fd', margin: 0 }}>{c}</p>)}
+        <div style={{ textAlign: 'right', width: 220, flexShrink: 0 }}>
+          {contactParts.map((c, i) => <p key={i} style={{ fontSize: 8.5, color: '#e2e8f0', margin: 0, wordBreak: 'break-word' }}>{c}</p>)}
+          {[linkedin, github, portfolio].filter(Boolean).map((c, i) => <p key={i} style={{ fontSize: 8, color: '#93c5fd', margin: 0, wordBreak: 'break-word' }}>{c}</p>)}
         </div>
       </div>
       <div style={{ padding: '12px 40px 32px' }}>
