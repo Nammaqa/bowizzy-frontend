@@ -9,6 +9,25 @@ import {
 const CURRENT_YEAR = new Date().getFullYear();
 const LETTERS_ONLY_REGEX = /^[A-Za-z\s]+$/;
 
+const OTHER_DEGREE = "__other__";
+
+const DEGREE_OPTIONS = [
+  "B.A",
+  "B.Arch",
+  "BBA",
+  "BCA",
+  "B.Com",
+  "B.E",
+  "B.Sc",
+  "B.Tech",
+  "M.Tech",
+  "M.Sc",
+  "MBA",
+  "MCA",
+  "Diploma",
+  "PhD",
+];
+
 export const branchesByDegree: Record<string, string[]> = {
   Diploma: [
     "Mechanical",
@@ -237,6 +256,11 @@ export default function EducationDetailsForm({
     getInitialExpanded(initialExtraEdu)
   );
 
+  // Track cards where the degree was entered manually via the "Other" option
+  const [customDegreeIds, setCustomDegreeIds] = useState<Set<string>>(
+    new Set()
+  );
+
   // Track changes for each education section/card
   const [sslcChanged, setSslcChanged] = useState(false);
   const [puChanged, setPuChanged] = useState(false);
@@ -284,6 +308,7 @@ export default function EducationDetailsForm({
     setPuChanged(false);
     setHigherChanges({});
     setExtraChanges({});
+    setCustomDegreeIds(new Set());
     setSslcFeedback("");
     setPuFeedback("");
     setHigherFeedback({});
@@ -1366,6 +1391,11 @@ export default function EducationDetailsForm({
     // Remove from state and clear associated data/errors
     const id = edu.id;
     setExtraEducations(extraEducations.filter((_, i) => i !== index));
+    setCustomDegreeIds((prev) => {
+      const updated = new Set(prev);
+      updated.delete(id);
+      return updated;
+    });
     setExtraExpanded((prev) => {
       const updated = { ...prev };
       delete updated[id];
@@ -1436,6 +1466,12 @@ export default function EducationDetailsForm({
     const setter = isExtra ? setExtraEducations : setHigherEducations;
     const initialRef = isExtra ? initialExtra : initialHigher;
     const initial = initialRef.current[id];
+
+    setCustomDegreeIds((prev) => {
+      const updated = new Set(prev);
+      updated.delete(id);
+      return updated;
+    });
 
     if (!initial) {
       // If no initial data (new unsaved card), clear all fields
@@ -1656,6 +1692,24 @@ export default function EducationDetailsForm({
     const handleChange = (field: string, value: string | boolean) =>
       handleEducationChange(id, field, value, isExtra);
 
+    const isOtherDegree =
+      customDegreeIds.has(id) ||
+      (!!education.degree && !DEGREE_OPTIONS.includes(education.degree));
+
+    const handleDegreeChange = (value: string) => {
+      if (value === OTHER_DEGREE) {
+        setCustomDegreeIds((prev) => new Set(prev).add(id));
+        handleChange("degree", "");
+        return;
+      }
+      setCustomDegreeIds((prev) => {
+        const updated = new Set(prev);
+        updated.delete(id);
+        return updated;
+      });
+      handleChange("degree", value);
+    };
+
     return (
       <div
         key={id}
@@ -1703,28 +1757,30 @@ export default function EducationDetailsForm({
                 </label>
                 <div className="relative">
                   <select
-                    value={education.degree}
-                    onChange={(e) => handleChange("degree", e.target.value)}
+                    value={isOtherDegree ? OTHER_DEGREE : education.degree}
+                    onChange={(e) => handleDegreeChange(e.target.value)}
                     className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm appearance-none bg-white pr-8"
                   >
                     <option value="">Select Degree / Diploma</option>
-                    <option value="B.A">B.A</option>
-                    <option value="B.Arch">B.Arch</option>
-                    <option value="BBA">BBA</option>
-                    <option value="BCA">BCA</option>
-                    <option value="B.Com">B.Com</option>
-                    <option value="B.E">B.E</option>
-                    <option value="B.Sc">B.Sc</option>
-                    <option value="B.Tech">B.Tech</option>
-                    <option value="M.Tech">M.Tech</option>
-                    <option value="M.Sc">M.Sc</option>
-                    <option value="MBA">MBA</option>
-                    <option value="MCA">MCA</option>
-                    <option value="Diploma">Diploma</option>
-                    <option value="PhD">PhD</option>
+                    {DEGREE_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                    <option value={OTHER_DEGREE}>Other</option>
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 </div>
+                {isOtherDegree && (
+                  <input
+                    type="text"
+                    value={education.degree}
+                    onChange={(e) => handleChange("degree", e.target.value)}
+                    maxLength={50}
+                    placeholder="Enter Degree / Diploma"
+                    className="mt-2 w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-xs sm:text-sm"
+                  />
+                )}
               </div>
 
               {/* Field of Study */}
