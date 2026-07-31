@@ -17,6 +17,8 @@ type PortfolioRecord = {
 const EMPTY_DATA: PortfolioData = {
   portfolioName: "",
   portfolioDescription: "",
+  aboutTitle: "",
+  aboutDescription: "",
   githubUrl: "",
   linkedinUrl: "",
   twitterUrl: "",
@@ -57,6 +59,8 @@ function mapToPreviewData(found: PortfolioRecord): PortfolioData {
   return {
     portfolioName: cfg.name || found.portfolio_name || "",
     portfolioDescription: cfg.description || found.description || "",
+    aboutTitle: cfg.aboutTitle || "",
+    aboutDescription: cfg.aboutDescription || "",
     githubUrl: cfg.github || "",
     linkedinUrl: cfg.linkedin || "",
     twitterUrl: cfg.twitter || "",

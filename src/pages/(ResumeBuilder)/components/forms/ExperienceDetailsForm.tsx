@@ -57,6 +57,15 @@ const locations = [
   { value: "San Francisco", label: "San Francisco" },
 ];
 
+// "Other" is a UI-only choice — the city the user types is stored in
+// `location` like any preset, so nothing downstream needs to know about it.
+const OTHER_LOCATION = "Other";
+
+const locationOptions = [...locations, { value: OTHER_LOCATION, label: "Other" }];
+
+const isPresetLocation = (value: string) =>
+  locations.some((loc) => loc.value === value);
+
 const normalizeMonthToDate = (val: string): string | null => {
   if (!val) return null;
   if (typeof val === "string" && /^\d{4}-\d{2}$/.test(val))
@@ -81,6 +90,9 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
   const [jobRoleFeedback, setJobRoleFeedback] = useState("");
   const [experienceFeedback, setExperienceFeedback] = useState<Record<string, string>>({});
   const [hiddenSaveIds, setHiddenSaveIds] = useState<Set<string>>(new Set());
+  // Experiences the user explicitly switched to "Other" — needed only while the
+  // custom city is still blank, since a filled-in one is detected from the value.
+  const [customLocationIds, setCustomLocationIds] = useState<Set<string>>(new Set());
 
   const initialDataRef = useRef(data);
   const initialJobRole = useRef(data.jobRole || "");
@@ -172,6 +184,19 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
     }
     return "";
   };
+  const validateLocation = (value: string) => {
+    if (value && value.length > 100) {
+      return "City must not exceed 100 characters";
+    }
+    if (value && !/^[a-zA-Z\s.,'-]+$/.test(value)) {
+      return "Invalid characters in city";
+    }
+    if (value && !/[a-zA-Z]/.test(value)) {
+      return "City must include at least one letter";
+    }
+    return "";
+  };
+
   const validateDescription = (value: string) => {
     // Strip HTML tags from the rich text value so the limit reflects
     // visible characters rather than markup.
@@ -265,6 +290,8 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
       updated[index] = { ...updated[index], [field]: value.slice(0, 100) };
     } else if (field === "jobTitle" && typeof value === "string") {
       updated[index] = { ...updated[index], [field]: value.slice(0, 100) };
+    } else if (field === "location" && typeof value === "string") {
+      updated[index] = { ...updated[index], [field]: value.slice(0, 100) };
     } else if (field === "description" && typeof value === "string") {
       // Clamp on the plain-text length, but keep the original (HTML) value
       // up to the point where the visible character count hits 500.
@@ -305,6 +332,9 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
     } else if (field === "jobTitle" && typeof value === "string") {
       const error = validateJobTitle(updatedExp.jobTitle);
       setErrors((prev) => ({ ...prev, [`exp-${id}-jobTitle`]: error }));
+    } else if (field === "location" && typeof value === "string") {
+      const error = validateLocation(updatedExp.location);
+      setErrors((prev) => ({ ...prev, [`exp-${id}-location`]: error }));
     } else if (field === "description" && typeof value === "string") {
       const error = validateDescription(updatedExp.description);
       setErrors((prev) => ({ ...prev, [`exp-${id}-description`]: error }));
@@ -329,6 +359,32 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
       const error = validateDateRange(updatedExp.startDate, updatedExp.endDate);
       setErrors((prev) => ({ ...prev, [`exp-${id}-endDate`]: error }));
     }
+  };
+
+  // A saved location that isn't one of the presets (e.g. loaded from the API)
+  // means the user typed it, so the form reopens in "Other" mode.
+  const isCustomLocation = (exp: WorkExperience) =>
+    customLocationIds.has(exp.id) || (!!exp.location && !isPresetLocation(exp.location));
+
+  const handleLocationChange = (id: string, value: string) => {
+    if (value === OTHER_LOCATION) {
+      setCustomLocationIds((prev) => new Set(prev).add(id));
+
+      // Drop a preset city so the input starts empty, but keep a custom one
+      // the user already typed.
+      const exp = workExperiences.find((e) => e.id === id);
+      if (exp && isPresetLocation(exp.location)) {
+        updateWorkExperience(id, "location", "");
+      }
+      return;
+    }
+
+    setCustomLocationIds((prev) => {
+      const updated = new Set(prev);
+      updated.delete(id);
+      return updated;
+    });
+    updateWorkExperience(id, "location", value);
   };
 
   const handleSaveExperience = async (exp: WorkExperience) => {
@@ -358,6 +414,7 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
     if (
       errors[`${prefix}-companyName`] ||
       errors[`${prefix}-jobTitle`] ||
+      errors[`${prefix}-location`] ||
       errors[`${prefix}-endDate`]
     ) return;
 
@@ -505,6 +562,12 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
     const updatedExperiences = workExperiences.filter(e => e.id !== id);
     setWorkExperiences(updatedExperiences);
 
+    setCustomLocationIds((prev) => {
+      const updated = new Set(prev);
+      updated.delete(id);
+      return updated;
+    });
+
     initialDataRef.current = {
       ...initialDataRef.current,
       workExperiences: initialDataRef.current.workExperiences.filter(e => e.id !== id)
@@ -538,6 +601,13 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
       } : exp
     );
     setWorkExperiences(updated);
+
+    // Let the restored value decide whether this is "Other" again.
+    setCustomLocationIds((prev) => {
+      const updatedIds = new Set(prev);
+      updatedIds.delete(id);
+      return updatedIds;
+    });
 
     setErrors((prev) => {
       const newErrors = { ...prev };
@@ -624,13 +694,25 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          <FormSelect
-            label="Location"
-            placeholder="Select Location"
-            value={experience.location}
-            onChange={(v) => updateWorkExperience(experience.id, "location", v)}
-            options={locations}
-          />
+          <div className="flex flex-col gap-3">
+            <FormSelect
+              label="Location"
+              placeholder="Select Location"
+              value={isCustomLocation(experience) ? OTHER_LOCATION : experience.location}
+              onChange={(v) => handleLocationChange(experience.id, v)}
+              options={locationOptions}
+            />
+            {isCustomLocation(experience) && (
+              <FormInput
+                label="Enter City"
+                placeholder="Enter City"
+                value={experience.location}
+                onChange={(v) => updateWorkExperience(experience.id, "location", v)}
+                error={errors[`exp-${experience.id}-location`]}
+                maxLength={100}
+              />
+            )}
+          </div>
           <FormSelect
             label="Work Mode"
             placeholder="Select Work Mode"
