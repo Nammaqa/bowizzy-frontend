@@ -209,7 +209,7 @@ const Template16PDF: React.FC<Template16PDFProps> = ({ data, primaryColor = '#11
         </View>
 
         <View style={{ marginTop: 12 }}>
-          <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Summary</Text>
+          <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Career Objective</Text>
           <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginTop: 4, marginBottom: 0 }} />
         </View>
         {personal.aboutCareerObjective ? htmlToPlainText(personal.aboutCareerObjective).split('\n').map((ln, idx) => (

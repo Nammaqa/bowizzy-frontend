@@ -1,6 +1,7 @@
 import React from 'react';
-import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, View, Text, StyleSheet, Link } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
+import { normalizeProfileUrl } from '../linkUtils';
 const htmlToPlain = (html?: string) => {
   if (!html) return '';
   let t = html.replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>|<\/li>/gi, '\n').replace(/<li>/gi, '• ').replace(/<[^>]+>/g, '');
@@ -32,9 +33,9 @@ interface Props { data: ResumeData; primaryColor?: string; }
 const AiTemplate5PDF: React.FC<Props> = ({ data, primaryColor = '#0f766e' }) => {
   const { personal, experience, education, projects, skillsLinks, certifications } = data;
   const contactParts = [personal.email, personal.mobileNumber].filter(Boolean);
-  const linkedin = skillsLinks?.links?.linkedinProfile || '';
-  const github = skillsLinks?.links?.githubProfile || '';
-  const portfolio = skillsLinks?.links?.portfolioUrl || '';
+  const linkedin = normalizeProfileUrl(skillsLinks?.links?.linkedinProfile);
+  const github = normalizeProfileUrl(skillsLinks?.links?.githubProfile);
+  const portfolio = normalizeProfileUrl(skillsLinks?.links?.portfolioUrl);
   const languages: string[] = (personal as any).languagesKnown || [];
   const SectionTitle = ({ title }: { title: string }) => (
     <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14, marginBottom: 6 }}>
@@ -56,7 +57,9 @@ const AiTemplate5PDF: React.FC<Props> = ({ data, primaryColor = '#0f766e' }) => 
           <View style={{ alignItems: 'flex-end', width: 200, flexShrink: 0 }}>
             {contactParts.map((c, i) => <Text key={i} style={{ fontSize: 9, color: '#555', textAlign: 'right' }}>{c}</Text>)}
             {personal.address && <Text style={{ fontSize: 9, color: '#555', textAlign: 'right', lineHeight: 1.4 }}>{personal.address}</Text>}
-            {[linkedin, github, portfolio].filter(Boolean).map((c, i) => <Text key={i} style={{ fontSize: 8, color: primaryColor, textAlign: 'right' }}>{c}</Text>)}
+            {[linkedin, github, portfolio].filter(Boolean).map((c, i) => (
+              <Link key={i} src={c} style={{ fontSize: 8, color: primaryColor, textAlign: 'right', textDecoration: 'none' }}>{c}</Link>
+            ))}
           </View>
         </View>
         <View style={{ height: 2, backgroundColor: primaryColor, marginBottom: 4 }} />

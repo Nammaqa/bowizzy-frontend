@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ResumeData } from '@/types/resume';
+import { normalizeProfileUrl } from '../linkUtils';
 const htmlToLines = (s?: string) => {
   if (!s) return [] as string[];
   const text = String(s).replace(/<\/p>|<\/li>/gi, '\n').replace(/<br\s*\/?>(?:\s*)/gi, '\n').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');
@@ -17,9 +18,9 @@ interface Props { data: ResumeData; primaryColor?: string; }
 const AiTemplate1Display: React.FC<Props> = ({ data, primaryColor = '#1a1a1a' }) => {
   const { personal, experience, education, projects, skillsLinks, certifications } = data;
   const contactParts = [personal.email, personal.mobileNumber, personal.address].filter(Boolean);
-  const linkedin = skillsLinks?.links?.linkedinProfile || '';
-  const github = skillsLinks?.links?.githubProfile || '';
-  const portfolio = skillsLinks?.links?.portfolioUrl || '';
+  const linkedin = normalizeProfileUrl(skillsLinks?.links?.linkedinProfile);
+  const github = normalizeProfileUrl(skillsLinks?.links?.githubProfile);
+  const portfolio = normalizeProfileUrl(skillsLinks?.links?.portfolioUrl);
   const languages: string[] = (personal as any).languagesKnown || [];
   const sectionStyle: React.CSSProperties = { fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase' as const, color: primaryColor, marginTop: 14 };
   const divider: React.CSSProperties = { height: 1, backgroundColor: primaryColor, width: '100%', marginTop: 2, marginBottom: 6 };
@@ -31,7 +32,11 @@ const AiTemplate1Display: React.FC<Props> = ({ data, primaryColor = '#1a1a1a' })
           {personal.firstName} {personal.middleName || ''} {personal.lastName}
         </h1>
         <p style={{ fontSize: 9, color: '#555', margin: '4px 0 0' }}>{contactParts.join('  |  ')}</p>
-        {[linkedin, github, portfolio].filter(Boolean).map((c, i) => <p key={i} style={{ fontSize: 9, color: '#555', margin: '2px 0 0' }}>{c}</p>)}
+        {[linkedin, github, portfolio].filter(Boolean).map((c, i) => (
+          <p key={i} style={{ fontSize: 9, margin: '2px 0 0' }}>
+            <a href={c} target="_blank" rel="noreferrer" style={{ color: '#555', textDecoration: 'none' }}>{c}</a>
+          </p>
+        ))}
       </div>
       <div style={divider} />
       {/* Summary */}

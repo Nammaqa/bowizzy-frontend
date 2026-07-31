@@ -181,7 +181,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
       <div style={{ padding: '0 36px 36px 36px' }}>
         <section style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '0 16px', alignItems: 'start' }}>
           <div style={{ gridColumn: '1 / -1', marginTop: 12 }}>
-            <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: '#111827', fontWeight: 700 }}>SUMMARY</div>
+            <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: '#111827', fontWeight: 700 }}>CAREER OBJECTIVE</div>
             <div style={{ height: 1, background: '#cfcfcf', marginTop: 0, marginBottom: 0, width: '100%' }} />
           </div>
           <div style={{ gridColumn: '1 / -1', marginTop: 0 }}>

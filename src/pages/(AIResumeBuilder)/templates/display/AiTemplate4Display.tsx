@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ResumeData } from '@/types/resume';
+import { normalizeProfileUrl } from '../linkUtils';
 
 const htmlToLines = (s?: string) => {
   if (!s) return [] as string[];
@@ -21,10 +22,16 @@ interface Props { data: ResumeData; primaryColor?: string; }
 const AiTemplate4Display: React.FC<Props> = ({ data, primaryColor = '#b91c1c' }) => {
   const { personal, experience, education, projects, skillsLinks, certifications } = data;
   const contactParts = [personal.email, personal.mobileNumber, personal.address].filter(Boolean);
-  const linkedin = skillsLinks?.links?.linkedinProfile || '';
-  const github = skillsLinks?.links?.githubProfile || '';
-  const portfolio = skillsLinks?.links?.portfolioUrl || '';
+  const linkedin = normalizeProfileUrl(skillsLinks?.links?.linkedinProfile);
+  const github = normalizeProfileUrl(skillsLinks?.links?.githubProfile);
+  const portfolio = normalizeProfileUrl(skillsLinks?.links?.portfolioUrl);
   const languages: string[] = (personal as any).languagesKnown || [];
+  const contactNodes: React.ReactNode[] = [
+    ...contactParts.map((c, i) => <React.Fragment key={`c-${i}`}>{c}</React.Fragment>),
+    linkedin && <a key="li" href={linkedin} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>{linkedin}</a>,
+    github && <a key="gh" href={github} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>{github}</a>,
+    portfolio && <a key="pf" href={portfolio} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>{portfolio}</a>,
+  ].filter(Boolean);
 
   const sectionStyle: React.CSSProperties = { fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase' as const, color: primaryColor, marginTop: 14, marginBottom: 0 };
   const dividerStyle: React.CSSProperties = { height: 1.5, backgroundColor: primaryColor, width: '100%', marginTop: 2, marginBottom: 6 };
@@ -38,7 +45,14 @@ const AiTemplate4Display: React.FC<Props> = ({ data, primaryColor = '#b91c1c' })
         </h1>
         {experience.jobRole && <p style={{ fontSize: 11, color: '#555', margin: '2px 0 0' }}>{experience.jobRole}</p>}
         <div style={{ height: 3, backgroundColor: primaryColor, width: 60, marginTop: 6 }} />
-        <p style={{ fontSize: 9, color: '#555', margin: '6px 0 0' }}>{[...contactParts, linkedin, github, portfolio].filter(Boolean).join('  |  ')}</p>
+        <p style={{ fontSize: 9, color: '#555', margin: '6px 0 0' }}>
+          {contactNodes.map((node, i) => (
+            <React.Fragment key={i}>
+              {i > 0 && '  |  '}
+              {node}
+            </React.Fragment>
+          ))}
+        </p>
       </div>
 
       {personal.aboutCareerObjective && (

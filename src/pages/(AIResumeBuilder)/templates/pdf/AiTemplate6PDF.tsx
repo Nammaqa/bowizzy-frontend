@@ -1,6 +1,7 @@
 import React from 'react';
-import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, View, Text, StyleSheet, Link } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
+import { normalizeProfileUrl } from '../linkUtils';
 const htmlToPlain = (html?: string) => {
   if (!html) return '';
   let t = html.replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>|<\/li>/gi, '\n').replace(/<li>/gi, '• ').replace(/<[^>]+>/g, '');
@@ -32,13 +33,22 @@ interface Props { data: ResumeData; primaryColor?: string; }
 const AiTemplate6PDF: React.FC<Props> = ({ data, primaryColor = '#4338ca' }) => {
   const { personal, experience, education, projects, skillsLinks, certifications } = data;
   const contactParts = [personal.email, personal.mobileNumber, personal.address].filter(Boolean);
-  const linkedin = skillsLinks?.links?.linkedinProfile || '';
-  const github = skillsLinks?.links?.githubProfile || '';
-  const portfolio = skillsLinks?.links?.portfolioUrl || '';
+  const linkedin = normalizeProfileUrl(skillsLinks?.links?.linkedinProfile);
+  const github = normalizeProfileUrl(skillsLinks?.links?.githubProfile);
+  const portfolio = normalizeProfileUrl(skillsLinks?.links?.portfolioUrl);
   const languages: string[] = (personal as any).languagesKnown || [];
+  const linkFields = [
+    { key: 'li', href: linkedin },
+    { key: 'gh', href: github },
+    { key: 'pf', href: portfolio },
+  ].filter((f) => f.href);
   return (
     <Document>
       <Page size="A4" style={{ paddingTop: 0, paddingBottom: 24, paddingLeft: 0, paddingRight: 0, fontSize: 9, fontFamily: 'Helvetica' }}>
+        {/* Top padding on every page after the first — the accent bar sits flush
+            against the page edge by design for page 1, but continuation pages need
+            breathing room so wrapped content doesn't stick to the top edge. */}
+        <View fixed render={({ pageNumber }) => (pageNumber > 1 ? <View style={{ height: 24 }} /> : null)} />
         {/* Thin top accent bar */}
         <View style={{ height: 6, backgroundColor: primaryColor }} />
         <View style={{ paddingHorizontal: 40, paddingTop: 20 }}>
@@ -49,7 +59,17 @@ const AiTemplate6PDF: React.FC<Props> = ({ data, primaryColor = '#4338ca' }) => 
             </Text>
             {experience.jobRole && <Text style={{ fontSize: 10, color: '#666', marginTop: 3, letterSpacing: 1 }}>{experience.jobRole}</Text>}
             <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 8, marginBottom: 4 }} />
-            <Text style={{ fontSize: 8, color: '#666', marginTop: 2 }}>{[...contactParts, linkedin, github, portfolio].filter(Boolean).join('  •  ')}</Text>
+            <Text style={{ fontSize: 8, color: '#666', marginTop: 2 }}>
+              {contactParts.map((c, i) => (
+                <Text key={`c-${i}`}>{i > 0 ? '  •  ' : ''}{c}</Text>
+              ))}
+              {linkFields.map((f, i) => (
+                <Text key={f.key}>
+                  {(contactParts.length > 0 || i > 0) ? '  •  ' : ''}
+                  <Link src={f.href} style={{ color: '#666', textDecoration: 'none' }}>{f.href}</Link>
+                </Text>
+              ))}
+            </Text>
           </View>
           {/* Two-column layout for main content */}
           <View style={{ flexDirection: 'row', marginTop: 10 }}>

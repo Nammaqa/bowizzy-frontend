@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ResumeData } from '@/types/resume';
+import { normalizeProfileUrl } from '../linkUtils';
 
 const htmlToLines = (s?: string) => {
   if (!s) return [] as string[];
@@ -21,10 +22,16 @@ interface Props { data: ResumeData; primaryColor?: string; }
 const AiTemplate6Display: React.FC<Props> = ({ data, primaryColor = '#4338ca' }) => {
   const { personal, experience, education, projects, skillsLinks, certifications } = data;
   const contactParts = [personal.email, personal.mobileNumber, personal.address].filter(Boolean);
-  const linkedin = skillsLinks?.links?.linkedinProfile || '';
-  const github = skillsLinks?.links?.githubProfile || '';
-  const portfolio = skillsLinks?.links?.portfolioUrl || '';
+  const linkedin = normalizeProfileUrl(skillsLinks?.links?.linkedinProfile);
+  const github = normalizeProfileUrl(skillsLinks?.links?.githubProfile);
+  const portfolio = normalizeProfileUrl(skillsLinks?.links?.portfolioUrl);
   const languages: string[] = (personal as any).languagesKnown || [];
+  const contactNodes: React.ReactNode[] = [
+    ...contactParts.map((c, i) => <React.Fragment key={`c-${i}`}>{c}</React.Fragment>),
+    linkedin && <a key="li" href={linkedin} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>{linkedin}</a>,
+    github && <a key="gh" href={github} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>{github}</a>,
+    portfolio && <a key="pf" href={portfolio} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>{portfolio}</a>,
+  ].filter(Boolean);
 
   const sectionTitle: React.CSSProperties = { fontSize: 10, fontWeight: 700, color: primaryColor, letterSpacing: 1, textTransform: 'uppercase' as const, marginBottom: 4 };
 
@@ -41,7 +48,14 @@ const AiTemplate6Display: React.FC<Props> = ({ data, primaryColor = '#4338ca' })
           </h1>
           {experience.jobRole && <p style={{ fontSize: 10, color: '#666', margin: '3px 0 0', letterSpacing: 1 }}>{experience.jobRole}</p>}
           <div style={{ height: 1, backgroundColor: '#ddd', marginTop: 8, marginBottom: 4 }} />
-          <p style={{ fontSize: 8, color: '#666', margin: '2px 0 0' }}>{[...contactParts, linkedin, github, portfolio].filter(Boolean).join('  •  ')}</p>
+          <p style={{ fontSize: 8, color: '#666', margin: '2px 0 0' }}>
+            {contactNodes.map((node, i) => (
+              <React.Fragment key={i}>
+                {i > 0 && '  •  '}
+                {node}
+              </React.Fragment>
+            ))}
+          </p>
         </div>
 
         {/* Two column */}

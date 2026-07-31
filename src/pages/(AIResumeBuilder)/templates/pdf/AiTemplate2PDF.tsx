@@ -1,6 +1,7 @@
 import React from 'react';
-import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, View, Text, StyleSheet, Link } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
+import { normalizeProfileUrl } from '../linkUtils';
 const htmlToPlain = (html?: string) => {
   if (!html) return '';
   let t = html.replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>|<\/li>/gi, '\n').replace(/<li>/gi, '• ').replace(/<[^>]+>/g, '');
@@ -44,17 +45,32 @@ interface Props { data: ResumeData; primaryColor?: string; }
 const AiTemplate2PDF: React.FC<Props> = ({ data, primaryColor = '#1e3a5f' }) => {
   const { personal, experience, education, projects, skillsLinks, certifications } = data;
   const contactParts = [personal.email, personal.mobileNumber, personal.address].filter(Boolean);
-  const linkedin = skillsLinks?.links?.linkedinProfile || '';
-  const github = skillsLinks?.links?.githubProfile || '';
-  const portfolio = skillsLinks?.links?.portfolioUrl || '';
+  const linkedin = normalizeProfileUrl(skillsLinks?.links?.linkedinProfile);
+  const github = normalizeProfileUrl(skillsLinks?.links?.githubProfile);
+  const portfolio = normalizeProfileUrl(skillsLinks?.links?.portfolioUrl);
   const languages: string[] = (personal as any).languagesKnown || [];
+  const linkFields = [
+    { key: 'li', href: linkedin },
+    { key: 'gh', href: github },
+    { key: 'pf', href: portfolio },
+  ].filter((f) => f.href);
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         {/* Colored header band */}
         <View style={{ ...styles.header, backgroundColor: primaryColor }}>
           <Text style={styles.name}>{personal.firstName} {personal.middleName || ''} {personal.lastName}</Text>
-          <Text style={styles.subtitle}>{[...contactParts, linkedin, github, portfolio].filter(Boolean).join('  •  ')}</Text>
+          <Text style={styles.subtitle}>
+            {contactParts.map((c, i) => (
+              <Text key={`c-${i}`}>{i > 0 ? '  •  ' : ''}{c}</Text>
+            ))}
+            {linkFields.map((f, i) => (
+              <Text key={f.key}>
+                {(contactParts.length > 0 || i > 0) ? '  •  ' : ''}
+                <Link src={f.href} style={{ color: '#c4d9f2', textDecoration: 'none' }}>{f.href}</Link>
+              </Text>
+            ))}
+          </Text>
         </View>
         <View style={styles.content}>
           {/* Summary */}

@@ -327,7 +327,7 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
 
         {(skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled) && (<>
           <View style={{ marginTop: 12 }}>
-            <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>SUMMARY</Text>
+            <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>TECHNICAL SUMMARY</Text>
             <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginTop: 4, marginBottom: 0 }} />
           </View>
           <View style={{ marginTop: 6 }}>

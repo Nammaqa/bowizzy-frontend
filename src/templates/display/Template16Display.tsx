@@ -114,7 +114,7 @@ const Template16Display: React.FC<Template16DisplayProps> = ({
         <section style={{ display: 'block' }}>
 
           <div style={{ marginTop: 12 }}>
-            <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Summary</div>
+            <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Career Objective</div>
             <div style={{ height: 1, background: '#ddd', marginTop: 4, width: '100%' }} />
           </div>
 

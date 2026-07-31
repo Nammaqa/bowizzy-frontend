@@ -26,7 +26,7 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
   onPageChange,
   pageControllerRef,
 }) => {
-  const { personal, education, experience, projects, skillsLinks } = data;
+  const { personal, education, experience, projects, skillsLinks, certifications } = data;
   const sortedHigherEducation = React.useMemo(() => {
     const parseYearKey = (val: string) => {
       if (!val) return -Infinity;
@@ -440,6 +440,29 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                       )}
                   </div>
                 ))}
+            </section>
+          )}
+
+          {/* Certifications Section */}
+          {certifications.filter(c => c.enabled && c.certificateTitle && c.certificateTitle.trim()).length > 0 && (
+            <section style={{ marginBottom: 22 }}>
+              <h2 style={{ fontSize: 13, fontWeight: 700, color: primaryColor, letterSpacing: 1.2, marginBottom: 8 }}>TECHNICAL CERTIFICATIONS</h2>
+              <div style={{ height: 1, background: '#333', width: '100%', marginBottom: 12 }} />
+              {certifications.filter(c => c.enabled && c.certificateTitle && c.certificateTitle.trim()).map((cert, idx) => (
+                <div key={idx} style={{ marginBottom: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#000000', flex: 1, marginRight: 8 }}>{cert.certificateTitle}</div>
+                    <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{cert.date}</div>
+                  </div>
+                  {cert.description && (
+                    <div
+                      className="t11-justify"
+                      style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', marginTop: 4, textAlign: 'justify' }}
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(cert.description) }}
+                    />
+                  )}
+                </div>
+              ))}
             </section>
           )}
 

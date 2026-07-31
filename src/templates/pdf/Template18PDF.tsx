@@ -216,7 +216,7 @@ const Template18PDF: React.FC<Template18PDFProps> = ({ data, primaryColor = '#11
 
         <View>
           <View style={styles.section}>
-            <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Professional Summary</Text>
+            <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Career Objective</Text>
             <View style={{ ...styles.divider, backgroundColor: primaryColor }} />
             {personal.aboutCareerObjective ? <Text style={{ marginTop: 6, color: '#444' }}>{htmlToPlainText(personal.aboutCareerObjective).replace(/ /g, ' ').trim()}</Text> : null}
           </View>

@@ -1,6 +1,7 @@
 import React from 'react';
-import { Document, Page, View, Text, StyleSheet, Svg, Path } from '@react-pdf/renderer';
+import { Document, Page, View, Text, StyleSheet, Svg, Path, Link } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
+import { normalizeProfileUrl } from '../linkUtils';
 const styles = StyleSheet.create({
   page: { paddingTop: 32, paddingBottom: 28, paddingLeft: 40, paddingRight: 40, fontSize: 10, fontFamily: 'Helvetica' },
   name: { fontSize: 26, letterSpacing: 1 },
@@ -45,9 +46,9 @@ interface Props { data: ResumeData; primaryColor?: string; }
 const AiTemplate1PDF: React.FC<Props> = ({ data, primaryColor = '#1a1a1a' }) => {
   const { personal, experience, education, projects, skillsLinks, certifications } = data;
   const contactParts = [personal.email, personal.mobileNumber, personal.address].filter(Boolean);
-  const linkedin = skillsLinks?.links?.linkedinProfile || '';
-  const github = skillsLinks?.links?.githubProfile || '';
-  const portfolio = skillsLinks?.links?.portfolioUrl || '';
+  const linkedin = normalizeProfileUrl(skillsLinks?.links?.linkedinProfile);
+  const github = normalizeProfileUrl(skillsLinks?.links?.githubProfile);
+  const portfolio = normalizeProfileUrl(skillsLinks?.links?.portfolioUrl);
   const languages: string[] = (personal as any).languagesKnown || [];
   return (
     <Document>
@@ -58,7 +59,9 @@ const AiTemplate1PDF: React.FC<Props> = ({ data, primaryColor = '#1a1a1a' }) => 
             {personal.firstName} {personal.middleName || ''} {personal.lastName}
           </Text>
           <Text style={{ ...styles.contact, marginTop: 4 }}>{contactParts.join('  |  ')}</Text>
-          {[linkedin, github, portfolio].filter(Boolean).map((c, i) => <Text key={i} style={{ ...styles.contact, marginTop: 2 }}>{c}</Text>)}
+          {[linkedin, github, portfolio].filter(Boolean).map((c, i) => (
+            <Link key={i} src={c} style={{ ...styles.contact, marginTop: 2, textDecoration: 'none' }}>{c}</Link>
+          ))}
         </View>
         <View style={{ ...styles.divider, backgroundColor: primaryColor }} />
         {/* Summary */}

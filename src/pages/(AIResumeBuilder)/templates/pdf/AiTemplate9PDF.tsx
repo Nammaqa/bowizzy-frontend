@@ -1,6 +1,7 @@
 import React from 'react';
-import { Document, Page, View, Text } from '@react-pdf/renderer';
+import { Document, Page, View, Text, Link } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
+import { normalizeProfileUrl } from '../linkUtils';
 const htmlToPlain = (html?: string) => {
   if (!html) return '';
   let t = html.replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>|<\/li>/gi, '\n').replace(/<li>/gi, '• ').replace(/<[^>]+>/g, '');
@@ -39,14 +40,18 @@ const SectionTitle = ({ title, color }: { title: string; color: string }) => (
 const AiTemplate9PDF: React.FC<Props> = ({ data, primaryColor = '#334155' }) => {
   const { personal, experience, education, projects, skillsLinks, certifications } = data;
   const contactParts = [personal.email, personal.mobileNumber, personal.address].filter(Boolean);
-  const linkedin = skillsLinks?.links?.linkedinProfile || '';
-  const github = skillsLinks?.links?.githubProfile || '';
-  const portfolio = skillsLinks?.links?.portfolioUrl || '';
+  const linkedin = normalizeProfileUrl(skillsLinks?.links?.linkedinProfile);
+  const github = normalizeProfileUrl(skillsLinks?.links?.githubProfile);
+  const portfolio = normalizeProfileUrl(skillsLinks?.links?.portfolioUrl);
   const languages: string[] = (personal as any).languagesKnown || [];
   const initials = `${(personal.firstName || '')[0] || ''}${(personal.lastName || '')[0] || ''}`.toUpperCase();
   return (
     <Document>
       <Page size="A4" style={{ fontSize: 9, fontFamily: 'Helvetica' }}>
+        {/* Top padding on every page after the first — the banner sits flush
+            against the page edge by design for page 1, but continuation pages need
+            breathing room so wrapped content doesn't stick to the top edge. */}
+        <View fixed render={({ pageNumber }) => (pageNumber > 1 ? <View style={{ height: 24 }} /> : null)} />
         {/* Top banner */}
         <View style={{ backgroundColor: primaryColor, paddingVertical: 20, paddingHorizontal: 40, flexDirection: 'row', alignItems: 'flex-start', gap: 16 }}>
           <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' }}>
@@ -60,7 +65,9 @@ const AiTemplate9PDF: React.FC<Props> = ({ data, primaryColor = '#334155' }) => 
           </View>
           <View style={{ alignItems: 'flex-end', width: 200, flexShrink: 0 }}>
             {contactParts.map((c, i) => <Text key={i} style={{ fontSize: 8.5, color: '#e2e8f0', textAlign: 'right' }}>{c}</Text>)}
-            {[linkedin, github, portfolio].filter(Boolean).map((c, i) => <Text key={i} style={{ fontSize: 8, color: '#93c5fd', textAlign: 'right' }}>{c}</Text>)}
+            {[linkedin, github, portfolio].filter(Boolean).map((c, i) => (
+              <Link key={i} src={c} style={{ fontSize: 8, color: '#93c5fd', textAlign: 'right', textDecoration: 'none' }}>{c}</Link>
+            ))}
           </View>
         </View>
         <View style={{ paddingHorizontal: 40, paddingTop: 12, paddingBottom: 28 }}>

@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ResumeData } from '@/types/resume';
+import { normalizeProfileUrl } from '../linkUtils';
 
 const htmlToLines = (s?: string) => {
   if (!s) return [] as string[];
@@ -21,9 +22,9 @@ interface Props { data: ResumeData; primaryColor?: string; }
 const AiTemplate5Display: React.FC<Props> = ({ data, primaryColor = '#0f766e' }) => {
   const { personal, experience, education, projects, skillsLinks, certifications } = data;
   const contactParts = [personal.email, personal.mobileNumber].filter(Boolean);
-  const linkedin = skillsLinks?.links?.linkedinProfile || '';
-  const github = skillsLinks?.links?.githubProfile || '';
-  const portfolio = skillsLinks?.links?.portfolioUrl || '';
+  const linkedin = normalizeProfileUrl(skillsLinks?.links?.linkedinProfile);
+  const github = normalizeProfileUrl(skillsLinks?.links?.githubProfile);
+  const portfolio = normalizeProfileUrl(skillsLinks?.links?.portfolioUrl);
   const languages: string[] = (personal as any).languagesKnown || [];
 
   const SectionTitle = ({ title }: { title: string }) => (
@@ -46,7 +47,11 @@ const AiTemplate5Display: React.FC<Props> = ({ data, primaryColor = '#0f766e' })
         <div style={{ textAlign: 'right', width: 220, flexShrink: 0 }}>
           {contactParts.map((c, i) => <p key={i} style={{ fontSize: 9, color: '#555', margin: 0, wordBreak: 'break-word' }}>{c}</p>)}
           {personal.address && <p style={{ fontSize: 9, color: '#555', margin: 0, lineHeight: 1.4, wordBreak: 'break-word' }}>{personal.address}</p>}
-          {[linkedin, github, portfolio].filter(Boolean).map((c, i) => <p key={i} style={{ fontSize: 8, color: primaryColor, margin: 0, wordBreak: 'break-word' }}>{c}</p>)}
+          {[linkedin, github, portfolio].filter(Boolean).map((c, i) => (
+            <p key={i} style={{ fontSize: 8, margin: 0, wordBreak: 'break-word' }}>
+              <a href={c} target="_blank" rel="noreferrer" style={{ color: primaryColor, textDecoration: 'none' }}>{c}</a>
+            </p>
+          ))}
         </div>
       </div>
       <div style={{ height: 2, backgroundColor: primaryColor, marginBottom: 4 }} />

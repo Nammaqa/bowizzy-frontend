@@ -1,6 +1,7 @@
 import React from 'react';
-import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, View, Text, StyleSheet, Link } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
+import { normalizeProfileUrl } from '../linkUtils';
 const htmlToPlain = (html?: string) => {
   if (!html) return '';
   let t = html.replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>|<\/li>/gi, '\n').replace(/<li>/gi, '• ').replace(/<[^>]+>/g, '');
@@ -32,10 +33,15 @@ interface Props { data: ResumeData; primaryColor?: string; }
 const AiTemplate4PDF: React.FC<Props> = ({ data, primaryColor = '#b91c1c' }) => {
   const { personal, experience, education, projects, skillsLinks, certifications } = data;
   const contactParts = [personal.email, personal.mobileNumber, personal.address].filter(Boolean);
-  const linkedin = skillsLinks?.links?.linkedinProfile || '';
-  const github = skillsLinks?.links?.githubProfile || '';
-  const portfolio = skillsLinks?.links?.portfolioUrl || '';
+  const linkedin = normalizeProfileUrl(skillsLinks?.links?.linkedinProfile);
+  const github = normalizeProfileUrl(skillsLinks?.links?.githubProfile);
+  const portfolio = normalizeProfileUrl(skillsLinks?.links?.portfolioUrl);
   const languages: string[] = (personal as any).languagesKnown || [];
+  const linkFields = [
+    { key: 'li', href: linkedin },
+    { key: 'gh', href: github },
+    { key: 'pf', href: portfolio },
+  ].filter((f) => f.href);
   return (
     <Document>
       <Page size="A4" style={{ paddingTop: 32, paddingBottom: 24, paddingLeft: 40, paddingRight: 40, fontSize: 9, fontFamily: 'Helvetica' }}>
@@ -48,7 +54,17 @@ const AiTemplate4PDF: React.FC<Props> = ({ data, primaryColor = '#b91c1c' }) => 
             <Text style={{ fontSize: 11, color: '#555', marginTop: 2 }}>{experience.jobRole}</Text>
           )}
           <View style={{ height: 3, backgroundColor: primaryColor, width: 60, marginTop: 6 }} />
-          <Text style={{ fontSize: 9, color: '#555', marginTop: 6 }}>{[...contactParts, linkedin, github, portfolio].filter(Boolean).join('  |  ')}</Text>
+          <Text style={{ fontSize: 9, color: '#555', marginTop: 6 }}>
+            {contactParts.map((c, i) => (
+              <Text key={`c-${i}`}>{i > 0 ? '  |  ' : ''}{c}</Text>
+            ))}
+            {linkFields.map((f, i) => (
+              <Text key={f.key}>
+                {(contactParts.length > 0 || i > 0) ? '  |  ' : ''}
+                <Link src={f.href} style={{ color: '#555', textDecoration: 'none' }}>{f.href}</Link>
+              </Text>
+            ))}
+          </Text>
         </View>
         {/* Summary */}
         {personal.aboutCareerObjective && (

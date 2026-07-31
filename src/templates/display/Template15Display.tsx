@@ -143,7 +143,7 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
 
           {(skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled) && (<>
             <div style={{ marginTop: 12 }}>
-              <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>SUMMARY</div>
+              <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>TECHNICAL SUMMARY</div>
               <div style={{ height: 1, background: '#ddd', marginTop: 4, width: '100%' }} />
             </div>
             <div style={{ marginTop: 6 }}>

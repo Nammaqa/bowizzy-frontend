@@ -1,6 +1,7 @@
 import React from 'react';
-import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, View, Text, StyleSheet, Link } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
+import { normalizeProfileUrl } from '../linkUtils';
 const htmlToPlain = (html?: string) => {
   if (!html) return '';
   let t = html.replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>|<\/li>/gi, '\n').replace(/<li>/gi, '• ').replace(/<[^>]+>/g, '');
@@ -32,13 +33,17 @@ const SIDEBAR_WIDTH = 170;
 interface Props { data: ResumeData; primaryColor?: string; }
 const AiTemplate3PDF: React.FC<Props> = ({ data, primaryColor = '#2d3748' }) => {
   const { personal, experience, education, projects, skillsLinks, certifications } = data;
-  const linkedin = skillsLinks?.links?.linkedinProfile || '';
-  const github = skillsLinks?.links?.githubProfile || '';
-  const portfolio = skillsLinks?.links?.portfolioUrl || '';
+  const linkedin = normalizeProfileUrl(skillsLinks?.links?.linkedinProfile);
+  const github = normalizeProfileUrl(skillsLinks?.links?.githubProfile);
+  const portfolio = normalizeProfileUrl(skillsLinks?.links?.portfolioUrl);
   const languages: string[] = (personal as any).languagesKnown || [];
   return (
     <Document>
       <Page size="A4" style={{ paddingTop: 0, paddingBottom: 0, paddingLeft: 0, paddingRight: 0, fontSize: 9 }}>
+        {/* Top padding on every page after the first — the sidebar/content sit flush
+            against the page edge by design for page 1, but continuation pages need
+            breathing room so wrapped content doesn't stick to the top edge. */}
+        <View fixed render={({ pageNumber }) => (pageNumber > 1 ? <View style={{ height: 24 }} /> : null)} />
         {/* Full-height sidebar background */}
         <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: SIDEBAR_WIDTH, backgroundColor: primaryColor }} />
         <View style={{ flexDirection: 'row' }}>
@@ -52,9 +57,9 @@ const AiTemplate3PDF: React.FC<Props> = ({ data, primaryColor = '#2d3748' }) => 
             {personal.email && <Text style={{ fontSize: 8, color: '#e2e8f0', marginBottom: 3 }}>{personal.email}</Text>}
             {personal.mobileNumber && <Text style={{ fontSize: 8, color: '#e2e8f0', marginBottom: 3 }}>{personal.mobileNumber}</Text>}
             {personal.address && <Text style={{ fontSize: 8, color: '#e2e8f0', marginBottom: 3 }}>{personal.address}</Text>}
-            {linkedin && <Text style={{ fontSize: 7, color: '#90cdf4', marginBottom: 3 }}>{linkedin}</Text>}
-            {github && <Text style={{ fontSize: 7, color: '#90cdf4', marginBottom: 3 }}>{github}</Text>}
-            {portfolio && <Text style={{ fontSize: 7, color: '#90cdf4', marginBottom: 3 }}>{portfolio}</Text>}
+            {linkedin && <Link src={linkedin} style={{ fontSize: 7, color: '#90cdf4', marginBottom: 3, textDecoration: 'none' }}>{linkedin}</Link>}
+            {github && <Link src={github} style={{ fontSize: 7, color: '#90cdf4', marginBottom: 3, textDecoration: 'none' }}>{github}</Link>}
+            {portfolio && <Link src={portfolio} style={{ fontSize: 7, color: '#90cdf4', marginBottom: 3, textDecoration: 'none' }}>{portfolio}</Link>}
             {/* Education in sidebar */}
             <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#e2e8f0', letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 18, marginBottom: 4 }}>Education</Text>
             <View style={{ height: 1, backgroundColor: '#e2e8f0', marginBottom: 6 }} />

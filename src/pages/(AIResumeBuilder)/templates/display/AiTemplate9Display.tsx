@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ResumeData } from '@/types/resume';
+import { normalizeProfileUrl } from '../linkUtils';
 const htmlToLines = (s?: string) => {
   if (!s) return [] as string[];
   const text = String(s).replace(/<\/p>|<\/li>/gi, '\n').replace(/<br\s*\/?>(?:\s*)/gi, '\n').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');
@@ -17,9 +18,9 @@ interface Props { data: ResumeData; primaryColor?: string; }
 const AiTemplate9Display: React.FC<Props> = ({ data, primaryColor = '#334155' }) => {
   const { personal, experience, education, projects, skillsLinks, certifications } = data;
   const contactParts = [personal.email, personal.mobileNumber, personal.address].filter(Boolean);
-  const linkedin = skillsLinks?.links?.linkedinProfile || '';
-  const github = skillsLinks?.links?.githubProfile || '';
-  const portfolio = skillsLinks?.links?.portfolioUrl || '';
+  const linkedin = normalizeProfileUrl(skillsLinks?.links?.linkedinProfile);
+  const github = normalizeProfileUrl(skillsLinks?.links?.githubProfile);
+  const portfolio = normalizeProfileUrl(skillsLinks?.links?.portfolioUrl);
   const languages: string[] = (personal as any).languagesKnown || [];
   const initials = `${(personal.firstName || '')[0] || ''}${(personal.lastName || '')[0] || ''}`.toUpperCase();
   const SectionTitle = ({ title }: { title: string }) => (
@@ -46,7 +47,11 @@ const AiTemplate9Display: React.FC<Props> = ({ data, primaryColor = '#334155' })
         </div>
         <div style={{ textAlign: 'right', width: 220, flexShrink: 0 }}>
           {contactParts.map((c, i) => <p key={i} style={{ fontSize: 8.5, color: '#e2e8f0', margin: 0, wordBreak: 'break-word' }}>{c}</p>)}
-          {[linkedin, github, portfolio].filter(Boolean).map((c, i) => <p key={i} style={{ fontSize: 8, color: '#93c5fd', margin: 0, wordBreak: 'break-word' }}>{c}</p>)}
+          {[linkedin, github, portfolio].filter(Boolean).map((c, i) => (
+            <p key={i} style={{ fontSize: 8, margin: 0, wordBreak: 'break-word' }}>
+              <a href={c} target="_blank" rel="noreferrer" style={{ color: '#93c5fd', textDecoration: 'none' }}>{c}</a>
+            </p>
+          ))}
         </div>
       </div>
       <div style={{ padding: '12px 40px 32px' }}>

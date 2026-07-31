@@ -244,7 +244,7 @@ const Template13PDF: React.FC<Template13PDFProps> = ({ data, primaryColor = '#11
         </View>
 
         <View style={{ marginTop: 12 }}>
-          <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>SUMMARY</Text>
+          <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>CAREER OBJECTIVE</Text>
           <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginTop: 0, marginBottom: 0 }} />
         </View>
         <View style={{ marginTop: 0 }}>
