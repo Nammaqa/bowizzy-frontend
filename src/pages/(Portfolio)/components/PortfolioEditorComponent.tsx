@@ -90,6 +90,10 @@ export interface PortfolioEditorComponentProps {
   setPortfolioName: (val: string) => void;
   portfolioDescription: string;
   setPortfolioDescription: (val: string) => void;
+  aboutTitle: string;
+  setAboutTitle: (val: string) => void;
+  aboutDescription: string;
+  setAboutDescription: (val: string) => void;
   portfolioType: string;
   setPortfolioType: (val: string) => void;
   githubUrl: string;
@@ -157,6 +161,10 @@ export default function PortfolioEditorComponent({
   setPortfolioName,
   portfolioDescription,
   setPortfolioDescription,
+  aboutTitle,
+  setAboutTitle,
+  aboutDescription,
+  setAboutDescription,
   portfolioType,
   setPortfolioType,
   githubUrl,
@@ -313,6 +321,8 @@ export default function PortfolioEditorComponent({
 
   const nameMax = 50;
   const descMax = 300;
+  const aboutTitleMax = 120;
+  const aboutDescriptionMax = 500;
   const linkMax = 100;
   const stepTitleMax = 100;
   const stepDescriptionMax = 250;
@@ -774,6 +784,59 @@ export default function PortfolioEditorComponent({
           </div>
         </div>
       </div>
+
+      {/* Section: About */}
+      {portfolioType === "designer" && (
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+          <h2 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+            <PenTool className="w-4 h-4 text-violet-500" />
+            About Section
+          </h2>
+          <p className="text-[11px] text-gray-400 -mt-2">
+            Replaces the default heading and text in the About block of your portfolio.
+          </p>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+              About Title
+            </label>
+            <input
+              type="text"
+              maxLength={aboutTitleMax}
+              value={aboutTitle}
+              onChange={(e) => setAboutTitle(e.target.value)}
+              placeholder="e.g. Design with a product brain and a visual point of view."
+              className="w-full text-sm px-3.5 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-500 bg-white placeholder-gray-400 transition"
+            />
+            <div className="flex justify-between mt-1 text-[10px] text-gray-400 font-medium">
+              <span>Headline shown beside the About label</span>
+              <span>
+                {aboutTitle.length}/{aboutTitleMax}
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+              About Description
+            </label>
+            <textarea
+              maxLength={aboutDescriptionMax}
+              value={aboutDescription}
+              onChange={(e) => setAboutDescription(e.target.value)}
+              placeholder="Tell recruiters how you work, what you care about, and the kind of problems you solve..."
+              rows={5}
+              className="w-full text-sm px-3.5 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-500 bg-white placeholder-gray-400 transition resize-y"
+            />
+            <div className="flex justify-between mt-1 text-[10px] text-gray-400 font-medium">
+              <span>Leave empty to reuse the portfolio description</span>
+              <span>
+                {aboutDescription.length}/{aboutDescriptionMax}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Section 2: Appearance */}
       {["developer", "designer"].includes(portfolioType) && (

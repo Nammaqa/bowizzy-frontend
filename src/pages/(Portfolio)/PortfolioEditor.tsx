@@ -73,6 +73,8 @@ export default function PortfolioEditor() {
   // State fields
   const [portfolioName, setPortfolioName] = useState("");
   const [portfolioDescription, setPortfolioDescription] = useState("");
+  const [aboutTitle, setAboutTitle] = useState("");
+  const [aboutDescription, setAboutDescription] = useState("");
   const [portfolioType, setPortfolioType] = useState("developer");
   const [githubUrl, setGithubUrl] = useState("");
   const [linkedinUrl, setLinkedinUrl] = useState("");
@@ -179,6 +181,8 @@ export default function PortfolioEditor() {
                 if (cfg.name) setPortfolioName(cfg.name);
                 if (cfg.description) setPortfolioDescription(cfg.description);
                 if (cfg.portfolio_type) setPortfolioType(cfg.portfolio_type);
+                setAboutTitle(cfg.aboutTitle || "");
+                setAboutDescription(cfg.aboutDescription || "");
                 const cfgTheme = getDefaultTheme(cfg.portfolio_type || foundType);
 
                 setGithubUrl(cfg.github || "");
@@ -474,6 +478,8 @@ export default function PortfolioEditor() {
     return {
       name: portfolioName,
       description: portfolioDescription,
+      aboutTitle: portfolioType === "designer" ? aboutTitle : "",
+      aboutDescription: portfolioType === "designer" ? aboutDescription : "",
       portfolio_type: portfolioType,
       github: githubUrl,
       linkedin: linkedinUrl,
@@ -751,6 +757,11 @@ export default function PortfolioEditor() {
       return;
     }
 
+    if (aboutTitle.trim().length > 120 || aboutDescription.trim().length > 500) {
+      alert("About title must be 120 characters or less and About description must be 500 characters or less.");
+      return;
+    }
+
     const invalidStep = designProcess.find(
       (step) => step.title.trim().length > 100 || step.description.trim().length > 250
     );
@@ -872,6 +883,8 @@ export default function PortfolioEditor() {
       const portfolioPayload = {
         name: portfolioName,
         description: portfolioDescription,
+        aboutTitle: portfolioType === "designer" ? aboutTitle : "",
+        aboutDescription: portfolioType === "designer" ? aboutDescription : "",
         portfolio_type: portfolioType,
         github: cleanGithub,
         linkedin: cleanLinkedin,
@@ -944,6 +957,8 @@ export default function PortfolioEditor() {
   const previewData = {
     portfolioName,
     portfolioDescription,
+    aboutTitle,
+    aboutDescription,
     githubUrl,
     linkedinUrl,
     twitterUrl,
@@ -985,6 +1000,10 @@ export default function PortfolioEditor() {
             setPortfolioName={setPortfolioName}
             portfolioDescription={portfolioDescription}
             setPortfolioDescription={setPortfolioDescription}
+            aboutTitle={aboutTitle}
+            setAboutTitle={setAboutTitle}
+            aboutDescription={aboutDescription}
+            setAboutDescription={setAboutDescription}
             portfolioType={portfolioType}
             setPortfolioType={setPortfolioType}
             githubUrl={githubUrl}

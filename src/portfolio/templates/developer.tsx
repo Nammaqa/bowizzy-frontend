@@ -18,6 +18,8 @@ export interface PortfolioData {
   email?: string;
   phone?: string;
   tagline?: string;
+  aboutTitle?: string;
+  aboutDescription?: string;
   themeColor?: string;
   backgroundColor?: string;
   behanceUrl?: string;

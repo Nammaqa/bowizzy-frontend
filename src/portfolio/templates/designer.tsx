@@ -335,13 +335,15 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
             <p className="text-xs font-extrabold uppercase mb-3" style={{ color: accent }}>
               About
             </p>
-            <h2 className="text-3xl @md:text-4xl font-extrabold leading-tight">
-              Design with a product brain and a visual point of view.
+            <h2 className="designer-text-wrap text-3xl @md:text-4xl font-extrabold leading-tight">
+              {data.aboutTitle ||
+                "Design with a product brain and a visual point of view."}
             </h2>
           </div>
           <div>
             <p className="designer-text-wrap text-xl @md:text-2xl leading-10 font-bold">
-              {data.portfolioDescription ||
+              {data.aboutDescription ||
+                data.portfolioDescription ||
                 "I help teams turn rough ideas into clear, polished digital experiences that feel considered from the first impression to the final interaction."}
             </p>
             <div className="flex flex-wrap gap-2 mt-8">
