@@ -4,6 +4,7 @@ import {
   X,
   MessageSquareText,
   ListChecks,
+  Lock,
   PencilOff,
   AlertTriangle,
   FileSearch,
@@ -28,6 +29,11 @@ const AI_MODE_POINTS: GuidePoint[] = [
     icon: <ListChecks className="w-4 h-4" />,
     title: "Detail drives quality",
     text: "The more specific and complete your answers are, the stronger the resume content generated for you will be.",
+  },
+  {
+    icon: <Lock className="w-4 h-4" />,
+    title: "Core details stay as they are",
+    text: "The assistant can add entries, remove them, and enhance the summary of existing ones — but it cannot change core details such as names, dates, or durations. Update those in your Profile section before you begin.",
   },
   {
     icon: <PencilOff className="w-4 h-4" />,
@@ -86,12 +92,23 @@ const ModeInfoModal: React.FC<ModeInfoModalProps> = ({ mode, onClose }) => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.97, y: 8 }}
               transition={{ duration: 0.22, ease: "easeOut" }}
-              className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl pointer-events-auto"
+              className="mode-info-modal relative w-full max-w-md max-h-[95vh] overflow-y-auto rounded-2xl shadow-2xl pointer-events-auto"
               style={{
                 background: "linear-gradient(145deg, #ffffff 0%, #fff7f3 100%)",
                 border: "1px solid rgba(249,115,22,0.15)",
               }}
             >
+              {/* Scrolling stays available on short viewports — only the bar is hidden. */}
+              <style>{`
+                .mode-info-modal::-webkit-scrollbar {
+                  display: none;
+                }
+                .mode-info-modal {
+                  -ms-overflow-style: none;
+                  scrollbar-width: none;
+                }
+              `}</style>
+
               {/* Header band */}
               <div
                 className="px-5 pt-5 pb-4"
