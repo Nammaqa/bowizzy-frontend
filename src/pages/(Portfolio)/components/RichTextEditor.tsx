@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from "react";
-import { Bold, Italic, Underline, List, ListOrdered, Link, RotateCcw, RotateCw } from "lucide-react";
+import { Bold, Italic, Underline, List, ListOrdered, Link, Eraser } from "lucide-react";
 
 interface RichTextEditorProps {
   value: string;
@@ -118,23 +118,15 @@ export default function RichTextEditor({
           type="button"
           onMouseDown={(e) => {
             e.preventDefault();
-            executeCommand("undo");
+            if (editorRef.current) {
+              editorRef.current.innerHTML = "";
+            }
+            onChange("");
           }}
           className="p-1 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-900 transition cursor-pointer ml-auto animate-none"
-          title="Undo"
+          title="Clear"
         >
-          <RotateCcw className="w-3.5 h-3.5" />
-        </button>
-        <button
-          type="button"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            executeCommand("redo");
-          }}
-          className="p-1 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-900 transition cursor-pointer animate-none"
-          title="Redo"
-        >
-          <RotateCw className="w-3.5 h-3.5" />
+          <Eraser className="w-3.5 h-3.5" />
         </button>
       </div>
 

@@ -229,10 +229,6 @@ export default function PortfolioEditor() {
     fetchPortfolioData();
   }, [id]);
 
-  const mmYYYYRegex = /^(0[1-9]|1[0-2])\s*-\s*\d{4}$/;
-  const plainTextRegex = /^[A-Za-z0-9 ]*$/;
-  const linkMaxLength = 100;
-
   const formatDuration = (startDate?: string, endDate?: string, currentlyWorking?: boolean) => {
     let start = (startDate || "").trim();
     let end = (endDate || "").trim();
@@ -377,43 +373,6 @@ export default function PortfolioEditor() {
     return `https://${trimmed}`;
   };
 
-  // Helper to check if a URL is valid (hostname must have a dot, e.g. github.com)
-  const isValidUrl = (url: string): boolean => {
-    if (!url.trim()) return true;
-    try {
-      const cleaned = ensureHttps(url);
-      const urlObj = new URL(cleaned);
-      return urlObj.hostname.includes(".") && !urlObj.hostname.endsWith(".");
-    } catch {
-      return false;
-    }
-  };
-
-  const hasAllowedUrlCharacters = (url: string): boolean => /^[A-Za-z0-9:/?#[\]@!$&'()*+,;=._~%-]+$/.test(url);
-
-  const isValidEmail = (email: string): boolean => {
-    const trimmed = email.trim();
-    if (!trimmed) return true;
-    if (trimmed.length > 150) return false;
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
-  };
-
-  const isValidPhone = (value: string): boolean => {
-    const trimmed = value.trim();
-    if (!trimmed) return true;
-    if (trimmed.length > 20) return false;
-    if (!/^[0-9+\s()-]+$/.test(trimmed)) return false;
-    const digitCount = trimmed.replace(/\D/g, "").length;
-    return digitCount >= 7 && digitCount <= 15;
-  };
-
-  const getPlainText = (html: string) => {
-    if (!html) return "";
-    return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
-  };
-
-  const isValidHexColor = (value: string) => /^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/.test(value.trim());
-
   const getCloudinaryPublicIdFromUrl = (
     url: string,
     resourceType: "image" | "raw" | "video"
@@ -434,37 +393,6 @@ export default function PortfolioEditor() {
       );
     } catch {
       return "";
-    }
-  };
-
-  const validateProfileUrl = (
-    url: string,
-    expectedHosts: string[],
-    pathPattern?: RegExp
-  ): boolean => {
-    if (!url.trim()) return true;
-    if (url.length > linkMaxLength || !hasAllowedUrlCharacters(url)) return false;
-    try {
-      const urlObj = new URL(ensureHttps(url));
-      const hostname = urlObj.hostname.replace(/^www\./i, "").toLowerCase();
-      if (!expectedHosts.includes(hostname)) return false;
-      if (pathPattern && !pathPattern.test(urlObj.pathname.replace(/\/+$/g, ""))) return false;
-      return !urlObj.search && !urlObj.hash;
-    } catch {
-      return false;
-    }
-  };
-
-  const validateCustomUrl = (url: string): boolean => {
-    if (!url.trim()) return true;
-    if (url.length > linkMaxLength || !hasAllowedUrlCharacters(url)) return false;
-    try {
-      const urlObj = new URL(ensureHttps(url));
-      const hostname = urlObj.hostname.replace(/^www\./i, "").toLowerCase();
-      const validDomain = /^([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i.test(hostname);
-      return validDomain && urlObj.pathname === "/" && !urlObj.search && !urlObj.hash;
-    } catch {
-      return false;
     }
   };
 
@@ -682,11 +610,6 @@ export default function PortfolioEditor() {
 
   // Submit and Save Portfolio
   const handleSave = async () => {
-    if (!portfolioName.trim()) {
-      alert("Portfolio name is required.");
-      return;
-    }
-
     // Clean and prepend https:// if missing
     const cleanGithub = githubUrl.trim() ? ensureHttps(githubUrl) : "";
     const cleanLinkedin = linkedinUrl.trim() ? ensureHttps(linkedinUrl) : "";
@@ -695,165 +618,7 @@ export default function PortfolioEditor() {
     const cleanBehance = behanceUrl.trim() ? ensureHttps(behanceUrl) : "";
     const cleanDribbble = dribbbleUrl.trim() ? ensureHttps(dribbbleUrl) : "";
 
-    if (!isValidHexColor(themeColor)) {
-      alert("Theme color must be a valid hex code, e.g. #RGB or #RRGGBB.");
-      return;
-    }
-
-    if (!isValidHexColor(backgroundColor)) {
-      alert("Background color must be a valid hex code, e.g. #RGB or #RRGGBB.");
-      return;
-    }
-
-    if (!isValidEmail(email)) {
-      alert("Please enter a valid email address with 150 characters or fewer.");
-      return;
-    }
-
-    if (!isValidPhone(phone)) {
-      alert("Please enter a valid contact number with 7 to 15 digits.");
-      return;
-    }
-
-    const invalidCertification = certifications.find(
-      (cert) =>
-        cert.name.trim().length > 100 ||
-        cert.issuer.trim().length > 100 ||
-        (cert.year.trim() && !/^\d{4}$/.test(cert.year.trim()))
-    );
-    if (invalidCertification) {
-      alert("Certification name and issuer must be 100 characters or less, and the year must be a 4-digit year.");
-      return;
-    }
-
-    const invalidCertificationUrl = certifications.find((cert) => {
-      const trimmed = (cert.link || "").trim();
-      if (!trimmed) return false;
-      return trimmed.length > linkMaxLength || !isValidUrl(trimmed);
-    });
-    if (invalidCertificationUrl) {
-      alert("Please enter a valid certification URL under 100 characters.");
-      return;
-    }
-
-    const invalidAchievement = achievements.find(
-      (achievement) =>
-        achievement.title.trim().length > 100 || achievement.description.trim().length > 250
-    );
-    if (invalidAchievement) {
-      alert("Each achievement must have a title of 100 characters or less and a description of 250 characters or less.");
-      return;
-    }
-
-    const invalidLanguage = languages.find((language) => language.trim().length > 50);
-    if (invalidLanguage) {
-      alert("Each language must be 50 characters or less.");
-      return;
-    }
-
-    const invalidStep = designProcess.find(
-      (step) => step.title.trim().length > 100 || step.description.trim().length > 250
-    );
-    if (invalidStep) {
-      alert("Each design process step must have a title of 100 characters or less and a description of 250 characters or less.");
-      return;
-    }
-
-    const invalidCaseStudyUrl = caseStudies.find(
-      (study) => (study.link || "").trim().length > linkMaxLength
-    );
-    if (invalidCaseStudyUrl) {
-      alert("Each case study URL must be 100 characters or less.");
-      return;
-    }
-
-    const invalidCaseStudyLength = caseStudies.find(
-      (study) =>
-        study.title.trim().length > 50 ||
-        study.role.trim().length > 50 ||
-        study.subtitle.trim().length > 250 ||
-        getPlainText(study.description).length > 500
-    );
-    if (invalidCaseStudyLength) {
-      alert("Case study title and role must be 50 characters or less, subtitle must be 250 characters or less, and description must be 500 characters or less.");
-      return;
-    }
-
-    // Validate URLs
-    if (cleanGithub && !validateProfileUrl(cleanGithub, ["github.com"], /^\/[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/)) {
-      alert("Please enter a valid GitHub profile URL under 100 characters.");
-      return;
-    }
-    if (cleanLinkedin && !validateProfileUrl(cleanLinkedin, ["linkedin.com"], /^\/in\/[A-Za-z0-9-]{3,100}$/)) {
-      alert("Please enter a valid LinkedIn profile URL under 100 characters.");
-      return;
-    }
-    if (cleanTwitter && !validateProfileUrl(cleanTwitter, ["twitter.com", "x.com"], /^\/[A-Za-z0-9_]{1,15}$/)) {
-      alert("Please enter a valid Twitter/X profile URL under 100 characters.");
-      return;
-    }
-    if (cleanCustom && !validateCustomUrl(cleanCustom)) {
-      alert("Please enter a valid Custom Domain URL under 100 characters.");
-      return;
-    }
-    if (cleanBehance && !isValidUrl(cleanBehance)) {
-      alert("Please enter a valid Behance URL.");
-      return;
-    }
-    if (cleanDribbble && !isValidUrl(cleanDribbble)) {
-      alert("Please enter a valid Dribbble URL.");
-      return;
-    }
-
-    const tooLongLink = [
-      cleanGithub,
-      cleanLinkedin,
-      cleanTwitter,
-      cleanCustom,
-      cleanBehance,
-      cleanDribbble,
-      ...caseStudies.map((study) => study.link || ""),
-    ].find((link) => link.length > linkMaxLength);
-
-    if (tooLongLink) {
-      alert("All portfolio links must be 100 characters or less.");
-      return;
-    }
-
     const normalizedExperiences = experiences.map(normalizeExperience);
-    const invalidProjectText = projects.find(
-      (project) => !plainTextRegex.test(project.title || "")
-    );
-
-    if (invalidProjectText) {
-      alert("Project title can only contain letters, numbers, and spaces.");
-      return;
-    }
-
-    const invalidExperienceText = normalizedExperiences.find((exp) => {
-      return (
-        !plainTextRegex.test(exp.role || "") ||
-        !plainTextRegex.test(exp.company || "") ||
-        (exp.role || "").length > 80 ||
-        (exp.company || "").length > 80
-      );
-    });
-
-    if (invalidExperienceText) {
-      alert("Job role/title and company can only contain letters, numbers, and spaces, with a maximum length of 80 characters.");
-      return;
-    }
-
-    const invalidExperience = normalizedExperiences.find((exp) => {
-      const hasStart = Boolean(exp.startDate);
-      const hasEnd = Boolean(exp.endDate);
-      return (hasStart && !mmYYYYRegex.test(exp.startDate || "")) || (hasEnd && !mmYYYYRegex.test(exp.endDate || ""));
-    });
-
-    if (invalidExperience) {
-      alert("Please enter timeline dates in MM-YYYY format.");
-      return;
-    }
 
     // Update state variables to match formatted links
     setGithubUrl(cleanGithub);
