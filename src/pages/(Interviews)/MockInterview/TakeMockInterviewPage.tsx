@@ -1172,7 +1172,8 @@ const TakeMockInterviewPage = () => {
                     {creditsLoading
                       ? "Loading credits…"
                       : purchasedCredits > 0
-                      ? `Purchased credits balance: ₹${purchasedCredits}. Apply them first.`
+                      ? `Purchased credits balance: ₹${purchasedCredits}. Apply them first.
+                        1 purchased credit = ₹1`
                       : "You don't have any purchased credits left."}
                   </p>
                 </div>
