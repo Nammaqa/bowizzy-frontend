@@ -86,7 +86,7 @@ export default function Register() {
     if (!value) return "";
     const m = value.match(/linkedin\.com\/in\/([^/?#\s]+)/i);
     if (m?.[1]) return m[1];
-    return value.replace(/[^A-Za-z0-9-]/g, "");
+    return value;
   };
 
   const formatDateInputValue = (date: Date) => {
@@ -249,9 +249,6 @@ export default function Register() {
 
     if (!isValidDob(dateOfBirth))
       return setFormError("You must be between 18 and 99 years old.");
-
-    if (!normalizedLinkedinUsername || !/^[A-Za-z0-9-]+$/.test(normalizedLinkedinUsername))
-      return setFormError("Invalid LinkedIn identifier.");
 
     setLoading(true);
 
