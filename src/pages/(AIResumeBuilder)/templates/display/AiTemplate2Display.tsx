@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ResumeData } from '@/types/resume';
+import { normalizeProfileUrl } from '../linkUtils';
 
 const htmlToLines = (s?: string) => {
   if (!s) return [] as string[];
@@ -21,10 +22,16 @@ interface Props { data: ResumeData; primaryColor?: string; }
 const AiTemplate2Display: React.FC<Props> = ({ data, primaryColor = '#1e3a5f' }) => {
   const { personal, experience, education, projects, skillsLinks, certifications } = data;
   const contactParts = [personal.email, personal.mobileNumber, personal.address].filter(Boolean);
-  const linkedin = skillsLinks?.links?.linkedinProfile || '';
-  const github = skillsLinks?.links?.githubProfile || '';
-  const portfolio = skillsLinks?.links?.portfolioUrl || '';
+  const linkedin = normalizeProfileUrl(skillsLinks?.links?.linkedinProfile);
+  const github = normalizeProfileUrl(skillsLinks?.links?.githubProfile);
+  const portfolio = normalizeProfileUrl(skillsLinks?.links?.portfolioUrl);
   const languages: string[] = (personal as any).languagesKnown || [];
+  const contactNodes: React.ReactNode[] = [
+    ...contactParts.map((c, i) => <React.Fragment key={`c-${i}`}>{c}</React.Fragment>),
+    linkedin && <a key="li" href={linkedin} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>{linkedin}</a>,
+    github && <a key="gh" href={github} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>{github}</a>,
+    portfolio && <a key="pf" href={portfolio} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>{portfolio}</a>,
+  ].filter(Boolean);
 
   const sectionStyle: React.CSSProperties = { fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase' as const, color: primaryColor, marginTop: 14, marginBottom: 0 };
   const dividerStyle: React.CSSProperties = { height: 1.5, backgroundColor: primaryColor, width: '100%', marginBottom: 6 };
@@ -36,7 +43,14 @@ const AiTemplate2Display: React.FC<Props> = ({ data, primaryColor = '#1e3a5f' })
         <h1 style={{ fontSize: 28, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: 1 }}>
           {personal.firstName} {personal.middleName || ''} {personal.lastName}
         </h1>
-        <p style={{ fontSize: 10, color: '#c4d9f2', margin: '4px 0 0' }}>{[...contactParts, linkedin, github, portfolio].filter(Boolean).join('  •  ')}</p>
+        <p style={{ fontSize: 10, color: '#c4d9f2', margin: '4px 0 0' }}>
+          {contactNodes.map((node, i) => (
+            <React.Fragment key={i}>
+              {i > 0 && '  •  '}
+              {node}
+            </React.Fragment>
+          ))}
+        </p>
       </div>
 
       <div style={{ padding: '16px 40px 24px' }}>

@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ResumeData } from '@/types/resume';
+import { normalizeProfileUrl } from '../linkUtils';
 const htmlToLines = (s?: string) => {
   if (!s) return [] as string[];
   const text = String(s).replace(/<\/p>|<\/li>/gi, '\n').replace(/<br\s*\/?>(?:\s*)/gi, '\n').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');
@@ -17,9 +18,9 @@ interface Props { data: ResumeData; primaryColor?: string; }
 const AiTemplate7Display: React.FC<Props> = ({ data, primaryColor = '#374151' }) => {
   const { personal, experience, education, projects, skillsLinks, certifications } = data;
   const contactParts = [personal.email, personal.mobileNumber, personal.address].filter(Boolean);
-  const linkedin = skillsLinks?.links?.linkedinProfile || '';
-  const github = skillsLinks?.links?.githubProfile || '';
-  const portfolio = skillsLinks?.links?.portfolioUrl || '';
+  const linkedin = normalizeProfileUrl(skillsLinks?.links?.linkedinProfile);
+  const github = normalizeProfileUrl(skillsLinks?.links?.githubProfile);
+  const portfolio = normalizeProfileUrl(skillsLinks?.links?.portfolioUrl);
   const languages: string[] = (personal as any).languagesKnown || [];
   const sectionStyle: React.CSSProperties = { fontSize: 10, fontWeight: 600, letterSpacing: 3, textTransform: 'uppercase' as const, color: primaryColor, marginTop: 16, marginBottom: 2 };
   const thinLine: React.CSSProperties = { height: 0.5, backgroundColor: '#d1d5db', width: '100%', marginBottom: 8 };
@@ -33,9 +34,9 @@ const AiTemplate7Display: React.FC<Props> = ({ data, primaryColor = '#374151' })
         {experience.jobRole && <p style={{ fontSize: 11, color: '#6b7280', margin: '3px 0 0', fontWeight: 500 }}>{experience.jobRole}</p>}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 6 }}>
           {contactParts.map((c, i) => <span key={i} style={{ fontSize: 8.5, color: '#6b7280' }}>{c}</span>)}
-          {linkedin && <span style={{ fontSize: 8.5, color: primaryColor }}>{linkedin}</span>}
-          {github && <span style={{ fontSize: 8.5, color: primaryColor }}>{github}</span>}
-          {portfolio && <span style={{ fontSize: 8.5, color: primaryColor }}>{portfolio}</span>}
+          {linkedin && <a href={linkedin} target="_blank" rel="noreferrer" style={{ fontSize: 8.5, color: primaryColor, textDecoration: 'none' }}>{linkedin}</a>}
+          {github && <a href={github} target="_blank" rel="noreferrer" style={{ fontSize: 8.5, color: primaryColor, textDecoration: 'none' }}>{github}</a>}
+          {portfolio && <a href={portfolio} target="_blank" rel="noreferrer" style={{ fontSize: 8.5, color: primaryColor, textDecoration: 'none' }}>{portfolio}</a>}
         </div>
       </div>
       <div style={{ height: 1.5, backgroundColor: primaryColor, marginBottom: 10 }} />

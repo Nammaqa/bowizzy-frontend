@@ -201,22 +201,30 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
 
         <View style={{ height: 1, backgroundColor: primaryColor, marginTop: 12, marginBottom: 12 }} />
 
-        {/* SUMMARY row */}
-        {(personal.aboutCareerObjective || (skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled)) && (
+        {/* CAREER OBJECTIVE row */}
+        {personal.aboutCareerObjective && (
           <>
             <View style={{ flexDirection: 'row' }}>
-              <View style={{ width: 150 }}><Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold }}>SUMMARY</Text></View>
+              <View style={{ width: 150 }}><Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold }}>CAREER OBJECTIVE</Text></View>
               <View style={{ flex: 1 }}>
-                {personal.aboutCareerObjective && (
-                  <Text style={{ fontSize: 11, color: '#333', marginBottom: (skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled) ? 6 : 0 }}>
-                    {htmlToPlainText(personal.aboutCareerObjective).replace(/\s{2,}/g, ' ')}
-                  </Text>
-                )}
-                {skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled && (
-                  <Text style={{ fontSize: 11, color: '#333' }}>
-                    {htmlToPlainText(skillsLinks.technicalSummary).replace(/\s{2,}/g, ' ')}
-                  </Text>
-                )}
+                <Text style={{ fontSize: 11, color: '#333' }}>
+                  {htmlToPlainText(personal.aboutCareerObjective).replace(/\s{2,}/g, ' ')}
+                </Text>
+              </View>
+            </View>
+            <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 12, marginBottom: 12 }} />
+          </>
+        )}
+
+        {/* TECHNICAL SUMMARY row */}
+        {skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled && (
+          <>
+            <View style={{ flexDirection: 'row' }}>
+              <View style={{ width: 150 }}><Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold }}>TECHNICAL SUMMARY</Text></View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 11, color: '#333' }}>
+                  {htmlToPlainText(skillsLinks.technicalSummary).replace(/\s{2,}/g, ' ')}
+                </Text>
               </View>
             </View>
             <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 12, marginBottom: 12 }} />

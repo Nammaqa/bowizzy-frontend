@@ -1,6 +1,7 @@
 import React from 'react';
-import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, View, Text, StyleSheet, Link } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
+import { normalizeProfileUrl } from '../linkUtils';
 const htmlToPlain = (html?: string) => {
   if (!html) return '';
   let t = html.replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>|<\/li>/gi, '\n').replace(/<li>/gi, '• ').replace(/<[^>]+>/g, '');
@@ -38,9 +39,9 @@ const SectionHeader = ({ title, color }: { title: string; color: string }) => (
 const AiTemplate7PDF: React.FC<Props> = ({ data, primaryColor = '#374151' }) => {
   const { personal, experience, education, projects, skillsLinks, certifications } = data;
   const contactParts = [personal.email, personal.mobileNumber, personal.address].filter(Boolean);
-  const linkedin = skillsLinks?.links?.linkedinProfile || '';
-  const github = skillsLinks?.links?.githubProfile || '';
-  const portfolio = skillsLinks?.links?.portfolioUrl || '';
+  const linkedin = normalizeProfileUrl(skillsLinks?.links?.linkedinProfile);
+  const github = normalizeProfileUrl(skillsLinks?.links?.githubProfile);
+  const portfolio = normalizeProfileUrl(skillsLinks?.links?.portfolioUrl);
   const languages: string[] = (personal as any).languagesKnown || [];
   return (
     <Document>
@@ -50,14 +51,12 @@ const AiTemplate7PDF: React.FC<Props> = ({ data, primaryColor = '#374151' }) => 
           <Text style={{ fontSize: 28, fontFamily: 'Helvetica-Bold', color: primaryColor, letterSpacing: 0.5 }}>
             {personal.firstName} {personal.middleName || ''} {personal.lastName}
           </Text>
-          {experience.jobRole && <Text style={{ fontSize: 11, color: '#6b7280', marginTop: 3 }}>
-            {github && <Text style={{ fontSize: 8.5, color: primaryColor }}>{github}</Text>}
-            {portfolio && <Text style={{ fontSize: 8.5, color: primaryColor }}>{portfolio}</Text>}{experience.jobRole}</Text>}
+          {experience.jobRole && <Text style={{ fontSize: 11, color: '#6b7280', marginTop: 3 }}>{experience.jobRole}</Text>}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 6 }}>
             {contactParts.map((c, i) => <Text key={i} style={{ fontSize: 8.5, color: '#6b7280' }}>{c}</Text>)}
-            {linkedin && <Text style={{ fontSize: 8.5, color: primaryColor }}>{linkedin}</Text>}
-            {github && <Text style={{ fontSize: 8.5, color: primaryColor }}>{github}</Text>}
-            {portfolio && <Text style={{ fontSize: 8.5, color: primaryColor }}>{portfolio}</Text>}
+            {linkedin && <Link src={linkedin} style={{ fontSize: 8.5, color: primaryColor, textDecoration: 'none' }}>{linkedin}</Link>}
+            {github && <Link src={github} style={{ fontSize: 8.5, color: primaryColor, textDecoration: 'none' }}>{github}</Link>}
+            {portfolio && <Link src={portfolio} style={{ fontSize: 8.5, color: primaryColor, textDecoration: 'none' }}>{portfolio}</Link>}
           </View>
         </View>
         <View style={{ height: 1.5, backgroundColor: primaryColor, marginBottom: 10 }} />

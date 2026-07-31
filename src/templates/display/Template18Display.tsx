@@ -116,7 +116,7 @@ const Template18Display: React.FC<Template18DisplayProps> = ({
       <main>
         <section style={{ marginTop: 8 }}>
           <div>
-            <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Professional Summary</div>
+            <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Career Objective</div>
             <div style={{ height: 1, background: '#ddd', marginTop: 6, width: '100%' }} />
           </div>
           <div style={{ marginTop: 8, color: '#444' }}>{personal.aboutCareerObjective && <div>{DOMPurify.sanitize(personal.aboutCareerObjective).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\u00A0/g, ' ').replace(/ /g, ' ').trim()}</div>}</div>

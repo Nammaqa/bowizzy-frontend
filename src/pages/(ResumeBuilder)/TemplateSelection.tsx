@@ -50,7 +50,16 @@ type TemplateSectionInfo = {
 const TEMPLATE_INFO: Record<string, TemplateSectionInfo> = {
   template11: {
     name: "Vijaynagara",
-    sections: ["Career Objective", "Experience", "Education", "Project"],
+    sections: [
+      "Career Objective",
+      "Experience",
+      "Education",
+      "Project",
+      "Certification",
+      "Technical Summary",
+      "Skills",
+      "Language",
+    ],
     free: true,
   },
   template12: {
@@ -92,6 +101,7 @@ const TEMPLATE_INFO: Record<string, TemplateSectionInfo> = {
       "Certification",
       "Experience",
       "Projects",
+      "Technical Summary",
     ],
     free: false,
   },
@@ -117,6 +127,8 @@ const TEMPLATE_INFO: Record<string, TemplateSectionInfo> = {
       "Education",
       "Certification",
       "Project",
+      "Language",
+      "Technical Summary",
     ],
     free: false,
   },
@@ -140,7 +152,7 @@ const TEMPLATE_INFO: Record<string, TemplateSectionInfo> = {
   },
   template20: {
     name: "Maratha",
-    sections: ["Experience", "Education", "Certificate"],
+    sections: ["Experience", "Education", "Certificate", "Technical Summary", "Skills"],
     free: false,
   },
 };

@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ResumeData } from '@/types/resume';
+import { normalizeProfileUrl } from '../linkUtils';
 
 const htmlToLines = (s?: string) => {
   if (!s) return [] as string[];
@@ -20,9 +21,9 @@ interface Props { data: ResumeData; primaryColor?: string; }
 
 const AiTemplate3Display: React.FC<Props> = ({ data, primaryColor = '#2d3748' }) => {
   const { personal, experience, education, projects, skillsLinks, certifications } = data;
-  const linkedin = skillsLinks?.links?.linkedinProfile || '';
-  const github = skillsLinks?.links?.githubProfile || '';
-  const portfolio = skillsLinks?.links?.portfolioUrl || '';
+  const linkedin = normalizeProfileUrl(skillsLinks?.links?.linkedinProfile);
+  const github = normalizeProfileUrl(skillsLinks?.links?.githubProfile);
+  const portfolio = normalizeProfileUrl(skillsLinks?.links?.portfolioUrl);
   const languages: string[] = (personal as any).languagesKnown || [];
 
   const sidebarSectionTitle: React.CSSProperties = { fontSize: 9, fontWeight: 700, color: '#e2e8f0', letterSpacing: 1.5, textTransform: 'uppercase' as const, marginTop: 18, marginBottom: 4 };
@@ -40,9 +41,9 @@ const AiTemplate3Display: React.FC<Props> = ({ data, primaryColor = '#2d3748' })
         {personal.email && <p style={{ fontSize: 8, color: '#e2e8f0', margin: '0 0 3px' }}>{personal.email}</p>}
         {personal.mobileNumber && <p style={{ fontSize: 8, color: '#e2e8f0', margin: '0 0 3px' }}>{personal.mobileNumber}</p>}
         {personal.address && <p style={{ fontSize: 8, color: '#e2e8f0', margin: '0 0 3px' }}>{personal.address}</p>}
-        {linkedin && <p style={{ fontSize: 7, color: '#90cdf4', margin: '0 0 3px', wordBreak: 'break-all' }}>{linkedin}</p>}
-        {github && <p style={{ fontSize: 7, color: '#90cdf4', margin: '0 0 3px', wordBreak: 'break-all' }}>{github}</p>}
-        {portfolio && <p style={{ fontSize: 7, color: '#90cdf4', margin: '0 0 3px', wordBreak: 'break-all' }}>{portfolio}</p>}
+        {linkedin && <p style={{ fontSize: 7, margin: '0 0 3px', wordBreak: 'break-all' }}><a href={linkedin} target="_blank" rel="noreferrer" style={{ color: '#90cdf4', textDecoration: 'none' }}>{linkedin}</a></p>}
+        {github && <p style={{ fontSize: 7, margin: '0 0 3px', wordBreak: 'break-all' }}><a href={github} target="_blank" rel="noreferrer" style={{ color: '#90cdf4', textDecoration: 'none' }}>{github}</a></p>}
+        {portfolio && <p style={{ fontSize: 7, margin: '0 0 3px', wordBreak: 'break-all' }}><a href={portfolio} target="_blank" rel="noreferrer" style={{ color: '#90cdf4', textDecoration: 'none' }}>{portfolio}</a></p>}
 
         <p style={sidebarSectionTitle}>Education</p>
         <div style={{ height: 1, backgroundColor: '#e2e8f0', marginBottom: 6 }} />

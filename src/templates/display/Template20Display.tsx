@@ -102,12 +102,11 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
           </div>
         </div>
 
-        {(personal.aboutCareerObjective || (skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled)) && (
+        {/* CAREER OBJECTIVE row */}
+        {personal.aboutCareerObjective && (
           <div style={{ height: 1, background: '#ddd', margin: '12px 0' }} />
         )}
-
-        {/* SUMMARY row */}
-        {(personal.aboutCareerObjective || (skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled)) && (
+        {personal.aboutCareerObjective && (
           <div style={{ display: 'flex', alignItems: 'flex-start' }}>
             <div
               style={{
@@ -120,18 +119,33 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
                 color: primaryColor,
               }}
             >
-              Summary
+              Career Objective
             </div>          <div style={{ flex: 1, fontSize: 12, color: '#333', lineHeight: 1.6 }}>
-              {personal.aboutCareerObjective && (
-                <div style={{ marginBottom: (skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled) ? 8 : 0 }}>
-                  {DOMPurify.sanitize(personal.aboutCareerObjective).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s{2,}/g, ' ').trim()}
-                </div>
-              )}
-              {skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled && (
-                <div>
-                  {DOMPurify.sanitize(skillsLinks.technicalSummary).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s{2,}/g, ' ').trim()}
-                </div>
-              )}
+              {DOMPurify.sanitize(personal.aboutCareerObjective).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s{2,}/g, ' ').trim()}
+            </div>
+          </div>
+        )}
+
+        {/* TECHNICAL SUMMARY row */}
+        {skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled && (
+          <div style={{ height: 1, background: '#ddd', margin: '12px 0' }} />
+        )}
+        {skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled && (
+          <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+            <div
+              style={{
+                width: 170,
+                paddingRight: 12,
+                fontSize: 11,
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                letterSpacing: 1.2,
+                color: primaryColor,
+              }}
+            >
+              Technical Summary
+            </div>          <div style={{ flex: 1, fontSize: 12, color: '#333', lineHeight: 1.6 }}>
+              {DOMPurify.sanitize(skillsLinks.technicalSummary).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s{2,}/g, ' ').trim()}
             </div>
           </div>
         )}

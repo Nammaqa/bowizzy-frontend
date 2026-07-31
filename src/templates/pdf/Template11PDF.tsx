@@ -113,6 +113,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
     experience,
     projects,
     skillsLinks,
+    certifications,
   } = data;
 
   // Map CSS font families to react-pdf compatible fonts
@@ -599,6 +600,25 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
                       </View>
                     </View>
                   ) : null}
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Certifications */}
+          {certifications.filter((c: any) => c.enabled && c.certificateTitle && c.certificateTitle.trim()).length > 0 && (
+            <View style={{ marginBottom: 12 }}>
+              <View minPresenceAhead={60}>
+                <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>TECHNICAL CERTIFICATIONS</Text>
+                <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
+              </View>
+              {certifications.filter((c: any) => c.enabled && c.certificateTitle && c.certificateTitle.trim()).map((cert: any, idx: number) => (
+                <View key={idx} style={{ marginBottom: 8 }} wrap={false}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{cert.certificateTitle}</Text>
+                    <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>{cert.date}</Text>
+                  </View>
+                  {cert.description ? renderBulletedParagraph(cert.description) : null}
                 </View>
               ))}
             </View>
