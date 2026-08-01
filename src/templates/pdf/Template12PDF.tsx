@@ -219,8 +219,8 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
               {experience.workExperiences.filter(w => w.enabled).map((w: any, i: number) => (
                 <View key={i} style={{ marginBottom: 8 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>{w.jobTitle} — {w.companyName}</Text>
-                    <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>{formatMonthYear(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYear(w.endDate)}</Text>
+                    <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold, flexGrow: 1, flexShrink: 1, marginRight: 8 }}>{w.jobTitle} — {w.companyName}</Text>
+                    <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold, flexShrink: 0 }}>{formatMonthYear(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYear(w.endDate)}</Text>
                   </View>
                   {w.description && (
                     <View style={{ color: '#2b2a2a' }}>{renderBulletedParagraph(w.description)}</View>
@@ -245,8 +245,8 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
               {projects && projects.filter((p: any) => p.enabled).map((p: any, i: number) => (
                 <View key={i} style={{ marginBottom: 8 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>{p.projectTitle}</Text>
-                    <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</Text>
+                    <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold, flexGrow: 1, flexShrink: 1, marginRight: 8 }}>{p.projectTitle}</Text>
+                    <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold, flexShrink: 0 }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</Text>
                   </View>
                   {p.description && renderBulletedParagraph(p.description)}
                 </View>
@@ -269,8 +269,8 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
               {education.higherEducation.filter(edu => edu.enabled).reverse().map((edu: any, i: number) => (
                 <View key={i} style={{ marginBottom: 8 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</Text>
-                    <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}</Text>
+                    <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold, flexGrow: 1, flexShrink: 1, marginRight: 8 }}>{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</Text>
+                    <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold, flexShrink: 0 }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}</Text>
                   </View>
                   <Text style={{ fontSize: 10, color: '#2b2a2a', marginTop: 4 }}>{edu.instituteName}</Text>
                   {edu.resultFormat && edu.result && (
@@ -282,8 +282,8 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
               {education.preUniversityEnabled && education.preUniversity.instituteName && (
                 <View style={{ marginBottom: 8 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>PUC{education.preUniversity.subjectStream ? ` in ${education.preUniversity.subjectStream}` : ''}</Text>
-                    <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
+                    <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold, flexGrow: 1, flexShrink: 1, marginRight: 8 }}>PUC{education.preUniversity.subjectStream ? ` in ${education.preUniversity.subjectStream}` : ''}</Text>
+                    <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold, flexShrink: 0 }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
                   </View>
                   <Text style={{ fontSize: 10, color: '#2b2a2a', marginTop: 4 }}>{education.preUniversity.instituteName}{education.preUniversity.boardType ? `, ${education.preUniversity.boardType}` : ''}</Text>
                   {education.preUniversity.resultFormat && education.preUniversity.result && (
@@ -295,8 +295,8 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
               {education.sslcEnabled && education.sslc.instituteName && (
                 <View style={{ marginBottom: 8 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>SSLC</Text>
-                    <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.sslc)}</Text>
+                    <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold, flexGrow: 1, flexShrink: 1, marginRight: 8 }}>SSLC</Text>
+                    <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold, flexShrink: 0 }}>{formatResumeEducationDateRange(education.sslc)}</Text>
                   </View>
                   <Text style={{ fontSize: 10, color: '#2b2a2a', marginTop: 4 }}>{education.sslc.instituteName}{education.sslc.boardType ? `, ${education.sslc.boardType}` : ''}</Text>
                   {education.sslc.resultFormat && education.sslc.result && (

@@ -150,9 +150,9 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
             <div>
               {experience.workExperiences.filter(e => e.enabled).map((w, i) => (
                 <div key={i} style={{ marginBottom: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ fontWeight: 700, color: '#111827' }}>{w.jobTitle} — <span style={{ fontWeight: 700 }}>{w.companyName}</span></div>
-                    <div style={{ color: '#111827', fontSize: 11, fontWeight: 700 }}>{formatMonthYear(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYear(w.endDate)}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ fontWeight: 700, color: '#111827', flex: 1, minWidth: 0, paddingRight: 12 }}>{w.jobTitle} — <span style={{ fontWeight: 700 }}>{w.companyName}</span></div>
+                    <div style={{ color: '#111827', fontSize: 11, fontWeight: 700, flexShrink: 0, whiteSpace: 'nowrap' }}>{formatMonthYear(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYear(w.endDate)}</div>
                   </div>
                   {w.description && renderDescription(w.description)}
                 </div>
@@ -173,8 +173,8 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
               {projects && projects.filter(p => p.enabled).map((p, i) => (
                 <div key={i} style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ fontWeight: 700, color: '#111827' }}>{p.projectTitle}</div>
-                    <div style={{ color: '#111827', fontSize: 11, fontWeight: 700 }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</div>
+                    <div style={{ fontWeight: 700, color: '#111827', flex: 1, minWidth: 0, paddingRight: 12 }}>{p.projectTitle}</div>
+                    <div style={{ color: '#111827', fontSize: 11, fontWeight: 700, flexShrink: 0, whiteSpace: 'nowrap' }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</div>
                   </div>
                   {p.description && renderDescription(p.description)}
                 </div>
@@ -192,8 +192,8 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
               {education.higherEducation.filter(edu => edu.enabled).reverse().map((edu, i) => (
                 <div key={i} style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ fontWeight: 700, color: '#111827' }}>{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</div>
-                    <div style={{ color: '#111827', fontSize: 11, fontWeight: 700 }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear)} - Present` : formatResumeEducationDateRange(edu)}</div>
+                    <div style={{ fontWeight: 700, color: '#111827', flex: 1, minWidth: 0, paddingRight: 12 }}>{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</div>
+                    <div style={{ color: '#111827', fontSize: 11, fontWeight: 700, flexShrink: 0, whiteSpace: 'nowrap' }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear)} - Present` : formatResumeEducationDateRange(edu)}</div>
                   </div>
                   <div style={{ color: '#111827', fontSize: 11, marginTop: 4 }}>{edu.instituteName}</div>
                   {edu.resultFormat && edu.result && (
@@ -205,8 +205,8 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
               {education.preUniversityEnabled && education.preUniversity.instituteName && (
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ fontWeight: 700, color: '#111827' }}>PUC{education.preUniversity.subjectStream ? ` in ${education.preUniversity.subjectStream}` : ''}</div>
-                    <div style={{ color: '#111827', fontSize: 11, fontWeight: 700 }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
+                    <div style={{ fontWeight: 700, color: '#111827', flex: 1, minWidth: 0, paddingRight: 12 }}>PUC{education.preUniversity.subjectStream ? ` in ${education.preUniversity.subjectStream}` : ''}</div>
+                    <div style={{ color: '#111827', fontSize: 11, fontWeight: 700, flexShrink: 0, whiteSpace: 'nowrap' }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
                   </div>
                   <div style={{ color: '#111827', fontSize: 11, marginTop: 4 }}>{education.preUniversity.instituteName}{education.preUniversity.boardType ? `, ${education.preUniversity.boardType}` : ''}</div>
                   {education.preUniversity.resultFormat && education.preUniversity.result && (
@@ -218,8 +218,8 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
               {education.sslcEnabled && education.sslc.instituteName && (
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ fontWeight: 700, color: '#111827' }}>SSLC</div>
-                    <div style={{ color: '#111827', fontSize: 11, fontWeight: 700 }}>{formatResumeEducationDateRange(education.sslc)}</div>
+                    <div style={{ fontWeight: 700, color: '#111827', flex: 1, minWidth: 0, paddingRight: 12 }}>SSLC</div>
+                    <div style={{ color: '#111827', fontSize: 11, fontWeight: 700, flexShrink: 0, whiteSpace: 'nowrap' }}>{formatResumeEducationDateRange(education.sslc)}</div>
                   </div>
                   <div style={{ color: '#111827', fontSize: 11, marginTop: 4 }}>{education.sslc.instituteName}{education.sslc.boardType ? `, ${education.sslc.boardType}` : ''}</div>
                   {education.sslc.resultFormat && education.sslc.result && (
