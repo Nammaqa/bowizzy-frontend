@@ -222,7 +222,10 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
           resume_name: resumeName,
         },
         modal: {
-          ondismiss: () => setPayLoading(false),
+          ondismiss: () => {
+            setPayLoading(false);
+            window.location.reload();
+          },
         },
         handler: async function (response: any) {
           try {
@@ -245,11 +248,13 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
             } else {
               alert('Payment verification failed. Please contact support.');
               setPayLoading(false);
+              window.location.reload();
             }
           } catch (err) {
             console.error('Payment verification error:', err);
             alert('Payment verification failed. Please contact support.');
             setPayLoading(false);
+            window.location.reload();
           }
         },
         prefill: {
@@ -266,6 +271,7 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
         rzp.on('payment.failed', () => {
           setPayLoading(false);
           alert('Payment failed or was cancelled.');
+          window.location.reload();
         });
       }
       rzp.open();
