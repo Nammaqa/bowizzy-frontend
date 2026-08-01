@@ -1476,6 +1476,48 @@ export default function EducationDetailsForm({
     setPuFeedback("");
   };
 
+  // Handler to delete Pre-University details entirely, resetting the section
+  // back to blank/optional so the user can proceed without filling it in.
+  const handleDeletePreUniversity = async () => {
+    if (puData.education_id) {
+      try {
+        await deleteEducation(userId, token, puData.education_id);
+      } catch (error) {
+        console.error("Error deleting PU details:", error);
+        setPuFeedback("Failed to delete Pre-University details ");
+        setTimeout(() => setPuFeedback(""), 3000);
+        return;
+      }
+    }
+
+    const blankPu = {
+      institutionName: "",
+      boardType: "",
+      yearOfPassing: "",
+      resultFormat: "",
+      subjectStream: "",
+      result: "",
+      education_id: null,
+    };
+
+    setPuData(blankPu);
+    initialPu.current = blankPu;
+
+    setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated["pu-institutionName"];
+      delete updated["pu-boardType"];
+      delete updated["pu-yearOfPassing"];
+      delete updated["pu-resultFormat"];
+      delete updated["pu-result"];
+      return updated;
+    });
+
+    setPuChanged(false);
+    setPuFeedback("Pre-university details cleared. This section is optional.");
+    setTimeout(() => setPuFeedback(""), 3000);
+  };
+
   // Handler for clearing Higher/Extra Education card data (RESET/UNDO)
   const handleClearHigherEducation = (id: string, isExtra: boolean) => {
     const setter = isExtra ? setExtraEducations : setHigherEducations;
@@ -2271,6 +2313,19 @@ export default function EducationDetailsForm({
               <p className="text-xs text-slate-500 mt-1">Optional — fill only if applicable</p>
             </div>
             <div className="flex gap-2 items-center">
+              {(isPuSectionFilled() || puData.education_id) && (
+                <button
+                  type="button"
+                  onClick={handleDeletePreUniversity}
+                  className="w-5 h-5 flex items-center justify-center rounded border-2 border-red-500 hover:bg-red-50 transition-colors"
+                  title="Delete pre-university details (optional section)"
+                >
+                  <Trash2
+                    className="w-3 h-3 text-red-500 cursor-pointer"
+                    strokeWidth={2.5}
+                  />
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setPuExpanded(!puExpanded)}

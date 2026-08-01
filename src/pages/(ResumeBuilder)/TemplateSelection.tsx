@@ -695,14 +695,15 @@ export default function TemplateSelection() {
                     {/* Info + price badge — top-left */}
                     {renderInfoBadge(template.id)}
 
-                    {/* Preview icon — top-center, appears on hover */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/20">
+                    {/* Preview icon — always visible on mobile, appears on hover on desktop */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200 bg-black/10 md:bg-black/20">
                       <button
                         onClick={(e) => handlePreview(template, e)}
-                        className="flex items-center justify-center w-12 h-12 rounded-full bg-white text-gray-800 hover:bg-orange-500 hover:text-white transition-all shadow-lg"
+                        className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full bg-white text-gray-800 hover:bg-orange-500 hover:text-white transition-all shadow-lg"
                         title="Preview template"
                       >
-                        <Eye size={24} />
+                        <Eye size={20} className="md:hidden" />
+                        <Eye size={24} className="hidden md:block" />
                       </button>
                     </div>
 

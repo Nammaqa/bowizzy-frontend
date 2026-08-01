@@ -918,11 +918,11 @@ const TakeMockInterviewPage = () => {
                     if (skillError) setSkillError("");
                   }}
                   placeholder="Add a skill"
-                  className="flex-1 rounded-xl border border-[#D9D9D9] px-4 py-3 text-sm focus:border-[#F26D3A] focus:outline-none focus:ring-2 focus:ring-[#FFE0D0]"
+                  className="min-w-0 flex-1 rounded-xl border border-[#D9D9D9] px-4 py-3 text-sm focus:border-[#F26D3A] focus:outline-none focus:ring-2 focus:ring-[#FFE0D0]"
                 />
                 <button
                   onClick={addSkill}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#F26D3A] px-4 py-3 text-sm font-semibold text-white"
+                  className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl bg-[#F26D3A] px-4 py-3 text-sm font-semibold text-white"
                 >
                   <Plus size={16} />
                   Add
@@ -1093,7 +1093,7 @@ const TakeMockInterviewPage = () => {
             </section>
           </div>
 
-          <aside className="h-fit rounded-3xl bg-white p-6 shadow-sm lg:sticky lg:top-6">
+          <aside className="h-fit min-w-0 rounded-3xl bg-white p-6 shadow-sm lg:sticky lg:top-6">
             <h2 className="text-xl font-bold text-[#2F2F2F]">Booking summary</h2>
 
             <div className="mt-5 space-y-4 text-sm">
