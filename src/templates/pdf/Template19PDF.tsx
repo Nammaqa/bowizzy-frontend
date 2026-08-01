@@ -119,11 +119,15 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
         </View>
 
         <View>
-          <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontFamily: pdfFontFamilyBold, fontSize: 10, marginBottom: 6, color: primaryColor }}>CAREER OBJECTIVE</Text>
-            <View style={{ height: 1, backgroundColor: primaryColor, width: '100%' }} />
-          </View>
-          {personal.aboutCareerObjective ? <Text style={{ marginTop: 12, color: '#444', textAlign: 'justify' }}>{htmlToPlainText(personal.aboutCareerObjective).trim()}</Text> : null}
+          {personal.aboutCareerObjective && (
+            <>
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{ fontFamily: pdfFontFamilyBold, fontSize: 10, marginBottom: 6, color: primaryColor }}>CAREER OBJECTIVE</Text>
+                <View style={{ height: 1, backgroundColor: primaryColor, width: '100%' }} />
+              </View>
+              <Text style={{ marginTop: 12, color: '#444', textAlign: 'justify' }}>{htmlToPlainText(personal.aboutCareerObjective).trim()}</Text>
+            </>
+          )}
 
           <View style={{ flexDirection: 'row', marginTop: 12 }}>
             {/* Left sidebar */}

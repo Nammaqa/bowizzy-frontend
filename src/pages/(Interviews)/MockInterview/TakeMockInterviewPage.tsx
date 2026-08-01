@@ -64,18 +64,14 @@ const getWeekdayDates = (): InterviewDate[] => {
   const cursor = new Date();
 
   while (dates.length < 7) {
-    const day = cursor.getDay();
-
-    if (day !== 0 && day !== 6) {
-      dates.push({
-        label: cursor.toLocaleDateString("en-IN", { weekday: "short" }),
-        displayDate: cursor.toLocaleDateString("en-IN", {
-          day: "2-digit",
-          month: "short",
-        }),
-        value: cursor.toISOString().split("T")[0],
-      });
-    }
+    dates.push({
+      label: cursor.toLocaleDateString("en-IN", { weekday: "short" }),
+      displayDate: cursor.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+      }),
+      value: cursor.toISOString().split("T")[0],
+    });
 
     cursor.setDate(cursor.getDate() + 1);
   }
@@ -849,7 +845,7 @@ const TakeMockInterviewPage = () => {
             <section className="rounded-3xl bg-white p-6 shadow-sm">
               <h2 className="text-xl font-bold text-[#2F2F2F]">3. Select day and time</h2>
               <p className="mt-1 text-sm text-[#777777]">
-                Showing the next 7 available weekdays. Weekends are excluded.
+                Showing the next 7 available days, including weekends.
               </p>
               {loadingBookedSlots && (
                 <p className="mt-2 text-xs font-semibold text-[#F26D3A]">
@@ -949,7 +945,7 @@ const TakeMockInterviewPage = () => {
                     <button
                       key={skill}
                       onClick={() => toggleSkill(skill)}
-                      className={`rounded-full border px-4 py-2 text-sm font-medium ${
+                      className={`max-w-full break-words rounded-full border px-4 py-2 text-sm font-medium ${
                         selectedSkills.includes(skill)
                           ? "border-[#F26D3A] bg-[#FFF0E3] text-[#F26D3A]"
                           : "border-[#D9D9D9] bg-white text-[#3A3A3A]"
@@ -1050,7 +1046,7 @@ const TakeMockInterviewPage = () => {
                               <FileText size={42} />
                             </div>
                           )}
-                          <div className="absolute bottom-0 left-0 right-0 bg-white/90 p-2 text-xs font-semibold text-[#3A3A3A]">
+                          <div className="absolute bottom-0 left-0 right-0 truncate bg-white/90 p-2 text-xs font-semibold text-[#3A3A3A]">
                             {name}
                           </div>
                           {isSelected && (
@@ -1143,7 +1139,7 @@ const TakeMockInterviewPage = () => {
                   selectedSkills.map((skill) => (
                     <span
                       key={skill}
-                      className="inline-flex items-center gap-1 rounded-full bg-[#FFF0E3] px-3 py-1 text-xs font-semibold text-[#F26D3A]"
+                      className="inline-flex max-w-full items-center gap-1 break-words rounded-full bg-[#FFF0E3] px-3 py-1 text-xs font-semibold text-[#F26D3A]"
                     >
                       {skill}
                       {/* <X size={12} /> */}

@@ -1000,7 +1000,6 @@ export default function WelcomeBonusManager() {
             await api.post(`/users/${userId}/claim-welcome-bonus`, {}, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            window.location.reload();
         } catch (err) {
             console.error('Failed to claim bonus', err);
         }

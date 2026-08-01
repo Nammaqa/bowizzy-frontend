@@ -66,11 +66,15 @@ const Template19Display: React.FC<Template19DisplayProps> = ({
       </div>
 
       <div style={{ paddingTop: 12 }}>
-        <section style={{ textAlign: 'center', marginTop: 0 }}>
-          <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700, marginBottom: 6 }}>CAREER OBJECTIVE</div>
-          <div style={{ height: 1, background: '#999', width: '100%' }} />
-          <div style={{ marginTop: 12, color: '#444', maxWidth: 720, marginLeft: 'auto', marginRight: 'auto', textAlign: 'left' }}>{personal.aboutCareerObjective && <div>{DOMPurify.sanitize(personal.aboutCareerObjective).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim()}</div>}</div>
-        </section>
+        {personal.aboutCareerObjective && (
+          <section style={{ textAlign: 'center', marginTop: 0 }}>
+            <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700, marginBottom: 6 }}>CAREER OBJECTIVE</div>
+            <div style={{ height: 1, background: '#999', width: '100%' }} />
+            <div style={{ marginTop: 12, color: '#444', maxWidth: 720, marginLeft: 'auto', marginRight: 'auto', textAlign: 'left' }}>
+              <div>{DOMPurify.sanitize(personal.aboutCareerObjective).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim()}</div>
+            </div>
+          </section>
+        )}
 
         <div style={{ display: 'flex', marginTop: 18, gap: 24 }}>
           {/* Left sidebar (fixed width) */}

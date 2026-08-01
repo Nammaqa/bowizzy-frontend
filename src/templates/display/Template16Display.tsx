@@ -113,18 +113,18 @@ const Template16Display: React.FC<Template16DisplayProps> = ({
       <div style={{ padding: '0 36px 36px 36px' }}>
         <section style={{ display: 'block' }}>
 
-          <div style={{ marginTop: 12 }}>
-            <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Career Objective</div>
-            <div style={{ height: 1, background: '#ddd', marginTop: 4, width: '100%' }} />
-          </div>
+          {personal.aboutCareerObjective && (
+            <>
+              <div style={{ marginTop: 12 }}>
+                <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Career Objective</div>
+                <div style={{ height: 1, background: '#ddd', marginTop: 4, width: '100%' }} />
+              </div>
 
-          <div style={{ marginTop: 6 }}>
-            {personal.aboutCareerObjective && (
-              <>
+              <div style={{ marginTop: 6 }}>
                 {htmlToLines(personal.aboutCareerObjective).map((ln, idx) => <div key={idx} style={{ color: '#444', lineHeight: 1.4, marginTop: idx ? 4 : 0 }}>{ln}</div>)}
-              </>
-            )}
-          </div>
+              </div>
+            </>
+          )}
 
           {experience.workExperiences.some(exp => exp.enabled) && (<>
             <div style={{ marginTop: 12 }}>
