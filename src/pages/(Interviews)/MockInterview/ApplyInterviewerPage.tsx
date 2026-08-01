@@ -360,12 +360,6 @@ const ApplyInterviewerPage = () => {
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
             <button
-              onClick={() => navigate("/interviews/mock-interview/dashboard")}
-              className="rounded-xl border border-[#F26D3A] px-5 py-3 text-sm font-bold text-[#F26D3A]"
-            >
-              Check dashboard access
-            </button>
-            <button
               onClick={handleSubmit}
               disabled={submitting}
               className="rounded-xl px-5 py-3 text-sm font-bold text-white shadow-md disabled:cursor-not-allowed disabled:bg-[#CFCFCF]"

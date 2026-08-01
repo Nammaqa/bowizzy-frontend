@@ -395,8 +395,8 @@ export default function PersonalDetailsForm({
         break;
 
       case "pincode":
-        if (value && !/^\d{6}$/.test(value)) {
-          error = "Pincode must be exactly 6 digits";
+        if (value && !/^\d+$/.test(value)) {
+          error = "Pincode must contain only digits";
         }
         break;
 
@@ -475,8 +475,7 @@ export default function PersonalDetailsForm({
         setErrors((prev) => ({ ...prev, [name]: error }));
         return;
       }
-      if (value.length > 6) return;
-    } 
+    }
     else if (name === "mobileNumber") {
       if (!/^\d*$/.test(value)) {
         setErrors((prev) => ({ ...prev, [name]: "Only digits allowed" }));
@@ -1639,7 +1638,6 @@ export default function PersonalDetailsForm({
                     onChange={handleInputChange}
                     placeholder="Enter Pin code"
                     inputMode="numeric"
-                    maxLength={6}
                     className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm ${errors.pincode
                       ? "border-red-500 focus:ring-red-400"
                       : "border-gray-300 focus:ring-orange-400 focus:border-transparent"

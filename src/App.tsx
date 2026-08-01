@@ -251,10 +251,9 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
     location.pathname === href || location.pathname.startsWith(href + "/");
 
   return (
-    <SidebarProvider>
+    <SidebarProvider open={isPortfolioEditor ? false : undefined}>
       <WelcomeBonusManager />
-      {!isPortfolioEditor && (
-        <Sidebar className="overflow-y-auto z-50">
+      <Sidebar className="overflow-y-auto z-50">
           <SidebarHeader>
             <div className="flex items-center justify-center p-6">
               <img src={Bowizzy} alt="Bowizzard Logo" />
@@ -394,7 +393,6 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
             </SidebarMenu>
           </SidebarFooter>
         </Sidebar>
-      )}
 
       <main className="bg-[#F0F0F0] min-h-screen flex-1">{children}</main>
     </SidebarProvider>

@@ -1302,7 +1302,7 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                     <div className="flex items-center gap-3">
                       <h3 className="text-lg font-semibold text-gray-900">Bowizzy Preview</h3>
                       {isTemplateLocked && (
-                        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 shadow-md">
+                        <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 shadow-md">
                           <Lock className="w-4 h-4 text-white" />
                           <span className="text-sm font-bold text-white tracking-wide">Premium Resume</span>
                         </div>
@@ -1325,24 +1325,14 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                       >
                         <ChevronDown className="h-4 w-4" />
                       </button>
-                      {pdfUrl && isMobilePreviewDevice() && (
-                        <a
-                          href={pdfUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="px-3 py-1.5 text-xs font-medium text-white bg-blue-500 rounded-full"
-                        >
-                          Open Preview
-                        </a>
-                      )}
                     </div>
                   </div>
 
                   <div
                     ref={pdfPreviewScrollRef}
-                    className="relative flex-1 min-h-0 overflow-y-auto overflow-x-hidden rounded-lg bg-[#262626] mb-4"
+                    className="relative flex-1 min-h-0 overflow-auto rounded-lg bg-[#262626] mb-4"
                   >
-                    <div className="flex justify-center px-6 py-4">
+                    <div className="flex justify-center px-6 py-4 w-fit min-w-full">
                       <div className="relative shadow-xl">
                         {DisplayComponent && (
                           <div className="pointer-events-none select-none">

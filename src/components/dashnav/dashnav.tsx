@@ -244,7 +244,11 @@ export default function DashNav({ heading, zindex }: { heading: string; zindex?:
                                                             </div>
                                                         ) : (
                                                             <button
-                                                                onClick={() => setShowBuyCreditsModal(true)}
+                                                                onClick={() => {
+                                                                    setShowCreditsDropdown(false);
+                                                                    setShowProfileDropdown(false);
+                                                                    setShowBuyCreditsModal(true);
+                                                                }}
                                                                 className="bg-orange-500 hover:bg-orange-600 text-white text-[10px] font-bold px-3 py-1 rounded-full transition shadow-sm"
                                                             >
                                                                 Buy

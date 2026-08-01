@@ -343,7 +343,6 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
           <div>
             <p className="designer-text-wrap text-xl @md:text-2xl leading-10 font-bold">
               {data.aboutDescription ||
-                data.portfolioDescription ||
                 "I help teams turn rough ideas into clear, polished digital experiences that feel considered from the first impression to the final interaction."}
             </p>
             <div className="flex flex-wrap gap-2 mt-8">

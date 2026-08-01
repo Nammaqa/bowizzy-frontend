@@ -208,13 +208,17 @@ const Template16PDF: React.FC<Template16PDFProps> = ({ data, primaryColor = '#11
           </View>
         </View>
 
-        <View style={{ marginTop: 12 }}>
-          <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Career Objective</Text>
-          <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginTop: 4, marginBottom: 0 }} />
-        </View>
-        {personal.aboutCareerObjective ? htmlToPlainText(personal.aboutCareerObjective).split('\n').map((ln, idx) => (
-          <Text key={idx} style={{ fontSize: 10, color: '#444', marginTop: idx === 0 ? 6 : 4 }}>{ln}</Text>
-        )) : null}
+        {personal.aboutCareerObjective && (
+          <>
+            <View style={{ marginTop: 12 }}>
+              <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Career Objective</Text>
+              <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginTop: 4, marginBottom: 0 }} />
+            </View>
+            {htmlToPlainText(personal.aboutCareerObjective).split('\n').map((ln, idx) => (
+              <Text key={idx} style={{ fontSize: 10, color: '#444', marginTop: idx === 0 ? 6 : 4 }}>{ln}</Text>
+            ))}
+          </>
+        )}
 
         {experience.workExperiences.some((exp: any) => exp.enabled) && (<>
           <View style={{ marginTop: 12 }}>

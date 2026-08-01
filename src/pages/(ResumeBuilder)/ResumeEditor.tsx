@@ -353,8 +353,32 @@ export const ResumeEditor: React.FC = () => {
 
   const [fontDropdownOpen, setFontDropdownOpen] = useState(false);
   const [colorDropdownOpen, setColorDropdownOpen] = useState(false);
+  const [fontMenuLeft, setFontMenuLeft] = useState(0);
+  const [colorMenuLeft, setColorMenuLeft] = useState(0);
   const fontDropdownRef = useRef<HTMLDivElement>(null);
   const colorDropdownRef = useRef<HTMLDivElement>(null);
+  const MENU_MARGIN = 16;
+
+  const computeClampedMenuLeft = (anchor: HTMLDivElement, menuWidth: number) => {
+    const wrapperLeft = anchor.getBoundingClientRect().left;
+    const maxLeft = Math.max(MENU_MARGIN, window.innerWidth - menuWidth - MENU_MARGIN);
+    const clampedViewportLeft = Math.min(Math.max(wrapperLeft, MENU_MARGIN), maxLeft);
+    return clampedViewportLeft - wrapperLeft;
+  };
+
+  const toggleFontDropdown = () => {
+    if (!fontDropdownOpen && fontDropdownRef.current) {
+      setFontMenuLeft(computeClampedMenuLeft(fontDropdownRef.current, 240)); // matches w-60
+    }
+    setFontDropdownOpen((prev) => !prev);
+  };
+
+  const toggleColorDropdown = () => {
+    if (!colorDropdownOpen && colorDropdownRef.current) {
+      setColorMenuLeft(computeClampedMenuLeft(colorDropdownRef.current, 256)); // matches w-64
+    }
+    setColorDropdownOpen((prev) => !prev);
+  };
   const templateImportDoneRef = useRef(false);
 
   // Determines whether fetchAllData is allowed to run.
@@ -990,7 +1014,7 @@ export const ResumeEditor: React.FC = () => {
                     {/* Font Selector */}
                     <div className="relative" ref={fontDropdownRef}>
                       <button
-                        onClick={() => setFontDropdownOpen(!fontDropdownOpen)}
+                        onClick={toggleFontDropdown}
                         className="border border-gray-300 rounded-lg px-3 py-1.5 text-xs font-medium bg-white hover:bg-gray-50 transition-colors flex items-center gap-1.5 shadow-sm whitespace-nowrap"
                         style={{ fontFamily: fontFamily }}
                       >
@@ -1006,7 +1030,10 @@ export const ResumeEditor: React.FC = () => {
                         </svg>
                       </button>
                       {fontDropdownOpen && (
-                        <div className="absolute top-full left-0 mt-1.5 w-60 bg-white border border-gray-200 rounded-lg shadow-xl z-20">
+                        <div
+                          className="absolute top-full mt-1.5 w-60 max-w-[calc(100vw-2rem)] bg-white border border-gray-200 rounded-lg shadow-xl z-20"
+                          style={{ left: fontMenuLeft }}
+                        >
                           <div className="p-3 max-h-72 overflow-y-auto">
                             <div className="text-xs font-semibold text-gray-400 px-2 pb-2 uppercase tracking-wide">Select Font</div>
                             {FONT_OPTIONS.map((font) => (
@@ -1035,7 +1062,7 @@ export const ResumeEditor: React.FC = () => {
                     {/* Color Selector */}
                     <div className="relative" ref={colorDropdownRef}>
                       <button
-                        onClick={() => setColorDropdownOpen(!colorDropdownOpen)}
+                        onClick={toggleColorDropdown}
                         className="border border-gray-300 rounded-lg px-3 py-1.5 text-xs font-medium bg-white hover:bg-gray-50 transition-colors flex items-center gap-1.5 shadow-sm whitespace-nowrap"
                       >
                         <div
@@ -1053,7 +1080,10 @@ export const ResumeEditor: React.FC = () => {
                         </svg>
                       </button>
                       {colorDropdownOpen && (
-                        <div className="absolute top-full left-0 mt-1.5 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-20">
+                        <div
+                          className="absolute top-full mt-1.5 w-64 max-w-[calc(100vw-2rem)] bg-white border border-gray-200 rounded-lg shadow-xl z-20"
+                          style={{ left: colorMenuLeft }}
+                        >
                           <div className="p-3">
                             <div className="text-xs font-semibold text-gray-400 px-2 pb-2 uppercase tracking-wide">Select Color</div>
                             <div className="grid grid-cols-2 gap-2">

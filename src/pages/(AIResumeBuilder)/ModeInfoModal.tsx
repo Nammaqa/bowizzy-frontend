@@ -92,7 +92,7 @@ const ModeInfoModal: React.FC<ModeInfoModalProps> = ({ mode, onClose }) => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.97, y: 8 }}
               transition={{ duration: 0.22, ease: "easeOut" }}
-              className="mode-info-modal relative w-full max-w-md max-h-[95vh] overflow-y-auto rounded-2xl shadow-2xl pointer-events-auto"
+              className="mode-info-modal relative w-full max-w-md max-h-[95dvh] overflow-y-auto rounded-2xl shadow-2xl pointer-events-auto"
               style={{
                 background: "linear-gradient(145deg, #ffffff 0%, #fff7f3 100%)",
                 border: "1px solid rgba(249,115,22,0.15)",
@@ -111,7 +111,7 @@ const ModeInfoModal: React.FC<ModeInfoModalProps> = ({ mode, onClose }) => {
 
               {/* Header band */}
               <div
-                className="px-5 pt-5 pb-4"
+                className="px-5 pt-5 pb-4 pr-12"
                 style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)" }}
               >
                 <button
@@ -129,11 +129,11 @@ const ModeInfoModal: React.FC<ModeInfoModalProps> = ({ mode, onClose }) => {
                       <Bot className="w-5 h-5 text-orange-400" />
                     )}
                   </div>
-                  <div>
-                    <h2 className="text-white font-semibold text-base leading-tight">
+                  <div className="min-w-0">
+                    <h2 className="text-white font-semibold text-base leading-tight break-words">
                       {isJd ? "JD Mode — How it works" : "AI Mode — How it works"}
                     </h2>
-                    <p className="text-white/50 text-xs leading-tight mt-0.5">
+                    <p className="text-white/50 text-xs leading-tight mt-0.5 break-words">
                       {isJd
                         ? "Match your resume to a specific job description"
                         : "A guided interview that builds your resume"}

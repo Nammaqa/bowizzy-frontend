@@ -484,10 +484,8 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
         break;
 
       case "pincode":
-        if (value && !/^\d{0,6}$/.test(value)) {
-          error = "Only 6 digits allowed";
-        } else if (value && value.length > 0 && value.length < 6) {
-          error = "Must be 6 digits";
+        if (value && !/^\d+$/.test(value)) {
+          error = "Only digits allowed";
         }
         break;
 
@@ -527,7 +525,6 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
 
     if (field === "pincode" && typeof newValue === "string") {
       if (!/^\d*$/.test(newValue)) return;
-      if (newValue.length > 6) return;
       // Reset address when pincode changes so the location hierarchy remains consistent
       onChange({ ...data, pincode: newValue, address: "" });
       const error = validateField(field, newValue);
