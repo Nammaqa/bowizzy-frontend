@@ -116,7 +116,9 @@ function PortfolioCard({
       <div className="mt-auto pt-4 flex gap-2">
         <button
           onClick={(e) => { e.stopPropagation(); onManage(portfolio); }}
-          className="flex-1 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs font-semibold border border-gray-200 transition"
+          disabled
+          title="Coming soon — this feature isn't active yet"
+          className="flex-1 py-2 rounded-lg bg-gray-50 text-gray-400 text-xs font-semibold border border-gray-200 transition cursor-not-allowed opacity-60"
         >
           Manage
         </button>

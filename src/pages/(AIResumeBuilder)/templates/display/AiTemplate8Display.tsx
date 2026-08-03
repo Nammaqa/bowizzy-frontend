@@ -53,7 +53,7 @@ const AiTemplate8Display: React.FC<Props> = ({ data, primaryColor = '#1e293b' })
       {personal.aboutCareerObjective && (
         <>
           <SectionTitle title="Professional Summary" />
-          <p style={{ fontSize: 9.5, color: '#334155', lineHeight: 1.6, margin: 0 }}>{htmlToLines(personal.aboutCareerObjective).join(' ')}</p>
+          <p style={{ fontSize: 9.5, color: '#334155', lineHeight: 1.6, margin: 0, textAlign: 'justify' }}>{htmlToLines(personal.aboutCareerObjective).join(' ')}</p>
         </>
       )}
       {/* Experience */}
@@ -68,7 +68,7 @@ const AiTemplate8Display: React.FC<Props> = ({ data, primaryColor = '#1e293b' })
               </div>
               <p style={{ fontSize: 9.5, color: primaryColor, fontWeight: 600, margin: '1px 0 0' }}>{w.companyName}{w.location ? `, ${w.location}` : ''}</p>
               <ul style={{ margin: '3px 0 0 14px', padding: 0, fontSize: 9, color: '#475569', lineHeight: 1.5 }}>
-                {htmlToLines(w.description).map((line, j) => <li key={j} style={{ marginBottom: 1.5 }}>{line.replace(/^[•\-]\s*/, '')}</li>)}
+                {htmlToLines(w.description).map((line, j) => <li key={j} style={{ marginBottom: 1.5, textAlign: 'justify' }}>{line.replace(/^[•\-]\s*/, '')}</li>)}
               </ul>
             </div>
           ))}
@@ -85,8 +85,8 @@ const AiTemplate8Display: React.FC<Props> = ({ data, primaryColor = '#1e293b' })
                 {(p.startDate || p.endDate || p.currentlyWorking) && <span style={{ fontSize: 8.5, color: '#94a3b8' }}>{fmtDate(p.startDate)}{(p.currentlyWorking || p.endDate) ? ` – ${p.currentlyWorking ? 'Present' : fmtDate(p.endDate)}` : ''}</span>}
               </div>
               <ul style={{ margin: '3px 0 0 14px', padding: 0, fontSize: 9, color: '#475569', lineHeight: 1.5 }}>
-                {htmlToLines(p.description).map((line, j) => <li key={j} style={{ marginBottom: 1.5 }}>{line.replace(/^[•\-]\s*/, '')}</li>)}
-                {htmlToLines(p.rolesResponsibilities).map((line, j) => <li key={j} style={{ marginBottom: 1.5 }}>{line.replace(/^[•\-]\s*/, '')}</li>)}
+                {htmlToLines(p.description).map((line, j) => <li key={j} style={{ marginBottom: 1.5, textAlign: 'justify' }}>{line.replace(/^[•\-]\s*/, '')}</li>)}
+                {htmlToLines(p.rolesResponsibilities).map((line, j) => <li key={j} style={{ marginBottom: 1.5, textAlign: 'justify' }}>{line.replace(/^[•\-]\s*/, '')}</li>)}
               </ul>
             </div>
           ))}
