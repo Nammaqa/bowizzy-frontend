@@ -3,6 +3,7 @@ import DOMPurify from 'dompurify';
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
 import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
+import { renderPdfRichBullets } from '@/templates/utils/richTextPdf';
 
 const styles = StyleSheet.create({
   page: { padding: 24, fontSize: 10 },
@@ -97,6 +98,16 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
 
   const pdfFontFamily = getPdfFontFamily(fontFamily);
   const pdfFontFamilyBold = getPdfFontFamilyBold(fontFamily);
+
+  const renderBulletedParagraph = (html?: string) =>
+    renderPdfRichBullets(html, {
+      fontSize: 10,
+      color: '#444',
+      marginTop: 6,
+      boldFontFamily: pdfFontFamilyBold,
+      textAlign: 'justify',
+    });
+
   const role = (experience && (experience as any).jobRole) || (experience.workExperiences && experience.workExperiences.find((w: any) => w.enabled && w.jobTitle) && experience.workExperiences.find((w: any) => w.enabled && w.jobTitle).jobTitle) || '';
   const contactLine = [personal.email, personal.mobileNumber, personal.address, personal.dateOfBirth].filter(Boolean).join(' | ');
   const hasPreUniversity = Boolean(education.preUniversityEnabled && (education.preUniversity?.instituteName || education.preUniversity?.subjectStream || education.preUniversity?.boardType || education.preUniversity?.yearOfPassing || education.preUniversity?.result));
@@ -235,16 +246,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
 
                       <Text style={{ marginTop: 6, color: '#000' }}>{w.companyName}{w.location ? ` — ${w.location}` : ''}</Text>
 
-                      {w.description && htmlToLines(w.description).length > 0 && (
-                        <View style={{ marginTop: 6 }}>
-                          {htmlToLines(w.description).map((ln: any, idx: number) => (
-                            <View key={idx} style={{ flexDirection: 'row', marginBottom: 4 }}>
-                              <Text style={{ width: 12 }}>•</Text>
-                              <Text style={{ flex: 1, color: '#444', textAlign: 'justify' }}>{ln}</Text>
-                            </View>
-                          ))}
-                        </View>
-                      )}
+                      {renderBulletedParagraph(w.description)}
 
                     </View>
                   ))}
@@ -262,16 +264,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
                           <Text style={{ fontSize: 11, fontFamily: 'Times-Bold' }}>{p.projectTitle}</Text>
                           <Text style={{ fontSize: 11, color: '#000' }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</Text>
                         </View>
-                        {p.description && htmlToLines(p.description).length > 0 && (
-                          <View style={{ marginTop: 6 }}>
-                            {htmlToLines(p.description).map((ln: any, idx: number) => (
-                              <View key={idx} style={{ flexDirection: 'row', marginBottom: 4 }}>
-                                <Text style={{ width: 12 }}>•</Text>
-                                <Text style={{ flex: 1, color: '#444' }}>{ln}</Text>
-                              </View>
-                            ))}
-                          </View>
-                        )}
+                        {renderBulletedParagraph(p.description)}
                       </View>
                     ))}
                   </View>

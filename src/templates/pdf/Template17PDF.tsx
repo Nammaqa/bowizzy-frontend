@@ -3,6 +3,7 @@ import DOMPurify from 'dompurify';
 import { Document, Page, View, Text, StyleSheet, Svg, Path, Link } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
 import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
+import { renderPdfRichBullets } from '@/templates/utils/richTextPdf';
 
 const styles = StyleSheet.create({
   page: { flexDirection: 'row', padding: 0, fontSize: 10, },
@@ -140,6 +141,16 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
 
   const pdfFontFamily = getPdfFontFamily(fontFamily);
   const pdfFontFamilyBold = getPdfFontFamilyBold(fontFamily);
+
+  const renderBulletedParagraph = (html?: string) =>
+    renderPdfRichBullets(html, {
+      fontSize: 9,
+      color: '#444',
+      marginTop: 6,
+      boldFontFamily: pdfFontFamilyBold,
+      textAlign: 'justify',
+    });
+
   const role = (experience && (experience as any).jobRole) || (experience.workExperiences && experience.workExperiences.find((w: any) => w.enabled && w.jobTitle) && experience.workExperiences.find((w: any) => w.enabled && w.jobTitle).jobTitle) || '';
   const linksEnabled = skillsLinks?.linksEnabled ?? true;
   const links: any = skillsLinks?.links || {};
@@ -221,7 +232,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
                       <Text style={{ fontSize: 10, color: '#000', flexShrink: 0, textAlign: 'right' }}>{formatMonthYear(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYear(w.endDate)}</Text>
                     </View>
                     <Text style={{ marginTop: 6, fontSize: 9, color: '#000' }}>{w.jobTitle}{w.location ? ` — ${w.location}` : ''}</Text>
-                    {w.description && <View style={{ marginTop: 6, paddingLeft: 10 }}>{htmlToPlainText(w.description).split('\n').filter(Boolean).map((line, idx) => <Text key={idx} style={{ fontSize: 9, color: '#444', marginTop: 6, textAlign: 'justify' }}>• {line}</Text>)}</View>}
+                    {w.description && <View style={{ paddingLeft: 10 }}>{renderBulletedParagraph(w.description)}</View>}
                   </View>
                 ))}
               </View>
@@ -241,11 +252,11 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
                       <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, flex: 1, paddingRight: 16 }}>{p.projectTitle}</Text>
                       <Text style={{ fontSize: 10, color: '#000', flexShrink: 0, textAlign: 'right' }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</Text>
                     </View>
-                    {p.description && <Text style={{ marginTop: 6, fontSize: 9, color: '#000', textAlign: 'justify' }}>{htmlToPlainText(p.description)}</Text>}
+                    {p.description && <View style={{ marginTop: 6 }}>{renderBulletedParagraph(p.description)}</View>}
                     {p.rolesResponsibilities && (
                       <View style={{ marginTop: 6, paddingLeft: 10 }}>
                         <Text style={{ fontSize: 9, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Roles & Responsibilities:</Text>
-                        {htmlToPlainText(p.rolesResponsibilities).split('\n').filter(Boolean).map((line, idx) => <Text key={idx} style={{ fontSize: 9, color: '#444', marginTop: 6, textAlign: 'justify' }}>• {line}</Text>)}
+                        {renderBulletedParagraph(p.rolesResponsibilities)}
                       </View>
                     )}
                   </View>

@@ -3,6 +3,7 @@ import DOMPurify from 'dompurify';
 import { Document, Page, View, Text, StyleSheet, Svg, Path } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
 import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
+import { renderPdfRichBullets } from '@/templates/utils/richTextPdf';
 
 const styles = StyleSheet.create({
   page: { paddingTop: 28, paddingBottom: 24, paddingLeft: 36, paddingRight: 36, fontSize: 10 },
@@ -34,73 +35,6 @@ const htmlToPlainText = (html?: string) => {
     }
   } catch (e) { /* ignore */ }
   return decoded.replace(/<[^>]+>/g, '').trim();
-};
-
-const renderBulletedParagraph = (html?: string) => {
-  if (!html) return null;
-
-  const hasListTags = /<(ul|ol|li)[\s\/>]/i.test(html) || html.includes('•');
-
-  if (!hasListTags) {
-    const sanitized = DOMPurify.sanitize(html || '');
-    const plainText = sanitized
-      .replace(/<[^>]+>/g, '')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&amp;/g, '&')
-      .trim();
-
-    if (!plainText) return null;
-
-    return (
-      <View style={{ marginTop: 2 }}>
-        <Text style={{ color: '#2b2a2a', fontSize: 10, lineHeight: 1.4, textAlign: 'justify' }}>
-          {plainText}
-        </Text>
-      </View>
-    );
-  }
-
-  const sanitized = DOMPurify.sanitize(html || '');
-  let text = sanitized
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n')
-    .replace(/<\/li>/gi, '\n')
-    .replace(/<ul[^>]*>/gi, '\n')
-    .replace(/<ol[^>]*>/gi, '\n')
-    .replace(/<li[^>]*>/gi, '• ')
-    .replace(/<p[^>]*>/gi, '')
-    .replace(/<span[^>]*>/gi, '')
-    .replace(/<\/span>/gi, '')
-    .replace(/<div[^>]*>/gi, '')
-    .replace(/<\/div>/gi, '')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
-    .trim();
-
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-
-  return (
-    <View style={{ marginTop: 2, width: '100%' }}>
-      {lines.map((line, idx) => {
-        const isBullet = line.startsWith('•');
-        return (
-          <View key={idx} style={{ flexDirection: 'row', marginTop: idx > 0 ? 2 : 0, width: '100%' }}>
-            <Text style={{ width: 12, flexShrink: 0, color: '#444', fontSize: 10, textAlign: 'justify' }}>
-              {isBullet ? '•' : ''}
-            </Text>
-            <Text style={{ flex: 1, color: '#444', fontSize: 10, textAlign: 'justify' }}>
-              {isBullet ? line.substring(1).trim() : line}
-            </Text>
-          </View>
-        );
-      })}
-    </View>
-  );
 };
 
 const formatMonthYear = (s?: string) => {
@@ -182,6 +116,16 @@ const Template13PDF: React.FC<Template13PDFProps> = ({ data, primaryColor = '#11
 
   const pdfFontFamily = getPdfFontFamily(fontFamily);
   const pdfFontFamilyBold = getPdfFontFamilyBold(fontFamily);
+
+  const renderBulletedParagraph = (html?: string) =>
+    renderPdfRichBullets(html, {
+      fontSize: 10,
+      color: '#444',
+      lineHeight: 1.4,
+      marginTop: 4,
+      boldFontFamily: pdfFontFamilyBold,
+      textAlign: 'justify',
+    });
 
   const contactParts = [personal.address, personal.email, personal.mobileNumber].filter(Boolean);
   const links = (skillsLinks as any)?.links;
