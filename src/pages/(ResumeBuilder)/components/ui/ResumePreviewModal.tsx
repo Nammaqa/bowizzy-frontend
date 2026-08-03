@@ -283,9 +283,17 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
 
   if (!isOpen) return null;
 
+  // Only the user explicitly backing out of this modal (backdrop/X) should
+  // reload the page — onClose() is also called internally after a
+  // successful payment, and that path must NOT reload.
+  const handleUserCancel = () => {
+    onClose();
+    window.location.reload();
+  };
+
   return (
     <>
-      <div className="fixed inset-0 bg-black/70 z-[90] backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/70 z-[90] backdrop-blur-sm" onClick={handleUserCancel} />
 
       {/* Outer layer: ONLY handles page-level scrolling (no centering here,
           so the modal can never be clipped when it's taller than the viewport) */}
@@ -308,7 +316,7 @@ const PaymentBreakdownModal: React.FC<PaymentBreakdownModalProps> = ({
               }}
             >
               <button
-                onClick={onClose}
+                onClick={handleUserCancel}
                 className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-white/10 transition-colors"
               >
                 <X className="w-4 h-4 text-white/70" />
@@ -1071,7 +1079,6 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
         onClose={() => {
           pendingSaveAfterPaymentRef.current = false;
           setShowPaymentBreakdown(false);
-          window.location.reload();
         }}
         onPaymentSuccess={() => {
           setResumeUnlocked(true);
