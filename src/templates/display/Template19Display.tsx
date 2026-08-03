@@ -2,6 +2,7 @@ import React from 'react';
 import DOMPurify from 'dompurify';
 import type { ResumeData } from '@/types/resume';
 import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
+import { splitIntoRichTextBlocks } from '@/templates/utils/richTextHtml';
 
 interface Template19DisplayProps {
   data: ResumeData
@@ -34,6 +35,20 @@ const formatMonthYear = (s?: string) => {
     if (mY) return `${months[parseInt(mY[1], 10) - 1]} ${mY[2]}`;
   } catch (e) { }
   return String(s);
+};
+
+// Preserves bold text the user applied in the description editor, instead
+// of flattening the HTML down to plain text.
+const renderDescriptionBlocks = (html?: string) => {
+  if (!html) return null;
+  const blocks = splitIntoRichTextBlocks(DOMPurify.sanitize(html));
+  return blocks.map((block, idx) => (
+    <div
+      key={idx}
+      style={{ marginTop: 6, textAlign: 'justify' }}
+      dangerouslySetInnerHTML={{ __html: block.bullet ? `• ${block.html}` : block.html }}
+    />
+  ));
 };
 
 const Template19Display: React.FC<Template19DisplayProps> = ({
@@ -162,9 +177,9 @@ const Template19Display: React.FC<Template19DisplayProps> = ({
                       <div style={{ color: '#000', fontWeight: 400 }}>{formatMonthYear(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYear(w.endDate)}</div>
                     </div>
                     <div style={{ color: '#000', marginTop: 6, fontFamily: 'Arial, sans-serif', fontWeight: 400 }}>{w.companyName}{w.location ? ` — ${w.location}` : ''}</div>
-                    {w.description && htmlToLines(w.description).length > 0 && (
+                    {w.description && (
                       <div style={{ marginTop: 6, paddingLeft: 12 }}>
-                        {htmlToLines(w.description).map((ln, idx) => <div key={idx} style={{ marginTop: 6, textAlign: 'justify' }}>• {ln}</div>)}
+                        {renderDescriptionBlocks(w.description)}
                       </div>
                     )}
                   </div>
@@ -183,11 +198,9 @@ const Template19Display: React.FC<Template19DisplayProps> = ({
                         <div style={{ fontWeight: 800 }}>{p.projectTitle}</div>
                         <div style={{ color: '#000', fontWeight: 400 }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</div>
                       </div>
-                      {p.description && htmlToLines(p.description).length > 0 && (
+                      {p.description && (
                         <div style={{ marginTop: 6, paddingLeft: 12 }}>
-                          {htmlToLines(p.description).map((ln: any, idx: number) => (
-                            <div key={idx} style={{ marginTop: 6, textAlign: 'justify' }}>• {ln}</div>
-                          ))}
+                          {renderDescriptionBlocks(p.description)}
                         </div>
                       )}
                     </div>

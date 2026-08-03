@@ -3,6 +3,7 @@ import DOMPurify from 'dompurify';
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
 import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
+import { renderPdfRichBullets } from '@/templates/utils/richTextPdf';
 
 const styles = StyleSheet.create({
   page: { paddingTop: 28, paddingBottom: 24, paddingLeft: 36, paddingRight: 36, fontSize: 10 },
@@ -16,70 +17,6 @@ const styles = StyleSheet.create({
   itemSub: { fontSize: 11, color: '#111827' },
   bullet: { fontSize: 10, color: '#444', marginTop: 4 },
 });
-
-const renderBulletedParagraph = (html?: string) => {
-  if (!html) return null;
-
-  const hasListTags = /<(ul|ol|li)[\s\/>]/i.test(html);
-
-  if (!hasListTags) {
-    const sanitized = DOMPurify.sanitize(html || '');
-    const plainText = sanitized
-      .replace(/<[^>]+>/g, '')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&amp;/g, '&')
-      .trim();
-
-    if (!plainText) return null;
-
-    return (
-      <View style={{ marginTop: 6 }}>
-        <Text style={{ color: '#2b2a2a', fontSize: 10, lineHeight: 1.4, textAlign: 'justify' }}>
-          {plainText}
-        </Text>
-      </View>
-    );
-  }
-
-  const sanitized = DOMPurify.sanitize(html || '');
-  let text = sanitized
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n')
-    .replace(/<\/li>/gi, '\n')
-    .replace(/<ul[^>]*>/gi, '\n')
-    .replace(/<ol[^>]*>/gi, '\n')
-    .replace(/<li[^>]*>/gi, '• ')
-    .replace(/<p[^>]*>/gi, '')
-    .replace(/<span[^>]*>/gi, '')
-    .replace(/<\/span>/gi, '')
-    .replace(/<div[^>]*>/gi, '')
-    .replace(/<\/div>/gi, '')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
-    .trim();
-
-  const lines = text.split('\n').filter((l) => l.trim());
-
-  return (
-    <View style={{ marginTop: 6 }}>
-      {lines.map((line, idx) => (
-        <View key={idx} style={{ flexDirection: 'row', marginTop: idx > 0 ? 2 : 0 }}>
-          <Text style={{ width: 12, flexShrink: 0, color: '#444', fontSize: 10, textAlign: 'justify' }}>
-            {line.startsWith('•') ? '•' : ''}
-          </Text>
-          <Text style={{ flex: 1, color: '#444', fontSize: 10, textAlign: 'justify' }}>
-            {line.startsWith('•') ? line.substring(1).trim() : line}
-          </Text>
-        </View>
-      ))}
-    </View>
-  );
-};
 
 const formatMonthYearNumeric = (s?: string) => {
   if (!s) return '';
@@ -146,6 +83,16 @@ const Template14PDF: React.FC<Template14PDFProps> = ({ data, primaryColor = '#11
 
   const pdfFontFamily = getPdfFontFamily(fontFamily);
   const pdfFontFamilyBold = getPdfFontFamilyBold(fontFamily);
+
+  const renderBulletedParagraph = (html?: string) =>
+    renderPdfRichBullets(html, {
+      fontSize: 10,
+      color: '#444',
+      lineHeight: 1.4,
+      marginTop: 6,
+      boldFontFamily: pdfFontFamilyBold,
+      textAlign: 'justify',
+    });
   // Use the separate jobRole if set by the user; otherwise fall back to first work experience jobTitle
   const profession = (experience && (experience as any).jobRole) || (experience.workExperiences && experience.workExperiences.find((w: any) => w.enabled && w.jobTitle) && experience.workExperiences.find((w: any) => w.enabled && w.jobTitle).jobTitle) || '';
 
