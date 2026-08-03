@@ -951,6 +951,11 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
     setShowNameDialog(true);
   };
 
+  const cancelNameDialog = () => {
+    setShowNameDialog(false);
+    window.location.reload();
+  };
+
   const embedProfilePhoto = async (d: ResumeData): Promise<ResumeData> => {
     const clone: ResumeData = JSON.parse(JSON.stringify(d));
     const url = clone?.personal?.profilePhotoUrl;
@@ -1218,11 +1223,11 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
       {/* Resume Name Dialog */}
       {showNameDialog && (
         <>
-          <div className="fixed inset-0 bg-black/60 z-[60]" onClick={() => setShowNameDialog(false)} />
+          <div className="fixed inset-0 bg-black/60 z-[60]" onClick={cancelNameDialog} />
           <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-[90%] max-w-md p-8 relative flex flex-col gap-6">
               <button
-                onClick={() => setShowNameDialog(false)}
+                onClick={cancelNameDialog}
                 className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
                 <X className="w-5 h-5 text-gray-500" />
@@ -1246,7 +1251,7 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
               </div>
               <div className="flex gap-3">
                 <button
-                  onClick={() => setShowNameDialog(false)}
+                  onClick={cancelNameDialog}
                   className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                   disabled={isDownloadingPdf}
                 >
