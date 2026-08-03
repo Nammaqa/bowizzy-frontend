@@ -234,7 +234,6 @@ export default function PortfolioEditor() {
   }, [id]);
 
   const mmYYYYRegex = /^(0[1-9]|1[0-2])\s*-\s*\d{4}$/;
-  const plainTextRegex = /^[A-Za-z0-9 ]*$/;
   const linkMaxLength = 100;
 
   const formatDuration = (startDate?: string, endDate?: string, currentlyWorking?: boolean) => {
@@ -268,6 +267,24 @@ export default function PortfolioEditor() {
     return `${String(d.getMonth() + 1).padStart(2, "0")} - ${d.getFullYear()}`;
   };
 
+  // Keep imported values inside the same limits the editor inputs enforce, so an
+  // import can never leave the form in a state that fails validation on save.
+  const sanitizeImportedPhone = (value: string) =>
+    String(value || "").replace(/[^0-9+\s()-]/g, "").trim().slice(0, 20);
+
+  const extractYear = (dateStr: string) => {
+    if (!dateStr) return "";
+    const match = String(dateStr).match(/\d{4}/);
+    if (match) return match[0];
+    const parsed = new Date(dateStr);
+    return isNaN(parsed.getTime()) ? "" : String(parsed.getFullYear());
+  };
+
+  const isImportableLink = (url: string) => {
+    const trimmed = String(url || "").trim();
+    return Boolean(trimmed) && trimmed.length <= linkMaxLength && isValidUrl(trimmed);
+  };
+
   // Import Details from Profile APIs
   const handleImportFromProfile = async () => {
     try {
@@ -284,12 +301,13 @@ export default function PortfolioEditor() {
       const token = userData.token;
 
       // Fetch all endpoints concurrently
-      const [expRes, projRes, skillsRes, linksRes, profileRes] = await Promise.all([
+      const [expRes, projRes, skillsRes, linksRes, profileRes, certRes] = await Promise.all([
         api.get(`/users/${userId}/work-experience`, { headers: { Authorization: `Bearer ${token}` } }),
         api.get(`/users/${userId}/projects`, { headers: { Authorization: `Bearer ${token}` } }),
         api.get(`/users/${userId}/skills`, { headers: { Authorization: `Bearer ${token}` } }),
         api.get(`/users/${userId}/links`, { headers: { Authorization: `Bearer ${token}` } }),
         api.get(`/users/${userId}/personal-details`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: null })),
+        api.get(`/users/${userId}/certificates`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] })),
       ]);
 
       // 1. Process Experiences
@@ -352,13 +370,39 @@ export default function PortfolioEditor() {
         });
       }
 
-      // 5. Process Profile Image and CV (if any)
+      // 5. Process Profile Image, CV, contact and languages (if any)
       if (profileRes.data) {
         // Handle both object and array responses from personal-details API
         const pd = Array.isArray(profileRes.data) ? profileRes.data[0] : profileRes.data;
         if (pd?.profile_photo_url) setProfileImageUrl(pd.profile_photo_url);
         if (pd?.cv_url) setCvUrl(pd.cv_url); // Optional: if CV is there
         if (pd?.email) setEmail(pd.email);
+        if (pd?.mobile_number) setPhone(sanitizeImportedPhone(pd.mobile_number));
+
+        if (Array.isArray(pd?.languages_known)) {
+          const mappedLanguages = pd.languages_known
+            .map((language: any) => String(language || "").trim().slice(0, 50))
+            .filter(Boolean);
+          if (mappedLanguages.length > 0) {
+            setLanguages(mappedLanguages);
+          }
+        }
+      }
+
+      // 6. Process Certifications
+      if (Array.isArray(certRes.data)) {
+        const mappedCertifications = certRes.data
+          .filter((cert: any) => (cert?.certificate_title || "").trim())
+          .map((cert: any) => ({
+            name: String(cert.certificate_title || "").trim().slice(0, 100),
+            issuer: String(cert.certificate_provided_by || "").trim().slice(0, 100),
+            year: extractYear(cert.date),
+            // Drop links the editor would reject on save (see linkMaxLength).
+            link: isImportableLink(cert.file_url) ? cert.file_url : "",
+          }));
+        if (mappedCertifications.length > 0) {
+          setCertifications(mappedCertifications);
+        }
       }
 
       setImportSuccess(true);
@@ -779,28 +823,6 @@ export default function PortfolioEditor() {
     }
 
     const normalizedExperiences = experiences.map(normalizeExperience);
-    const invalidProjectText = projects.find(
-      (project) => !plainTextRegex.test(project.title || "")
-    );
-
-    if (invalidProjectText) {
-      alert("Project title can only contain letters, numbers, and spaces.");
-      return;
-    }
-
-    const invalidExperienceText = normalizedExperiences.find((exp) => {
-      return (
-        !plainTextRegex.test(exp.role || "") ||
-        !plainTextRegex.test(exp.company || "") ||
-        (exp.role || "").length > 80 ||
-        (exp.company || "").length > 80
-      );
-    });
-
-    if (invalidExperienceText) {
-      alert("Job role/title and company can only contain letters, numbers, and spaces, with a maximum length of 80 characters.");
-      return;
-    }
 
     const invalidExperience = normalizedExperiences.find((exp) => {
       const hasStart = Boolean(exp.startDate);
