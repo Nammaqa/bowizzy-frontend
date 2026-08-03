@@ -111,14 +111,20 @@ const AiTemplate8PDF: React.FC<Props> = ({ data, primaryColor = '#1e293b' }) => 
         ))}
         {education.preUniversityEnabled && education.preUniversity?.instituteName && (
           <View style={{ marginBottom: 6 }}>
-            <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#0f172a' }}>Pre University (12th)</Text>
-            <Text style={{ fontSize: 9, color: '#64748b' }}>{education.preUniversity.instituteName} | {fmtYear(education.preUniversity.yearOfPassing)}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#0f172a' }}>Pre University (12th)</Text>
+              <Text style={{ fontSize: 8.5, color: '#94a3b8' }}>{fmtYear(education.preUniversity.yearOfPassing)}</Text>
+            </View>
+            <Text style={{ fontSize: 9, color: '#64748b' }}>{education.preUniversity.instituteName}</Text>
           </View>
         )}
         {education.sslcEnabled && education.sslc?.instituteName && (
           <View style={{ marginBottom: 6 }}>
-            <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#0f172a' }}>SSLC (10th)</Text>
-            <Text style={{ fontSize: 9, color: '#64748b' }}>{education.sslc.instituteName} | {fmtYear(education.sslc.yearOfPassing)}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#0f172a' }}>SSLC (10th)</Text>
+              <Text style={{ fontSize: 8.5, color: '#94a3b8' }}>{fmtYear(education.sslc.yearOfPassing)}</Text>
+            </View>
+            <Text style={{ fontSize: 9, color: '#64748b' }}>{education.sslc.instituteName}</Text>
           </View>
         )}
         {skillsLinks.skills.some(s => s.enabled && s.skillName) && (
