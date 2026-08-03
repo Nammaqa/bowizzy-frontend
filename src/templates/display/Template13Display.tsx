@@ -86,7 +86,7 @@ const renderDescription = (html?: string) => {
     if (!plainText) return null;
     
     return (
-      <div style={{ marginTop: 6, color: '#2b2a2a', lineHeight: 1.4 }}>
+      <div style={{ marginTop: 6, color: '#2b2a2a', lineHeight: 1.4, textAlign: 'justify' }}>
         {plainText}
       </div>
     );
@@ -103,7 +103,7 @@ const renderDescription = (html?: string) => {
         return (
           <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', marginTop: idx > 0 ? 4 : 0 }}>
             <span style={{ marginRight: 6, lineHeight: 1.4, opacity: isBullet ? 1 : 0, width: 6 }}>{isBullet ? '•' : ''}</span>
-            <div style={{ flex: 1, lineHeight: 1.4 }}>{cleanLine}</div>
+            <div style={{ flex: 1, lineHeight: 1.4, textAlign: 'justify' }}>{cleanLine}</div>
           </div>
         );
       })}
@@ -185,7 +185,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
             <div style={{ height: 1, background: '#cfcfcf', marginTop: 0, marginBottom: 0, width: '100%' }} />
           </div>
           <div style={{ gridColumn: '1 / -1', marginTop: 0 }}>
-            {personal.aboutCareerObjective && (<div style={{ color: '#2b2a2a', lineHeight: 1.4 }}>{htmlToLines(personal.aboutCareerObjective).join(' ')}</div>)}
+            {personal.aboutCareerObjective && (<div style={{ color: '#2b2a2a', lineHeight: 1.4, textAlign: 'justify' }}>{htmlToLines(personal.aboutCareerObjective).join(' ')}</div>)}
           </div>
 
           {experience.workExperiences.some(exp => exp.enabled) && (<>

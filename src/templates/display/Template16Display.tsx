@@ -121,7 +121,7 @@ const Template16Display: React.FC<Template16DisplayProps> = ({
               </div>
 
               <div style={{ marginTop: 6 }}>
-                {htmlToLines(personal.aboutCareerObjective).map((ln, idx) => <div key={idx} style={{ color: '#444', lineHeight: 1.4, marginTop: idx ? 4 : 0 }}>{ln}</div>)}
+                {htmlToLines(personal.aboutCareerObjective).map((ln, idx) => <div key={idx} style={{ color: '#444', lineHeight: 1.4, marginTop: idx ? 4 : 0, textAlign: 'justify' }}>{ln}</div>)}
               </div>
             </>
           )}
@@ -140,7 +140,7 @@ const Template16Display: React.FC<Template16DisplayProps> = ({
                     <div style={{ color: '#000' }}>{formatMonthYear(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYear(w.endDate)}</div>
                   </div>
                   {w.description && (
-                    <div style={{ marginTop: 4, color: '#444', paddingLeft: 10 }}
+                    <div style={{ marginTop: 4, color: '#444', paddingLeft: 10, textAlign: 'justify' }}
                       dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(w.description || '') }}
                     />
                   )}
@@ -164,14 +164,14 @@ const Template16Display: React.FC<Template16DisplayProps> = ({
                       <div style={{ color: '#000' }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</div>
                     </div>
                     {p.description && (
-                      <div style={{ marginTop: 4, color: '#444', paddingLeft: 10 }}
+                      <div style={{ marginTop: 4, color: '#444', paddingLeft: 10, textAlign: 'justify' }}
                         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(p.description || '') }}
                       />
                     )}
                     {p.rolesResponsibilities && (
                       <div style={{ marginTop: 4, paddingLeft: 10 }}>
                         <div style={{ fontWeight: 700, fontSize: 11, color: primaryColor }}>Roles & Responsibilities:</div>
-                        <div style={{ marginTop: 2, color: '#444' }}
+                        <div style={{ marginTop: 2, color: '#444', textAlign: 'justify' }}
                           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(p.rolesResponsibilities || '') }}
                         />
                       </div>

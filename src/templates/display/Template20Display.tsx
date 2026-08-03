@@ -120,7 +120,7 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
               }}
             >
               Career Objective
-            </div>          <div style={{ flex: 1, fontSize: 12, color: '#333', lineHeight: 1.6 }}>
+            </div>          <div style={{ flex: 1, fontSize: 12, color: '#333', lineHeight: 1.6, textAlign: 'justify' }}>
               {DOMPurify.sanitize(personal.aboutCareerObjective).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s{2,}/g, ' ').trim()}
             </div>
           </div>
@@ -146,7 +146,7 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
               Technical Summary
             </div>          <div style={{ flex: 1, fontSize: 12, color: '#333', lineHeight: 1.6 }}>
               <ul style={{ margin: 0, paddingLeft: 18 }}>
-                {htmlToLines(DOMPurify.sanitize(skillsLinks.technicalSummary)).map((ln, j) => <li key={j} style={{ marginBottom: 6, listStyleType: 'disc' }}>{ln.replace(/^[•\-]\s*/, '')}</li>)}
+                {htmlToLines(DOMPurify.sanitize(skillsLinks.technicalSummary)).map((ln, j) => <li key={j} style={{ marginBottom: 6, listStyleType: 'disc', textAlign: 'justify' }}>{ln.replace(/^[•\-]\s*/, '')}</li>)}
               </ul>
             </div>
           </div>
@@ -180,7 +180,7 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
                   </div>
                   <div style={{ color: '#000', marginTop: 4, fontWeight: 700 }}>{w.companyName}</div>
                   {w.description && (
-                    <div style={{ marginTop: 8, color: '#333' }}
+                    <div style={{ marginTop: 8, color: '#333', textAlign: 'justify' }}
                       dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(w.description || '') }}
                     />
                   )}
@@ -227,7 +227,7 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
                   ) : null}
                   {edu.description && (
                     <ul style={{ marginTop: 8, paddingLeft: 18 }}>
-                      {htmlToLines(edu.description).map((ln, j) => <li key={j} style={{ marginBottom: 6, listStyleType: 'disc' }}>{ln}</li>)}
+                      {htmlToLines(edu.description).map((ln, j) => <li key={j} style={{ marginBottom: 6, listStyleType: 'disc', textAlign: 'justify' }}>{ln}</li>)}
                     </ul>
                   )}
                 </div>

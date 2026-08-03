@@ -50,7 +50,7 @@ const renderBulletedParagraph = (html?: string) => {
 
     return (
       <View style={{ marginTop: 4 }}>
-        <Text style={{ color: '#2b2a2a', fontSize: 10, lineHeight: 1.4 }}>
+        <Text style={{ color: '#2b2a2a', fontSize: 10, lineHeight: 1.4, textAlign: 'justify' }}>
           {plainText}
         </Text>
       </View>
@@ -83,10 +83,10 @@ const renderBulletedParagraph = (html?: string) => {
     <View style={{ marginTop: 4 }}>
       {lines.map((line, idx) => (
         <View key={idx} style={{ flexDirection: 'row', marginTop: idx > 0 ? 2 : 0 }}>
-          <Text style={{ width: 12, flexShrink: 0, color: '#444', fontSize: 10 }}>
+          <Text style={{ width: 12, flexShrink: 0, color: '#444', fontSize: 10, textAlign: 'justify' }}>
             {line.startsWith('•') ? '•' : ''}
           </Text>
-          <Text style={{ flex: 1, color: '#444', fontSize: 10 }}>
+          <Text style={{ flex: 1, color: '#444', fontSize: 10, textAlign: 'justify' }}>
             {line.startsWith('•') ? line.substring(1).trim() : line}
           </Text>
         </View>
@@ -215,7 +215,7 @@ const Template16PDF: React.FC<Template16PDFProps> = ({ data, primaryColor = '#11
               <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginTop: 4, marginBottom: 0 }} />
             </View>
             {htmlToPlainText(personal.aboutCareerObjective).split('\n').map((ln, idx) => (
-              <Text key={idx} style={{ fontSize: 10, color: '#444', marginTop: idx === 0 ? 6 : 4 }}>{ln}</Text>
+              <Text key={idx} style={{ fontSize: 10, color: '#444', marginTop: idx === 0 ? 6 : 4, textAlign: 'justify' }}>{ln}</Text>
             ))}
           </>
         )}

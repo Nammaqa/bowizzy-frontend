@@ -36,7 +36,7 @@ const renderBulletedParagraph = (html?: string) => {
 
     return (
       <View style={{ marginTop: 6 }}>
-        <Text style={{ color: '#2b2a2a', fontSize: 10, lineHeight: 1.4 }}>
+        <Text style={{ color: '#2b2a2a', fontSize: 10, lineHeight: 1.4, textAlign: 'justify' }}>
           {plainText}
         </Text>
       </View>
@@ -69,10 +69,10 @@ const renderBulletedParagraph = (html?: string) => {
     <View style={{ marginTop: 6 }}>
       {lines.map((line, idx) => (
         <View key={idx} style={{ flexDirection: 'row', marginTop: idx > 0 ? 2 : 0 }}>
-          <Text style={{ width: 12, flexShrink: 0, color: '#444', fontSize: 10 }}>
+          <Text style={{ width: 12, flexShrink: 0, color: '#444', fontSize: 10, textAlign: 'justify' }}>
             {line.startsWith('•') ? '•' : ''}
           </Text>
-          <Text style={{ flex: 1, color: '#444', fontSize: 10 }}>
+          <Text style={{ flex: 1, color: '#444', fontSize: 10, textAlign: 'justify' }}>
             {line.startsWith('•') ? line.substring(1).trim() : line}
           </Text>
         </View>

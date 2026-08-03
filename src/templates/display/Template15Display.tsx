@@ -135,7 +135,7 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
           <div style={{ marginTop: 6 }}>
             {personal.aboutCareerObjective && (
               <div
-                style={{ color: '#444', lineHeight: 1.4 }}
+                style={{ color: '#444', lineHeight: 1.4, textAlign: 'justify' }}
                 dangerouslySetInnerHTML={{ __html: sanitizeRichText(personal.aboutCareerObjective) }}
               />
             )}
@@ -149,7 +149,7 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
             <div style={{ marginTop: 6 }}>
               {skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled && (
                 <div
-                  style={{ color: '#444', lineHeight: 1.4 }}
+                  style={{ color: '#444', lineHeight: 1.4, textAlign: 'justify' }}
                   dangerouslySetInnerHTML={{ __html: sanitizeRichText(skillsLinks.technicalSummary) }}
                 />
               )}
@@ -282,7 +282,7 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
                   )}
 
                   {w.description && (
-                    <div style={{ marginTop: 4, color: '#444', paddingLeft: 10 }}
+                    <div style={{ marginTop: 4, color: '#444', paddingLeft: 10, textAlign: 'justify' }}
                       dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(w.description || '') }}
                     />
                   )}
@@ -304,7 +304,7 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
                     <div style={{ color: '#111827', fontWeight: 700 }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</div>
                   </div>
                   {p.description && (
-                    <div style={{ marginTop: 4, color: '#444', paddingLeft: 10 }}
+                    <div style={{ marginTop: 4, color: '#444', paddingLeft: 10, textAlign: 'justify' }}
                       dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(p.description || '') }}
                     />
                   )}
@@ -312,7 +312,7 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
                     <div style={{ marginTop: 4, paddingLeft: 10 }}>
                       <div style={{ fontWeight: 700, fontSize: 11, color: primaryColor }}>Roles & Responsibilities:</div>
                       {htmlToLines(p.rolesResponsibilities).map((ln: string, idx: number) => (
-                        <div key={idx} style={{ marginTop: 2, color: '#444' }}>• {ln}</div>
+                        <div key={idx} style={{ marginTop: 2, color: '#444', textAlign: 'justify' }}>• {ln}</div>
                       ))}
                     </div>
                   )}

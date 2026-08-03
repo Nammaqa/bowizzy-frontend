@@ -191,7 +191,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
                 <Text style={styles.sectionHeading}>About</Text>
                 <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
               </View>
-              <Text style={{ marginTop: 8, fontSize: 9, color: '#444' }}>{htmlToPlainText(personal.aboutCareerObjective).replace(/\s{2,}/g, ' ')}</Text>
+              <Text style={{ marginTop: 8, fontSize: 9, color: '#444', textAlign: 'justify' }}>{htmlToPlainText(personal.aboutCareerObjective).replace(/\s{2,}/g, ' ')}</Text>
             </View>
           ) : null}
 
@@ -201,7 +201,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
                 <Text style={styles.sectionHeading}>Technical Summary</Text>
                 <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
               </View>
-              <Text style={{ marginTop: 8, fontSize: 9, color: '#444' }}>
+              <Text style={{ marginTop: 8, fontSize: 9, color: '#444', textAlign: 'justify' }}>
                 {htmlToPlainText(skillsLinks.technicalSummary).replace(/\s{2,}/g, ' ')}
               </Text>
             </View>
@@ -221,7 +221,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
                       <Text style={{ fontSize: 10, color: '#000', flexShrink: 0, textAlign: 'right' }}>{formatMonthYear(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYear(w.endDate)}</Text>
                     </View>
                     <Text style={{ marginTop: 6, fontSize: 9, color: '#000' }}>{w.jobTitle}{w.location ? ` — ${w.location}` : ''}</Text>
-                    {w.description && <View style={{ marginTop: 6, paddingLeft: 10 }}>{htmlToPlainText(w.description).split('\n').filter(Boolean).map((line, idx) => <Text key={idx} style={{ fontSize: 9, color: '#444', marginTop: 6 }}>• {line}</Text>)}</View>}
+                    {w.description && <View style={{ marginTop: 6, paddingLeft: 10 }}>{htmlToPlainText(w.description).split('\n').filter(Boolean).map((line, idx) => <Text key={idx} style={{ fontSize: 9, color: '#444', marginTop: 6, textAlign: 'justify' }}>• {line}</Text>)}</View>}
                   </View>
                 ))}
               </View>
@@ -241,11 +241,11 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
                       <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, flex: 1, paddingRight: 16 }}>{p.projectTitle}</Text>
                       <Text style={{ fontSize: 10, color: '#000', flexShrink: 0, textAlign: 'right' }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</Text>
                     </View>
-                    {p.description && <Text style={{ marginTop: 6, fontSize: 9, color: '#000' }}>{htmlToPlainText(p.description)}</Text>}
+                    {p.description && <Text style={{ marginTop: 6, fontSize: 9, color: '#000', textAlign: 'justify' }}>{htmlToPlainText(p.description)}</Text>}
                     {p.rolesResponsibilities && (
                       <View style={{ marginTop: 6, paddingLeft: 10 }}>
                         <Text style={{ fontSize: 9, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Roles & Responsibilities:</Text>
-                        {htmlToPlainText(p.rolesResponsibilities).split('\n').filter(Boolean).map((line, idx) => <Text key={idx} style={{ fontSize: 9, color: '#444', marginTop: 6 }}>• {line}</Text>)}
+                        {htmlToPlainText(p.rolesResponsibilities).split('\n').filter(Boolean).map((line, idx) => <Text key={idx} style={{ fontSize: 9, color: '#444', marginTop: 6, textAlign: 'justify' }}>• {line}</Text>)}
                       </View>
                     )}
                   </View>

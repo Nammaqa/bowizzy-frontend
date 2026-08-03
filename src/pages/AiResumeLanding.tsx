@@ -315,7 +315,7 @@ export default function AiResumeLanding() {
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
-              { step: "1", label: "Upload your resume", sub: "PDF, DOC, or paste text" },
+              { step: "1", label: "AI Extraction", sub: "AI will extract from your profile" },
               { step: "2", label: "Add a job description", sub: "Optional — but powerful" },
               { step: "3", label: "Chat & download", sub: "Iterate until it's perfect" },
             ].map((item) => (

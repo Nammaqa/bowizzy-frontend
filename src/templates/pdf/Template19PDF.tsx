@@ -240,7 +240,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
                           {htmlToLines(w.description).map((ln: any, idx: number) => (
                             <View key={idx} style={{ flexDirection: 'row', marginBottom: 4 }}>
                               <Text style={{ width: 12 }}>•</Text>
-                              <Text style={{ flex: 1, color: '#444' }}>{ln}</Text>
+                              <Text style={{ flex: 1, color: '#444', textAlign: 'justify' }}>{ln}</Text>
                             </View>
                           ))}
                         </View>
