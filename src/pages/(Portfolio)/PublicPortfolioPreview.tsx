@@ -5,17 +5,16 @@ import DeveloperTemplate, { type PortfolioData } from "@/portfolio/templates/dev
 import DesignerTemplate from "@/portfolio/templates/designer";
 import { Loader2 } from "lucide-react";
 
-export type PortfolioRecord = {
+type PortfolioRecord = {
   portfolio_id?: string | number;
   portfolio_name?: string;
   description?: string;
   portfolio_type?: string;
   portfolio_json?: any;
   config?: any;
-  domain?: string;
 };
 
-export const EMPTY_DATA: PortfolioData = {
+const EMPTY_DATA: PortfolioData = {
   portfolioName: "",
   portfolioDescription: "",
   aboutTitle: "",
@@ -36,7 +35,7 @@ export const EMPTY_DATA: PortfolioData = {
   achievements: [],
 };
 
-export function parseMaybeJson(value: any) {
+function parseMaybeJson(value: any) {
   if (!value) return null;
   if (typeof value === "string") {
     try {
@@ -48,13 +47,13 @@ export function parseMaybeJson(value: any) {
   return value;
 }
 
-export function getDefaultTheme(type?: string) {
+function getDefaultTheme(type?: string) {
   return type === "designer"
     ? { themeColor: "#d84f2a", backgroundColor: "#f6f2ea" }
     : { themeColor: "#4f46e5", backgroundColor: "#0a0f1e" };
 }
 
-export function mapToPreviewData(found: PortfolioRecord): PortfolioData {
+function mapToPreviewData(found: PortfolioRecord): PortfolioData {
   const cfg = parseMaybeJson(found.portfolio_json) || parseMaybeJson(found.config) || {};
   const defaultTheme = getDefaultTheme(cfg.portfolio_type || found.portfolio_type);
   return {

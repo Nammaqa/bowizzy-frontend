@@ -76,8 +76,6 @@ import PortfolioList from "./pages/(Portfolio)/PortfolioList";
 import PortfolioLanding from "./pages/PortfolioLanding";
 import PortfolioEditor from "./pages/(Portfolio)/PortfolioEditor";
 import PublicPortfolioPreview from "./pages/(Portfolio)/PublicPortfolioPreview";
-import DomainPortfolioPreview from "./pages/(Portfolio)/DomainPortfolioPreview";
-import { getPortfolioSubdomain } from "@/lib/portfolioDomain";
 import ResumeSharedPreview from "./pages/ResumeSharedPreview";
 import MockInterviewLanding from "./pages/(Interviews)/MockInterview/MockInterviewLanding";
 import TakeMockInterviewPage from "./pages/(Interviews)/MockInterview/TakeMockInterviewPage";
@@ -416,13 +414,6 @@ function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
-  // A custom portfolio subdomain (e.g. jane.bowizzy.com) bypasses the normal
-  // router entirely — visitors there only ever see that one portfolio.
-  const portfolioSubdomain = getPortfolioSubdomain();
-  if (portfolioSubdomain) {
-    return <DomainPortfolioPreview />;
-  }
-
   const router = createBrowserRouter([
     {
       path: "/",
@@ -849,10 +840,6 @@ function App() {
     {
       path: "portfolio-preview/:portfolioid",
       Component: () => <PublicPortfolioPreview />,
-    },
-    {
-      path: "portfolio-preview/domain/:domain",
-      Component: () => <DomainPortfolioPreview />,
     },
     // Public on purpose — shared resume links are opened by recruiters who
     // have no Bowizzy account. The splat swallows the embedded file URL.
