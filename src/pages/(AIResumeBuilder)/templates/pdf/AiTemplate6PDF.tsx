@@ -14,8 +14,8 @@ const renderBullets = (html?: string) => {
     <View style={{ marginTop: 2 }}>
       {lines.map((line, i) => (
         <View key={i} style={{ flexDirection: 'row', marginTop: i > 0 ? 1 : 0 }}>
-          <Text style={{ width: 10, flexShrink: 0, fontSize: 9, color: '#333' }}>{line.startsWith('•') ? '•' : ''}</Text>
-          <Text style={{ flex: 1, fontSize: 9, color: '#333', lineHeight: 1.5 }}>{line.startsWith('•') ? line.substring(1).trim() : line}</Text>
+          <Text style={{ width: 10, flexShrink: 0, fontSize: 9, color: '#333', textAlign: 'justify' }}>{line.startsWith('•') ? '•' : ''}</Text>
+          <Text style={{ flex: 1, fontSize: 9, color: '#333', lineHeight: 1.5, textAlign: 'justify' }}>{line.startsWith('•') ? line.substring(1).trim() : line}</Text>
         </View>
       ))}
     </View>
@@ -80,7 +80,7 @@ const AiTemplate6PDF: React.FC<Props> = ({ data, primaryColor = '#4338ca' }) => 
                 <View style={{ marginBottom: 12 }}>
                   <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: primaryColor, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4 }}>Profile</Text>
                   <View style={{ height: 1, backgroundColor: primaryColor, marginBottom: 6 }} />
-                  <Text style={{ fontSize: 9, color: '#333', lineHeight: 1.5 }}>{htmlToPlain(personal.aboutCareerObjective)}</Text>
+                  <Text style={{ fontSize: 9, color: '#333', lineHeight: 1.5, textAlign: 'justify' }}>{htmlToPlain(personal.aboutCareerObjective)}</Text>
                 </View>
               )}
               {/* Experience */}
