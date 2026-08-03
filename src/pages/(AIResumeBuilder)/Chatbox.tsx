@@ -11,6 +11,7 @@ import { mapInfoJsonToResumeData } from './mapInfoJsonToResumeData';
 import DataChips, { type DataChip } from "./DataChips";
 import JdResumeFlow from "./JdResumeFlow";
 import api from "@/api";
+import { deleteAiSession } from "@/services/aiResumeService";
 
 // ── AI Resume Payment constants ────────────────────────────────────────────────
 const AI_RESUME_BASE_PRICE = Number(import.meta.env.VITE_BASE_AI_RESUME_PRICE) || 49.2;
@@ -61,12 +62,18 @@ interface AiPaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onPaymentSuccess: () => void;
+  // Called when the user cancels/fails payment after an order was already
+  // created — the session gets deleted (see handleCancelledOrFailed below)
+  // since the backend may mark it started/paid at order-creation time
+  // rather than at verified payment, so the only reliable fix client-side
+  // is to not leave that half-paid session around.
+  onCancelled?: () => void;
   token: string;
   sessionId?: string;
   mode?: "jd" | "non-jd";
 }
 
-const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaymentSuccess, token, sessionId, mode }) => {
+const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaymentSuccess, onCancelled, token, sessionId, mode }) => {
   const [userProfile, setUserProfile] = useState<UserProfileData | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [creditsToApply, setCreditsToApply] = useState(0);
@@ -100,6 +107,24 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
   
   const breakdown = calculatePriceBreakdown(AI_RESUME_BASE_PRICE, creditsToApply, availablePurchasedCredits, usePurchasedCredits);
   const purchasedCreditsToUse = breakdown.purchasedCreditsUsed;
+
+  // The backend may mark a session started/paid as soon as the order is
+  // created, before the payment is actually verified — so a cancelled or
+  // failed payment can leave behind a session that looks "used" but was
+  // never paid for. Deleting it here is the only reliable client-side fix.
+  const handleCancelledOrFailed = async () => {
+    setPayLoading(false);
+    if (sessionId) {
+      try {
+        await deleteAiSession(sessionId, token);
+      } catch (err) {
+        console.error('Failed to remove session after cancelled/failed payment', err);
+      }
+    }
+    onCancelled?.();
+    onClose();
+    window.location.reload();
+  };
 
   const handlePay = async () => {
     setPayLoading(true);
@@ -162,7 +187,7 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
           cgst: breakdown.cgst,
           sgst: breakdown.sgst,
         },
-        modal: { ondismiss: () => setPayLoading(false) },
+        modal: { ondismiss: () => void handleCancelledOrFailed() },
         handler: async function (response: any) {
           try {
             const verifyResp: any = await api.post(
@@ -184,11 +209,11 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
               onClose();
             } else {
               alert('Payment verification failed. Please contact support.');
-              setPayLoading(false);
+              void handleCancelledOrFailed();
             }
           } catch {
             alert('Payment verification failed. Please contact support.');
-            setPayLoading(false);
+            void handleCancelledOrFailed();
           }
         },
         prefill: {
@@ -202,7 +227,7 @@ const AiPaymentModal: React.FC<AiPaymentModalProps> = ({ isOpen, onClose, onPaym
 
       const rzp = new window.Razorpay(options);
       if (typeof rzp.on === 'function') {
-        rzp.on('payment.failed', () => { setPayLoading(false); alert('Payment failed or was cancelled.'); });
+        rzp.on('payment.failed', () => { alert('Payment failed or was cancelled.'); void handleCancelledOrFailed(); });
       }
       rzp.open();
     } catch {
@@ -498,6 +523,7 @@ interface ChatBoxProps {
   onShowGuide?: () => void;
   isJdPaid?: boolean;
   onJdPaymentSuccess?: () => void;
+  onPaymentCancelled?: () => void;
   initialJdText?: string;
 }
 
@@ -520,6 +546,7 @@ export default function ChatBox({
   onShowGuide,
   isJdPaid,
   onJdPaymentSuccess,
+  onPaymentCancelled,
   initialJdText,
 }: ChatBoxProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -561,6 +588,7 @@ export default function ChatBox({
             onShowGuide={onShowGuide}
             isJdPaid={isJdPaid}
             onJdPaymentSuccess={onJdPaymentSuccess}
+            onPaymentCancelled={onPaymentCancelled}
             initialJdText={initialJdText}
           />
         ) : (
@@ -648,9 +676,10 @@ export default function ChatBox({
         accept=".pdf,.doc,.docx,.txt"
       />
 
-      {/* Input bar — only visible after start, and never in JD mode: that flow
-          finishes inside JdResumeFlow, so there is nothing left to reply to. */}
-      {started && mode !== "jd" && (
+      {/* Input bar — only visible after start, never in JD mode (that flow
+          finishes inside JdResumeFlow), and hidden once the resume has been
+          generated (session.infoJson set) since there's nothing left to reply to. */}
+      {started && mode !== "jd" && !session?.infoJson && (
         <div className="bg-white border-t border-gray-200 px-4 pt-3 pb-4">
           <div className="max-w-2xl mx-auto">
             <div className="flex items-center gap-2">
@@ -696,6 +725,7 @@ function PreStartState({
   onShowGuide,
   isJdPaid,
   onJdPaymentSuccess,
+  onPaymentCancelled,
   initialJdText,
 }: {
   mode: "jd" | "non-jd";
@@ -708,6 +738,7 @@ function PreStartState({
   onShowGuide?: () => void;
   isJdPaid?: boolean;
   onJdPaymentSuccess?: () => void;
+  onPaymentCancelled?: () => void;
   initialJdText?: string;
 }) {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -810,6 +841,7 @@ function PreStartState({
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
         onPaymentSuccess={handlePaymentSuccess}
+        onCancelled={onPaymentCancelled}
         token={token}
         sessionId={sessionId}
         mode={mode}
