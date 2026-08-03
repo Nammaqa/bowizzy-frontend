@@ -222,9 +222,12 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
             <View style={{ flexDirection: 'row' }}>
               <View style={{ width: 150 }}><Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold }}>TECHNICAL SUMMARY</Text></View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 11, color: '#333' }}>
-                  {htmlToPlainText(skillsLinks.technicalSummary).replace(/\s{2,}/g, ' ')}
-                </Text>
+                {htmlToLines(skillsLinks.technicalSummary).map((line, idx) => (
+                  <View key={idx} style={{ flexDirection: 'row', marginTop: idx > 0 ? 2 : 0 }}>
+                    <Text style={{ width: 12, flexShrink: 0, fontSize: 11, color: '#333' }}>•</Text>
+                    <Text style={{ flex: 1, fontSize: 11, color: '#333' }}>{line.replace(/^[•\-]\s*/, '')}</Text>
+                  </View>
+                ))}
               </View>
             </View>
             <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 12, marginBottom: 12 }} />

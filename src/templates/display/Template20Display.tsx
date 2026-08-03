@@ -145,7 +145,9 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
             >
               Technical Summary
             </div>          <div style={{ flex: 1, fontSize: 12, color: '#333', lineHeight: 1.6 }}>
-              {DOMPurify.sanitize(skillsLinks.technicalSummary).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s{2,}/g, ' ').trim()}
+              <ul style={{ margin: 0, paddingLeft: 18 }}>
+                {htmlToLines(DOMPurify.sanitize(skillsLinks.technicalSummary)).map((ln, j) => <li key={j} style={{ marginBottom: 6, listStyleType: 'disc' }}>{ln.replace(/^[•\-]\s*/, '')}</li>)}
+              </ul>
             </div>
           </div>
         )}
@@ -225,7 +227,7 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
                   ) : null}
                   {edu.description && (
                     <ul style={{ marginTop: 8, paddingLeft: 18 }}>
-                      {htmlToLines(edu.description).map((ln, j) => <li key={j} style={{ marginBottom: 6 }}>{ln}</li>)}
+                      {htmlToLines(edu.description).map((ln, j) => <li key={j} style={{ marginBottom: 6, listStyleType: 'disc' }}>{ln}</li>)}
                     </ul>
                   )}
                 </div>
