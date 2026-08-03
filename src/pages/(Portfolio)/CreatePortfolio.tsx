@@ -475,7 +475,7 @@ export default function CreatePortfolio() {
                   Tailored for Software Engineers, Tech Leads, and QA Professionals. Showcases repositories and tech stacks.
                 </p>
                 <a
-                  href="https://google.com"
+                  href="https://bowizzy.com/portfolio-preview/9"
                   target="_blank"
                   rel="noopener noreferrer"
                   draggable={false}
@@ -511,7 +511,7 @@ export default function CreatePortfolio() {
                   Ideal for UI/UX Designers, Product Managers, and Creatives. Focuses on visual case studies and galleries.
                 </p>
                 <a
-                  href="https://google.com"
+                  href="https://bowizzy.com/portfolio-preview/12"
                   target="_blank"
                   rel="noopener noreferrer"
                   draggable={false}
