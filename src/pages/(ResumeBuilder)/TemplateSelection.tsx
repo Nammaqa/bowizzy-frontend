@@ -145,14 +145,13 @@ const TEMPLATE_INFO: Record<string, TemplateSectionInfo> = {
       "Experience",
       "Education",
       "Language",
-      "Certification",
       "Project",
     ],
     free: false,
   },
   template20: {
     name: "Maratha",
-    sections: ["Experience", "Education", "Certificate", "Technical Summary", "Skills"],
+    sections: ["Career Objective", "Experience", "Education", "Certificate", "Technical Summary", "Skills"],
     free: false,
   },
 };

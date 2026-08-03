@@ -71,7 +71,7 @@ const Template19Display: React.FC<Template19DisplayProps> = ({
             <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700, marginBottom: 6 }}>CAREER OBJECTIVE</div>
             <div style={{ height: 1, background: '#999', width: '100%' }} />
             <div style={{ marginTop: 12, color: '#444', maxWidth: 720, marginLeft: 'auto', marginRight: 'auto', textAlign: 'left' }}>
-              <div>{DOMPurify.sanitize(personal.aboutCareerObjective).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim()}</div>
+              <div style={{ textAlign: 'justify' }}>{DOMPurify.sanitize(personal.aboutCareerObjective).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim()}</div>
             </div>
           </section>
         )}
@@ -164,7 +164,7 @@ const Template19Display: React.FC<Template19DisplayProps> = ({
                     <div style={{ color: '#000', marginTop: 6, fontFamily: 'Arial, sans-serif', fontWeight: 400 }}>{w.companyName}{w.location ? ` — ${w.location}` : ''}</div>
                     {w.description && htmlToLines(w.description).length > 0 && (
                       <div style={{ marginTop: 6, paddingLeft: 12 }}>
-                        {htmlToLines(w.description).map((ln, idx) => <div key={idx} style={{ marginTop: 6 }}>• {ln}</div>)}
+                        {htmlToLines(w.description).map((ln, idx) => <div key={idx} style={{ marginTop: 6, textAlign: 'justify' }}>• {ln}</div>)}
                       </div>
                     )}
                   </div>
@@ -186,7 +186,7 @@ const Template19Display: React.FC<Template19DisplayProps> = ({
                       {p.description && htmlToLines(p.description).length > 0 && (
                         <div style={{ marginTop: 6, paddingLeft: 12 }}>
                           {htmlToLines(p.description).map((ln: any, idx: number) => (
-                            <div key={idx} style={{ marginTop: 6 }}>• {ln}</div>
+                            <div key={idx} style={{ marginTop: 6, textAlign: 'justify' }}>• {ln}</div>
                           ))}
                         </div>
                       )}

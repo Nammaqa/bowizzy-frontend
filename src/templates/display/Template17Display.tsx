@@ -116,7 +116,7 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>About</div>
               <div style={{ height: 1, background: '#ddd', marginTop: 6, width: '100%' }} />
             </div>
-            <div style={{ marginTop: 8, color: '#444', fontSize: 11 }}>
+            <div style={{ marginTop: 8, color: '#444', fontSize: 11, textAlign: 'justify' }}>
               {DOMPurify.sanitize(personal.aboutCareerObjective).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s{2,}/g, ' ').trim()}
             </div>
           </section>
@@ -128,7 +128,7 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Technical Summary</div>
               <div style={{ height: 1, background: '#ddd', marginTop: 6, width: '100%' }} />
             </div>
-            <div style={{ marginTop: 8, color: '#444', fontSize: 11 }}>
+            <div style={{ marginTop: 8, color: '#444', fontSize: 11, textAlign: 'justify' }}>
               {DOMPurify.sanitize(skillsLinks.technicalSummary).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s{2,}/g, ' ').trim()}
             </div>
           </section>
@@ -150,7 +150,7 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
                       <div style={{ color: '#000', fontSize: 11, flexShrink: 0, textAlign: 'right' }}>{formatMonthYear(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYear(w.endDate)}</div>
                     </div>
                     <div style={{ color: '#000', marginTop: 6, fontSize: 11 }}>{w.jobTitle}{w.location ? ` — ${w.location}` : ''}</div>
-                    {w.description && <div style={{ marginTop: 6, paddingLeft: 10 }}>{htmlToLines(w.description).map((ln, idx) => <div key={idx} style={{ marginTop: 6, fontSize: 11 }}>• {ln}</div>)}</div>}
+                    {w.description && <div style={{ marginTop: 6, paddingLeft: 10 }}>{htmlToLines(w.description).map((ln, idx) => <div key={idx} style={{ marginTop: 6, fontSize: 11, textAlign: 'justify' }}>• {ln}</div>)}</div>}
                   </div>
                 ))}
               </div>
@@ -170,11 +170,11 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
                       <div style={{ fontWeight: 700, fontSize: 12, flex: 1, wordBreak: 'break-word' }}>{p.projectTitle}</div>
                       <div style={{ color: '#000', fontSize: 11, flexShrink: 0, textAlign: 'right' }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</div>
                     </div>
-                    {p.description && <div style={{ color: '#000', marginTop: 6, fontSize: 11 }}>{DOMPurify.sanitize(p.description).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim()}</div>}
+                    {p.description && <div style={{ color: '#000', marginTop: 6, fontSize: 11, textAlign: 'justify' }}>{DOMPurify.sanitize(p.description).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim()}</div>}
                     {p.rolesResponsibilities && (
                       <div style={{ marginTop: 6, paddingLeft: 10 }}>
                         <div style={{ fontWeight: 700, fontSize: 11, color: primaryColor }}>Roles & Responsibilities:</div>
-                        {htmlToLines(p.rolesResponsibilities).map((ln, idx) => <div key={idx} style={{ marginTop: 6, fontSize: 11 }}>• {ln}</div>)}
+                        {htmlToLines(p.rolesResponsibilities).map((ln, idx) => <div key={idx} style={{ marginTop: 6, fontSize: 11, textAlign: 'justify' }}>• {ln}</div>)}
                       </div>
                     )}
                   </div>

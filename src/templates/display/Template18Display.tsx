@@ -119,7 +119,7 @@ const Template18Display: React.FC<Template18DisplayProps> = ({
             <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Career Objective</div>
             <div style={{ height: 1, background: '#ddd', marginTop: 6, width: '100%' }} />
           </div>
-          <div style={{ marginTop: 8, color: '#444' }}>{personal.aboutCareerObjective && <div>{DOMPurify.sanitize(personal.aboutCareerObjective).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\u00A0/g, ' ').replace(/ /g, ' ').trim()}</div>}</div>
+          <div style={{ marginTop: 8, color: '#444' }}>{personal.aboutCareerObjective && <div style={{ textAlign: 'justify' }}>{DOMPurify.sanitize(personal.aboutCareerObjective).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\u00A0/g, ' ').replace(/ /g, ' ').trim()}</div>}</div>
         </section>
 
         {experience.workExperiences.some(exp => exp.enabled) && (
@@ -151,7 +151,7 @@ const Template18Display: React.FC<Template18DisplayProps> = ({
                     <div style={{ color: '#000' }}>{w.jobTitle}</div>
                     <div style={{ color: '#000', fontWeight: 400 }}>{w.location}</div>
                   </div>
-                  {w.description && <div style={{ marginTop: 6, paddingLeft: 10 }} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(w.description || '') }} />}
+                  {w.description && <div style={{ marginTop: 6, paddingLeft: 10, textAlign: 'justify' }} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(w.description || '') }} />}
                 </div>
               ))}
             </div>

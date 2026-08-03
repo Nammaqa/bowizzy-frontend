@@ -49,7 +49,7 @@ const subjectStreams = [
 
 const resultFormats = [
   { value: "Percentage", label: "Percentage" },
-  { value: "Cgpa", label: "Cgpa" },
+  { value: "CGPA", label: "CGPA" },
   { value: "GPA", label: "GPA" },
   { value: "Grade", label: "Grade" },
 ];

@@ -73,7 +73,7 @@ const renderBulletedParagraph = (html?: string) => {
 
     return (
       <View style={{ marginTop: 6 }}>
-        <Text style={{ color: '#2b2a2a', fontSize: 10, lineHeight: 1.4 }}>
+        <Text style={{ color: '#2b2a2a', fontSize: 10, lineHeight: 1.4, textAlign: 'justify' }}>
           {plainText}
         </Text>
       </View>
@@ -109,10 +109,10 @@ const renderBulletedParagraph = (html?: string) => {
         const isBullet = line.startsWith('•');
         return (
           <View key={idx} style={{ flexDirection: 'row', marginTop: idx > 0 ? 2 : 0 }}>
-            <Text style={{ width: 12, flexShrink: 0, color: '#444', fontSize: 10 }}>
+            <Text style={{ width: 12, flexShrink: 0, color: '#444', fontSize: 10, textAlign: 'justify' }}>
               {isBullet ? '•' : ''}
             </Text>
-            <Text style={{ flex: 1, color: '#444', fontSize: 10 }}>
+            <Text style={{ flex: 1, color: '#444', fontSize: 10, textAlign: 'justify' }}>
               {isBullet ? line.substring(1).trim() : line}
             </Text>
           </View>
@@ -202,7 +202,7 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
                 <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>CAREER OBJECTIVE</Text>
               </View>
               <View style={styles.rightCol}>
-                <Text style={{ color: '#2b2a2a', fontSize: 10, lineHeight: 1.3 }}>{htmlToPlainText(personal.aboutCareerObjective)}</Text>
+                <Text style={{ color: '#2b2a2a', fontSize: 10, lineHeight: 1.3, textAlign: 'justify' }}>{htmlToPlainText(personal.aboutCareerObjective)}</Text>
               </View>
             </View>
             {experience.workExperiences.some((exp: any) => exp.enabled) && <View style={{ height: 1, backgroundColor: '#aaa', width: '100%', marginVertical: 12 }} />}

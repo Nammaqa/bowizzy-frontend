@@ -90,7 +90,7 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
       if (!plainText) return null;
       
       return (
-        <div style={{ marginTop: 6, color: '#2b2a2a', lineHeight: 1.5 }}>
+        <div style={{ marginTop: 6, color: '#2b2a2a', lineHeight: 1.5, textAlign: 'justify' }}>
           {plainText}
         </div>
       );
@@ -108,7 +108,7 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
           return (
             <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', marginTop: idx > 0 ? 4 : 0 }}>
               <span style={{ marginRight: 6, lineHeight: 1.4, opacity: isBullet ? 1 : 0, width: 6 }}>{isBullet ? '•' : ''}</span>
-              <div style={{ flex: 1, lineHeight: 1.4 }}>{cleanLine}</div>
+              <div style={{ flex: 1, lineHeight: 1.4, textAlign: 'justify' }}>{cleanLine}</div>
             </div>
           );
         })}
@@ -138,7 +138,7 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
           <>
             <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '16px', padding: '0 8px', marginBottom: 12 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: primaryColor, fontWeight: 700 }}>Career Objective</div>
-              <div style={{ color: '#2b2a2a', fontSize: 11, lineHeight: 1.5 }}>{htmlToLines(personal.aboutCareerObjective).join(' ')}</div>
+              <div style={{ color: '#2b2a2a', fontSize: 11, lineHeight: 1.5, textAlign: 'justify' }}>{htmlToLines(personal.aboutCareerObjective).join(' ')}</div>
             </div>
             {experience.workExperiences.some(exp => exp.enabled) && <hr style={{ border: 'none', borderTop: '1px solid #aaa', margin: '18px 0' }} />}
           </>

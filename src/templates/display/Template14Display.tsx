@@ -113,7 +113,7 @@ const Template14Display: React.FC<Template14DisplayProps> = ({
                   {w.description && (
                     <div style={{ marginTop: 6, color: '#2b2a2a' }}>
                       <div
-                        style={{ fontSize: '10px', color: '#2b2a2a', lineHeight: '1.4' }}
+                        style={{ fontSize: '10px', color: '#2b2a2a', lineHeight: '1.4', textAlign: 'justify' }}
                         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(w.description || '') }}
                       />
                     </div>
@@ -139,7 +139,7 @@ const Template14Display: React.FC<Template14DisplayProps> = ({
                   {p.description && (
                     <div style={{ marginTop: 6, color: '#2b2a2a' }}>
                       <div
-                        style={{ fontSize: '10px', color: '#2b2a2a', lineHeight: '1.4' }}
+                        style={{ fontSize: '10px', color: '#2b2a2a', lineHeight: '1.4', textAlign: 'justify' }}
                         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(p.description || '') }}
                       />
                     </div>
