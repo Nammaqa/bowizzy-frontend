@@ -1071,6 +1071,7 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
         onClose={() => {
           pendingSaveAfterPaymentRef.current = false;
           setShowPaymentBreakdown(false);
+          window.location.reload();
         }}
         onPaymentSuccess={() => {
           setResumeUnlocked(true);
