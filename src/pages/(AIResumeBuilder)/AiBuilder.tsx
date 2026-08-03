@@ -421,6 +421,19 @@ export default function AIBuilder() {
     } catch (err) { console.error("Failed to delete session", err); }
   };
 
+  // Payment was cancelled or failed — AiPaymentModal already deleted the
+  // session server-side (see Chatbox.tsx's handleCancelledOrFailed), this
+  // just drops it from local state so the UI reflects it.
+  const handlePaymentCancelled = () => {
+    if (!currentSessionId) return;
+    const cancelledId = currentSessionId;
+    setChatSessions((prev) => {
+      const filtered = prev.filter((s) => s.id !== cancelledId);
+      if (currentSessionId === cancelledId && filtered.length > 0) setCurrentSessionId(filtered[0].id);
+      return filtered;
+    });
+  };
+
   const handleModeChange = (newMode: "jd" | "non-jd") => {
     if (currentSessionId && paidJdSessions[currentSessionId]) {
       return;
@@ -725,6 +738,7 @@ export default function AIBuilder() {
               onShowGuide={() => setInfoModalMode(mode)}
               isJdPaid={!!paidJdSessions[currentSession.id]}
               onJdPaymentSuccess={() => setPaidJdSessions(prev => ({ ...prev, [currentSession.id]: true }))}
+              onPaymentCancelled={handlePaymentCancelled}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center p-6 bg-white">
