@@ -732,7 +732,7 @@ export default function PortfolioEditorComponent({
             value={portfolioName}
             onChange={(e) => setPortfolioName(e.target.value)}
             placeholder="e.g. Himanshu's Interactive Workspace"
-            autoComplete="off"
+            autoComplete="new-password"
             className="w-full text-sm px-3.5 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-500 bg-white placeholder-gray-400 transition"
           />
           <div className="flex justify-between mt-1 text-[10px] text-gray-400 font-medium">
@@ -785,7 +785,7 @@ export default function PortfolioEditorComponent({
               value={aboutTitle}
               onChange={(e) => setAboutTitle(e.target.value)}
               placeholder="e.g. Design with a product brain and a visual point of view."
-              autoComplete="off"
+              autoComplete="new-password"
               className="w-full text-sm px-3.5 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-500 bg-white placeholder-gray-400 transition"
             />
             <div className="mt-1 text-[10px] text-gray-400 font-medium">
@@ -889,7 +889,7 @@ export default function PortfolioEditorComponent({
                   value={themeColor}
                   onChange={(e) => setThemeColor(e.target.value)}
                   placeholder="#4f46e5"
-                  autoComplete="off"
+                  autoComplete="new-password"
                   className="flex-1 text-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                 />
               </div>
@@ -911,7 +911,7 @@ export default function PortfolioEditorComponent({
                   value={backgroundColor}
                   onChange={(e) => setBackgroundColor(e.target.value)}
                   placeholder="#0a0f1e"
-                  autoComplete="off"
+                  autoComplete="new-password"
                   className="flex-1 text-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                 />
               </div>
@@ -1029,6 +1029,7 @@ export default function PortfolioEditorComponent({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="hello@example.com"
+              autoComplete="new-password"
               className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-500 bg-white"
             />
           </div>
@@ -1041,6 +1042,7 @@ export default function PortfolioEditorComponent({
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+91 98765 43210"
+              autoComplete="new-password"
               className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-500 bg-white"
             />
           </div>
@@ -1058,7 +1060,7 @@ export default function PortfolioEditorComponent({
                 }
               }}
               placeholder="https://github.com/..."
-              autoComplete="off"
+              autoComplete="new-password"
               className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-500 bg-white"
             />
           </div>
@@ -1076,7 +1078,7 @@ export default function PortfolioEditorComponent({
                 }
               }}
               placeholder="https://linkedin.com/in/..."
-              autoComplete="off"
+              autoComplete="new-password"
               className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-500 bg-white"
             />
           </div>
@@ -1094,7 +1096,7 @@ export default function PortfolioEditorComponent({
                 }
               }}
               placeholder="https://twitter.com/..."
-              autoComplete="off"
+              autoComplete="new-password"
               className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-500 bg-white"
             />
           </div>
@@ -1112,7 +1114,7 @@ export default function PortfolioEditorComponent({
                 }
               }}
               placeholder="https://mywebsite.com"
-              autoComplete="off"
+              autoComplete="new-password"
               className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-500 bg-white"
             />
           </div>
@@ -1132,7 +1134,7 @@ export default function PortfolioEditorComponent({
                     }
                   }}
                   placeholder="https://behance.net/..."
-                  autoComplete="off"
+                  autoComplete="new-password"
                   className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-500 bg-white"
                 />
               </div>
@@ -1150,7 +1152,7 @@ export default function PortfolioEditorComponent({
                     }
                   }}
                   placeholder="https://dribbble.com/..."
-                  autoComplete="off"
+                  autoComplete="new-password"
                   className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-500 bg-white"
                 />
               </div>
@@ -1171,7 +1173,7 @@ export default function PortfolioEditorComponent({
             value={newSkill}
             onChange={(e) => setNewSkill(e.target.value)}
             placeholder="e.g. JavaScript, UI Design, AWS"
-            autoComplete="off"
+            autoComplete="new-password"
             className="flex-1 text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
           />
           <button
@@ -1212,7 +1214,7 @@ export default function PortfolioEditorComponent({
             value={newLanguage}
             onChange={(e) => setNewLanguage(e.target.value)}
             placeholder="e.g. English, Hindi, Kannada"
-            autoComplete="off"
+            autoComplete="new-password"
             className="flex-1 text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
           />
           <button
@@ -1281,7 +1283,7 @@ export default function PortfolioEditorComponent({
                     value={cert.name}
                     onChange={(e) => handleUpdateCertification(idx, "name", e.target.value)}
                     placeholder="e.g. AWS Certified Solutions Architect"
-                    autoComplete="off"
+                    autoComplete="new-password"
                     className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                   />
                 </div>
@@ -1296,7 +1298,7 @@ export default function PortfolioEditorComponent({
                       value={cert.issuer}
                       onChange={(e) => handleUpdateCertification(idx, "issuer", e.target.value)}
                       placeholder="e.g. Amazon Web Services"
-                      autoComplete="off"
+                      autoComplete="new-password"
                       className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                     />
                   </div>
@@ -1310,7 +1312,7 @@ export default function PortfolioEditorComponent({
                       value={cert.year}
                       onChange={(e) => handleUpdateCertification(idx, "year", e.target.value)}
                       placeholder="e.g. 2024"
-                      autoComplete="off"
+                      autoComplete="new-password"
                       className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                     />
                   </div>
@@ -1331,7 +1333,7 @@ export default function PortfolioEditorComponent({
                       }
                     }}
                     placeholder="https://credential.example.com/..."
-                    autoComplete="off"
+                    autoComplete="new-password"
                     className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                   />
                   <div className="mt-1 text-[10px] text-gray-400 font-medium">
@@ -1384,7 +1386,7 @@ export default function PortfolioEditorComponent({
                     value={achievement.title}
                     onChange={(e) => handleUpdateAchievement(idx, "title", e.target.value)}
                     placeholder="e.g. Winner, National Hackathon 2024"
-                    autoComplete="off"
+                    autoComplete="new-password"
                     className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                   />
                 </div>
@@ -1447,7 +1449,7 @@ export default function PortfolioEditorComponent({
                         value={step.title}
                         onChange={(e) => handleUpdateProcessStep(idx, "title", e.target.value)}
                         placeholder="e.g. Research, Wireframe, Prototype"
-                        autoComplete="off"
+                        autoComplete="new-password"
                         className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                       />
                     </div>
@@ -1509,7 +1511,7 @@ export default function PortfolioEditorComponent({
                           value={study.title}
                           onChange={(e) => handleUpdateCaseStudy(idx, "title", e.target.value)}
                           placeholder="e.g. Mobile Banking Redesign"
-                          autoComplete="off"
+                          autoComplete="new-password"
                           className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                         />
                       </div>
@@ -1522,7 +1524,7 @@ export default function PortfolioEditorComponent({
                           value={study.role}
                           onChange={(e) => handleUpdateCaseStudy(idx, "role", e.target.value)}
                           placeholder="e.g. UX Research, UI Design"
-                          autoComplete="off"
+                          autoComplete="new-password"
                           className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                         />
                       </div>
@@ -1537,7 +1539,7 @@ export default function PortfolioEditorComponent({
                         value={study.subtitle}
                         onChange={(e) => handleUpdateCaseStudy(idx, "subtitle", e.target.value)}
                         placeholder="e.g. Improving onboarding conversion for first-time users"
-                        autoComplete="off"
+                        autoComplete="new-password"
                         className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                       />
                     </div>
@@ -1612,7 +1614,7 @@ export default function PortfolioEditorComponent({
                           value={study.link}
                           onChange={(e) => handleUpdateCaseStudy(idx, "link", e.target.value)}
                           placeholder="https://..."
-                          autoComplete="off"
+                          autoComplete="new-password"
                           className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                         />
                       </div>
@@ -1669,7 +1671,7 @@ export default function PortfolioEditorComponent({
                       value={p.title}
                       onChange={(e) => handleUpdateProject(idx, "title", e.target.value)}
                       placeholder="e.g. Crypto Tracker"
-                      autoComplete="off"
+                      autoComplete="new-password"
                       className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                     />
                   </div>
@@ -1682,7 +1684,7 @@ export default function PortfolioEditorComponent({
                       value={p.tech}
                       onChange={(e) => handleUpdateProject(idx, "tech", e.target.value)}
                       placeholder="e.g. React, Node, AWS"
-                      autoComplete="off"
+                      autoComplete="new-password"
                       className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                     />
                   </div>
@@ -1710,7 +1712,7 @@ export default function PortfolioEditorComponent({
                       value={p.link}
                       onChange={(e) => handleUpdateProject(idx, "link", e.target.value)}
                       placeholder="https://..."
-                      autoComplete="off"
+                      autoComplete="new-password"
                       className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                     />
                   </div>
@@ -1826,7 +1828,7 @@ export default function PortfolioEditorComponent({
                       value={exp.role}
                       onChange={(e) => handleUpdateExperience(idx, "role", e.target.value)}
                       placeholder="e.g. Lead Engineer"
-                      autoComplete="off"
+                      autoComplete="new-password"
                       className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                     />
                   </div>
@@ -1839,7 +1841,7 @@ export default function PortfolioEditorComponent({
                       value={exp.company}
                       onChange={(e) => handleUpdateExperience(idx, "company", e.target.value)}
                       placeholder="e.g. Bowizzy Inc"
-                      autoComplete="off"
+                      autoComplete="new-password"
                       className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/20"
                     />
                   </div>
@@ -1852,7 +1854,7 @@ export default function PortfolioEditorComponent({
                       value={toMonthInputValue(getExperienceDate(exp, "startDate"))}
                       onChange={(e) => handleUpdateExperienceDate(idx, "startDate", e.target.value)}
                       title="Use month-year format, e.g. April 2024"
-                      autoComplete="off"
+                      autoComplete="new-password"
                       min={minMonth}
                       max={maxMonth}
                       onKeyDown={(e) => e.preventDefault()}
@@ -1871,7 +1873,7 @@ export default function PortfolioEditorComponent({
                       value={exp.currentlyWorking ? "" : toMonthInputValue(getExperienceDate(exp, "endDate"))}
                       onChange={(e) => handleUpdateExperienceDate(idx, "endDate", e.target.value)}
                       title="Use month-year format, e.g. May 2026"
-                      autoComplete="off"
+                      autoComplete="new-password"
                       min={minMonth}
                       max={maxMonth}
                       onKeyDown={(e) => e.preventDefault()}
