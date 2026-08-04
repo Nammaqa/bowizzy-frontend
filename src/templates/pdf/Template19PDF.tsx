@@ -10,7 +10,7 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, padding: 12, backgroundColor: '#f3f4f6', borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
   name: { fontSize: 20 },
   role: { fontSize: 11, color: '#6b7280' },
-  contact: { fontSize: 10, color: '#374151' },
+  contact: { fontSize: 10, color: '#374151', textAlign: 'right' },
   sectionHeading: { fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase' },
   divider: { height: 1, marginTop: 6, width: '100%' },
   leftCol: { flex: 1, paddingRight: 12 },
@@ -121,7 +121,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
             <Text style={{ ...styles.name, fontFamily: pdfFontFamilyBold, color: primaryColor }}>{personal.firstName} {(personal.middleName || '')} {personal.lastName}</Text>
             {role && <Text style={{ ...styles.role, fontFamily: pdfFontFamily, color: primaryColor }}>{role}</Text>}
           </View>
-          <View style={{ textAlign: 'right' }}>
+          <View style={{ alignItems: 'flex-end' }}>
             {personal.email && <Text style={[styles.contact, { color: '#2563eb' }]}>{personal.email}</Text>}
             {personal.mobileNumber && <Text style={[styles.contact, { marginTop: 6 }]}>{personal.mobileNumber}</Text>}
             {personal.address && <Text style={[styles.contact, { marginTop: 6 }]}>{String(personal.address)}</Text>}
