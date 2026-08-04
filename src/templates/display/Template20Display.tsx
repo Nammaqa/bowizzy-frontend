@@ -213,8 +213,8 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
               {education.higherEducation.filter(edu => edu.enabled).reverse().map((edu: any, i: number) => (
                 <div key={i} style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ fontWeight: 800, color: '#000' }}>{edu.instituteName}</div>
-                    <div style={{ color: '#000', fontWeight: 800 }}>
+                    <div style={{ color: '#000' }}>{edu.instituteName}</div>
+                    <div style={{ color: '#000' }}>
                       {edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}
                     </div>
                   </div>
@@ -236,8 +236,8 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
               {hasPreUniversity && (
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ fontWeight: 800, color: '#000' }}>{education.preUniversity.instituteName || 'Pre University'}</div>
-                    <div style={{ color: '#000', fontWeight: 800 }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
+                    <div style={{ color: '#000' }}>{education.preUniversity.instituteName || 'Pre University'}</div>
+                    <div style={{ color: '#000' }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
                   </div>
                   <div style={{ color: '#000', marginTop: 6 }}>Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}{education.preUniversity.boardType ? ` — ${education.preUniversity.boardType}` : ''}</div>
                   {education.preUniversity.resultFormat && education.preUniversity.result && (
@@ -249,8 +249,8 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
               {hasSSLC && (
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ fontWeight: 800, color: '#000' }}>{education.sslc.instituteName || 'SSLC'}</div>
-                    <div style={{ color: '#000', fontWeight: 800 }}>{formatResumeEducationDateRange(education.sslc)}</div>
+                    <div style={{ color: '#000' }}>{education.sslc.instituteName || 'SSLC'}</div>
+                    <div style={{ color: '#000' }}>{formatResumeEducationDateRange(education.sslc)}</div>
                   </div>
                   <div style={{ color: '#000', marginTop: 6 }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</div>
                   {education.sslc.resultFormat && education.sslc.result && (
