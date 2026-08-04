@@ -216,7 +216,7 @@ const Template16PDF: React.FC<Template16PDFProps> = ({ data, primaryColor = '#11
 
         {(education.higherEducation.some(edu => edu.enabled) || education.preUniversityEnabled || education.sslcEnabled) && (<>
           <View style={{ marginTop: 12 }}>
-            <Text style={styles.sectionHeading}>Education</Text>
+            <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Education</Text>
             <View style={{ height: 1, backgroundColor: '#ddd', width: '100%', marginTop: 4, marginBottom: 0 }} />
           </View>
 
@@ -229,7 +229,7 @@ const Template16PDF: React.FC<Template16PDFProps> = ({ data, primaryColor = '#11
                 </View>
                   <Text style={{ fontSize: 10, color: '#000' }}>{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</Text>
                 {edu.resultFormat && edu.result ? (
-                  <Text style={{ fontSize: 10, color: '#000', fontFamily: 'Times-Bold', marginTop: 4 }}>{edu.resultFormat}: {edu.result}</Text>
+                  <Text style={{ fontSize: 10, color: '#000', fontFamily: pdfFontFamily, marginTop: 4 }}>{edu.resultFormat}: {edu.result}</Text>
                 ) : null}
               </View>
             ))}
@@ -266,7 +266,7 @@ const Template16PDF: React.FC<Template16PDFProps> = ({ data, primaryColor = '#11
 
         {(skillsLinks.skills || []).some((s: any) => s.enabled && s.skillName) && (<>
           <View style={{ marginTop: 12 }}>
-            <Text style={styles.sectionHeading}>Skills</Text>
+            <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Skills</Text>
             <View style={{ height: 1, backgroundColor: '#ddd', width: '100%', marginTop: 4, marginBottom: 0 }} />
           </View>
           <View style={{ marginTop: 6 }}>{(skillsLinks.skills || []).filter((s: any) => s.enabled && s.skillName).map((s: any, i: number) => (
@@ -278,7 +278,7 @@ const Template16PDF: React.FC<Template16PDFProps> = ({ data, primaryColor = '#11
         </>)}
 
         <View style={{ marginTop: 12 }}>
-          <Text style={styles.sectionHeading}>Languages</Text>
+          <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Languages</Text>
           <View style={{ height: 1, backgroundColor: '#ddd', width: '100%', marginTop: 4, marginBottom: 0 }} />
         </View>
         <View style={{ marginTop: 6 }}>{((personal as any).languagesKnown || (personal as any).languages || []).map((l: string, i: number) => (
@@ -289,7 +289,7 @@ const Template16PDF: React.FC<Template16PDFProps> = ({ data, primaryColor = '#11
 
         {(certifications || []).some((c: any) => c.enabled && c.certificateTitle) && (<>
           <View style={{ marginTop: 12 }}>
-            <Text style={styles.sectionHeading}>Achievements / Certifications</Text>
+            <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Achievements / Certifications</Text>
             <View style={{ height: 1, backgroundColor: '#ddd', width: '100%', marginTop: 4, marginBottom: 0 }} />
           </View>
           <View style={{ marginTop: 6 }}>{(certifications || []).filter((c: any) => c.enabled && c.certificateTitle).map((c: any, i: number) => <Text key={i} style={{ fontSize: 10, color: '#444', marginBottom: 4 }}>{c.certificateTitle}{c.providedBy ? ` — ${c.providedBy}` : ''}</Text>)}</View>
