@@ -125,8 +125,11 @@ const AiTemplate7PDF: React.FC<Props> = ({ data, primaryColor = '#374151' }) => 
         )}
         {education.sslcEnabled && education.sslc?.instituteName && (
           <View style={{ marginBottom: 6 }}>
-            <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#111827' }}>SSLC (10th)</Text>
-            <Text style={{ fontSize: 9, color: '#6b7280' }}>{education.sslc.instituteName} | {fmtYear(education.sslc.yearOfPassing)}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#111827' }}>SSLC (10th)</Text>
+              <Text style={{ fontSize: 8.5, color: '#9ca3af' }}>{fmtYear(education.sslc.yearOfPassing)}</Text>
+            </View>
+            <Text style={{ fontSize: 9, color: '#6b7280' }}>{education.sslc.instituteName}</Text>
           </View>
         )}
         {skillsLinks.skills.some(s => s.enabled && s.skillName) && (
