@@ -3,6 +3,7 @@ import DOMPurify from 'dompurify';
 
 import type { ResumeData } from '@/types/resume';
 import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
+import { splitIntoRichTextBlocks } from '@/templates/utils/richTextHtml';
 
 interface Template15DisplayProps {
   data: ResumeData;
@@ -148,10 +149,15 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
             </div>
             <div style={{ marginTop: 6 }}>
               {skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled && (
-                <div
-                  style={{ color: '#444', lineHeight: 1.4, textAlign: 'justify' }}
-                  dangerouslySetInnerHTML={{ __html: sanitizeRichText(skillsLinks.technicalSummary) }}
-                />
+                <ul style={{ margin: 0, paddingLeft: 18, color: '#444' }}>
+                  {splitIntoRichTextBlocks(sanitizeRichText(skillsLinks.technicalSummary)).map((block, idx) => (
+                    <li
+                      key={idx}
+                      style={{ marginBottom: 4, lineHeight: 1.4, textAlign: 'justify', listStyleType: 'disc' }}
+                      dangerouslySetInnerHTML={{ __html: block.html }}
+                    />
+                  ))}
+                </ul>
               )}
             </div>
           </>)}

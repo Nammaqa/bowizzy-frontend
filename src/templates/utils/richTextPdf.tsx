@@ -12,6 +12,9 @@ export interface PdfRichBulletsOptions {
   regularFontFamily?: string;
   textAlign?: 'left' | 'right' | 'center' | 'justify';
   bulletColor?: string;
+  // Some fields (e.g. Technical Summary) should always render as points,
+  // even when the user typed continuous prose with no <ul>/<li> markup.
+  forceBullets?: boolean;
 }
 
 /**
@@ -31,6 +34,7 @@ export function renderPdfRichBullets(html: string | undefined, opts: PdfRichBull
     regularFontFamily,
     textAlign = 'justify',
     bulletColor = color,
+    forceBullets = false,
   } = opts;
 
   const sanitized = DOMPurify.sanitize(html || '');
@@ -47,7 +51,7 @@ export function renderPdfRichBullets(html: string | undefined, opts: PdfRichBull
       </Text>
     ));
 
-  const isBulleted = blocks[0].bullet;
+  const isBulleted = forceBullets || blocks[0].bullet;
 
   if (isBulleted) {
     return (
