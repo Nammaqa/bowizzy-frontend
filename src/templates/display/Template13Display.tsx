@@ -110,6 +110,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
         minHeight: '297mm',
         fontFamily: fontFamily,
         background: '#fff',
+        fontSize: 11,
       }}
     >      <div style={{ padding: '28px 36px 8px 36px', textAlign: 'center' }}>
         <h1
@@ -182,7 +183,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
               {experience.workExperiences.filter(e => e.enabled).map((w, i) => (
                 <div key={i} style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ fontSize: 12, fontWeight: 700 }}>{w.jobTitle} — <span style={{ fontWeight: 700 }}>{w.companyName}</span></div>
+                    <div style={{ fontSize: 11, fontWeight: 700 }}>{w.jobTitle} — <span style={{ fontWeight: 700 }}>{w.companyName}</span></div>
                     <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{formatMonthYear(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYear(w.endDate)}</div>
                   </div>
                   {w.description && renderDescription(w.description)}
@@ -200,7 +201,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
               {projects && projects.filter(p => p.enabled).map((p, i) => (
                 <div key={i} style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ fontSize: 12, fontWeight: 700 }}>{p.projectTitle}</div>
+                    <div style={{ fontSize: 11, fontWeight: 700 }}>{p.projectTitle}</div>
                     <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</div>
                   </div>
                   {p.description && renderDescription(p.description)}

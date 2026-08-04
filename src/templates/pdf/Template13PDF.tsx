@@ -16,8 +16,8 @@ const styles = StyleSheet.create({
   leftCol: { width: 120, paddingRight: 12 },
   sectionHeading: { fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', color: '#111827' },
   rightCol: { flex: 1 },
-  itemTitle: { fontSize: 12 },
-  itemSub: { fontSize: 11, color: '#111827' },
+  itemTitle: { fontSize: 10, flexGrow: 1, flexShrink: 1, marginRight: 8 },
+  itemSub: { fontSize: 10, color: '#111827', flexShrink: 0 },
   bullet: { fontSize: 10, color: '#444', marginTop: 2 },
 });
 
@@ -302,7 +302,7 @@ const Template13PDF: React.FC<Template13PDFProps> = ({ data, primaryColor = '#11
             {certifications.filter((c: any) => c.enabled && (c.certificateTitle || c.providedBy)).map((c: any, i: number) => (
               <View key={i} style={{ marginBottom: 6 }}>
                 {c.certificateTitle ? <Text style={{ fontSize: 10, color: '#111827', fontFamily: pdfFontFamilyBold }}>{c.certificateTitle}</Text> : null}
-                {c.providedBy ? <Text style={{ fontSize: 9, color: '#2b2a2a', marginTop: 1 }}>Provided by: {c.providedBy}</Text> : null}
+                {c.providedBy ? <Text style={{ fontSize: 10, color: '#2b2a2a', marginTop: 1 }}>Provided by: {c.providedBy}</Text> : null}
               </View>
             ))}
           </View>

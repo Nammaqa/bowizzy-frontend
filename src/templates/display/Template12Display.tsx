@@ -101,7 +101,7 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
 
   return (
     <div style={{ width: '210mm', minHeight: '297mm', fontFamily: fontFamily, background: '#fff' }}>
-      <div style={{ padding: '20px 36px' }}>
+      <div style={{ padding: '20px 36px', fontSize: 11 }}>
         <div style={{ textAlign: 'center' }}>
           <h1
             style={{
