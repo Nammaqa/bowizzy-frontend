@@ -110,7 +110,7 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
   if (portfolio) contactNodes.push(<a href={(skillsLinks as any).links?.portfolioUrl} target="_blank" rel="noreferrer" style={{ color: '#000', textDecoration: 'none' }}>{extractHandle(portfolio)}</a>);
 
   return (
-    <div style={{ width: '210mm', minHeight: '297mm', fontFamily: fontFamily, background: '#fff' }}>
+    <div style={{ width: '210mm', minHeight: '297mm', fontFamily: fontFamily, background: '#fff', fontSize: 11 }}>
       <div style={{ padding: '28px 36px 8px 36px', textAlign: 'center' }}>
         <h1
           style={{
@@ -173,7 +173,7 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
                 <div key={`he-${i}`} style={{ marginBottom: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 700 }}>{edu.instituteName}</div>
-                    <div style={{ fontSize: 12, color: '#101113ff', fontWeight: 700 }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear)} - Present` : formatResumeEducationDateRange(edu)}</div>
+                    <div style={{ fontSize: 11, color: '#101113ff', fontWeight: 700 }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear)} - Present` : formatResumeEducationDateRange(edu)}</div>
 
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
@@ -190,7 +190,7 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 700 }}>{education.preUniversity.instituteName || 'Pre University'}</div>
-                  <div style={{ fontSize: 12, color: '#101113ff', fontWeight: 700 }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
+                  <div style={{ fontSize: 11, color: '#101113ff', fontWeight: 700 }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2, display: 'flex', justifyContent: 'space-between' }}>
                     Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}

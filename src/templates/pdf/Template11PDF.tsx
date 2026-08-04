@@ -5,6 +5,21 @@ import type { ResumeData } from "@/types/resume";
 import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 import logo from '@/assets/bowizzy.png';
 
+// Computed once at module load (not per render/page) — sparse diagonal grid so the
+// watermark still tiles visually with far fewer <Image> nodes for react-pdf to paint.
+const WATERMARK_POSITIONS = (() => {
+  const positions: { top: number; left: number }[] = [];
+  for (let row = 0; row < 6; row++) {
+    for (let col = 0; col < 3; col++) {
+      positions.push({
+        top: row * 170 - 20,
+        left: col * 280 - 40 + (row % 2 === 0 ? 0 : 140),
+      });
+    }
+  }
+  return positions;
+})();
+
 const styles = StyleSheet.create({
   page: {
     paddingTop: 20,
@@ -417,22 +432,11 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
       <Page size="A4" style={styles.page}>
 
         {/* Tiled Watermark Pattern — Diagonal Staggered */}
-        {(() => {
-          const positions = [];
-          for (let row = 0; row < 12; row++) {
-            for (let col = 0; col < 6; col++) {
-              positions.push({
-                top: row * 85 - 20,
-                left: col * 140 - 40 + (row % 2 === 0 ? 0 : 70),
-              });
-            }
-          }
-          return positions.map((pos, i) => (
-            <View key={i} style={{ position: "absolute", top: pos.top, left: pos.left, zIndex: -1 }} fixed>
-              <Image src={logo} style={{ width: 80, opacity: 0.2, transform: "rotate(-30deg)" }} />
-            </View>
-          ));
-        })()}
+        {WATERMARK_POSITIONS.map((pos, i) => (
+          <View key={i} style={{ position: "absolute", top: pos.top, left: pos.left, zIndex: -1 }} fixed>
+            <Image src={logo} style={{ width: 80, opacity: 0.2, transform: "rotate(-30deg)" }} />
+          </View>
+        ))}
 
 
         {/* ── Header ── */}

@@ -27,8 +27,8 @@ const styles = StyleSheet.create({
   sectionHeading: { fontSize: 9, letterSpacing: 0.9, textTransform: 'uppercase', color: '#111827' },
   rightCol: { flex: 1 },
 
-  sectionTitle: { fontSize: 11, marginBottom: 6 },
-  itemTitle: { fontSize: 11 },
+  sectionTitle: { fontSize: 10, marginBottom: 6 },
+  itemTitle: { fontSize: 10 },
   itemSub: { fontSize: 10, color: '#2b2a2a' },
   bullet: { fontSize: 10, color: '#2b2a2a', marginTop: 4 },
 });
@@ -255,7 +255,7 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
             <View style={{ height: 1, backgroundColor: '#333', width: '100%', marginVertical: 12 }} />
             <View style={styles.grid}>
               <View style={styles.leftCol}>
-                <Text style={{ ...styles.sectionHeading, fontSize: 10, fontFamily: pdfFontFamilyBold, color: primaryColor }}>LINKS</Text>
+                <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>LINKS</Text>
               </View>
               <View style={styles.rightCol}>
                 <View style={{ flexDirection: 'column' }}>
@@ -280,7 +280,7 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
 
           <View style={{ height: 12 }} />
           <View style={styles.grid}>
-            <View style={styles.leftCol}><Text style={{ ...styles.sectionHeading, fontSize: 10, fontFamily: pdfFontFamilyBold, color: primaryColor }}>SKILLS</Text></View>
+            <View style={styles.leftCol}><Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>SKILLS</Text></View>
             <View style={styles.rightCol}><Text style={{ color: '#2b2a2a' }}>{skillsLinks.skills.filter((s: any) => s.enabled && s.skillName).map((s: any) => s.skillName).join(', ')}</Text></View>
           </View>
         </>)}
@@ -288,13 +288,13 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
         {hasCerts && (<>
           <View style={{ height: 1, backgroundColor: '#333', width: '100%', marginVertical: 12 }} />
           <View style={styles.grid}>
-            <View style={styles.leftCol}><Text style={{ ...styles.sectionHeading, fontSize: 10, fontFamily: pdfFontFamilyBold, color: primaryColor }}>CERTIFICATIONS</Text></View>
+            <View style={styles.leftCol}><Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>CERTIFICATIONS</Text></View>
             <View style={styles.rightCol}>
               <View style={{ flexDirection: 'column' }}>
                 {certifications.filter((c: any) => c.enabled && (c.certificateTitle || c.providedBy)).map((c: any, i: number) => (
                   <View key={i} style={{ marginBottom: 6 }}>
                     {c.certificateTitle ? <Text style={{ color: '#111827', fontFamily: pdfFontFamilyBold }}>{c.certificateTitle}</Text> : null}
-                    {c.providedBy ? <Text style={{ color: '#2b2a2a', fontSize: 9, marginTop: 1 }}>Provided by: {c.providedBy}</Text> : null}
+                    {c.providedBy ? <Text style={{ color: '#2b2a2a', fontSize: 10, marginTop: 1 }}>Provided by: {c.providedBy}</Text> : null}
                   </View>
                 ))}
               </View>

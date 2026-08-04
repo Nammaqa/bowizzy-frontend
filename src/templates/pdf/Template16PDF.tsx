@@ -12,8 +12,8 @@ const styles = StyleSheet.create({
   role: { fontSize: 11, marginTop: 4 },
   contact: { fontSize: 10, color: '#6b7280', textAlign: 'right' },
   sectionHeading: { fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase' },
-  itemTitle: { fontSize: 11 },
-  itemSub: { fontSize: 10, color: '#6b7280' },
+  itemTitle: { fontSize: 10, flexGrow: 1, flexShrink: 1, marginRight: 8 },
+  itemSub: { fontSize: 10, color: '#6b7280', flexShrink: 0 },
   bullet: { fontSize: 10, color: '#444', marginTop: 4 },
 });
 

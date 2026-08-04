@@ -82,7 +82,7 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
       {/* Left sidebar */}
       <aside style={{ width: 220, background: '#f3f4f6', padding: 24, boxSizing: 'border-box' }}>
         <h2 style={{ margin: 0, fontSize: 20, color: primaryColor }}>{personal.firstName} {(personal.middleName || '')} {personal.lastName}</h2>
-        {role && <div style={{ color: '#000', marginTop: 6, fontWeight: 700 }}>{role}</div>}
+        {role && <div style={{ color: '#000', marginTop: 6, fontWeight: 700, fontSize: 11 }}>{role}</div>}
 
         <div style={{ marginTop: 20 }}>
           <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1, color: primaryColor }}>PERSONAL DETAILS</div>
@@ -167,7 +167,7 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
                 {experience.workExperiences.filter((w: any) => w.enabled).map((w: any, i: number) => (
                   <div key={i} style={{ marginBottom: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', alignItems: 'flex-start' }}>
-                      <div style={{ fontWeight: 700, fontSize: 12, flex: 1, wordBreak: 'break-word' }}>{w.companyName}</div>
+                      <div style={{ fontWeight: 700, fontSize: 11, flex: 1, wordBreak: 'break-word' }}>{w.companyName}</div>
                       <div style={{ color: '#000', fontSize: 11, flexShrink: 0, textAlign: 'right' }}>{formatMonthYear(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYear(w.endDate)}</div>
                     </div>
                     <div style={{ color: '#000', marginTop: 6, fontSize: 11 }}>{w.jobTitle}{w.location ? ` — ${w.location}` : ''}</div>
@@ -188,7 +188,7 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
                 {projects.filter((p: any) => p.enabled).map((p: any, i: number) => (
                   <div key={i} style={{ marginBottom: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', alignItems: 'flex-start' }}>
-                      <div style={{ fontWeight: 700, fontSize: 12, flex: 1, wordBreak: 'break-word' }}>{p.projectTitle}</div>
+                      <div style={{ fontWeight: 700, fontSize: 11, flex: 1, wordBreak: 'break-word' }}>{p.projectTitle}</div>
                       <div style={{ color: '#000', fontSize: 11, flexShrink: 0, textAlign: 'right' }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</div>
                     </div>
                     {p.description && <div style={{ color: '#000' }}>{renderDescriptionBlocks(p.description, { marginTop: 6, fontSize: 11, color: '#000', textAlign: 'justify' })}</div>}
@@ -213,7 +213,7 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
               {education.higherEducation.filter(edu => edu.enabled).reverse().map((edu: any, i: number) => (
                 <div key={i} style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', alignItems: 'flex-start' }}>
-                    <div style={{ fontWeight: 700, fontSize: 12, flex: 1, wordBreak: 'break-word' }}>{edu.instituteName}</div>
+                    <div style={{ fontWeight: 700, fontSize: 11, flex: 1, wordBreak: 'break-word' }}>{edu.instituteName}</div>
                     <div style={{ color: '#000', fontSize: 11, flexShrink: 0, textAlign: 'right' }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}</div>
                   </div>
                   <div style={{ color: '#000', marginTop: 4, fontSize: 11 }}>
@@ -229,7 +229,7 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
               {education.preUniversityEnabled && (
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', alignItems: 'flex-start' }}>
-                    <div style={{ fontWeight: 700, fontSize: 12, flex: 1, wordBreak: 'break-word' }}>{education.preUniversity.instituteName || 'Pre University'}</div>
+                    <div style={{ fontWeight: 700, fontSize: 11, flex: 1, wordBreak: 'break-word' }}>{education.preUniversity.instituteName || 'Pre University'}</div>
                     <div style={{ color: '#000', fontSize: 11, flexShrink: 0, textAlign: 'right' }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
                   </div>
                   <div style={{ color: '#000', marginTop: 4, fontSize: 11 }}>
@@ -244,7 +244,7 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
               {education.sslcEnabled && (
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', alignItems: 'flex-start' }}>
-                    <div style={{ fontWeight: 700, fontSize: 12, flex: 1, wordBreak: 'break-word' }}>{education.sslc.instituteName || 'SSLC'}</div>
+                    <div style={{ fontWeight: 700, fontSize: 11, flex: 1, wordBreak: 'break-word' }}>{education.sslc.instituteName || 'SSLC'}</div>
                     <div style={{ color: '#000', fontSize: 11, flexShrink: 0, textAlign: 'right' }}>{formatResumeEducationDateRange(education.sslc)}</div>
                   </div>
                   <div style={{ color: '#000', marginTop: 4, fontSize: 11 }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</div>

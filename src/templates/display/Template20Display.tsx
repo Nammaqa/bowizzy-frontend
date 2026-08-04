@@ -171,7 +171,7 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
               }}
             >
               Professional Experience
-            </div>          <div style={{ flex: 1 }}>
+            </div>          <div style={{ flex: 1, fontSize: 12 }}>
               {experience.workExperiences.filter((w: any) => w.enabled).map((w: any, idx: number) => (
                 <div key={idx} style={{ marginBottom: 14 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -209,7 +209,7 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
               }}
             >
               Education
-            </div>          <div style={{ flex: 1 }}>
+            </div>          <div style={{ flex: 1, fontSize: 12 }}>
               {education.higherEducation.filter(edu => edu.enabled).reverse().map((edu: any, i: number) => (
                 <div key={i} style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -313,7 +313,10 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 {(certifications || []).filter((c: any) => c.enabled && c.certificateTitle).map((c: any, i: number) => (
                   <div key={i} style={{ fontSize: 12 }}>
-                    <div style={{ fontWeight: 700 }}>{c.certificateTitle} {c.year ? `| ${c.year}` : ''}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                      <div style={{ fontWeight: 700 }}>{c.certificateTitle}</div>
+                      {c.year && <div style={{ color: '#000' }}>{c.year}</div>}
+                    </div>
                     {c.providedBy && <div style={{ color: '#6b7280', marginTop: 4 }}>{c.providedBy}</div>}
                   </div>
                 ))}

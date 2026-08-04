@@ -177,36 +177,36 @@ const Template18PDF: React.FC<Template18PDFProps> = ({ data, primaryColor = '#11
                 {experience.workExperiences.filter((w: any) => w.enabled).map((w: any, i: number) => (
                   <View key={i} style={{ marginBottom: 10 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold }}>{w.companyName}</Text>
-                      <View style={{ flexDirection: 'row' }}>
+                      <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, flexGrow: 1, flexShrink: 1, marginRight: 8 }}>{w.companyName}</Text>
+                      <View style={{ flexDirection: 'row', flexShrink: 0 }}>
                         {(() => {
                           const sParts = formatMonthYearParts(w.startDate);
                           return (
                             <>
-                              <Text style={{ fontSize: 11, color: '#000' }}>{sParts.month}{sParts.month ? ' ' : ''}</Text>
-                              <Text style={{ fontSize: 11, color: '#000' }}>{sParts.year}</Text>
+                              <Text style={{ fontSize: 10, color: '#000' }}>{sParts.month}{sParts.month ? ' ' : ''}</Text>
+                              <Text style={{ fontSize: 10, color: '#000' }}>{sParts.year}</Text>
                             </>
                           );
                         })()}
 
-                        <Text style={{ fontSize: 11, color: '#000' }}> {' '}-{' '}</Text>
+                        <Text style={{ fontSize: 10, color: '#000' }}> {' '}-{' '}</Text>
 
                         {w.currentlyWorking ? (
-                          <Text style={{ fontSize: 11, color: '#000' }}>Present</Text>
+                          <Text style={{ fontSize: 10, color: '#000' }}>Present</Text>
                         ) : (() => {
                           const eParts = formatMonthYearParts(w.endDate);
                           return (
                             <>
-                              <Text style={{ fontSize: 11, color: '#000' }}>{eParts.month}{eParts.month ? ' ' : ''}</Text>
-                              <Text style={{ fontSize: 11, color: '#000' }}>{eParts.year}</Text>
+                              <Text style={{ fontSize: 10, color: '#000' }}>{eParts.month}{eParts.month ? ' ' : ''}</Text>
+                              <Text style={{ fontSize: 10, color: '#000' }}>{eParts.year}</Text>
                             </>
                           );
                         })()}
                       </View>
                     </View>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
-                      <Text style={{ fontSize: 11, color: '#000' }}>{w.jobTitle}</Text>
-                      <Text style={{ fontSize: 11, color: '#000' }}>{w.location}</Text>
+                      <Text style={{ fontSize: 10, color: '#000', flexGrow: 1, flexShrink: 1, marginRight: 8 }}>{w.jobTitle}</Text>
+                      <Text style={{ fontSize: 10, color: '#000', flexShrink: 0 }}>{w.location}</Text>
                     </View>
                     {w.description && renderBulletedParagraph(w.description)}
                   </View>
@@ -225,8 +225,8 @@ const Template18PDF: React.FC<Template18PDFProps> = ({ data, primaryColor = '#11
                   <View key={i} style={{ marginBottom: 10 }}>
                     <Text style={{ marginTop: 6, color: '#000', fontWeight: 700 }}>{edu.instituteName}{edu.universityBoard ? ` - ${edu.universityBoard}` : ''}</Text>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-                      <Text style={{ fontSize: 11, color: '#000' }}>{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</Text>
-                      <Text style={{ fontSize: 11, color: '#000' }}>
+                      <Text style={{ fontSize: 10, color: '#000', flexGrow: 1, flexShrink: 1, marginRight: 8 }}>{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</Text>
+                      <Text style={{ fontSize: 10, color: '#000', flexShrink: 0 }}>
                         {edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}
                       </Text>
                     </View>
@@ -239,8 +239,8 @@ const Template18PDF: React.FC<Template18PDFProps> = ({ data, primaryColor = '#11
                   <View style={{ marginBottom: 10 }}>
                     <Text style={{ marginTop: 6, color: '#000', fontWeight: 700 }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-                      <Text style={{ fontSize: 11, color: '#000' }}>Pre University (12th Standard){education.preUniversity.boardType ? ` - ${education.preUniversity.boardType}` : ''}{education.preUniversity.subjectStream ? ` (${education.preUniversity.subjectStream})` : ''}</Text>
-                      <Text style={{ fontSize: 11, color: '#000' }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
+                      <Text style={{ fontSize: 10, color: '#000', flexGrow: 1, flexShrink: 1, marginRight: 8 }}>Pre University (12th Standard){education.preUniversity.boardType ? ` - ${education.preUniversity.boardType}` : ''}{education.preUniversity.subjectStream ? ` (${education.preUniversity.subjectStream})` : ''}</Text>
+                      <Text style={{ fontSize: 10, color: '#000', flexShrink: 0 }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
                     </View>
                     {education.preUniversity.resultFormat && education.preUniversity.result && (<Text style={{ fontSize: 10, color: '#444', marginTop: 4 }}>{education.preUniversity.resultFormat}: {education.preUniversity.result}</Text>)}
                   </View>
@@ -251,8 +251,8 @@ const Template18PDF: React.FC<Template18PDFProps> = ({ data, primaryColor = '#11
                   <View style={{ marginBottom: 10 }}>
                     <Text style={{ marginTop: 6, color: '#000', fontWeight: 700 }}>{education.sslc.instituteName || 'SSLC'}</Text>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-                      <Text style={{ fontSize: 11, color: '#000' }}>SSLC (10th Standard){education.sslc.boardType ? ` - ${education.sslc.boardType}` : ''}</Text>
-                      <Text style={{ fontSize: 11, color: '#000' }}>{formatResumeEducationDateRange(education.sslc)}</Text>
+                      <Text style={{ fontSize: 10, color: '#000', flexGrow: 1, flexShrink: 1, marginRight: 8 }}>SSLC (10th Standard){education.sslc.boardType ? ` - ${education.sslc.boardType}` : ''}</Text>
+                      <Text style={{ fontSize: 10, color: '#000', flexShrink: 0 }}>{formatResumeEducationDateRange(education.sslc)}</Text>
                     </View>
                     {education.sslc.resultFormat && education.sslc.result && (<Text style={{ fontSize: 10, color: '#444', marginTop: 4 }}>{education.sslc.resultFormat}: {education.sslc.result}</Text>)}
                   </View>
@@ -290,7 +290,7 @@ const Template18PDF: React.FC<Template18PDFProps> = ({ data, primaryColor = '#11
                         {c.providedBy ? ` - ${c.providedBy}` : ''}
                       </Text>
                     </View>
-                    <Text style={{ fontSize: 10, color: '#000' }}>{c.date ? formatYear(c.date) : ''}</Text>
+                    <Text style={{ fontSize: 10, color: '#000', flexShrink: 0 }}>{c.date ? formatYear(c.date) : ''}</Text>
                   </View>
                 ))}
               </View>

@@ -106,7 +106,7 @@ const Template18Display: React.FC<Template18DisplayProps> = ({
   const contactLine = [locationPart, personal.email, formatMobile(personal.mobileNumber), linkedinLabel, githubLabel, portfolioLabel].filter(Boolean).join(' | ');
 
   return (
-    <div style={{ width: '210mm', minHeight: '297mm', fontFamily: fontFamily, background: '#fff', padding: 24, boxSizing: 'border-box' }}>
+    <div style={{ width: '210mm', minHeight: '297mm', fontFamily: fontFamily, background: '#fff', padding: 24, boxSizing: 'border-box', fontSize: 11 }}>
       <header style={{ textAlign: 'center', marginBottom: 18 }}>
         <h1 style={{ margin: 0, fontSize: 28, letterSpacing: 1, color: primaryColor }}>{personal.firstName} {(personal.middleName || '')} {personal.lastName}</h1>
         {role && <div style={{ marginTop: 6, color: '#000', fontSize: 12, fontWeight: 800 }}>{role}</div>}
