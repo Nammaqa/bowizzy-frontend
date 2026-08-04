@@ -136,14 +136,12 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
             <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold }}>CONTACT</Text>
           </View>
           <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <View>
-                {contactItems.slice(0, 2).map((c: any, i: number) => (<Text key={i} style={{ marginBottom: 4 }}>{c}</Text>))}
+            {Array.from({ length: Math.ceil(contactItems.length / 2) }).map((_, rowIdx) => (
+              <View key={rowIdx} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Text style={{ width: '50%', marginBottom: 6 }}>{contactItems[rowIdx * 2] || ''}</Text>
+                <Text style={{ width: '50%', marginBottom: 6 }}>{contactItems[rowIdx * 2 + 1] || ''}</Text>
               </View>
-              <View>
-                {contactItems.slice(2).map((c: any, i: number) => (<Text key={i} style={{ marginBottom: 4 }}>{c}</Text>))}
-              </View>
-            </View>
+            ))}
           </View>
         </View>
 
@@ -186,7 +184,10 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
         {experience.workExperiences.filter((w: any) => w.enabled).length > 0 && (
           <>
             <View style={{ flexDirection: 'row' }}>
-              <View style={{ width: 150 }}><Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold }}>PROFESSIONAL EXPERIENCE</Text></View>
+              <View style={{ width: 150 }}>
+                <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold }}>PROFESSIONAL</Text>
+                <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold }}>EXPERIENCE</Text>
+              </View>
               <View style={{ flex: 1 }}>
                 {experience.workExperiences.filter((w: any) => w.enabled).map((w: any, i: number) => (
                   <View key={i} style={{ marginBottom: 10 }}>
