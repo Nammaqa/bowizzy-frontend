@@ -4,6 +4,7 @@ import { FiPhone, FiMail, FiMapPin, FiLinkedin, FiGithub, FiLink, FiFileText } f
 
 import type { ResumeData } from '@/types/resume';
 import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
+import { splitIntoRichTextBlocks } from '@/templates/utils/richTextHtml';
 
 interface Template13DisplayProps {
   data: ResumeData;
@@ -66,47 +67,31 @@ const educationPriority = (degree?: string) => {
   return 4;
 };
 
-const hasListTags = (html?: string) => {
-  if (!html) return false;
-  return /<(ul|ol|li)[\s\/>]/i.test(html) || html.includes('•');
-};
-
+// Preserves bold text the user applied in the description editor, instead
+// of flattening the HTML down to plain text.
 const renderDescription = (html?: string) => {
   if (!html) return null;
+  const blocks = splitIntoRichTextBlocks(DOMPurify.sanitize(html));
+  if (blocks.length === 0) return null;
 
-  if (!hasListTags(html)) {
-    const plainText = String(html)
-      .replace(/<[^>]+>/g, '')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .trim();
-    
-    if (!plainText) return null;
-    
+  if (!blocks[0].bullet) {
     return (
       <div style={{ marginTop: 6, color: '#2b2a2a', lineHeight: 1.4, textAlign: 'justify' }}>
-        {plainText}
+        {blocks.map((block, idx) => (
+          <div key={idx} style={{ marginTop: idx > 0 ? 6 : 0 }} dangerouslySetInnerHTML={{ __html: block.html }} />
+        ))}
       </div>
     );
   }
 
-  const lines = htmlToLines(html);
-  if (lines.length === 0) return null;
-
   return (
     <div style={{ marginTop: 6, color: '#2b2a2a' }}>
-      {lines.map((line, idx) => {
-        const isBullet = line.startsWith('•');
-        const cleanLine = isBullet ? line.replace(/^•\s*/, '') : line;
-        return (
-          <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', marginTop: idx > 0 ? 4 : 0 }}>
-            <span style={{ marginRight: 6, lineHeight: 1.4, opacity: isBullet ? 1 : 0, width: 6 }}>{isBullet ? '•' : ''}</span>
-            <div style={{ flex: 1, lineHeight: 1.4, textAlign: 'justify' }}>{cleanLine}</div>
-          </div>
-        );
-      })}
+      {blocks.map((block, idx) => (
+        <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', marginTop: idx > 0 ? 4 : 0 }}>
+          <span style={{ marginRight: 6, lineHeight: 1.4, width: 6 }}>•</span>
+          <div style={{ flex: 1, lineHeight: 1.4, textAlign: 'justify' }} dangerouslySetInnerHTML={{ __html: block.html }} />
+        </div>
+      ))}
     </div>
   );
 };

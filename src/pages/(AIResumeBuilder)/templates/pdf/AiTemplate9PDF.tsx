@@ -107,8 +107,11 @@ const AiTemplate9PDF: React.FC<Props> = ({ data, primaryColor = '#334155' }) => 
               ))}
             </>
           )}
-          {/* Two-column: Education + Skills */}
-          <View style={{ flexDirection: 'row', gap: 30, marginTop: 4 }}>
+          {/* Two-column: Education + Skills — kept as a single unbreakable
+              block so the two independently-flowing columns can't get
+              split at different points by a page break (which misaligns
+              them relative to each other). */}
+          <View style={{ flexDirection: 'row', gap: 30, marginTop: 4 }} wrap={false}>
             <View style={{ flex: 1 }}>
               <SectionTitle title="Education" color={primaryColor} />
               {education.higherEducation.filter(e => e.enabled).reverse().map((edu: any, i) => (

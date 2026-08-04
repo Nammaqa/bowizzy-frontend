@@ -3,6 +3,7 @@ import DOMPurify from 'dompurify';
 import { FiPhone, FiMail, FiMapPin, FiGithub, FiLinkedin, FiGlobe, FiExternalLink } from 'react-icons/fi';
 import type { ResumeData } from '@/types/resume';
 import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
+import { splitIntoRichTextBlocks } from '@/templates/utils/richTextHtml';
 
 interface Template17DisplayProps {
   data: ResumeData
@@ -22,6 +23,20 @@ const htmlToLines = (s?: string) => {
       .replace(/&amp;/g, '&');
     return text.split(/\n|\r\n/).map(l => l.trim()).filter(Boolean);
   } catch (e) { return [String(s)]; }
+};
+
+// Preserves bold text the user applied in the description editor, instead
+// of flattening the HTML down to plain text.
+const renderDescriptionBlocks = (html?: string, style: React.CSSProperties = { marginTop: 6, fontSize: 11, textAlign: 'justify' }) => {
+  if (!html) return null;
+  const blocks = splitIntoRichTextBlocks(DOMPurify.sanitize(html));
+  return blocks.map((block, idx) => (
+    <div
+      key={idx}
+      style={style}
+      dangerouslySetInnerHTML={{ __html: block.bullet ? `• ${block.html}` : block.html }}
+    />
+  ));
 };
 
 const formatMonthYear = (s?: string) => {
@@ -150,7 +165,7 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
                       <div style={{ color: '#000', fontSize: 11, flexShrink: 0, textAlign: 'right' }}>{formatMonthYear(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYear(w.endDate)}</div>
                     </div>
                     <div style={{ color: '#000', marginTop: 6, fontSize: 11 }}>{w.jobTitle}{w.location ? ` — ${w.location}` : ''}</div>
-                    {w.description && <div style={{ marginTop: 6, paddingLeft: 10 }}>{htmlToLines(w.description).map((ln, idx) => <div key={idx} style={{ marginTop: 6, fontSize: 11, textAlign: 'justify' }}>• {ln}</div>)}</div>}
+                    {w.description && <div style={{ marginTop: 6, paddingLeft: 10 }}>{renderDescriptionBlocks(w.description)}</div>}
                   </div>
                 ))}
               </div>
@@ -170,11 +185,11 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
                       <div style={{ fontWeight: 700, fontSize: 12, flex: 1, wordBreak: 'break-word' }}>{p.projectTitle}</div>
                       <div style={{ color: '#000', fontSize: 11, flexShrink: 0, textAlign: 'right' }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</div>
                     </div>
-                    {p.description && <div style={{ color: '#000', marginTop: 6, fontSize: 11, textAlign: 'justify' }}>{DOMPurify.sanitize(p.description).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim()}</div>}
+                    {p.description && <div style={{ color: '#000' }}>{renderDescriptionBlocks(p.description, { marginTop: 6, fontSize: 11, color: '#000', textAlign: 'justify' })}</div>}
                     {p.rolesResponsibilities && (
                       <div style={{ marginTop: 6, paddingLeft: 10 }}>
                         <div style={{ fontWeight: 700, fontSize: 11, color: primaryColor }}>Roles & Responsibilities:</div>
-                        {htmlToLines(p.rolesResponsibilities).map((ln, idx) => <div key={idx} style={{ marginTop: 6, fontSize: 11, textAlign: 'justify' }}>• {ln}</div>)}
+                        {renderDescriptionBlocks(p.rolesResponsibilities)}
                       </div>
                     )}
                   </div>

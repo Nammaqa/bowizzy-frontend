@@ -115,8 +115,11 @@ const AiTemplate8Display: React.FC<Props> = ({ data, primaryColor = '#1e293b' })
       )}
       {education.sslcEnabled && education.sslc?.instituteName && (
         <div style={{ marginBottom: 6 }}>
-          <strong style={{ fontSize: 10, color: '#0f172a' }}>SSLC (10th)</strong>
-          <p style={{ fontSize: 9, color: '#64748b', margin: 0 }}>{education.sslc.instituteName} | {fmtYear(education.sslc.yearOfPassing)}</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <strong style={{ fontSize: 10, color: '#0f172a' }}>SSLC (10th)</strong>
+            <span style={{ fontSize: 8.5, color: '#94a3b8' }}>{fmtYear(education.sslc.yearOfPassing)}</span>
+          </div>
+          <p style={{ fontSize: 9, color: '#64748b', margin: 0 }}>{education.sslc.instituteName}</p>
         </div>
       )}
       {/* Skills */}
