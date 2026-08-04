@@ -278,7 +278,15 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
             <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginTop: 4, marginBottom: 0 }} />
           </View>
           <View style={{ marginTop: 6 }}>
-            {skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled && renderRichText(skillsLinks.technicalSummary, { fontSize: 10, color: '#444', textAlign: 'justify' })}
+            {skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled && renderPdfRichBullets(skillsLinks.technicalSummary, {
+              fontSize: 10,
+              color: '#444',
+              lineHeight: 1.4,
+              marginTop: 0,
+              boldFontFamily: pdfFontFamilyBold,
+              textAlign: 'justify',
+              forceBullets: true,
+            })}
           </View>
         </>)}
 
