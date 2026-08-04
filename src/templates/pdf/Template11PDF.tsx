@@ -279,6 +279,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
     return stripNonInlineTags(withBreaks)
       .split('\n')
       .map((line) => line.trim())
+      .map((line) => line.replace(/^[•◦▪●\-*]\s*/, ''))
       .filter((line) => stripTags(line))
       .map((html) => ({ html, bullet: false }));
   };
@@ -304,7 +305,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
    */
   const renderBulletedParagraph = (
     html?: string,
-    textStyle?: { fontSize?: number; lineHeight?: number; color?: string }
+    textStyle?: { fontSize?: number; lineHeight?: number; color?: string; forceBullets?: boolean }
   ) => {
     if (!html) return null;
     const sanitized = DOMPurify.sanitize(html || '');
@@ -313,7 +314,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
 
     const fontSize = textStyle?.fontSize ?? 10;
     const color = textStyle?.color ?? '#000000';
-    const isBulleted = blocks[0].bullet;
+    const isBulleted = textStyle?.forceBullets || blocks[0].bullet;
     const lineHeight = textStyle?.lineHeight ?? (isBulleted ? 1.3 : 1.35);
 
     if (isBulleted) {
@@ -631,7 +632,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
               <View style={{ marginBottom: 12 }} minPresenceAhead={60}>
                 <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>TECHNICAL SUMMARY</Text>
                 <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
-                {renderBulletedParagraph(skillsLinks.technicalSummary)}
+                {renderBulletedParagraph(skillsLinks.technicalSummary, { forceBullets: true })}
               </View>
             )}
 

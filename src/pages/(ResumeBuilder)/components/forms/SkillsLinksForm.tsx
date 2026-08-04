@@ -714,13 +714,29 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
     }
   };
 
+  const escapeHtml = (unsafe: string) =>
+    unsafe
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
   const handleApplySummaryVersion = (type: "atsFriendly" | "informative") => {
     if (!enhancedSummaryVersions) return;
-    const html = enhancedSummaryVersions[type]
+    // The AI always prefixes each line with "• " (see enhanceTechnicalSummary.js).
+    // Strip that off and store real <li> items instead of plain <div> lines,
+    // so templates that render technicalSummary as a bullet list don't end up
+    // drawing their own bullet marker in front of the AI's literal "•" text.
+    const items = enhancedSummaryVersions[type]
       .split("\n")
-      .filter((line) => line.trim())
-      .map((line) => `<div>${line.trim()}</div>`)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => line.replace(/^[•◦▪●\-*]\s*/, ""))
+      .filter(Boolean)
+      .map((line) => `<li>${escapeHtml(line)}</li>`)
       .join("");
+    const html = items ? `<ul>${items}</ul>` : "";
     onChange({ ...data, technicalSummary: html });
     setTechnicalSummaryChanges(true);
     setEnhancedSummaryVersions(null);

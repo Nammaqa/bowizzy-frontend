@@ -475,11 +475,13 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                   TECHNICAL SUMMARY
                 </h2>
                 <div style={{ height: 1, background: '#333', width: '100%', marginBottom: 12 }} />
-                <div
-                  className="t11-justify"
-                  style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', lineHeight: 1.6, textAlign: 'justify' }}
-                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(skillsLinks.technicalSummary) }}
-                />
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 11, color: '#000000', fontWeight: 'normal', lineHeight: 1.6 }}>
+                  {htmlToLines(DOMPurify.sanitize(skillsLinks.technicalSummary)).map((line, idx) => (
+                    <li key={idx} style={{ marginBottom: 4, listStyleType: 'disc', textAlign: 'justify' }}>
+                      {line.replace(/^[•◦▪●\-*]\s*/, '')}
+                    </li>
+                  ))}
+                </ul>
               </section>
             )}
 

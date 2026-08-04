@@ -99,6 +99,10 @@ export function splitIntoRichTextBlocks(sanitized: string): RichTextBlock[] {
   return stripNonInlineTags(withBreaks)
     .split('\n')
     .map((line) => line.trim())
+    // Strip any bullet character the user already typed by hand (or that an
+    // AI-enhanced summary came pre-formatted with), so callers that force a
+    // bullet marker on every line don't end up drawing two.
+    .map((line) => line.replace(/^[•◦▪●\-*]\s*/, ''))
     .filter((line) => stripTags(line))
     .map((html) => ({ html, bullet: false }));
 }
