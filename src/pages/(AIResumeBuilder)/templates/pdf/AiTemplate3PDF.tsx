@@ -13,7 +13,7 @@ const renderBullets = (html?: string) => {
   return (
     <View style={{ marginTop: 2 }}>
       {lines.map((line, i) => (
-        <View key={i} style={{ flexDirection: 'row', marginTop: i > 0 ? 1 : 0 }}>
+        <View key={i} wrap={false} style={{ flexDirection: 'row', marginTop: i > 0 ? 1 : 0 }}>
           <Text style={{ width: 10, flexShrink: 0, fontSize: 9, color: '#333', textAlign: 'justify' }}>{line.startsWith('•') ? '•' : ''}</Text>
           <Text style={{ flex: 1, fontSize: 9, color: '#333', lineHeight: 1.5, textAlign: 'justify' }}>{line.startsWith('•') ? line.substring(1).trim() : line}</Text>
         </View>
