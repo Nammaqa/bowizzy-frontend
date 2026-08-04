@@ -546,7 +546,7 @@ export default function CreatePortfolio() {
                   type="text"
                   value={portfolioName}
                   onChange={(e) => {
-                    const sanitized = e.target.value.replace(/[^a-zA-Z0-9\s-]/g, "");
+                    const sanitized = e.target.value.replace(/[<>]/g, "");
                     setPortfolioName(sanitized);
                     setNameError("");
                   }}
