@@ -143,8 +143,14 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Technical Summary</div>
               <div style={{ height: 1, background: '#ddd', marginTop: 6, width: '100%' }} />
             </div>
-            <div style={{ marginTop: 8, color: '#444', fontSize: 11, textAlign: 'justify' }}>
-              {DOMPurify.sanitize(skillsLinks.technicalSummary).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s{2,}/g, ' ').trim()}
+            <div style={{ marginTop: 8, color: '#444', fontSize: 11 }}>
+              <ul style={{ margin: 0, paddingLeft: 18 }}>
+                {htmlToLines(DOMPurify.sanitize(skillsLinks.technicalSummary)).map((line, idx) => (
+                  <li key={idx} style={{ marginBottom: 4, listStyleType: 'disc', textAlign: 'justify' }}>
+                    {line.replace(/^[•◦▪●\-*]\s*/, '')}
+                  </li>
+                ))}
+              </ul>
             </div>
           </section>
         )}
