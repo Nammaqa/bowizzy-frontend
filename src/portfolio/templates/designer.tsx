@@ -273,10 +273,15 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
             </div>
           </div>
 
-          <div className="relative">
+          <div className="relative flex justify-center @lg:justify-end">
             <div
-              className="aspect-[4/5] overflow-hidden border relative"
-              style={{ borderColor: line, background: panelStrong, borderRadius: 8 }}
+              className="rounded-full overflow-hidden border relative"
+              style={{
+                width: "clamp(220px, 26vw, 320px)",
+                height: "clamp(220px, 26vw, 320px)",
+                borderColor: line,
+                background: panelStrong,
+              }}
             >
               {data.avatarUrl ? (
                 <img
@@ -292,24 +297,12 @@ export default function DesignerTemplate({ data }: { data: PortfolioData }) {
                   style={{ backgroundColor: accent }}
                 >
                   <div className="absolute inset-0 grid place-items-center">
-                    <span className="text-8xl @md:text-9xl font-extrabold" style={{ color: "#ffffff" }}>
+                    <span className="text-6xl @md:text-7xl font-extrabold" style={{ color: "#ffffff" }}>
                       {getInitials(data.portfolioName)}
                     </span>
                   </div>
                 </div>
               )}
-            </div>
-
-            <div
-              className="absolute -left-3 @md:-left-8 bottom-8 border p-4 max-w-[240px]"
-              style={{ borderColor: line, background: panelStrong, backdropFilter: "blur(16px)", borderRadius: 8 }}
-            >
-              <p className="text-xs font-extrabold uppercase mb-2" style={{ color: accentTwo }}>
-                Now crafting
-              </p>
-              <p className="text-sm leading-6 font-bold">
-                Interfaces, brand systems, product stories, and handoff-ready design.
-              </p>
             </div>
           </div>
         </header>
