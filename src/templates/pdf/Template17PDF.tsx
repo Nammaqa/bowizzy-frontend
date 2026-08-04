@@ -142,13 +142,14 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
   const pdfFontFamily = getPdfFontFamily(fontFamily);
   const pdfFontFamilyBold = getPdfFontFamilyBold(fontFamily);
 
-  const renderBulletedParagraph = (html?: string) =>
+  const renderBulletedParagraph = (html?: string, extra?: { forceBullets?: boolean }) =>
     renderPdfRichBullets(html, {
       fontSize: 9,
       color: '#444',
       marginTop: 6,
       boldFontFamily: pdfFontFamilyBold,
       textAlign: 'justify',
+      ...extra,
     });
 
   const role = (experience && (experience as any).jobRole) || (experience.workExperiences && experience.workExperiences.find((w: any) => w.enabled && w.jobTitle) && experience.workExperiences.find((w: any) => w.enabled && w.jobTitle).jobTitle) || '';
@@ -212,9 +213,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
                 <Text style={styles.sectionHeading}>Technical Summary</Text>
                 <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
               </View>
-              <Text style={{ marginTop: 8, fontSize: 9, color: '#444', textAlign: 'justify' }}>
-                {htmlToPlainText(skillsLinks.technicalSummary).replace(/\s{2,}/g, ' ')}
-              </Text>
+              {renderBulletedParagraph(skillsLinks.technicalSummary, { forceBullets: true })}
             </View>
           ) : null}
 
