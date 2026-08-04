@@ -81,8 +81,15 @@ export default function RichTextEditor({
     range.insertNode(frag);
     if (lastNode) {
       const newRange = document.createRange();
-      const li = (lastNode as HTMLElement).querySelector('li') || lastNode;
-      newRange.setStart(li, 0);
+      // querySelector only exists on Element nodes — plain-text paste
+      // produces a Text node here, which would otherwise throw and abort
+      // before onChange(el.innerHTML) runs, silently dropping the paste.
+      if (lastNode.nodeType === Node.TEXT_NODE) {
+        newRange.setStart(lastNode, lastNode.textContent?.length ?? 0);
+      } else {
+        const li = (lastNode as HTMLElement).querySelector('li') || lastNode;
+        newRange.setStart(li, 0);
+      }
       newRange.collapse(true);
       sel.removeAllRanges();
       sel.addRange(newRange);
