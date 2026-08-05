@@ -4,6 +4,7 @@ import { Document, Page, View, Text, StyleSheet, Link } from '@react-pdf/rendere
 import type { ResumeData } from '@/types/resume';
 import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 import { renderPdfRichBullets } from '@/templates/utils/richTextPdf';
+import { ContinuationSpacer } from '@/templates/utils/pdfContinuationSpacer';
 
 const styles = StyleSheet.create({
   page: { paddingTop: 28, paddingBottom: 24, paddingLeft: 36, paddingRight: 36, fontSize: 10 },
@@ -243,6 +244,7 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+        <ContinuationSpacer />
         <View style={styles.header}>
           <Text style={{ ...styles.name, fontFamily: pdfFontFamilyBold, color: primaryColor }}>{personal.firstName} {(personal.middleName || '')} {personal.lastName}</Text>
           {role && <Text style={{ ...styles.role, fontFamily: pdfFontFamily, color: primaryColor }}>{role}</Text>}

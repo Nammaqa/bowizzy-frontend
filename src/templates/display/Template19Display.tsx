@@ -38,17 +38,30 @@ const formatMonthYear = (s?: string) => {
 };
 
 // Preserves bold text the user applied in the description editor, instead
-// of flattening the HTML down to plain text.
+// of flattening the HTML down to plain text. Bullet lists still render as
+// separate lines, but plain multi-line prose is joined into one flowing
+// paragraph (line breaks become normal <br/> wraps, not stacked blocks with
+// their own margin) so pressing Enter reads like ordinary paragraph text
+// instead of double-spaced lines.
 const renderDescriptionBlocks = (html?: string) => {
   if (!html) return null;
   const blocks = splitIntoRichTextBlocks(DOMPurify.sanitize(html));
-  return blocks.map((block, idx) => (
-    <div
-      key={idx}
-      style={{ marginTop: 6, textAlign: 'justify' }}
-      dangerouslySetInnerHTML={{ __html: block.bullet ? `• ${block.html}` : block.html }}
-    />
-  ));
+  if (blocks.length === 0) return null;
+
+  if (blocks[0].bullet) {
+    return blocks.map((block, idx) => (
+      <div
+        key={idx}
+        style={{ marginTop: idx > 0 ? 4 : 0, textAlign: 'justify' }}
+        dangerouslySetInnerHTML={{ __html: `• ${block.html}` }}
+      />
+    ));
+  }
+
+  const joined = blocks.map((block) => block.html).join('<br/>');
+  return (
+    <div style={{ marginTop: 6, lineHeight: 1.5, textAlign: 'justify' }} dangerouslySetInnerHTML={{ __html: joined }} />
+  );
 };
 
 const Template19Display: React.FC<Template19DisplayProps> = ({

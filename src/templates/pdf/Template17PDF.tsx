@@ -4,6 +4,7 @@ import { Document, Page, View, Text, StyleSheet, Svg, Path, Link } from '@react-
 import type { ResumeData } from '@/types/resume';
 import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 import { renderPdfRichBullets } from '@/templates/utils/richTextPdf';
+import { ContinuationSpacer, SidebarBackground } from '@/templates/utils/pdfContinuationSpacer';
 
 const styles = StyleSheet.create({
   page: { flexDirection: 'row', padding: 0, fontSize: 10, },
@@ -164,6 +165,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+        <SidebarBackground width={220} color="#f3f4f6" />
         <View style={styles.sidebar}>
           <Text style={{ ...styles.name, fontFamily: pdfFontFamilyBold, color: primaryColor }}>{personal.firstName} {(personal.middleName || '')} {personal.lastName}</Text>
           {role && <Text style={{ ...styles.role, fontFamily: pdfFontFamily, color: primaryColor }}>{role}</Text>}
@@ -197,6 +199,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
         </View>
 
         <View style={styles.content}>
+          <ContinuationSpacer />
           {personal.aboutCareerObjective ? (
             <View>
               <View wrap={false} minPresenceAhead={40}>
