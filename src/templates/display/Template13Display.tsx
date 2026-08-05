@@ -58,15 +58,6 @@ const formatYear = (s?: string) => {
   return y ? y[1] : str;
 };
 
-const educationPriority = (degree?: string) => {
-  if (!degree) return 99;
-  const d = degree.toLowerCase();
-  if (/(bachelor|b\.?e|btech|b\.tech|be|bsc|ba)/.test(d)) return 1;
-  if (/(puc|higher secondary|12th|intermediate)/.test(d)) return 2;
-  if (/(ssc|sslc|10th|matric)/.test(d)) return 3;
-  return 4;
-};
-
 // Preserves bold text the user applied in the description editor, instead
 // of flattening the HTML down to plain text.
 const renderDescription = (html?: string) => {
@@ -110,6 +101,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
         minHeight: '297mm',
         fontFamily: fontFamily,
         background: '#fff',
+        fontSize: 11,
       }}
     >      <div style={{ padding: '28px 36px 8px 36px', textAlign: 'center' }}>
         <h1
@@ -182,7 +174,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
               {experience.workExperiences.filter(e => e.enabled).map((w, i) => (
                 <div key={i} style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ fontSize: 12, fontWeight: 700 }}>{w.jobTitle} — <span style={{ fontWeight: 700 }}>{w.companyName}</span></div>
+                    <div style={{ fontSize: 11, fontWeight: 700 }}>{w.jobTitle} — <span style={{ fontWeight: 700 }}>{w.companyName}</span></div>
                     <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{formatMonthYear(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYear(w.endDate)}</div>
                   </div>
                   {w.description && renderDescription(w.description)}
@@ -200,7 +192,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
               {projects && projects.filter(p => p.enabled).map((p, i) => (
                 <div key={i} style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ fontSize: 12, fontWeight: 700 }}>{p.projectTitle}</div>
+                    <div style={{ fontSize: 11, fontWeight: 700 }}>{p.projectTitle}</div>
                     <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</div>
                   </div>
                   {p.description && renderDescription(p.description)}
@@ -222,7 +214,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
             </div>
             <div style={{ gridColumn: '1 / -1', marginTop: 0 }}>
               {/* Higher Education (BE/Bachelor etc.) */}
-              {education.higherEducation.filter(edu => edu.enabled).sort((a, b) => educationPriority(a.degree) - educationPriority(b.degree)).map((edu, i) => (
+              {education.higherEducation.filter(edu => edu.enabled).reverse().map((edu, i) => (
                 <div key={`he-${i}`} style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 700 }}>{edu.instituteName}</div>

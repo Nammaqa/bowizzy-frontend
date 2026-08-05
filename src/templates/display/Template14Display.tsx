@@ -65,6 +65,7 @@ const Template14Display: React.FC<Template14DisplayProps> = ({
         minHeight: '297mm',
         fontFamily: fontFamily,
         background: '#fff',
+        fontSize: 11,
       }}
     >      <div style={{ padding: '28px 36px 8px 36px' }}>
         <div style={{ textAlign: 'left' }}>
@@ -107,7 +108,7 @@ const Template14Display: React.FC<Template14DisplayProps> = ({
               {experience.workExperiences.filter(e => e.enabled).map((w, i) => (
                 <div key={i} style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ fontSize: 13, fontWeight: 700 }}>{w.jobTitle} <span style={{ fontWeight: 600, color: '#111' }}>— {w.companyName}, {w.location || ''}</span></div>
+                    <div style={{ fontSize: 11, fontWeight: 700 }}>{w.jobTitle} <span style={{ fontWeight: 600, color: '#111' }}>— {w.companyName}, {w.location || ''}</span></div>
                     <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{formatMonthYearNumeric(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYearNumeric(w.endDate)}</div>
                   </div>
                   {w.description && (
@@ -133,7 +134,7 @@ const Template14Display: React.FC<Template14DisplayProps> = ({
               {projects && projects.filter(p => p.enabled).map((p, i) => (
                 <div key={i} style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ fontSize: 13, fontWeight: 700 }}>{p.projectTitle}</div>
+                    <div style={{ fontSize: 11, fontWeight: 700 }}>{p.projectTitle}</div>
                     <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{formatMonthYearNumeric(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYearNumeric(p.endDate)}</div>
                   </div>
                   {p.description && (

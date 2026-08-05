@@ -16,8 +16,8 @@ const styles = StyleSheet.create({
   leftCol: { width: 120, paddingRight: 12 },
   sectionHeading: { fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', color: '#111827' },
   rightCol: { flex: 1 },
-  itemTitle: { fontSize: 12 },
-  itemSub: { fontSize: 11, color: '#111827' },
+  itemTitle: { fontSize: 10, flexGrow: 1, flexShrink: 1, marginRight: 8 },
+  itemSub: { fontSize: 10, color: '#111827', flexShrink: 0 },
   bullet: { fontSize: 10, color: '#444', marginTop: 2 },
 });
 
@@ -65,15 +65,6 @@ const formatYear = (s?: string) => {
   const str = String(s).trim();
   const y = str.match(/(\d{4})/);
   return y ? y[1] : str;
-};
-
-const educationPriority = (degree?: string) => {
-  if (!degree) return 99;
-  const d = degree.toLowerCase();
-  if (/(bachelor|b\.?e|btech|b\.tech|be|bsc|ba)/.test(d)) return 1;
-  if (/(puc|higher secondary|12th|intermediate)/.test(d)) return 2;
-  if (/(ssc|sslc|10th|matric)/.test(d)) return 3;
-  return 4;
 };
 
 interface Template13PDFProps {
@@ -243,7 +234,7 @@ const Template13PDF: React.FC<Template13PDFProps> = ({ data, primaryColor = '#11
             <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginTop: 0, marginBottom: 6 }} />
           </View>
           <View>
-            {education.higherEducation.filter(edu => edu.enabled).sort((a: any, b: any) => educationPriority(a.degree) - educationPriority(b.degree)).map((edu: any, i: number) => (
+            {education.higherEducation.filter(edu => edu.enabled).reverse().map((edu: any, i: number) => (
               <View key={`he-${i}`} style={{ marginBottom: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>{edu.instituteName}</Text>
@@ -302,7 +293,7 @@ const Template13PDF: React.FC<Template13PDFProps> = ({ data, primaryColor = '#11
             {certifications.filter((c: any) => c.enabled && (c.certificateTitle || c.providedBy)).map((c: any, i: number) => (
               <View key={i} style={{ marginBottom: 6 }}>
                 {c.certificateTitle ? <Text style={{ fontSize: 10, color: '#111827', fontFamily: pdfFontFamilyBold }}>{c.certificateTitle}</Text> : null}
-                {c.providedBy ? <Text style={{ fontSize: 9, color: '#2b2a2a', marginTop: 1 }}>Provided by: {c.providedBy}</Text> : null}
+                {c.providedBy ? <Text style={{ fontSize: 10, color: '#2b2a2a', marginTop: 1 }}>Provided by: {c.providedBy}</Text> : null}
               </View>
             ))}
           </View>

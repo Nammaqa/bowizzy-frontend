@@ -197,15 +197,6 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
     return "";
   };
 
-  const validateDescription = (value: string) => {
-    // Strip HTML tags from the rich text value so the limit reflects
-    // visible characters rather than markup.
-    const plainText = value ? value.replace(/<[^>]*>/g, "") : "";
-    if (plainText.length > 500) {
-      return "Description must not exceed 500 characters";
-    }
-    return "";
-  };
   const validateDateRange = (startDate: string, endDate: string) => {
     const currentYear = new Date().getFullYear();
 
@@ -292,15 +283,6 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
       updated[index] = { ...updated[index], [field]: value.slice(0, 100) };
     } else if (field === "location" && typeof value === "string") {
       updated[index] = { ...updated[index], [field]: value.slice(0, 100) };
-    } else if (field === "description" && typeof value === "string") {
-      // Clamp on the plain-text length, but keep the original (HTML) value
-      // up to the point where the visible character count hits 500.
-      let clamped = value;
-      const plainLength = value.replace(/<[^>]*>/g, "").length;
-      if (plainLength > 500) {
-        clamped = value.slice(0, 500);
-      }
-      updated[index] = { ...updated[index], [field]: clamped };
     } else {
       updated[index] = { ...updated[index], [field]: value };
     }
@@ -335,9 +317,6 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
     } else if (field === "location" && typeof value === "string") {
       const error = validateLocation(updatedExp.location);
       setErrors((prev) => ({ ...prev, [`exp-${id}-location`]: error }));
-    } else if (field === "description" && typeof value === "string") {
-      const error = validateDescription(updatedExp.description);
-      setErrors((prev) => ({ ...prev, [`exp-${id}-description`]: error }));
     } else if (
       (field === "startDate" || field === "endDate") &&
       typeof value === "string"
@@ -787,7 +766,7 @@ export const ExperienceDetailsForm: React.FC<ExperienceDetailsFormProps> = ({
               <p className="text-xs text-red-500">{errors[`exp-${experience.id}-description`]}</p>
             ) : <span />}
             <span className="text-xs text-gray-400">
-              {experience.description ? experience.description.replace(/<[^>]*>/g, "").length : 0}/500
+              {experience.description ? experience.description.replace(/<[^>]*>/g, "").length : 0} characters
             </span>
           </div>
         </div>

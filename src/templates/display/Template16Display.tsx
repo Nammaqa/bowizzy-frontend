@@ -82,7 +82,7 @@ const Template16Display: React.FC<Template16DisplayProps> = ({
   const contactParts = [personal.address, personal.email, personal.mobileNumber].filter(Boolean);
 
   return (
-    <div style={{ width: '210mm', minHeight: '297mm', fontFamily, background: '#fff' }}>      <div style={{ padding: '24px 36px 8px 36px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+    <div style={{ width: '210mm', minHeight: '297mm', fontFamily, background: '#fff', fontSize: 11 }}>      <div style={{ padding: '24px 36px 8px 36px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
       <div>
         <h1 style={{ margin: 0, fontSize: 22, color: primaryColor, fontFamily, fontWeight: 700 }}>{personal.firstName} {(personal.middleName || '')} {personal.lastName}</h1>
         {role && <div style={{ fontSize: 11, color: primaryColor, marginTop: 4, fontWeight: 700 }}>{role}</div>}
@@ -233,7 +233,7 @@ const Template16Display: React.FC<Template16DisplayProps> = ({
               <div style={{ height: 1, background: '#ddd', marginTop: 4, width: '100%' }} />
             </div>
 
-            <div style={{ marginTop: 6 }}>{skillsLinks.skills.filter(s => s.enabled && s.skillName).map((s, i) => <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}><div>• {s.skillName}</div><div style={{ color: '#111827', fontSize: 12, minWidth: 60, textAlign: 'right' }}>{getStarsByLevel(s.skillLevel)}</div></div>)}</div>
+            <div style={{ marginTop: 6 }}>{skillsLinks.skills.filter(s => s.enabled && s.skillName).map((s, i) => <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}><div>• {s.skillName}</div><div style={{ color: '#111827', fontSize: 11, minWidth: 60, textAlign: 'right' }}>{getStarsByLevel(s.skillLevel)}</div></div>)}</div>
           </>)}
 
           <div style={{ marginTop: 12 }}>

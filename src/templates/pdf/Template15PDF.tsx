@@ -13,8 +13,8 @@ const styles = StyleSheet.create({
   contact: { fontSize: 10, color: '#6b7280' },
   divider: { height: 1, marginTop: 12, marginBottom: 0, width: '100%' },
   sectionHeading: { fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase' },
-  itemTitle: { fontSize: 12 },
-  itemSub: { fontSize: 11, color: '#111827' },
+  itemTitle: { fontSize: 10, flexGrow: 1, flexShrink: 1, marginRight: 8 },
+  itemSub: { fontSize: 10, color: '#111827', flexShrink: 0 },
   bullet: { fontSize: 10, color: '#444', marginTop: 4 },
 });
 
@@ -301,15 +301,15 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
               <View key={`he-${i}`} style={{ marginBottom: 8 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>{edu.instituteName}</Text>
-                    <Text style={{ fontSize: 11, color: '#101113ff', fontFamily: pdfFontFamilyBold }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}</Text>
+                    <Text style={{ fontSize: 10, color: '#101113ff', fontFamily: pdfFontFamilyBold }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}</Text>
                 </View>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-                  <Text style={{ fontSize: 11, color: '#6b7280' }}>{edu.degree}{edu.fieldOfStudy ? ` — ${edu.fieldOfStudy}` : ''}</Text>
+                  <Text style={{ fontSize: 10, color: '#6b7280' }}>{edu.degree}{edu.fieldOfStudy ? ` — ${edu.fieldOfStudy}` : ''}</Text>
                   {edu.resultFormat && edu.result ? (
-                    <Text style={{ fontSize: 11, color: '#6b7280', fontFamily: pdfFontFamilyBold }}>{edu.resultFormat}: {edu.result}</Text>
+                    <Text style={{ fontSize: 10, color: '#6b7280', fontFamily: pdfFontFamilyBold }}>{edu.resultFormat}: {edu.result}</Text>
                   ) : null}
                 </View>
-                {edu.universityBoard ? <Text style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>{edu.universityBoard}</Text> : null}
+                {edu.universityBoard ? <Text style={{ fontSize: 10, color: '#6b7280', marginTop: 2 }}>{edu.universityBoard}</Text> : null}
               </View>
             ))}
 
@@ -318,12 +318,12 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
               <View style={{ marginBottom: 8 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
-                  <Text style={{ fontSize: 12, color: '#101113ff', fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
+                  <Text style={{ fontSize: 10, color: '#101113ff', fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
                 </View>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-                  <Text style={{ fontSize: 11, color: '#6b7280' }}>Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}</Text>
+                  <Text style={{ fontSize: 10, color: '#6b7280' }}>Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}</Text>
                   {education.preUniversity.resultFormat && education.preUniversity.result ? (
-                    <Text style={{ fontSize: 11, color: '#6b7280', fontFamily: pdfFontFamilyBold }}>{education.preUniversity.resultFormat}: {education.preUniversity.result}</Text>
+                    <Text style={{ fontSize: 10, color: '#6b7280', fontFamily: pdfFontFamilyBold }}>{education.preUniversity.resultFormat}: {education.preUniversity.result}</Text>
                   ) : null}
                 </View>
               </View>
@@ -334,12 +334,12 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
               <View style={{ marginBottom: 8 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>{education.sslc.instituteName || 'SSLC'}</Text>
-                  <Text style={{ fontSize: 11, color: '#101113ff', fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.sslc)}</Text>
+                  <Text style={{ fontSize: 10, color: '#101113ff', fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.sslc)}</Text>
                 </View>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-                  <Text style={{ fontSize: 11, color: '#6b7280' }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</Text>
+                  <Text style={{ fontSize: 10, color: '#6b7280' }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</Text>
                   {education.sslc.resultFormat && education.sslc.result ? (
-                    <Text style={{ fontSize: 11, color: '#6b7280', fontFamily: pdfFontFamilyBold }}>{education.sslc.resultFormat}: {education.sslc.result}</Text>
+                    <Text style={{ fontSize: 10, color: '#6b7280', fontFamily: pdfFontFamilyBold }}>{education.sslc.resultFormat}: {education.sslc.result}</Text>
                   ) : null}
                 </View>
               </View>
@@ -409,12 +409,12 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
                 {w.jobTitle ? (
                   <>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                      <Text style={{ fontSize: 12, fontFamily: pdfFontFamilyBold, color: primaryColor }}>{w.jobTitle}</Text>
+                      <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, color: primaryColor, flexGrow: 1, flexShrink: 1, marginRight: 8 }}>{w.jobTitle}</Text>
                       <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>{formatMonthYear(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYear(w.endDate)}</Text>
                     </View>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-                      <Text style={{ fontSize: 10, color: '#444', fontFamily: pdfFontFamilyBold }}>{w.companyName}</Text>
-                      <Text style={{ fontSize: 10, color: '#111827' }}>{w.location}</Text>
+                      <Text style={{ fontSize: 10, color: '#444', fontFamily: pdfFontFamilyBold, flexGrow: 1, flexShrink: 1, marginRight: 8 }}>{w.companyName}</Text>
+                      <Text style={{ fontSize: 10, color: '#111827', flexShrink: 0 }}>{w.location}</Text>
                     </View>
                   </>
                 ) : (

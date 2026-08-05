@@ -5,6 +5,21 @@ import type { ResumeData } from "@/types/resume";
 import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 import logo from '@/assets/bowizzy.png';
 
+// Computed once at module load (not per render/page) — sparse diagonal grid so the
+// watermark still tiles visually with far fewer <Image> nodes for react-pdf to paint.
+const WATERMARK_POSITIONS = (() => {
+  const positions: { top: number; left: number }[] = [];
+  for (let row = 0; row < 6; row++) {
+    for (let col = 0; col < 3; col++) {
+      positions.push({
+        top: row * 170 - 20,
+        left: col * 280 - 40 + (row % 2 === 0 ? 0 : 140),
+      });
+    }
+  }
+  return positions;
+})();
+
 const styles = StyleSheet.create({
   page: {
     paddingTop: 20,
@@ -276,12 +291,22 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
       .replace(/<br\s*\/?>/gi, '\n')
       .replace(/<\/(p|div|h[1-6])>/gi, '\n');
 
-    return stripNonInlineTags(withBreaks)
+    const lines = stripNonInlineTags(withBreaks)
       .split('\n')
       .map((line) => line.trim())
-      .map((line) => line.replace(/^[•◦▪●\-*]\s*/, ''))
-      .filter((line) => stripTags(line))
-      .map((html) => ({ html, bullet: false }));
+      .map((line) => line.replace(/^[•◦▪●\-*]\s*/, ''));
+
+    // Drop only leading/trailing blank lines (editor artifacts) — a blank
+    // line in the middle is a deliberate paragraph break and should render
+    // as visible spacing.
+    let start = 0;
+    let end = lines.length - 1;
+    while (start <= end && !stripTags(lines[start])) start++;
+    while (end >= start && !stripTags(lines[end])) end--;
+
+    return lines
+      .slice(start, end + 1)
+      .map((line) => ({ html: stripTags(line) ? line : '&nbsp;', bullet: false }));
   };
 
   // Build contact parts including optional links — respects enabled flags
@@ -417,22 +442,11 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
       <Page size="A4" style={styles.page}>
 
         {/* Tiled Watermark Pattern — Diagonal Staggered */}
-        {(() => {
-          const positions = [];
-          for (let row = 0; row < 12; row++) {
-            for (let col = 0; col < 6; col++) {
-              positions.push({
-                top: row * 85 - 20,
-                left: col * 140 - 40 + (row % 2 === 0 ? 0 : 70),
-              });
-            }
-          }
-          return positions.map((pos, i) => (
-            <View key={i} style={{ position: "absolute", top: pos.top, left: pos.left, zIndex: -1 }} fixed>
-              <Image src={logo} style={{ width: 80, opacity: 0.2, transform: "rotate(-30deg)" }} />
-            </View>
-          ));
-        })()}
+        {WATERMARK_POSITIONS.map((pos, i) => (
+          <View key={i} style={{ position: "absolute", top: pos.top, left: pos.left, zIndex: -1 }} fixed>
+            <Image src={logo} style={{ width: 80, opacity: 0.2, transform: "rotate(-30deg)" }} />
+          </View>
+        ))}
 
 
         {/* ── Header ── */}
@@ -450,9 +464,11 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
 
           {/* Career Objective */}
           {personal.aboutCareerObjective && personal.aboutCareerObjective.trim() !== '' && (
-            <View style={{ marginBottom: 12 }} minPresenceAhead={60}>
-              <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>CAREER OBJECTIVE</Text>
-              <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 6 }} />
+            <View style={{ marginBottom: 12 }}>
+              <View minPresenceAhead={80} wrap={false}>
+                <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>CAREER OBJECTIVE</Text>
+                <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 6 }} />
+              </View>
               {renderBulletedParagraph(personal.aboutCareerObjective, { fontSize: 11, lineHeight: 1.6 })}
             </View>
           )}
@@ -460,12 +476,14 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
           {/* Experience */}
           {experience.workExperiences.filter((w: any) => w.enabled).length > 0 && (
             <View style={{ marginBottom: 12 }}>
-              <View minPresenceAhead={90}>
-                <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>EXPERIENCE</Text>
-                <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
-              </View>
               {experience.workExperiences.filter((w: any) => w.enabled).map((w: any, i: number) => (
                 <View key={i} style={{ marginBottom: 12 }} wrap={false}>
+                  {i === 0 && (
+                    <View style={{ marginBottom: 8 }}>
+                      <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>EXPERIENCE</Text>
+                      <View style={{ height: 1, backgroundColor: '#333333', width: '100%' }} />
+                    </View>
+                  )}
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
                     <Text style={{ fontSize: 12, fontFamily: pdfFontFamilyBold, color: '#111827', flex: 1, marginRight: 8 }}>{w.companyName}</Text>
                     <Text style={{ fontSize: 11, color: '#111827', fontFamily: pdfFontFamilyBold, textAlign: 'right' }}>
@@ -487,28 +505,26 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
           )}
 
           {/* Education */}
-          {(education.higherEducation.some(edu => edu.enabled) || education.preUniversityEnabled || education.sslcEnabled) && (
-            <View style={{ marginBottom: 12 }}>
-              <View minPresenceAhead={70}>
-                <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>EDUCATION</Text>
-                <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
-              </View>
+          {(() => {
+            const hasHigherEd = education.higherEducation.some(edu => edu.enabled);
+            const hasPreUni = education.preUniversityEnabled;
+            const hasSSLC = education.sslcEnabled;
+            if (!hasHigherEd && !hasPreUni && !hasSSLC) return null;
 
-              {education.higherEducation.some(edu => edu.enabled) && (
+            const eduHeading = (
+              <View style={{ marginBottom: 8 }}>
+                <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>EDUCATION</Text>
+                <View style={{ height: 1, backgroundColor: '#333333', width: '100%' }} />
+              </View>
+            );
+
+            return (
+              <View style={{ marginBottom: 12 }}>
+              {hasHigherEd && (
                 <>
-                  {[...education.higherEducation].filter((edu: any) => edu.enabled).sort((a: any, b: any) => {
-                    const parseYearKey = (val: string) => {
-                      if (!val) return -Infinity;
-                      const parts = val.split('-');
-                      const y = parseInt(parts[0], 10) || 0;
-                      const m = parseInt(parts[1], 10) || 0;
-                      return y * 100 + m;
-                    };
-                    const aKey = parseYearKey(a.endYear || a.startYear || '');
-                    const bKey = parseYearKey(b.endYear || b.startYear || '');
-                    return aKey - bKey;
-                  }).map((edu: any, idx: number) => (
+                  {[...education.higherEducation].filter((edu: any) => edu.enabled).reverse().map((edu: any, idx: number) => (
                     <View key={idx} style={{ marginBottom: 8 }} wrap={false}>
+                      {idx === 0 && eduHeading}
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{edu.instituteName}</Text>
                         <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>
@@ -529,8 +545,9 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
               )}
 
               {/* Pre University */}
-              {education.preUniversityEnabled && (
+              {hasPreUni && (
                 <View style={{ marginBottom: 8 }} wrap={false}>
+                  {!hasHigherEd && eduHeading}
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
                       <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
@@ -547,8 +564,9 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
               )}
 
               {/* SSLC */}
-              {education.sslcEnabled && (
+              {hasSSLC && (
                 <View style={{ marginBottom: 8 }} wrap={false}>
+                  {!hasHigherEd && !hasPreUni && eduHeading}
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{education.sslc.instituteName || 'SSLC'}</Text>
                       <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.sslc)}</Text>
@@ -563,18 +581,25 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
                   ) : null}
                 </View>
               )}
-            </View>
-          )}
+              </View>
+            );
+          })()}
 
           {/* Projects */}
           {projects && projects.filter((p: any) => p.enabled).length > 0 && (
             <View style={{ marginBottom: 12 }}>
-              <View minPresenceAhead={100}>
-                <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>PROJECTS</Text>
-                <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
-              </View>
               {projects.filter((p: any) => p.enabled).map((proj: any, idx: number) => (
                 <View key={idx} style={{ marginBottom: 12 }} wrap={false}>
+                  {/* Heading lives inside the first project's own non-wrapping block so it can
+                      only ever move to the next page together with that project — a heading in
+                      its own sibling View can get separated if the first item turns out taller
+                      than the minPresenceAhead guess. */}
+                  {idx === 0 && (
+                    <View style={{ marginBottom: 8 }}>
+                      <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>PROJECTS</Text>
+                      <View style={{ height: 1, backgroundColor: '#333333', width: '100%' }} />
+                    </View>
+                  )}
                   {/* Title + dates */}
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 3 }}>
                     <Text style={{ fontSize: 12, fontFamily: pdfFontFamilyBold, color: '#111827', flex: 1, marginRight: 8 }}>{proj.projectTitle}</Text>
@@ -609,12 +634,14 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
           {/* Certifications */}
           {certifications.filter((c: any) => c.enabled && c.certificateTitle && c.certificateTitle.trim()).length > 0 && (
             <View style={{ marginBottom: 12 }}>
-              <View minPresenceAhead={60}>
-                <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>TECHNICAL CERTIFICATIONS</Text>
-                <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
-              </View>
               {certifications.filter((c: any) => c.enabled && c.certificateTitle && c.certificateTitle.trim()).map((cert: any, idx: number) => (
                 <View key={idx} style={{ marginBottom: 8 }} wrap={false}>
+                  {idx === 0 && (
+                    <View style={{ marginBottom: 8 }}>
+                      <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>TECHNICAL CERTIFICATIONS</Text>
+                      <View style={{ height: 1, backgroundColor: '#333333', width: '100%' }} />
+                    </View>
+                  )}
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{cert.certificateTitle}</Text>
                     <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>{cert.date}</Text>

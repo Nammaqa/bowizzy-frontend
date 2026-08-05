@@ -169,7 +169,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
           {role && <Text style={{ ...styles.role, fontFamily: pdfFontFamily, color: primaryColor }}>{role}</Text>}
 
           <View style={{ marginTop: 12 }}>
-            <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, letterSpacing: 1, color: primaryColor, marginBottom: 6 }}>PERSONAL DETAILS</Text>
+            <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, letterSpacing: 1, color: primaryColor, marginBottom: 6 }}>PERSONAL DETAILS</Text>
             <View style={{ height: 1, backgroundColor: primaryColor, marginBottom: 8 }} />
             {personal.email && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconEmail /><Text style={{ fontSize: 9, color: '#000' }}>{personal.email}</Text></View>}
             {personal.mobileNumber && <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}><IconPhone /><Text style={{ fontSize: 9, color: '#000' }}>{personal.mobileNumber}</Text></View>}
@@ -227,7 +227,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
                 {experience.workExperiences.filter((w: any) => w.enabled).map((w: any, i: number) => (
                   <View key={i} style={{ marginBottom: 10 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, flex: 1, paddingRight: 16 }}>{w.companyName}</Text>
+                      <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, flex: 1, paddingRight: 16 }}>{w.companyName}</Text>
                       <Text style={{ fontSize: 10, color: '#000', flexShrink: 0, textAlign: 'right' }}>{formatMonthYear(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYear(w.endDate)}</Text>
                     </View>
                     <Text style={{ marginTop: 6, fontSize: 9, color: '#000' }}>{w.jobTitle}{w.location ? ` — ${w.location}` : ''}</Text>
@@ -248,7 +248,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
                 {projects.filter((p: any) => p.enabled).map((p: any, i: number) => (
                   <View key={i} style={{ marginBottom: 10 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, flex: 1, paddingRight: 16 }}>{p.projectTitle}</Text>
+                      <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, flex: 1, paddingRight: 16 }}>{p.projectTitle}</Text>
                       <Text style={{ fontSize: 10, color: '#000', flexShrink: 0, textAlign: 'right' }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</Text>
                     </View>
                     {p.description && <View style={{ marginTop: 6 }}>{renderBulletedParagraph(p.description)}</View>}
@@ -274,7 +274,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
                 {education.higherEducation.filter(edu => edu.enabled).reverse().map((edu: any, i: number) => (
                   <View key={i} style={{ marginBottom: 10 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, flex: 1, paddingRight: 16 }}>{edu.instituteName}</Text>
+                      <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, flex: 1, paddingRight: 16 }}>{edu.instituteName}</Text>
                       <Text style={{ fontSize: 9, color: '#000', flexShrink: 0, textAlign: 'right' }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}</Text>
                     </View>
                     <Text style={{ marginTop: 4, fontSize: 9, color: '#000' }}>
@@ -291,7 +291,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
                 {education.preUniversityEnabled && (
                   <View style={{ marginBottom: 10 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, flex: 1, paddingRight: 16 }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
+                      <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, flex: 1, paddingRight: 16 }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
                       <Text style={{ fontSize: 9, color: '#000', flexShrink: 0, textAlign: 'right' }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
                     </View>
                     <Text style={{ marginTop: 4, fontSize: 9, color: '#000' }}>
@@ -309,7 +309,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
                 {education.sslcEnabled && (
                   <View style={{ marginBottom: 10 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, flex: 1, paddingRight: 16 }}>{education.sslc.instituteName || 'SSLC'}</Text>
+                      <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, flex: 1, paddingRight: 16 }}>{education.sslc.instituteName || 'SSLC'}</Text>
                       <Text style={{ fontSize: 9, color: '#000', flexShrink: 0, textAlign: 'right' }}>{formatResumeEducationDateRange(education.sslc)}</Text>
                     </View>
                     <Text style={{ marginTop: 4, fontSize: 9, color: '#000' }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</Text>

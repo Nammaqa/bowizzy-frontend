@@ -26,6 +26,7 @@ import template18Img from "@/templates/preview/imgs/template18.png";
 import template19Img from "@/templates/preview/imgs/template19.png";
 import template20Img from "@/templates/preview/imgs/template20.png";
 import ResumePreviewModal from "./components/ui/ResumePreviewModal";
+import PdfSplitPreviewModal from "./components/ui/PdfSplitPreviewModal";
 import PageBreakMarkers from "./components/PageBreakMarkers";
 import { usePageMarkers } from "@/hooks/usePageMarkers";
 import { getPersonalDetailsByUserId } from "@/services/personalService";
@@ -313,6 +314,7 @@ export const ResumeEditor: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [showSplitPreview, setShowSplitPreview] = useState(false);
   const [loading, setLoading] = useState(true);
   const [fetchTimedOut, setFetchTimedOut] = useState(false);
   const [fontName, setFontName] = useState("Arial (Recommended)");
@@ -978,7 +980,7 @@ export const ResumeEditor: React.FC = () => {
                   <span className="font-semibold">Avoid refreshing while you edit.</span>{" "}
                   Reloading this page resets your section toggles, font and
                   colour back to the defaults.
-                  stay safe. Fill all the profile data to ensure consistent and smooth resume generation
+                  stay safe. Fill all the profile data to ensure consistent and smooth resume generation. Adjust spacing as needed and verify the resume layout in Preview.
                 </p>
               </div>
             </div>
@@ -1159,7 +1161,7 @@ export const ResumeEditor: React.FC = () => {
                     <Lock className="w-4 h-4 text-gray-500" />
                     <span className="text-xs text-gray-500 font-medium">Preview</span>
                   </div>
-                  <div>
+                  <div className="flex items-center gap-2">
                     {totalPages > 1 && (
                       <div className="bg-white px-3 py-1 rounded-full shadow-sm text-xs font-medium text-gray-600 border border-gray-200">
                         {paginatePreview ? (
@@ -1173,6 +1175,14 @@ export const ResumeEditor: React.FC = () => {
                         )}
                       </div>
                     )}
+                    <button
+                      type="button"
+                      onClick={() => setShowSplitPreview(true)}
+                      disabled={!selectedTemplate?.pdfComponent}
+                      className="px-3 py-1 rounded-full shadow-sm text-xs font-medium text-white bg-orange-500 hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Open Preview
+                    </button>
                   </div>
                 </div>
 
@@ -1236,6 +1246,15 @@ export const ResumeEditor: React.FC = () => {
         onPreviewComplete={() => setPreviewLoading(false)}
         onSaveAndExit={handleSaveAndExit}
         onSaveAndDownloadComplete={() => navigate("/ResumeBuilder")}
+        primaryColor={primaryColor}
+        fontFamily={fontFamily}
+      />
+
+      <PdfSplitPreviewModal
+        isOpen={showSplitPreview}
+        onClose={() => setShowSplitPreview(false)}
+        resumeData={resumeData}
+        PDFComponent={selectedTemplate?.pdfComponent}
         primaryColor={primaryColor}
         fontFamily={fontFamily}
       />
