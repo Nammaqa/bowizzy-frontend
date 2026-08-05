@@ -4,6 +4,7 @@ import { Document, Page, Text, View, StyleSheet, Svg, Path, Image } from "@react
 import type { ResumeData } from "@/types/resume";
 import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 import logo from '@/assets/bowizzy.png';
+import { ContinuationSpacer } from '@/templates/utils/pdfContinuationSpacer';
 
 // Computed once at module load (not per render/page) — sparse diagonal grid so the
 // watermark still tiles visually with far fewer <Image> nodes for react-pdf to paint.
@@ -440,6 +441,8 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+
+        <ContinuationSpacer />
 
         {/* Tiled Watermark Pattern — Diagonal Staggered */}
         {WATERMARK_POSITIONS.map((pos, i) => (
