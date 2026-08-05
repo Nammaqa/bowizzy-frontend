@@ -454,9 +454,11 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
 
           {/* Career Objective */}
           {personal.aboutCareerObjective && personal.aboutCareerObjective.trim() !== '' && (
-            <View style={{ marginBottom: 12 }} minPresenceAhead={60}>
-              <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>CAREER OBJECTIVE</Text>
-              <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 6 }} />
+            <View style={{ marginBottom: 12 }}>
+              <View minPresenceAhead={80} wrap={false}>
+                <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>CAREER OBJECTIVE</Text>
+                <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 6 }} />
+              </View>
               {renderBulletedParagraph(personal.aboutCareerObjective, { fontSize: 11, lineHeight: 1.6 })}
             </View>
           )}
