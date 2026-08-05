@@ -28,23 +28,7 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
 }) => {
   const { personal, education, experience, projects, skillsLinks, certifications } = data;
   const sortedHigherEducation = React.useMemo(() => {
-    const parseYearKey = (val: string) => {
-      if (!val) return -Infinity;
-      const parts = val.split('-');
-      const y = parseInt(parts[0], 10) || 0;
-      const m = parseInt(parts[1], 10) || 0;
-      return y * 100 + m;
-    };
-
-    return [...(education.higherEducation || [])].filter(edu => edu.enabled).sort((a, b) => {
-      if (a.currentlyPursuing && !b.currentlyPursuing) return -1;
-      if (!a.currentlyPursuing && b.currentlyPursuing) return 1;
-
-      const aKey = parseYearKey(a.endYear || a.startYear || '');
-      const bKey = parseYearKey(b.endYear || b.startYear || '');
-
-      return aKey - bKey;
-    });
+    return [...(education.higherEducation || [])].filter(edu => edu.enabled).reverse();
   }, [education.higherEducation]);
   const getYear = (s?: string) => (s ? s.split('-')[0] : '');
 

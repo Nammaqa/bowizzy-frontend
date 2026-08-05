@@ -500,18 +500,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
 
               {education.higherEducation.some(edu => edu.enabled) && (
                 <>
-                  {[...education.higherEducation].filter((edu: any) => edu.enabled).sort((a: any, b: any) => {
-                    const parseYearKey = (val: string) => {
-                      if (!val) return -Infinity;
-                      const parts = val.split('-');
-                      const y = parseInt(parts[0], 10) || 0;
-                      const m = parseInt(parts[1], 10) || 0;
-                      return y * 100 + m;
-                    };
-                    const aKey = parseYearKey(a.endYear || a.startYear || '');
-                    const bKey = parseYearKey(b.endYear || b.startYear || '');
-                    return aKey - bKey;
-                  }).map((edu: any, idx: number) => (
+                  {[...education.higherEducation].filter((edu: any) => edu.enabled).reverse().map((edu: any, idx: number) => (
                     <View key={idx} style={{ marginBottom: 8 }} wrap={false}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{edu.instituteName}</Text>
