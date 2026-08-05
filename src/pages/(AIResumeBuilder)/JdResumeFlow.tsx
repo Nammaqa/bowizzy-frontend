@@ -48,8 +48,9 @@ const RESULT_FORMATS: { label: string; value: string }[] = [
   { label: "Percentage", value: "percentage" },
 ];
 
-// School-level records have no degree or field of study — those only apply to
-// higher education, so the inputs are hidden for these types.
+// School-level records have no degree, field of study or university, and only
+// their completion year is meaningful — all of that only applies to higher
+// education, so those inputs are hidden for these types.
 const SCHOOL_EDUCATION_TYPES = ["sslc", "puc"];
 
 const isSchoolEducation = (educationType?: string) =>
@@ -128,6 +129,20 @@ function mergeProjectDescriptions(projects: JdProjectItem[]): JdProjectItem[] {
   });
 }
 
+/**
+ * SSLC and PUC are attended at a school, not a university, and are listed by
+ * the year they were completed. The analyzer still guesses at those two fields,
+ * so they're dropped here — otherwise hidden values would ride along into the
+ * saved resume and show up in the rendered templates.
+ */
+function stripSchoolOnlyEducationFields(education: JdEducationItem[]): JdEducationItem[] {
+  return education.map((edu) =>
+    isSchoolEducation(edu.education_type)
+      ? { ...edu, university_name: null, start_year: null }
+      : edu
+  );
+}
+
 function normalizeJdData(raw: JdResumeData): JdResumeData {
   const rawAny = raw as any;
   const experiences: JdExperienceItem[] = Array.isArray(rawAny.work_experience)
@@ -144,7 +159,7 @@ function normalizeJdData(raw: JdResumeData): JdResumeData {
     technical_summary_generated: technicalSummary,
     work_experience: { experiences: enforceSingleCurrentExperience(experiences) },
     projects: mergeProjectDescriptions(raw.projects || []),
-    education: raw.education || [],
+    education: stripSchoolOnlyEducationFields(raw.education || []),
     skills: raw.skills || [],
     ai_skills: raw.ai_skills || [],
     certificates: raw.certificates || [],
@@ -179,8 +194,8 @@ export default function JdResumeFlow({ sessionId, token, onComplete }: JdResumeF
       if (!raw) return;
       const draft = JSON.parse(raw);
       if (draft?.data) {
-        // Older drafts may predate the single-current-experience and
-        // merged-project-description rules.
+        // Older drafts may predate the single-current-experience,
+        // merged-project-description and school-education rules.
         const experiences = draft.data?.work_experience?.experiences;
         setData({
           ...draft.data,
@@ -194,6 +209,9 @@ export default function JdResumeFlow({ sessionId, token, onComplete }: JdResumeF
             : {}),
           ...(Array.isArray(draft.data.projects)
             ? { projects: mergeProjectDescriptions(draft.data.projects) }
+            : {}),
+          ...(Array.isArray(draft.data.education)
+            ? { education: stripSchoolOnlyEducationFields(draft.data.education) }
             : {}),
         });
         setStage("review");
@@ -619,23 +637,27 @@ export default function JdResumeFlow({ sessionId, token, onComplete }: JdResumeF
                   </Field>
                 </div>
               )}
-              <Field label="University Name">
-                <input
-                  className={fieldClass}
-                  value={edu.university_name || ""}
-                  onChange={(e) => updateEducation(i, { university_name: e.target.value })}
-                />
-              </Field>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Start Year">
+              {!isSchoolEducation(edu.education_type) && (
+                <Field label="University Name">
                   <input
-                    type="month"
-                    disabled={!!edu.currently_pursuing}
                     className={fieldClass}
-                    value={edu.start_year || ""}
-                    onChange={(e) => updateEducation(i, { start_year: e.target.value })}
+                    value={edu.university_name || ""}
+                    onChange={(e) => updateEducation(i, { university_name: e.target.value })}
                   />
                 </Field>
+              )}
+              <div className="grid grid-cols-2 gap-3">
+                {!isSchoolEducation(edu.education_type) && (
+                  <Field label="Start Year">
+                    <input
+                      type="month"
+                      disabled={!!edu.currently_pursuing}
+                      className={fieldClass}
+                      value={edu.start_year || ""}
+                      onChange={(e) => updateEducation(i, { start_year: e.target.value })}
+                    />
+                  </Field>
+                )}
                 <Field label="End Year">
                   <input
                     type="month"
