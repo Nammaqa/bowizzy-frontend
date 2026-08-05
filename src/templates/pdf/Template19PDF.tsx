@@ -216,7 +216,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
                   {experience.workExperiences.filter((w: any) => w.enabled).map((w: any, i: number) => (
                     <View key={i} style={{ marginBottom: 10 }}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                        <Text style={{ fontSize: 10, fontFamily: 'Times-Bold', flexGrow: 1, flexShrink: 1, marginRight: 8 }}>{w.jobTitle}</Text>
+                        <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, flexGrow: 1, flexShrink: 1, marginRight: 8 }}>{w.jobTitle}</Text>
                         <View style={{ flexDirection: 'row', flexShrink: 0 }}>
                           {(() => {
                             const sParts = formatMonthYearParts(w.startDate);
@@ -261,7 +261,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
                     {(projects || []).filter((p: any) => p.enabled).map((p: any, i: number) => (
                       <View key={i} style={{ marginBottom: 10 }}>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                          <Text style={{ fontSize: 10, fontFamily: 'Times-Bold', flexGrow: 1, flexShrink: 1, marginRight: 8 }}>{p.projectTitle}</Text>
+                          <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, flexGrow: 1, flexShrink: 1, marginRight: 8 }}>{p.projectTitle}</Text>
                           <Text style={{ fontSize: 10, color: '#000', flexShrink: 0 }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</Text>
                         </View>
                         {renderBulletedParagraph(p.description)}
