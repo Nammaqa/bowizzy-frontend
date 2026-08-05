@@ -67,15 +67,6 @@ const formatYear = (s?: string) => {
   return y ? y[1] : str;
 };
 
-const educationPriority = (degree?: string) => {
-  if (!degree) return 99;
-  const d = degree.toLowerCase();
-  if (/(bachelor|b\.?e|btech|b\.tech|be|bsc|ba)/.test(d)) return 1;
-  if (/(puc|higher secondary|12th|intermediate)/.test(d)) return 2;
-  if (/(ssc|sslc|10th|matric)/.test(d)) return 3;
-  return 4;
-};
-
 interface Template13PDFProps {
   data: ResumeData;
   primaryColor?: string;
@@ -243,7 +234,7 @@ const Template13PDF: React.FC<Template13PDFProps> = ({ data, primaryColor = '#11
             <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginTop: 0, marginBottom: 6 }} />
           </View>
           <View>
-            {education.higherEducation.filter(edu => edu.enabled).sort((a: any, b: any) => educationPriority(a.degree) - educationPriority(b.degree)).map((edu: any, i: number) => (
+            {education.higherEducation.filter(edu => edu.enabled).reverse().map((edu: any, i: number) => (
               <View key={`he-${i}`} style={{ marginBottom: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>{edu.instituteName}</Text>
