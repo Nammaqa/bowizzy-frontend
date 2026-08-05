@@ -5,6 +5,7 @@ import type { ResumeData } from '@/types/resume';
 import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 import { renderPdfRichBullets } from '@/templates/utils/richTextPdf';
 import { ContinuationSpacer } from '@/templates/utils/pdfContinuationSpacer';
+import { trimTrailingHtml } from '@/templates/utils/richTextHtml';
 
 const styles = StyleSheet.create({
   page: { paddingTop: 28, paddingBottom: 24, paddingLeft: 36, paddingRight: 36, fontSize: 10 },
@@ -185,7 +186,7 @@ const Template13PDF: React.FC<Template13PDFProps> = ({ data, primaryColor = '#11
           <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginTop: 0, marginBottom: 0 }} />
         </View>
         <View style={{ marginTop: 0 }}>
-          {personal.aboutCareerObjective ? <Text style={[styles.objective, { marginTop: 0, marginBottom: 0, color: '#2b2a2a', textAlign: 'justify' }]}>{htmlToPlainText(personal.aboutCareerObjective)}</Text> : null}
+          {personal.aboutCareerObjective ? <Text style={[styles.objective, { marginTop: 0, marginBottom: 0, color: '#2b2a2a', textAlign: 'justify' }]}>{htmlToPlainText(trimTrailingHtml(personal.aboutCareerObjective))}</Text> : null}
         </View>
 
         {experience.workExperiences.some((exp: any) => exp.enabled) && (<>

@@ -3,7 +3,7 @@ import DOMPurify from 'dompurify';
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
 import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
-import { parseInlineSegments, splitIntoRichTextBlocks } from '@/templates/utils/richTextHtml';
+import { parseInlineSegments, splitIntoRichTextBlocks, trimTrailingHtml } from '@/templates/utils/richTextHtml';
 import { ContinuationSpacer } from '@/templates/utils/pdfContinuationSpacer';
 
 const styles = StyleSheet.create({
@@ -186,7 +186,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
                 <Text style={{ fontFamily: pdfFontFamilyBold, fontSize: 10, marginBottom: 6, color: primaryColor }}>CAREER OBJECTIVE</Text>
                 <View style={{ height: 1, backgroundColor: primaryColor, width: '100%' }} />
               </View>
-              <Text style={{ marginTop: 12, color: '#444', textAlign: 'justify' }}>{htmlToPlainText(personal.aboutCareerObjective).trim()}</Text>
+              <Text style={{ marginTop: 12, color: '#444', textAlign: 'justify' }}>{htmlToPlainText(trimTrailingHtml(personal.aboutCareerObjective))}</Text>
             </>
           )}
 

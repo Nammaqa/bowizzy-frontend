@@ -5,6 +5,7 @@ import type { ResumeData } from '@/types/resume';
 import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 import { renderPdfRichBullets } from '@/templates/utils/richTextPdf';
 import { ContinuationSpacer } from '@/templates/utils/pdfContinuationSpacer';
+import { trimTrailingHtml } from '@/templates/utils/richTextHtml';
 
 const styles = StyleSheet.create({
   page: { paddingTop: 28, paddingBottom: 24, paddingLeft: 36, paddingRight: 36, fontSize: 10 },
@@ -270,7 +271,7 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
         </View>
         {personal.aboutCareerObjective ? (
           <View style={{ marginTop: 6 }}>
-            {renderRichText(personal.aboutCareerObjective, { fontSize: 10, color: '#444', textAlign: 'justify' })}
+            {renderRichText(trimTrailingHtml(personal.aboutCareerObjective), { fontSize: 10, color: '#444', textAlign: 'justify' })}
           </View>
         ) : null}
 

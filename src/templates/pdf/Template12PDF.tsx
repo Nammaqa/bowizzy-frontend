@@ -5,6 +5,7 @@ import type { ResumeData } from '@/types/resume';
 import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 import { renderPdfRichBullets } from '@/templates/utils/richTextPdf';
 import { ContinuationSpacer } from '@/templates/utils/pdfContinuationSpacer';
+import { trimTrailingHtml } from '@/templates/utils/richTextHtml';
 
 const styles = StyleSheet.create({
   page: {
@@ -146,7 +147,7 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
                 <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>CAREER OBJECTIVE</Text>
               </View>
               <View style={styles.rightCol}>
-                <Text style={{ color: '#2b2a2a', fontSize: 10, lineHeight: 1.3, textAlign: 'justify' }}>{htmlToPlainText(personal.aboutCareerObjective)}</Text>
+                <Text style={{ color: '#2b2a2a', fontSize: 10, lineHeight: 1.3, textAlign: 'justify' }}>{htmlToPlainText(trimTrailingHtml(personal.aboutCareerObjective))}</Text>
               </View>
             </View>
             {experience.workExperiences.some((exp: any) => exp.enabled) && <View style={{ height: 1, backgroundColor: '#aaa', width: '100%', marginVertical: 12 }} />}
