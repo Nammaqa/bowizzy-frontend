@@ -276,14 +276,34 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
     ));
 
   /** Break rich text into bullet items (from <li>) or plain lines, keeping inline tags. */
-  const splitIntoBlocks = (sanitized: string): { html: string; bullet: boolean }[] => {
-    const liRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
-    const items: { html: string; bullet: boolean }[] = [];
-    let match: RegExpExecArray | null;
+  const splitIntoBlocks = (sanitized: string): { html: string; bullet: boolean; ordered?: boolean }[] => {
+    const items: { html: string; bullet: boolean; ordered?: boolean }[] = [];
 
-    while ((match = liRegex.exec(sanitized)) !== null) {
-      const inner = stripNonInlineTags(match[1] || '').trim();
-      if (stripTags(inner)) items.push({ html: inner, bullet: true });
+    // Scan each <ul>/<ol> container so ordered lists (numbered in the
+    // editor) can be told apart from unordered ones — a flat <li> scan
+    // over the whole string loses that distinction and everything ends up
+    // rendered as bullets.
+    const listRegex = /<(ul|ol)[^>]*>([\s\S]*?)<\/\1>/gi;
+    let listMatch: RegExpExecArray | null;
+    while ((listMatch = listRegex.exec(sanitized)) !== null) {
+      const ordered = listMatch[1].toLowerCase() === 'ol';
+      const liRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
+      let liMatch: RegExpExecArray | null;
+      while ((liMatch = liRegex.exec(listMatch[2])) !== null) {
+        const inner = stripNonInlineTags(liMatch[1] || '').trim();
+        if (stripTags(inner)) items.push({ html: inner, bullet: true, ordered });
+      }
+    }
+
+    if (items.length === 0) {
+      // Bare <li> items with no <ul>/<ol> wrapper (e.g. HTML stripped by a
+      // paste) — fall back to treating them as unordered.
+      const liRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
+      let match: RegExpExecArray | null;
+      while ((match = liRegex.exec(sanitized)) !== null) {
+        const inner = stripNonInlineTags(match[1] || '').trim();
+        if (stripTags(inner)) items.push({ html: inner, bullet: true, ordered: false });
+      }
     }
 
     if (items.length > 0) return items;
@@ -351,7 +371,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
               key={idx}
               style={{ flexDirection: 'row', marginTop: idx > 0 ? 4 : 0, alignItems: 'flex-start', width: '100%' }}
             >
-              <Text style={{ width: 10, color, fontSize, flexShrink: 0 }}>•</Text>
+              <Text style={{ width: 16, color, fontSize, flexShrink: 0 }}>{block.ordered ? `${idx + 1}.` : '•'}</Text>
               <Text style={{ flex: 1, color, fontSize, lineHeight, textAlign: 'justify', fontFamily: pdfFontFamily }}>
                 {renderInlineRuns(block.html)}
               </Text>
@@ -361,15 +381,36 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
       );
     }
 
+    // Plain prose: fold every line's segments into one flat run list instead
+    // of stacking each line in its own View with a top margin — a separate
+    // View per line adds its own margin on top of the paragraph's
+    // lineHeight, which reads as double-spaced text. The '\n' is spliced
+    // into the first run's own text (not inserted as a separate sibling
+    // node) so react-pdf treats it as a normal forced line break within one
+    // Text block.
+    const flatSegments: InlineSegment[] = [];
+    blocks.forEach((block, blockIdx) => {
+      parseInlineSegments(block.html).forEach((segment, segIdx) => {
+        const prefix = blockIdx > 0 && segIdx === 0 ? '\n' : '';
+        flatSegments.push({ ...segment, text: prefix + segment.text });
+      });
+    });
+
     return (
       <View style={{ marginTop: 6, width: '100%' }}>
-        {blocks.map((block, idx) => (
-          <View key={idx} style={{ marginTop: idx > 0 ? 6 : 0, width: '100%' }}>
-            <Text style={{ color, fontSize, lineHeight, textAlign: 'justify', fontFamily: pdfFontFamily }}>
-              {renderInlineRuns(block.html)}
+        <Text style={{ color, fontSize, lineHeight, textAlign: 'justify', fontFamily: pdfFontFamily }}>
+          {flatSegments.map((segment, idx) => (
+            <Text
+              key={idx}
+              style={{
+                fontFamily: getPdfFontVariant(segment.bold, segment.italic),
+                ...(segment.underline ? { textDecoration: 'underline' as const } : {}),
+              }}
+            >
+              {segment.text}
             </Text>
-          </View>
-        ))}
+          ))}
+        </Text>
       </View>
     );
   };
