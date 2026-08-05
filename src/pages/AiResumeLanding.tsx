@@ -149,9 +149,10 @@ export default function AiResumeLanding() {
   const isLoading = loadingMode !== null;
 
   const goToBuilder = (mode: "jd" | "non-jd") => {
-    // JD mode is passed via navigation state — the builder applies it to the
-    // active session on arrival.
-    navigate("/ai-resume-builder/chat", mode === "jd" ? { state: { mode } } : undefined);
+    // The mode is passed via navigation state — on arrival the builder opens a
+    // fresh chat in that mode and shows its guidelines pop-up, rather than
+    // resuming whichever session was last active.
+    navigate("/ai-resume-builder/chat", { state: { mode } });
   };
 
   const handleStartBuilding = async (mode: "jd" | "non-jd" = "non-jd") => {
