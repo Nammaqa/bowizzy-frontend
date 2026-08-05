@@ -7,6 +7,7 @@ interface RichTextEditorProps {
   placeholder?: string;
   rows?: number;
   hideListControls?: boolean;
+  preventEnter?: boolean;
 }
 
 export default function RichTextEditor({
@@ -15,6 +16,7 @@ export default function RichTextEditor({
   placeholder = "Enter description...",
   rows = 6,
   hideListControls = false,
+  preventEnter = false,
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const [, setActiveAction] = useState<string | null>(null);
@@ -142,6 +144,12 @@ export default function RichTextEditor({
     });
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (preventEnter && e.key === 'Enter') {
+      e.preventDefault();
+    }
+  };
+
   const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
     e.preventDefault();
 
@@ -203,6 +211,7 @@ export default function RichTextEditor({
         ref={editorRef}
         onInput={onInput}
         onPaste={handlePaste}
+        onKeyDown={handleKeyDown}
         contentEditable
         suppressContentEditableWarning
         role="textbox"
