@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from "react";
-import PreviewModalTest from "./__PreviewModalTest";
-import PreviewCanvasSimple from "./__PreviewCanvasSimple";
 import {
   createBrowserRouter,
   RouterProvider,
@@ -425,14 +423,6 @@ function App() {
         }
         return <Navigate to="/login" replace />;
       },
-    },
-    {
-      path: "__previewmodaltest",
-      Component: PreviewModalTest,
-    },
-    {
-      path: "__previewcanvassimple",
-      Component: PreviewCanvasSimple,
     },
     {
       path: "login",
