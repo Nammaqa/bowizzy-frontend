@@ -21,6 +21,7 @@ import { usePageMarkers } from "@/hooks/usePageMarkers";
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { uploadToCloudinary } from "@/utils/uploadToCloudinary";
+import PdfCanvasViewer from "./PdfCanvasViewer";
 import api from "@/api";
 import { getExperienceSummary } from "@/services/experienceSummaryService";
 
@@ -732,7 +733,6 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
   }, [isOpen, userId, token]);
 
   const previewContentRef = useRef<HTMLDivElement>(null);
-  const pdfPreviewScrollRef = useRef<HTMLDivElement>(null);
   const [modalPaginatePageCount, setModalPaginatePageCount] = useState<number | null>(null);
   const [modalPaginateCurrentPage, setModalPaginateCurrentPage] = useState<number>(1);
   const modalPaginatedRef = useRef<{ goTo: (i: number) => void; next: () => void; prev: () => void } | null>(null);
@@ -1020,15 +1020,6 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
     URL.revokeObjectURL(url);
   };
 
-  const scrollPdfPreview = (direction: "up" | "down") => {
-    const container = pdfPreviewScrollRef.current;
-    if (!container) return;
-    container.scrollBy({
-      top: direction === "down" ? container.clientHeight * 0.8 : -container.clientHeight * 0.8,
-      behavior: "smooth",
-    });
-  };
-
   const handleSaveAndDownloadPdf = async (paymentAlreadyCompleted = false) => {
     const finalName = resumeName.trim();
     if (!finalName) return;
@@ -1284,7 +1275,7 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
           <div className="fixed inset-0 bg-black/60 z-[60]" onClick={() => setShowDownloadDialog(false)} />
           <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-[95%] h-[95vh] max-w-7xl p-8 relative flex flex-col">
-              {!pdfUrl ? (
+              {!pdfBlob ? (
                 <div className="overflow-y-auto flex-1">
                   <h3 className="text-xl font-semibold text-gray-900 mt-2 mb-6 text-center">Your Resume</h3>
                   <p className="text-sm text-gray-600 mb-4 text-center">Pages: <strong>{modalPaginatePageCount ?? totalPages}</strong></p>
@@ -1327,61 +1318,15 @@ const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => scrollPdfPreview("up")}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition hover:bg-gray-50"
-                        aria-label="Scroll resume up"
-                      >
-                        <ChevronUp className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => scrollPdfPreview("down")}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition hover:bg-gray-50"
-                        aria-label="Scroll resume down"
-                      >
-                        <ChevronDown className="h-4 w-4" />
-                      </button>
-                    </div>
                   </div>
 
-                  <div
-                    ref={pdfPreviewScrollRef}
-                    className="relative flex-1 min-h-0 overflow-auto rounded-lg bg-[#262626] mb-4"
-                  >
-                    <div className="flex justify-center px-6 py-4 w-fit min-w-full">
-                      <div className="relative shadow-xl">
-                        {DisplayComponent && (
-                          <div className="pointer-events-none select-none">
-                            <DisplayComponent
-                              data={resumeData}
-                              supportsPhoto={template?.supportsPhoto ?? false}
-                              primaryColor={primaryColor}
-                              fontFamily={fontFamily}
-                            />
-                          </div>
-                        )}
-                        <div
-                          className="absolute inset-0 z-10 cursor-default"
-                          aria-hidden="true"
-                          onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                          }}
-                          onMouseDown={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                          }}
-                          onContextMenu={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  {/* Renders the actual generated PDF (same blob used for download) onto plain
+                      <canvas> elements — no native viewer toolbar/thumbnail rail exists to hide,
+                      and right-click is a real, blockable DOM event on a canvas. */}
+                  <PdfCanvasViewer
+                    blob={pdfBlob}
+                    className="relative flex-1 min-h-0 overflow-y-auto rounded-lg bg-[#262626] mb-4 p-4"
+                  />
 
                   {/* Locked template: Pay to unlock section */}
                   {isTemplateLocked && !resumeUnlocked && (
