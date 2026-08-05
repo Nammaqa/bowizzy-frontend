@@ -96,13 +96,26 @@ export function splitIntoRichTextBlocks(sanitized: string): RichTextBlock[] {
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/(p|div|h[1-6])>/gi, '\n');
 
-  return stripNonInlineTags(withBreaks)
+  const lines = stripNonInlineTags(withBreaks)
     .split('\n')
     .map((line) => line.trim())
     // Strip any bullet character the user already typed by hand (or that an
     // AI-enhanced summary came pre-formatted with), so callers that force a
     // bullet marker on every line don't end up drawing two.
-    .map((line) => line.replace(/^[•◦▪●\-*]\s*/, ''))
-    .filter((line) => stripTags(line))
-    .map((html) => ({ html, bullet: false }));
+    .map((line) => line.replace(/^[•◦▪●\-*]\s*/, ''));
+
+  // Drop only leading/trailing blank lines (editor artifacts, e.g. the
+  // placeholder empty line an untouched field starts with) — a blank line
+  // in the middle is a paragraph break the user deliberately typed by
+  // pressing Enter twice, and should render as visible spacing.
+  let start = 0;
+  let end = lines.length - 1;
+  while (start <= end && !stripTags(lines[start])) start++;
+  while (end >= start && !stripTags(lines[end])) end--;
+
+  return lines
+    .slice(start, end + 1)
+    // A block with no text would collapse to zero height when rendered —
+    // give it a single space so the blank line still takes up a line.
+    .map((line) => ({ html: stripTags(line) ? line : '&nbsp;', bullet: false }));
 }
