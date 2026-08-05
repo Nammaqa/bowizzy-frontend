@@ -980,7 +980,7 @@ export const ResumeEditor: React.FC = () => {
                   <span className="font-semibold">Avoid refreshing while you edit.</span>{" "}
                   Reloading this page resets your section toggles, font and
                   colour back to the defaults.
-                  stay safe. Fill all the profile data to ensure consistent and smooth resume generation
+                  stay safe. Fill all the profile data to ensure consistent and smooth resume generation. Adjust spacing as needed and verify the resume layout in Preview.
                 </p>
               </div>
             </div>
