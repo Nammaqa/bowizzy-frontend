@@ -6,6 +6,8 @@ interface RichTextEditorProps {
   onChange: (value: string) => void;
   placeholder?: string;
   rows?: number;
+  hideListControls?: boolean;
+  preventEnter?: boolean;
 }
 
 export default function RichTextEditor({
@@ -13,6 +15,8 @@ export default function RichTextEditor({
   onChange,
   placeholder = "Enter description...",
   rows = 6,
+  hideListControls = false,
+  preventEnter = false,
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const [, setActiveAction] = useState<string | null>(null);
@@ -140,6 +144,12 @@ export default function RichTextEditor({
     });
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (preventEnter && e.key === 'Enter') {
+      e.preventDefault();
+    }
+  };
+
   const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
     e.preventDefault();
 
@@ -175,28 +185,33 @@ export default function RichTextEditor({
         >
           <Bold size={18} strokeWidth={2} />
         </button>
-        <button
-          type="button"
-          onClick={handleBulletPoint}
-          title="Add bullet point"
-          className="flex items-center justify-center w-8 h-8 rounded hover:bg-gray-200 transition-colors text-gray-700 hover:text-gray-900"
-        >
-          <List size={18} strokeWidth={2} />
-        </button>
-        <button
-          type="button"
-          onClick={handleNumberedList}
-          title="Add numbered list item"
-          className="flex items-center justify-center w-8 h-8 rounded hover:bg-gray-200 transition-colors text-gray-700 hover:text-gray-900"
-        >
-          <ListOrdered size={18} strokeWidth={2} />
-        </button>
+        {!hideListControls && (
+          <>
+            <button
+              type="button"
+              onClick={handleBulletPoint}
+              title="Add bullet point"
+              className="flex items-center justify-center w-8 h-8 rounded hover:bg-gray-200 transition-colors text-gray-700 hover:text-gray-900"
+            >
+              <List size={18} strokeWidth={2} />
+            </button>
+            <button
+              type="button"
+              onClick={handleNumberedList}
+              title="Add numbered list item"
+              className="flex items-center justify-center w-8 h-8 rounded hover:bg-gray-200 transition-colors text-gray-700 hover:text-gray-900"
+            >
+              <ListOrdered size={18} strokeWidth={2} />
+            </button>
+          </>
+        )}
       </div>
 
       <div
         ref={editorRef}
         onInput={onInput}
         onPaste={handlePaste}
+        onKeyDown={handleKeyDown}
         contentEditable
         suppressContentEditableWarning
         role="textbox"

@@ -4,6 +4,8 @@ import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
 import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 import { renderPdfRichBullets } from '@/templates/utils/richTextPdf';
+import { ContinuationSpacer } from '@/templates/utils/pdfContinuationSpacer';
+import { trimTrailingHtml } from '@/templates/utils/richTextHtml';
 
 const styles = StyleSheet.create({
   page: { padding: 24, fontSize: 10 },
@@ -156,6 +158,7 @@ const Template18PDF: React.FC<Template18PDFProps> = ({ data, primaryColor = '#11
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+        <ContinuationSpacer />
         <View style={styles.header}>
           <Text style={{ ...styles.name, fontFamily: pdfFontFamilyBold, color: primaryColor }}>{personal.firstName} {(personal.middleName || '')} {personal.lastName}</Text>
           {role && <Text style={{ ...styles.role, fontFamily: pdfFontFamily, color: primaryColor }}>{role}</Text>}
@@ -166,7 +169,7 @@ const Template18PDF: React.FC<Template18PDFProps> = ({ data, primaryColor = '#11
           <View style={styles.section}>
             <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Career Objective</Text>
             <View style={{ ...styles.divider, backgroundColor: primaryColor }} />
-            {personal.aboutCareerObjective ? <Text style={{ marginTop: 6, color: '#444', textAlign: 'justify' }}>{htmlToPlainText(personal.aboutCareerObjective).replace(/ /g, ' ').trim()}</Text> : null}
+            {personal.aboutCareerObjective ? <Text style={{ marginTop: 6, color: '#444', textAlign: 'justify' }}>{htmlToPlainText(trimTrailingHtml(personal.aboutCareerObjective))}</Text> : null}
           </View>
 
           {experience.workExperiences.some((exp: any) => exp.enabled) && (
@@ -177,7 +180,7 @@ const Template18PDF: React.FC<Template18PDFProps> = ({ data, primaryColor = '#11
                 {experience.workExperiences.filter((w: any) => w.enabled).map((w: any, i: number) => (
                   <View key={i} style={{ marginBottom: 10 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                      <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, flexGrow: 1, flexShrink: 1, marginRight: 8 }}>{w.companyName}</Text>
+                      <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, flex: 1, marginRight: 8 }}>{w.companyName}</Text>
                       <View style={{ flexDirection: 'row', flexShrink: 0 }}>
                         {(() => {
                           const sParts = formatMonthYearParts(w.startDate);
@@ -205,7 +208,7 @@ const Template18PDF: React.FC<Template18PDFProps> = ({ data, primaryColor = '#11
                       </View>
                     </View>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
-                      <Text style={{ fontSize: 10, color: '#000', flexGrow: 1, flexShrink: 1, marginRight: 8 }}>{w.jobTitle}</Text>
+                      <Text style={{ fontSize: 10, color: '#000', flex: 1, marginRight: 8 }}>{w.jobTitle}</Text>
                       <Text style={{ fontSize: 10, color: '#000', flexShrink: 0 }}>{w.location}</Text>
                     </View>
                     {w.description && renderBulletedParagraph(w.description)}
@@ -225,7 +228,7 @@ const Template18PDF: React.FC<Template18PDFProps> = ({ data, primaryColor = '#11
                   <View key={i} style={{ marginBottom: 10 }}>
                     <Text style={{ marginTop: 6, color: '#000', fontWeight: 700 }}>{edu.instituteName}{edu.universityBoard ? ` - ${edu.universityBoard}` : ''}</Text>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-                      <Text style={{ fontSize: 10, color: '#000', flexGrow: 1, flexShrink: 1, marginRight: 8 }}>{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</Text>
+                      <Text style={{ fontSize: 10, color: '#000', flex: 1, marginRight: 8 }}>{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</Text>
                       <Text style={{ fontSize: 10, color: '#000', flexShrink: 0 }}>
                         {edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}
                       </Text>
@@ -239,7 +242,7 @@ const Template18PDF: React.FC<Template18PDFProps> = ({ data, primaryColor = '#11
                   <View style={{ marginBottom: 10 }}>
                     <Text style={{ marginTop: 6, color: '#000', fontWeight: 700 }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-                      <Text style={{ fontSize: 10, color: '#000', flexGrow: 1, flexShrink: 1, marginRight: 8 }}>Pre University (12th Standard){education.preUniversity.boardType ? ` - ${education.preUniversity.boardType}` : ''}{education.preUniversity.subjectStream ? ` (${education.preUniversity.subjectStream})` : ''}</Text>
+                      <Text style={{ fontSize: 10, color: '#000', flex: 1, marginRight: 8 }}>Pre University (12th Standard){education.preUniversity.boardType ? ` - ${education.preUniversity.boardType}` : ''}{education.preUniversity.subjectStream ? ` (${education.preUniversity.subjectStream})` : ''}</Text>
                       <Text style={{ fontSize: 10, color: '#000', flexShrink: 0 }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
                     </View>
                     {education.preUniversity.resultFormat && education.preUniversity.result && (<Text style={{ fontSize: 10, color: '#444', marginTop: 4 }}>{education.preUniversity.resultFormat}: {education.preUniversity.result}</Text>)}
@@ -251,7 +254,7 @@ const Template18PDF: React.FC<Template18PDFProps> = ({ data, primaryColor = '#11
                   <View style={{ marginBottom: 10 }}>
                     <Text style={{ marginTop: 6, color: '#000', fontWeight: 700 }}>{education.sslc.instituteName || 'SSLC'}</Text>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-                      <Text style={{ fontSize: 10, color: '#000', flexGrow: 1, flexShrink: 1, marginRight: 8 }}>SSLC (10th Standard){education.sslc.boardType ? ` - ${education.sslc.boardType}` : ''}</Text>
+                      <Text style={{ fontSize: 10, color: '#000', flex: 1, marginRight: 8 }}>SSLC (10th Standard){education.sslc.boardType ? ` - ${education.sslc.boardType}` : ''}</Text>
                       <Text style={{ fontSize: 10, color: '#000', flexShrink: 0 }}>{formatResumeEducationDateRange(education.sslc)}</Text>
                     </View>
                     {education.sslc.resultFormat && education.sslc.result && (<Text style={{ fontSize: 10, color: '#444', marginTop: 4 }}>{education.sslc.resultFormat}: {education.sslc.result}</Text>)}

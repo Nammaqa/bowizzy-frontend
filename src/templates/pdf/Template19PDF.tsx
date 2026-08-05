@@ -3,7 +3,8 @@ import DOMPurify from 'dompurify';
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
 import type { ResumeData } from '@/types/resume';
 import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
-import { renderPdfRichBullets } from '@/templates/utils/richTextPdf';
+import { parseInlineSegments, splitIntoRichTextBlocks, trimTrailingHtml } from '@/templates/utils/richTextHtml';
+import { ContinuationSpacer } from '@/templates/utils/pdfContinuationSpacer';
 
 const styles = StyleSheet.create({
   page: { padding: 24, fontSize: 10 },
@@ -99,14 +100,62 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
   const pdfFontFamily = getPdfFontFamily(fontFamily);
   const pdfFontFamilyBold = getPdfFontFamilyBold(fontFamily);
 
-  const renderBulletedParagraph = (html?: string) =>
-    renderPdfRichBullets(html, {
-      fontSize: 10,
-      color: '#444',
-      marginTop: 6,
-      boldFontFamily: pdfFontFamilyBold,
-      textAlign: 'justify',
+  // Renders bullet lists as separate lines, but plain multi-line prose as a
+  // single flowing paragraph (line breaks from Enter become normal line
+  // wraps via lineHeight, not stacked blocks with their own margin) so the
+  // description reads like ordinary paragraph text instead of double-spaced
+  // lines.
+  const renderBulletedParagraph = (html?: string) => {
+    if (!html) return null;
+    const blocks = splitIntoRichTextBlocks(DOMPurify.sanitize(html));
+    if (blocks.length === 0) return null;
+
+    const renderRuns = (blockHtml: string) =>
+      parseInlineSegments(blockHtml).map((segment, idx) => (
+        <Text key={idx} style={segment.bold ? { fontFamily: pdfFontFamilyBold } : undefined}>
+          {segment.text}
+        </Text>
+      ));
+
+    if (blocks[0].bullet) {
+      return (
+        <View style={{ marginTop: 6, width: '100%' }}>
+          {blocks.map((block, idx) => (
+            <View key={idx} style={{ flexDirection: 'row', marginTop: idx > 0 ? 2 : 0, alignItems: 'flex-start', width: '100%' }}>
+              <Text style={{ width: 12, flexShrink: 0, color: '#444', fontSize: 10 }}>•</Text>
+              <Text style={{ flex: 1, color: '#444', fontSize: 10, lineHeight: 1.4, textAlign: 'justify' }}>{renderRuns(block.html)}</Text>
+            </View>
+          ))}
+        </View>
+      );
+    }
+
+    // Fold every line's segments into one flat run list, splicing the '\n'
+    // into the first run's own text instead of inserting it as a separate
+    // sibling node — react-pdf pads extra leading around bare text nodes
+    // sitting next to nested <Text> runs, which was inflating the gap
+    // between lines well past the paragraph's lineHeight.
+    const flatRuns: { text: string; bold: boolean }[] = [];
+    blocks.forEach((block, blockIdx) => {
+      const segments = parseInlineSegments(block.html);
+      segments.forEach((segment, segIdx) => {
+        const prefix = blockIdx > 0 && segIdx === 0 ? '\n' : '';
+        flatRuns.push({ text: prefix + segment.text, bold: segment.bold });
+      });
     });
+
+    return (
+      <View style={{ marginTop: 6, width: '100%' }}>
+        <Text style={{ color: '#444', fontSize: 10, lineHeight: 1.4, textAlign: 'justify' }}>
+          {flatRuns.map((run, idx) => (
+            <Text key={idx} style={run.bold ? { fontFamily: pdfFontFamilyBold } : undefined}>
+              {run.text}
+            </Text>
+          ))}
+        </Text>
+      </View>
+    );
+  };
 
   const role = (experience && (experience as any).jobRole) || (experience.workExperiences && experience.workExperiences.find((w: any) => w.enabled && w.jobTitle) && experience.workExperiences.find((w: any) => w.enabled && w.jobTitle).jobTitle) || '';
   const contactLine = [personal.email, personal.mobileNumber, personal.address, personal.dateOfBirth].filter(Boolean).join(' | ');
@@ -116,6 +165,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+        <ContinuationSpacer />
         <View style={styles.headerRow}>
           <View>
             <Text style={{ ...styles.name, fontFamily: pdfFontFamilyBold, color: primaryColor }}>{personal.firstName} {(personal.middleName || '')} {personal.lastName}</Text>
@@ -136,7 +186,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
                 <Text style={{ fontFamily: pdfFontFamilyBold, fontSize: 10, marginBottom: 6, color: primaryColor }}>CAREER OBJECTIVE</Text>
                 <View style={{ height: 1, backgroundColor: primaryColor, width: '100%' }} />
               </View>
-              <Text style={{ marginTop: 12, color: '#444', textAlign: 'justify' }}>{htmlToPlainText(personal.aboutCareerObjective).trim()}</Text>
+              <Text style={{ marginTop: 12, color: '#444', textAlign: 'justify' }}>{htmlToPlainText(trimTrailingHtml(personal.aboutCareerObjective))}</Text>
             </>
           )}
 
@@ -216,7 +266,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
                   {experience.workExperiences.filter((w: any) => w.enabled).map((w: any, i: number) => (
                     <View key={i} style={{ marginBottom: 10 }}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                        <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, flexGrow: 1, flexShrink: 1, marginRight: 8 }}>{w.jobTitle}</Text>
+                        <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, flex: 1, marginRight: 8 }}>{w.jobTitle}</Text>
                         <View style={{ flexDirection: 'row', flexShrink: 0 }}>
                           {(() => {
                             const sParts = formatMonthYearParts(w.startDate);
@@ -261,7 +311,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
                     {(projects || []).filter((p: any) => p.enabled).map((p: any, i: number) => (
                       <View key={i} style={{ marginBottom: 10 }}>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                          <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, flexGrow: 1, flexShrink: 1, marginRight: 8 }}>{p.projectTitle}</Text>
+                          <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, flex: 1, marginRight: 8 }}>{p.projectTitle}</Text>
                           <Text style={{ fontSize: 10, color: '#000', flexShrink: 0 }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</Text>
                         </View>
                         {renderBulletedParagraph(p.description)}

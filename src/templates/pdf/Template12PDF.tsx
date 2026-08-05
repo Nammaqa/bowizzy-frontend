@@ -4,6 +4,8 @@ import { Document, Page, View, Text, StyleSheet, Link } from '@react-pdf/rendere
 import type { ResumeData } from '@/types/resume';
 import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 import { renderPdfRichBullets } from '@/templates/utils/richTextPdf';
+import { ContinuationSpacer } from '@/templates/utils/pdfContinuationSpacer';
+import { trimTrailingHtml } from '@/templates/utils/richTextHtml';
 
 const styles = StyleSheet.create({
   page: {
@@ -130,6 +132,7 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+        <ContinuationSpacer />
         <View style={styles.header}>
           <Text style={{ ...styles.name, fontFamily: pdfFontFamilyBold, color: primaryColor }}>{personal.firstName} {(personal.middleName || '')} {personal.lastName}</Text>
           <Text style={styles.contact}>{[personal.email, personal.mobileNumber, personal.address].filter(Boolean).join(' | ')}</Text>
@@ -144,7 +147,7 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
                 <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>CAREER OBJECTIVE</Text>
               </View>
               <View style={styles.rightCol}>
-                <Text style={{ color: '#2b2a2a', fontSize: 10, lineHeight: 1.3, textAlign: 'justify' }}>{htmlToPlainText(personal.aboutCareerObjective)}</Text>
+                <Text style={{ color: '#2b2a2a', fontSize: 10, lineHeight: 1.3, textAlign: 'justify' }}>{htmlToPlainText(trimTrailingHtml(personal.aboutCareerObjective))}</Text>
               </View>
             </View>
             {experience.workExperiences.some((exp: any) => exp.enabled) && <View style={{ height: 1, backgroundColor: '#aaa', width: '100%', marginVertical: 12 }} />}
@@ -161,7 +164,7 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
               {experience.workExperiences.filter(w => w.enabled).map((w: any, i: number) => (
                 <View key={i} style={{ marginBottom: 8 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold, flexGrow: 1, flexShrink: 1, marginRight: 8 }}>{w.jobTitle} — {w.companyName}</Text>
+                    <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold, flex: 1, marginRight: 8 }}>{w.jobTitle} — {w.companyName}</Text>
                     <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold, flexShrink: 0 }}>{formatMonthYear(w.startDate)} — {w.currentlyWorking ? 'Present' : formatMonthYear(w.endDate)}</Text>
                   </View>
                   {w.description && (
@@ -187,7 +190,7 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
               {projects && projects.filter((p: any) => p.enabled).map((p: any, i: number) => (
                 <View key={i} style={{ marginBottom: 8 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold, flexGrow: 1, flexShrink: 1, marginRight: 8 }}>{p.projectTitle}</Text>
+                    <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold, flex: 1, marginRight: 8 }}>{p.projectTitle}</Text>
                     <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold, flexShrink: 0 }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</Text>
                   </View>
                   {p.description && renderBulletedParagraph(p.description)}
@@ -211,7 +214,7 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
               {education.higherEducation.filter(edu => edu.enabled).reverse().map((edu: any, i: number) => (
                 <View key={i} style={{ marginBottom: 8 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold, flexGrow: 1, flexShrink: 1, marginRight: 8 }}>{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</Text>
+                    <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold, flex: 1, marginRight: 8 }}>{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</Text>
                     <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold, flexShrink: 0 }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}</Text>
                   </View>
                   <Text style={{ fontSize: 10, color: '#2b2a2a', marginTop: 4 }}>{edu.instituteName}</Text>
@@ -224,7 +227,7 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
               {education.preUniversityEnabled && education.preUniversity.instituteName && (
                 <View style={{ marginBottom: 8 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold, flexGrow: 1, flexShrink: 1, marginRight: 8 }}>PUC{education.preUniversity.subjectStream ? ` in ${education.preUniversity.subjectStream}` : ''}</Text>
+                    <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold, flex: 1, marginRight: 8 }}>PUC{education.preUniversity.subjectStream ? ` in ${education.preUniversity.subjectStream}` : ''}</Text>
                     <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold, flexShrink: 0 }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
                   </View>
                   <Text style={{ fontSize: 10, color: '#2b2a2a', marginTop: 4 }}>{education.preUniversity.instituteName}{education.preUniversity.boardType ? `, ${education.preUniversity.boardType}` : ''}</Text>
@@ -237,7 +240,7 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
               {education.sslcEnabled && education.sslc.instituteName && (
                 <View style={{ marginBottom: 8 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold, flexGrow: 1, flexShrink: 1, marginRight: 8 }}>SSLC</Text>
+                    <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold, flex: 1, marginRight: 8 }}>SSLC</Text>
                     <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold, flexShrink: 0 }}>{formatResumeEducationDateRange(education.sslc)}</Text>
                   </View>
                   <Text style={{ fontSize: 10, color: '#2b2a2a', marginTop: 4 }}>{education.sslc.instituteName}{education.sslc.boardType ? `, ${education.sslc.boardType}` : ''}</Text>

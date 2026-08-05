@@ -66,13 +66,32 @@ export function renderPdfRichBullets(html: string | undefined, opts: PdfRichBull
     );
   }
 
+  // Plain prose: fold every line's segments into one flat run list instead
+  // of stacking each line in its own View with a top margin — a separate
+  // View per line adds its own margin on top of the paragraph's lineHeight,
+  // which reads as double-spaced text. The '\n' is spliced into the first
+  // run's own text (not inserted as a separate sibling node) so react-pdf
+  // treats it as a normal forced line break within one Text block.
+  const flatRuns: { text: string; bold: boolean }[] = [];
+  blocks.forEach((block, blockIdx) => {
+    parseInlineSegments(block.html).forEach((segment, segIdx) => {
+      const prefix = blockIdx > 0 && segIdx === 0 ? '\n' : '';
+      flatRuns.push({ text: prefix + segment.text, bold: segment.bold });
+    });
+  });
+
   return (
     <View style={{ marginTop, width: '100%' }}>
-      {blocks.map((block, idx) => (
-        <View key={idx} style={{ marginTop: idx > 0 ? 6 : 0, width: '100%' }}>
-          <Text style={{ color, fontSize, lineHeight, textAlign }}>{renderRuns(block.html)}</Text>
-        </View>
-      ))}
+      <Text style={{ color, fontSize, lineHeight, textAlign }}>
+        {flatRuns.map((run, idx) => (
+          <Text
+            key={idx}
+            style={run.bold && boldFontFamily ? { fontFamily: boldFontFamily } : regularFontFamily ? { fontFamily: regularFontFamily } : undefined}
+          >
+            {run.text}
+          </Text>
+        ))}
+      </Text>
     </View>
   );
 }

@@ -55,7 +55,7 @@ const TEMPLATE_INFO: Record<string, TemplateSectionInfo> = {
       "Experience",
       "Education",
       "Project",
-      "Certification",
+      "Technical Certification",
       "Technical Summary",
       "Skills",
       "Language",
@@ -66,7 +66,7 @@ const TEMPLATE_INFO: Record<string, TemplateSectionInfo> = {
     name: "Hoysala",
     sections: [
       "Career Objective",
-      "Experience",
+      "Work Experience",
       "Projects",
       "Education",
       "Links",
@@ -78,7 +78,7 @@ const TEMPLATE_INFO: Record<string, TemplateSectionInfo> = {
   template13: {
     name: "Chalukya",
     sections: [
-      "About / Career Objective",
+      "Career Objective",
       "Experience",
       "Projects",
       "Education",
@@ -89,18 +89,18 @@ const TEMPLATE_INFO: Record<string, TemplateSectionInfo> = {
   },
   template14: {
     name: "Rashtrakuta",
-    sections: ["Experience", "Project", "Education", "Skills", "Certification"],
+    sections: ["Work Experience", "Project", "Education", "Skills", "Certification"],
     free: false,
   },
   template15: {
     name: "Kadamba",
     sections: [
-      "Career Objective",
+      "Objective",
       "Education",
       "Skills",
       "Certification",
       "Experience",
-      "Projects",
+      "Academic Project",
       "Technical Summary",
     ],
     free: false,
@@ -114,18 +114,18 @@ const TEMPLATE_INFO: Record<string, TemplateSectionInfo> = {
       "Education",
       "Skills",
       "Language",
-      "Certification",
+      "Achievements/Certification",
     ],
     free: false,
   },
   template17: {
     name: "Ganga",
     sections: [
-      "Career Objective",
+      "About",
       "Skill",
       "Experience",
       "Education",
-      "Certification",
+      "Achievements/Certification",
       "Project",
       "Language",
       "Technical Summary",
@@ -134,7 +134,7 @@ const TEMPLATE_INFO: Record<string, TemplateSectionInfo> = {
   },
   template18: {
     name: "Maurya",
-    sections: ["Career Objective", "Experience", "Education", "Skills", "Certification"],
+    sections: ["Career Objective", "Work Experience", "Education", "Skills", "Certification"],
     free: false,
   },
   template19: {
@@ -142,16 +142,17 @@ const TEMPLATE_INFO: Record<string, TemplateSectionInfo> = {
     sections: [
       "Career Objective",
       "Skills",
-      "Experience",
+      "Professional Experience",
       "Education",
       "Language",
       "Project",
+      "Certification",
     ],
     free: false,
   },
   template20: {
     name: "Maratha",
-    sections: ["Career Objective", "Experience", "Education", "Certificate", "Technical Summary", "Skills"],
+    sections: ["Career Objective", "Professional Experience", "Education", "Certificate", "Technical Summary", "Skills", "Contact"],
     free: false,
   },
 };
