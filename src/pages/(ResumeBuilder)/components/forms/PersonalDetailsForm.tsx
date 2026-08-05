@@ -1332,6 +1332,7 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
               placeholder="Provide Career Objective"
               rows={6}
               hideListControls
+              preventEnter
             />
             {errors.aboutCareerObjective && (
               <p className="mt-2 text-xs text-red-600">{errors.aboutCareerObjective}</p>
