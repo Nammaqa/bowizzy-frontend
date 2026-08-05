@@ -5,6 +5,7 @@ import type { ResumeData } from "@/types/resume";
 import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 import logo from '@/assets/bowizzy.png';
 import { ContinuationSpacer } from '@/templates/utils/pdfContinuationSpacer';
+import { trimTrailingHtml } from '@/templates/utils/richTextHtml';
 
 // Computed once at module load (not per render/page) — sparse diagonal grid so the
 // watermark still tiles visually with far fewer <Image> nodes for react-pdf to paint.
@@ -513,7 +514,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
                 <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>CAREER OBJECTIVE</Text>
                 <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 6 }} />
               </View>
-              {renderBulletedParagraph(personal.aboutCareerObjective, { fontSize: 11, lineHeight: 1.6 })}
+              {renderBulletedParagraph(trimTrailingHtml(personal.aboutCareerObjective), { fontSize: 10 })}
             </View>
           )}
 
@@ -570,12 +571,12 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
                     <View key={idx} style={{ marginBottom: 8 }} wrap={false}>
                       {idx === 0 && eduHeading}
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{edu.instituteName}</Text>
+                        <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{edu.instituteName}</Text>
                         <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>
                               {edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatHigherEducationRange(edu)}
                         </Text>
                       </View>
-                      <Text style={{ fontSize: 11, color: '#000000', fontFamily: pdfFontFamily, marginTop: 3 }}>
+                      <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamily, marginTop: 3 }}>
                         {getFullDegreeName(edu.degree)}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}
                       </Text>
                       {edu.resultFormat && edu.result ? (
@@ -593,10 +594,10 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
                 <View style={{ marginBottom: 8 }} wrap={false}>
                   {!hasHigherEd && eduHeading}
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
+                    <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
                       <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.preUniversity)}</Text>
                   </View>
-                  <Text style={{ fontSize: 11, color: '#000000', fontFamily: pdfFontFamily, marginTop: 3 }}>
+                  <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamily, marginTop: 3 }}>
                     Pre University (12th Standard){education.preUniversity.boardType ? ` — ${education.preUniversity.boardType}` : ''} {education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}
                   </Text>
                   {education.preUniversity.resultFormat && education.preUniversity.result ? (
@@ -612,14 +613,14 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
                 <View style={{ marginBottom: 8 }} wrap={false}>
                   {!hasHigherEd && !hasPreUni && eduHeading}
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <Text style={{ fontSize: 11, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{education.sslc.instituteName || 'SSLC'}</Text>
+                    <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, color: '#000000', flex: 1, marginRight: 8 }}>{education.sslc.instituteName || 'SSLC'}</Text>
                       <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamilyBold }}>{formatResumeEducationDateRange(education.sslc)}</Text>
                   </View>
-                  <Text style={{ fontSize: 11, color: '#000000', fontFamily: pdfFontFamily, marginTop: 3 }}>
+                  <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamily, marginTop: 3 }}>
                     SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}
                   </Text>
                   {education.sslc.resultFormat && education.sslc.result ? (
-                    <Text style={{ fontSize: 11, color: '#000000', fontFamily: pdfFontFamily, marginTop: 3 }}>
+                    <Text style={{ fontSize: 10, color: '#000000', fontFamily: pdfFontFamily, marginTop: 3 }}>
                       {education.sslc.resultFormat}: {education.sslc.result}
                     </Text>
                   ) : null}

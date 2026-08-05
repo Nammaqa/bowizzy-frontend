@@ -15,6 +15,64 @@ const decodeHtmlEntities = (value: string) =>
 
 export const stripTags = (html: string) => decodeHtmlEntities(html.replace(/<[^>]+>/g, '')).trim();
 
+// Invisible/space-like characters a contentEditable field can leave behind:
+// NBSP 160 (browsers turn a trailing typed space into this so it doesn't
+// collapse), zero-width space 8203, and BOM 65279. Built from numeric char
+// codes rather than literal or \u-escaped characters in source, so the
+// pattern can't silently get mangled by an editor/encoding round-trip.
+const INVISIBLE_SPACE_CHARS = [160, 8203, 65279].map((code) => String.fromCharCode(code)).join('');
+const TRAILING_INVISIBLE_SPACE_RE = new RegExp('[\\s' + INVISIBLE_SPACE_CHARS + ']+$', 'g');
+const ANY_INVISIBLE_SPACE_RE = new RegExp('[\\s' + INVISIBLE_SPACE_CHARS + ']', 'g');
+
+/**
+ * Strips trailing empty paragraphs and trailing whitespace/&nbsp; left over
+ * from the rich-text editor — a trailing space typed in a contentEditable
+ * field is often preserved as &nbsp; so the browser doesn't collapse it, and
+ * Enter presses can leave empty trailing <div><br></div> blocks. Left in,
+ * PDF fonts often render that stray codepoint as a visible box/special
+ * character at the end of the paragraph instead of invisible trailing
+ * space. Operates on the raw HTML (before any per-template parsing) so the
+ * fix applies uniformly regardless of how each template splits it up.
+ */
+export function trimTrailingHtml(html?: string): string {
+  if (!html) return '';
+
+  if (typeof document === 'undefined') {
+    // Non-browser fallback: best-effort regex trim of trailing empty
+    // blocks/whitespace/&nbsp; right before the string's closing tag(s).
+    return html
+      .replace(/(?:\s|&nbsp;|<br\s*\/?>|<(?:div|p)>(?:\s|&nbsp;|<br\s*\/?>)*<\/(?:div|p)>)+$/gi, '')
+      .replace(/(?:&nbsp;|\s)+(<\/[a-zA-Z]+>)\s*$/, '$1');
+  }
+
+  const container = document.createElement('div');
+  container.innerHTML = html;
+
+  const isEmptyNode = (node: ChildNode): boolean => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return !(node.textContent || '').replace(ANY_INVISIBLE_SPACE_RE, '');
+    }
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const el = node as HTMLElement;
+      if (el.tagName === 'BR') return true;
+      return Array.from(el.childNodes).every(isEmptyNode);
+    }
+    return true;
+  };
+
+  while (container.lastChild && isEmptyNode(container.lastChild)) {
+    container.removeChild(container.lastChild);
+  }
+
+  let deepestLast: ChildNode | null = container;
+  while (deepestLast && deepestLast.lastChild) deepestLast = deepestLast.lastChild;
+  if (deepestLast && deepestLast.nodeType === Node.TEXT_NODE) {
+    deepestLast.textContent = (deepestLast.textContent || '').replace(TRAILING_INVISIBLE_SPACE_RE, '');
+  }
+
+  return container.innerHTML;
+}
+
 // Tags that may carry inline formatting are kept; every other tag is dropped.
 const INLINE_TAG_PATTERN = 'b|strong|i|em|u|span|font';
 export const stripNonInlineTags = (html: string) =>

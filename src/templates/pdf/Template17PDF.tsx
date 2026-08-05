@@ -5,15 +5,16 @@ import type { ResumeData } from '@/types/resume';
 import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 import { renderPdfRichBullets } from '@/templates/utils/richTextPdf';
 import { ContinuationSpacer, SidebarBackground } from '@/templates/utils/pdfContinuationSpacer';
+import { trimTrailingHtml } from '@/templates/utils/richTextHtml';
 
 const styles = StyleSheet.create({
   page: { flexDirection: 'row', padding: 0, fontSize: 10, },
-  sidebar: { width: 220, backgroundColor: '#f3f4f6', padding: 18 },
+  sidebar: { width: 220, backgroundColor: '#f3f4f6', padding: 18, paddingBottom: 40 },
   name: { fontSize: 20, color: '#0f172a' },
   role: { fontSize: 11, marginTop: 6 },
   sectionHeading: { fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase', paddingTop: 10 },
   divider: { height: 1, marginTop: 6, width: '100%' },
-  content: { flex: 1, padding: 18, paddingLeft: 24 }
+  content: { flex: 1, padding: 18, paddingLeft: 24, paddingBottom: 40 }
 });
 
 const htmlToPlainText = (html?: string) => {
@@ -206,7 +207,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
                 <Text style={styles.sectionHeading}>About</Text>
                 <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
               </View>
-              <Text style={{ marginTop: 8, fontSize: 9, color: '#444', textAlign: 'justify' }}>{htmlToPlainText(personal.aboutCareerObjective).replace(/\s{2,}/g, ' ')}</Text>
+              <Text style={{ marginTop: 8, fontSize: 9, color: '#444', textAlign: 'justify' }}>{htmlToPlainText(trimTrailingHtml(personal.aboutCareerObjective)).replace(/\s{2,}/g, ' ')}</Text>
             </View>
           ) : null}
 

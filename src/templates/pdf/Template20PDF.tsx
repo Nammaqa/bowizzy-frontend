@@ -5,6 +5,7 @@ import type { ResumeData } from '@/types/resume';
 import { formatEducationDateRange as formatResumeEducationDateRange, formatEducationMonthYear as formatResumeEducationMonthYear } from '@/templates/utils/educationDates';
 import { renderPdfRichBullets } from '@/templates/utils/richTextPdf';
 import { ContinuationSpacer } from '@/templates/utils/pdfContinuationSpacer';
+import { trimTrailingHtml } from '@/templates/utils/richTextHtml';
 
 const styles = StyleSheet.create({
   page: { padding: 24, fontSize: 10 },
@@ -156,7 +157,7 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
               <View style={{ width: 150 }}><Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold }}>CAREER OBJECTIVE</Text></View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 10, color: '#333', textAlign: 'justify' }}>
-                  {htmlToPlainText(personal.aboutCareerObjective).replace(/\s{2,}/g, ' ')}
+                  {htmlToPlainText(trimTrailingHtml(personal.aboutCareerObjective)).replace(/\s{2,}/g, ' ')}
                 </Text>
               </View>
             </View>
