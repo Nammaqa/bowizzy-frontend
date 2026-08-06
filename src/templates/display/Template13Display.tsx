@@ -79,7 +79,7 @@ const renderDescription = (html?: string) => {
     <div style={{ marginTop: 6, color: '#2b2a2a' }}>
       {blocks.map((block, idx) => (
         <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', marginTop: idx > 0 ? 4 : 0 }}>
-          <span style={{ marginRight: 6, lineHeight: 1.4, width: 6 }}>•</span>
+          <span style={{ marginRight: 6, lineHeight: 1.4, width: block.ordered ? 16 : 6 }}>{block.ordered ? `${idx + 1}.` : '•'}</span>
           <div style={{ flex: 1, lineHeight: 1.4, textAlign: 'justify' }} dangerouslySetInnerHTML={{ __html: block.html }} />
         </div>
       ))}

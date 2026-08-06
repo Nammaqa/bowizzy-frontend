@@ -53,7 +53,7 @@ const renderDescriptionBlocks = (html?: string) => {
       <div
         key={idx}
         style={{ marginTop: idx > 0 ? 4 : 0, textAlign: 'justify' }}
-        dangerouslySetInnerHTML={{ __html: `• ${block.html}` }}
+        dangerouslySetInnerHTML={{ __html: `${block.ordered ? `${idx + 1}.` : '•'} ${block.html}` }}
       />
     ));
   }

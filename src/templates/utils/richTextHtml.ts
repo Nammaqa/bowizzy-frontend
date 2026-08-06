@@ -135,17 +135,37 @@ export function parseInlineSegments(html: string): InlineSegment[] {
 export interface RichTextBlock {
   html: string;
   bullet: boolean;
+  ordered?: boolean;
 }
 
 /** Break sanitized rich text into bullet items (from <li>) or plain lines, keeping inline tags. */
 export function splitIntoRichTextBlocks(sanitized: string): RichTextBlock[] {
-  const liRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
   const items: RichTextBlock[] = [];
-  let match: RegExpExecArray | null;
 
-  while ((match = liRegex.exec(sanitized)) !== null) {
-    const inner = stripNonInlineTags(match[1] || '').trim();
-    if (stripTags(inner)) items.push({ html: inner, bullet: true });
+  // Scan each <ul>/<ol> container so ordered lists (numbered in the editor)
+  // can be told apart from unordered ones — a flat <li> scan over the whole
+  // string loses that distinction and everything ends up rendered as bullets.
+  const listRegex = /<(ul|ol)[^>]*>([\s\S]*?)<\/\1>/gi;
+  let listMatch: RegExpExecArray | null;
+  while ((listMatch = listRegex.exec(sanitized)) !== null) {
+    const ordered = listMatch[1].toLowerCase() === 'ol';
+    const liRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
+    let liMatch: RegExpExecArray | null;
+    while ((liMatch = liRegex.exec(listMatch[2])) !== null) {
+      const inner = stripNonInlineTags(liMatch[1] || '').trim();
+      if (stripTags(inner)) items.push({ html: inner, bullet: true, ordered });
+    }
+  }
+
+  if (items.length === 0) {
+    // Bare <li> items with no <ul>/<ol> wrapper (e.g. HTML stripped by a
+    // paste) — fall back to treating them as unordered.
+    const liRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
+    let match: RegExpExecArray | null;
+    while ((match = liRegex.exec(sanitized)) !== null) {
+      const inner = stripNonInlineTags(match[1] || '').trim();
+      if (stripTags(inner)) items.push({ html: inner, bullet: true, ordered: false });
+    }
   }
 
   if (items.length > 0) return items;
