@@ -58,7 +58,7 @@ export function renderPdfRichBullets(html: string | undefined, opts: PdfRichBull
       <View style={{ marginTop, width: '100%' }}>
         {blocks.map((block, idx) => (
           <View key={idx} style={{ flexDirection: 'row', marginTop: idx > 0 ? 2 : 0, alignItems: 'flex-start', width: '100%' }}>
-            <Text style={{ width: 12, flexShrink: 0, color: bulletColor, fontSize }}>•</Text>
+            <Text style={{ width: 16, flexShrink: 0, color: bulletColor, fontSize }}>{block.ordered ? `${idx + 1}.` : '•'}</Text>
             <Text style={{ flex: 1, color, fontSize, lineHeight, textAlign }}>{renderRuns(block.html)}</Text>
           </View>
         ))}

@@ -290,7 +290,6 @@ const FONT_OPTIONS = [
   { label: "Times New Roman (Recommended)", value: "Times New Roman, serif" },
   { label: "Georgia", value: "Georgia, serif" },
   { label: "Calibri", value: "Calibri, sans-serif" },
-  { label: "Roboto", value: "Roboto, sans-serif" },
   { label: "Inter", value: "Inter, sans-serif" }
 ];
 

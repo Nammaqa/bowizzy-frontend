@@ -482,7 +482,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" style={[styles.page, { fontFamily: pdfFontFamily }]}>
 
         <ContinuationSpacer />
 
