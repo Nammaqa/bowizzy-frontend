@@ -122,7 +122,7 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" style={[styles.page, { fontFamily: pdfFontFamily }]}>
         <ContinuationSpacer />
         <View style={styles.header}>
           <View style={styles.nameRow}>
@@ -136,7 +136,7 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
         {/* CONTACT row */}
         <View style={{ flexDirection: 'row', marginTop: 6 }}>
           <View style={{ width: 150 }}>
-            <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold }}>CONTACT</Text>
+            <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>CONTACT</Text>
           </View>
           <View style={{ flex: 1 }}>
             {Array.from({ length: Math.ceil(contactItems.length / 2) }).map((_, rowIdx) => (
@@ -154,7 +154,7 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
         {personal.aboutCareerObjective && (
           <>
             <View style={{ flexDirection: 'row' }}>
-              <View style={{ width: 150 }}><Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold }}>CAREER OBJECTIVE</Text></View>
+              <View style={{ width: 150 }}><Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>CAREER OBJECTIVE</Text></View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 10, color: '#333', textAlign: 'justify' }}>
                   {htmlToPlainText(trimTrailingHtml(personal.aboutCareerObjective)).replace(/\s{2,}/g, ' ')}
@@ -169,7 +169,7 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
         {skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled && (
           <>
             <View style={{ flexDirection: 'row' }}>
-              <View style={{ width: 150 }}><Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold }}>TECHNICAL SUMMARY</Text></View>
+              <View style={{ width: 150 }}><Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>TECHNICAL SUMMARY</Text></View>
               <View style={{ flex: 1 }}>
                 {htmlToLines(skillsLinks.technicalSummary).map((line, idx) => (
                   <View key={idx} style={{ flexDirection: 'row', marginTop: idx > 0 ? 2 : 0 }}>
@@ -188,8 +188,8 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
           <>
             <View style={{ flexDirection: 'row' }}>
               <View style={{ width: 150 }}>
-                <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold }}>PROFESSIONAL</Text>
-                <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold }}>EXPERIENCE</Text>
+                <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>PROFESSIONAL</Text>
+                <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>EXPERIENCE</Text>
               </View>
               <View style={{ flex: 1 }}>
                 {experience.workExperiences.filter((w: any) => w.enabled).map((w: any, i: number) => (
@@ -212,7 +212,7 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
           <>
             <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 12, marginBottom: 12 }} />
             <View style={{ flexDirection: 'row' }}>
-              <View style={{ width: 150 }}><Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold }}>EDUCATION</Text></View>
+              <View style={{ width: 150 }}><Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>EDUCATION</Text></View>
               <View style={{ flex: 1 }}>
                 {education.higherEducation.filter(edu => edu.enabled).reverse().map((edu: any, i: number) => (
                   <View key={i} style={{ marginBottom: 12 }}>
@@ -270,7 +270,7 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
           <>
             <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 12, marginBottom: 12 }} />
             <View style={{ flexDirection: 'row' }}>
-              <View style={{ width: 150 }}><Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold }}>SKILLS</Text></View>
+              <View style={{ width: 150 }}><Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>SKILLS</Text></View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 10, color: '#000', lineHeight: 1.6 }}>
                   {(skillsLinks?.skills || []).filter((s: any) => s.enabled && s.skillName).map((s: any) => s.skillName).join(', ')}
@@ -285,7 +285,7 @@ const Template20PDF: React.FC<Template20PDFProps> = ({ data, primaryColor = '#11
           <>
             <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 12, marginBottom: 12 }} />
             <View style={{ flexDirection: 'row' }}>
-              <View style={{ width: 150 }}><Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold }}>CERTIFICATES</Text></View>
+              <View style={{ width: 150 }}><Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>CERTIFICATES</Text></View>
               <View style={{ flex: 1 }}>
                 <View style={{ marginTop: 6, flexDirection: 'row', flexWrap: 'wrap' }}>
                   {(certifications || []).filter((c: any) => c.enabled && c.certificateTitle).map((c: any, i: number) => (
