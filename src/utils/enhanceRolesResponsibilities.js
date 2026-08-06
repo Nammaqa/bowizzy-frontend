@@ -1,7 +1,7 @@
 // enhanceRolesResponsibilities.js
-// Utility to enhance Roles & Responsibilities using Groq API (llama-3.1-8b-instant)
+// Utility to enhance Roles & Responsibilities using OpenAI API (gpt-4o-mini)
 
-const GROQ_API_KEY =import.meta.env.VITE_GROK_API_KEY;  // 🔑 Paste your Groq key here (console.groq.com)
+const OPENAI_API_KEY =import.meta.env.VITE_OPENAI_API_KEY;  // 🔑 Paste your OpenAI key here (platform.openai.com)
 
 /**
  * Strips HTML tags from a string and returns plain text.
@@ -23,7 +23,7 @@ function stripHtml(html) {
 
 /**
  * Fixes unescaped newlines/tabs inside JSON string values so JSON.parse doesn't choke.
- * Llama models sometimes return literal newlines inside string values instead of \n.
+ * Models sometimes return literal newlines inside string values instead of \n.
  * @param {string} raw
  * @returns {string}
  */
@@ -38,7 +38,7 @@ function fixJsonStringNewlines(raw) {
 }
 
 /**
- * Calls Groq API to generate two enhanced versions of roles & responsibilities.
+ * Calls OpenAI API to generate two enhanced versions of roles & responsibilities.
  *
  * @param {string} rolesInput - The raw roles & responsibilities text (can include HTML).
  * @param {string} projectTitle - The project title for context.
@@ -88,15 +88,15 @@ Generate two enhanced versions as specified. Remember: each version must total 5
   const fetchWithRetry = async (retries = 3, delayMs = 1000) => {
     for (let i = 0; i < retries; i++) {
       const response = await fetch(
-        "https://api.groq.com/openai/v1/chat/completions",
+        "https://api.openai.com/v1/chat/completions",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${GROQ_API_KEY}`,
+            Authorization: `Bearer ${OPENAI_API_KEY}`,
           },
           body: JSON.stringify({
-            model: "llama-3.1-8b-instant",
+            model: "gpt-4o-mini",
             messages: [
               { role: "system", content: systemPrompt },
               { role: "user", content: userPrompt },
@@ -122,7 +122,7 @@ Generate two enhanced versions as specified. Remember: each version must total 5
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData?.error?.message || `Groq API error: ${response.status}`
+          errorData?.error?.message || `OpenAI API error: ${response.status}`
         );
       }
 

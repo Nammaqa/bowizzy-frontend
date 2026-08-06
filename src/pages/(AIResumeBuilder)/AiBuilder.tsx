@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Menu, Sparkles, Wand2, Brain, Rocket, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import DashNav from "@/components/dashnav/dashnav";
@@ -122,6 +122,13 @@ export default function AIBuilder() {
   } catch {}
 
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // Set by the landing page's "AI Builder" / "JD Based AI Builder" buttons. It
+  // means "open a fresh chat in this mode", so it is read once on mount —
+  // afterwards the navigation state is cleared and the user is free to toggle.
+  const requestedMode = (location.state as { mode?: "jd" | "non-jd" } | null)?.mode;
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mode, setMode] = useState<"jd" | "non-jd">("non-jd");
   const [inputValue, setInputValue] = useState("");
@@ -132,8 +139,19 @@ export default function AIBuilder() {
   const [chatAnswers, setChatAnswers] = useState<Record<string, SessionAnswers>>({});
   const [chipStates, setChipStates] = useState<Record<string, ChipState>>({});
   const [paidJdSessions, setPaidJdSessions] = useState<Record<string, boolean>>({});
-  // Guidelines pop-up — shown on entry, on every new chat, and on mode switch
-  const [infoModalMode, setInfoModalMode] = useState<"jd" | "non-jd" | null>("non-jd");
+  // Guidelines pop-up — shown on entry, on every new chat, and on mode switch.
+  // Seeded with the mode the landing page asked for so the JD guide doesn't
+  // have to wait for (or flash behind) the AI one.
+  const [infoModalMode, setInfoModalMode] = useState<"jd" | "non-jd" | null>(
+    requestedMode ?? "non-jd"
+  );
+  // Sessions have loaded — needed before opening a requested new chat, so it
+  // gets numbered after the existing ones.
+  const [sessionsLoaded, setSessionsLoaded] = useState(false);
+  // Non-null while a landing-page-requested chat is still waiting to be created.
+  const [pendingNewChatMode, setPendingNewChatMode] = useState<"jd" | "non-jd" | null>(
+    requestedMode ?? null
+  );
 
   // ── Fetch sessions ────────────────────────────────────────────────────────
 
@@ -163,16 +181,21 @@ export default function AIBuilder() {
         setPaidJdSessions(newPaidSessions);
       } catch (err) {
         console.error("Failed to fetch sessions", err);
+      } finally {
+        setSessionsLoaded(true);
       }
     }
     fetchSessions();
   }, [token]);
 
   React.useEffect(() => {
+    // Coming from the landing page a brand-new chat is on its way — don't
+    // resume the most recent one only to switch away from it a moment later.
+    if (pendingNewChatMode) return;
     if (chatSessions.length > 0 && !currentSessionId) {
       setCurrentSessionId(chatSessions[0].id);
     }
-  }, [chatSessions, currentSessionId]);
+  }, [chatSessions, currentSessionId, pendingNewChatMode]);
 
   const currentSession = chatSessions.find((s) => s.id === currentSessionId);
   const activeChipState = currentSessionId ? chipStates[currentSessionId] : undefined;
@@ -186,29 +209,6 @@ export default function AIBuilder() {
   React.useEffect(() => {
     if (currentSession?.mode) setMode(currentSession.mode);
   }, [currentSession?.id, currentSession?.mode]);
-
-  // Entering from the landing page's "JD Based AI Builder" button. The mode is
-  // written onto the active session (not just local state) so the sync effect
-  // above keeps it, and so it survives switching chats. Applied once per
-  // navigation — afterwards the user is free to toggle back.
-  const requestedMode = (location.state as { mode?: "jd" | "non-jd" } | null)?.mode;
-  const requestedModeAppliedRef = React.useRef(false);
-
-  React.useEffect(() => {
-    if (requestedModeAppliedRef.current) return;
-    if (requestedMode !== "jd" || !currentSessionId) return;
-
-    requestedModeAppliedRef.current = true;
-
-    // A session that's already been paid for is locked to its mode.
-    if (paidJdSessions[currentSessionId]) return;
-
-    setMode("jd");
-    setInfoModalMode("jd");
-    setChatSessions((prev) =>
-      prev.map((s) => (s.id === currentSessionId ? { ...s, mode: "jd" } : s))
-    );
-  }, [requestedMode, currentSessionId, paidJdSessions]);
 
   // ── Fetch /resume-data and build chips ───────────────────────────────────
 
@@ -382,19 +382,45 @@ export default function AIBuilder() {
 
   // ── Session handlers ──────────────────────────────────────────────────────
 
-  const handleNewChat = async () => {
+  /**
+   * Creates a session in `sessionMode` and makes it the active one. The mode is
+   * stored on the session itself (not just local state) so the sync effect
+   * above keeps it and it survives switching chats.
+   */
+  const createSessionWithMode = async (
+    sessionMode: "jd" | "non-jd",
+    { showGuide = true }: { showGuide?: boolean } = {}
+  ) => {
     try {
-      const session = await createAiSession(mode, `Session ${getNextSessionNumber(chatSessions)}`, token);
+      const session = await createAiSession(sessionMode, `Session ${getNextSessionNumber(chatSessions)}`, token);
       const enriched: ChatSession = {
-        id: String(session.id), title: session.title, mode: session.mode,
+        id: String(session.id), title: session.title, mode: session.mode || sessionMode,
         messages: [], started: false, createdAt: session.createdAt || new Date().toISOString(),
       };
       setChatSessions((prev) => [enriched, ...prev]);
       setCurrentSessionId(enriched.id);
+      setMode(sessionMode);
       setSidebarOpen(false);
-      setInfoModalMode(mode);
+      if (showGuide) setInfoModalMode(sessionMode);
     } catch (err) { console.error("Failed to create session", err); }
   };
+
+  const handleNewChat = () => createSessionWithMode(mode);
+
+  // Landing page entry: open a fresh chat in the mode that was picked there.
+  // Waits for the session list so the new chat is numbered after the existing
+  // ones. The guidelines pop-up is already open (seeded from `requestedMode`),
+  // so it isn't re-triggered here.
+  React.useEffect(() => {
+    if (!pendingNewChatMode || !sessionsLoaded) return;
+    const modeToOpen = pendingNewChatMode;
+    setPendingNewChatMode(null);
+    // Consume the navigation state, otherwise a reload would open yet another
+    // chat — the state lives in the history entry, not just this render.
+    navigate(location.pathname, { replace: true, state: null });
+    createSessionWithMode(modeToOpen, { showGuide: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingNewChatMode, sessionsLoaded]);
 
   const handleSelectSession = async (id: string) => {
     setCurrentSessionId(id);
