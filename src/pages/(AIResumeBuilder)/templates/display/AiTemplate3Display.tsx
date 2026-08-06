@@ -34,6 +34,7 @@ const AiTemplate3Display: React.FC<Props> = ({ data, primaryColor = '#2d3748' })
       {/* Sidebar */}
       <div style={{ width: 170, backgroundColor: primaryColor, padding: '28px 18px', color: '#fff', flexShrink: 0 }}>
         <h1 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: 0 }}>{personal.firstName}</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: 0 }}>{personal.middleName}</h1>
         <h1 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 12px' }}>{personal.lastName}</h1>
 
         <p style={sidebarSectionTitle}>Contact</p>
