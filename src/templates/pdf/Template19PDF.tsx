@@ -122,7 +122,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
         <View style={{ marginTop: 6, width: '100%' }}>
           {blocks.map((block, idx) => (
             <View key={idx} style={{ flexDirection: 'row', marginTop: idx > 0 ? 2 : 0, alignItems: 'flex-start', width: '100%' }}>
-              <Text style={{ width: 12, flexShrink: 0, color: '#444', fontSize: 10 }}>•</Text>
+              <Text style={{ width: 16, flexShrink: 0, color: '#444', fontSize: 10 }}>{block.ordered ? `${idx + 1}.` : '•'}</Text>
               <Text style={{ flex: 1, color: '#444', fontSize: 10, lineHeight: 1.4, textAlign: 'justify' }}>{renderRuns(block.html)}</Text>
             </View>
           ))}

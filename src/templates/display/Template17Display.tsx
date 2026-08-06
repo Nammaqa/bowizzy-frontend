@@ -34,7 +34,7 @@ const renderDescriptionBlocks = (html?: string, style: React.CSSProperties = { m
     <div
       key={idx}
       style={style}
-      dangerouslySetInnerHTML={{ __html: block.bullet ? `• ${block.html}` : block.html }}
+      dangerouslySetInnerHTML={{ __html: block.bullet ? `${block.ordered ? `${idx + 1}.` : '•'} ${block.html}` : block.html }}
     />
   ));
 };
