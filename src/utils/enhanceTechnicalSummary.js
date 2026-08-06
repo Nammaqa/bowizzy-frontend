@@ -22,6 +22,24 @@ function stripHtml(html) {
 }
 
 /**
+ * Normalises a bullet string into one bullet per real newline.
+ * Guards against two malformed shapes the model occasionally returns:
+ * a double-escaped "\\n" that survives JSON.parse as literal text, and
+ * all bullets run together on a single line.
+ * @param {string} value
+ * @returns {string}
+ */
+function normalizeBulletLines(value) {
+  return value
+    .replace(/\\r\\n|\\r|\\n/g, "\n")
+    .replace(/\r\n?/g, "\n")
+    .split(/\n+|(?=[•◦▪●‣]\s)/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join("\n");
+}
+
+/**
  * Calls OpenAI API to generate two enhanced versions of the technical summary.
  *
  * @param {string} userInput - The raw technical summary text (can include HTML).
@@ -47,11 +65,9 @@ Both versions must naturally incorporate the provided skills.
 Each version MUST have exactly 6 bullet points. No more, no less.
 
 STRICT LENGTH LIMIT: Each version MUST NOT exceed 500 characters in total, counting all 6 bullets together including the bullet characters, spaces, punctuation and line breaks. That means roughly 70-78 characters per bullet. Count the characters of every version before responding, and if a version is longer than 500 characters, shorten the bullets until it fits (keep all 6 bullets). A version longer than 500 characters is invalid.
+IMPORTANT: Format both as plain text using "• " as the bullet character separated by \\n (escaped newline, NOT a real line break).
 Respond ONLY with a valid JSON object in this exact format (no markdown, no explanation, no code fences):
-{
-  "atsFriendly": "• point 1\n• point 2\n• point 3\n• point 4\n• point 5\n• point 6",
-  "informative": "• point 1\n• point 2\n• point 3\n• point 4\n• point 5\n• point 6"
-}`;
+{"atsFriendly":"• point 1\\n• point 2\\n• point 3\\n• point 4\\n• point 5\\n• point 6","informative":"• point 1\\n• point 2\\n• point 3\\n• point 4\\n• point 5\\n• point 6"}`;
 
   const userPrompt = `Current Technical Summary:
 "${plainInput}"
@@ -127,8 +143,8 @@ try {
       }
 
       return {
-        atsFriendly: parsed.atsFriendly.trim(),
-        informative: parsed.informative.trim(),
+        atsFriendly: normalizeBulletLines(parsed.atsFriendly),
+        informative: normalizeBulletLines(parsed.informative),
       };
     }
 
