@@ -23,6 +23,7 @@ import {
   type JdCertificateItem,
   type JdLinkItem,
 } from "@/services/aiResumeService";
+import { dropIncompleteSchoolEducation, isSchoolEducation } from "./educationFilters";
 
 const LOADING_MESSAGES = [
   "Reading the job description...",
@@ -47,14 +48,6 @@ const RESULT_FORMATS: { label: string; value: string }[] = [
   { label: "CGPA", value: "cgpa" },
   { label: "Percentage", value: "percentage" },
 ];
-
-// School-level records have no degree, field of study or university, and only
-// their completion year is meaningful — all of that only applies to higher
-// education, so those inputs are hidden for these types.
-const SCHOOL_EDUCATION_TYPES = ["sslc", "puc"];
-
-const isSchoolEducation = (educationType?: string) =>
-  SCHOOL_EDUCATION_TYPES.includes((educationType || "").toLowerCase());
 
 const fieldClass =
   "w-full text-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400 bg-white placeholder-gray-400 transition disabled:bg-gray-100 disabled:text-gray-400";
@@ -159,7 +152,9 @@ function normalizeJdData(raw: JdResumeData): JdResumeData {
     technical_summary_generated: technicalSummary,
     work_experience: { experiences: enforceSingleCurrentExperience(experiences) },
     projects: mergeProjectDescriptions(raw.projects || []),
-    education: stripSchoolOnlyEducationFields(raw.education || []),
+    education: stripSchoolOnlyEducationFields(
+      dropIncompleteSchoolEducation(raw.education || [])
+    ),
     skills: raw.skills || [],
     ai_skills: raw.ai_skills || [],
     certificates: raw.certificates || [],
@@ -211,7 +206,11 @@ export default function JdResumeFlow({ sessionId, token, onComplete }: JdResumeF
             ? { projects: mergeProjectDescriptions(draft.data.projects) }
             : {}),
           ...(Array.isArray(draft.data.education)
-            ? { education: stripSchoolOnlyEducationFields(draft.data.education) }
+            ? {
+                education: stripSchoolOnlyEducationFields(
+                  dropIncompleteSchoolEducation(draft.data.education)
+                ),
+              }
             : {}),
         });
         setStage("review");
