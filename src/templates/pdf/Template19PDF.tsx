@@ -122,7 +122,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
         <View style={{ marginTop: 6, width: '100%' }}>
           {blocks.map((block, idx) => (
             <View key={idx} style={{ flexDirection: 'row', marginTop: idx > 0 ? 2 : 0, alignItems: 'flex-start', width: '100%' }}>
-              <Text style={{ width: 12, flexShrink: 0, color: '#444', fontSize: 10 }}>•</Text>
+              <Text style={{ width: 16, flexShrink: 0, color: '#444', fontSize: 10 }}>{block.ordered ? `${idx + 1}.` : '•'}</Text>
               <Text style={{ flex: 1, color: '#444', fontSize: 10, lineHeight: 1.4, textAlign: 'justify' }}>{renderRuns(block.html)}</Text>
             </View>
           ))}
@@ -164,7 +164,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" style={[styles.page, { fontFamily: pdfFontFamily }]}>
         <ContinuationSpacer />
         <View style={styles.headerRow}>
           <View>
@@ -194,18 +194,18 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
             {/* Left sidebar */}
             <View style={[styles.rightCol, { paddingRight: 12 }]}>
               {(skillsLinks.skills || []).some((s: any) => s.enabled && s.skillName) && (<>
-                <Text style={styles.sectionHeading}>Skills</Text>
+                <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Skills</Text>
                 <View style={{ ...styles.divider, backgroundColor: '#999' }} />
                 <View style={{ marginTop: 8 }}>{(skillsLinks.skills || []).filter((s: any) => s.enabled && s.skillName).map((s: any, i: number) => (<Text key={i} style={{ marginBottom: 6 }}>• {s.skillName}</Text>))}</View>
               </>)}
 
               {(education.higherEducation.some(edu => edu.enabled) || hasPreUniversity || hasSSLC) && (
                 <View style={{ marginTop: 12 }}>
-                  <Text style={styles.sectionHeading}>Education</Text>
+                  <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Education</Text>
                   <View style={{ ...styles.divider, backgroundColor: '#999' }} />
                   <View style={{ marginTop: 8 }}>{[...education.higherEducation].filter(edu => edu.enabled).reverse().map((edu: any, i: number) => (
                     <View key={i} style={{ marginBottom: 8 }}>
-                      <Text style={{ fontSize: 10, fontFamily: 'Helvetica' }}>{edu.instituteName}</Text>
+                      <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold }}>{edu.instituteName}</Text>
                       <Text style={{ color: '#151616', marginTop: 4 }}>{edu.degree}{edu.fieldOfStudy ? ` (${edu.fieldOfStudy}) — ${edu.universityBoard}` : ''}</Text>
                       <Text style={{ color: '#6b7280', marginTop: 4, fontSize: 10 }}>
                         {edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear || edu.startDate)} - Present` : formatResumeEducationDateRange(edu)}
@@ -216,7 +216,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
 
                     {hasPreUniversity && (
                       <View style={{ marginBottom: 8 }}>
-                        <Text style={{ fontSize: 10, fontFamily: 'Helvetica' }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
+                        <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold }}>{education.preUniversity.instituteName || 'Pre University'}</Text>
                         <Text style={{ color: '#151616', marginTop: 4 }}>Pre University (12th Standard){education.preUniversity.boardType ? ` — ${education.preUniversity.boardType}` : ''}{education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}</Text>
                         <Text style={{ color: '#6b7280', marginTop: 4, fontSize: 10 }}>
                           {formatResumeEducationDateRange(education.preUniversity)}
@@ -227,7 +227,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
 
                     {hasSSLC && (
                       <View style={{ marginBottom: 8 }}>
-                        <Text style={{ fontSize: 10, fontFamily: 'Helvetica' }}>{education.sslc.instituteName || 'SSLC'}</Text>
+                        <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold }}>{education.sslc.instituteName || 'SSLC'}</Text>
                         <Text style={{ color: '#151616', marginTop: 4 }}>SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}</Text>
                         <Text style={{ color: '#6b7280', marginTop: 4, fontSize: 10 }}>
                           {formatResumeEducationDateRange(education.sslc)}
@@ -240,7 +240,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
 
               {(((personal as any).languagesKnown || (personal as any).languages || [])).filter((l: string) => l && l.trim()).length > 0 && (
                 <View style={{ marginTop: 12 }}>
-                  <Text style={styles.sectionHeading}>Language</Text>
+                  <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Language</Text>
                   <View style={{ ...styles.divider, backgroundColor: '#999' }} />
                   <View style={{ marginTop: 8 }}>{(((personal as any).languagesKnown || (personal as any).languages || [])).filter((l: string) => l && l.trim()).map((l: string, i: number) => (<Text key={i} style={{ marginBottom: 6 }}>• {l}</Text>))}</View>
                 </View>
@@ -248,7 +248,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
 
               {(certifications || []).some((c: any) => c.enabled && c.certificateTitle) && (
                 <View style={{ marginTop: 12 }}>
-                  <Text style={styles.sectionHeading}>Certification</Text>
+                  <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Certification</Text>
                   <View style={{ ...styles.divider, backgroundColor: '#999' }} />
                   <View style={{ marginTop: 8 }}>{(certifications || []).filter((c: any) => c.enabled && c.certificateTitle).map((c: any, i: number) => (<Text key={i} style={{ marginBottom: 6 }}>• {c.certificateTitle}{c.providedBy ? ` — ${c.providedBy}` : ''}</Text>))}</View>
                 </View>
@@ -259,7 +259,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
             {/* Right main content */}
             <View style={styles.leftCol}>
               {experience.workExperiences.some((exp: any) => exp.enabled) && (<>
-                <Text style={styles.sectionHeading}>Professional Experience</Text>
+                <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Professional Experience</Text>
                 <View style={{ ...styles.divider, backgroundColor: '#999' }} />
 
                 <View style={{ marginTop: 8 }}>
@@ -305,7 +305,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
 
               {(projects || []).some((p: any) => p.enabled) && (
                 <View style={{ marginTop: 12 }}>
-                  <Text style={styles.sectionHeading}>Projects</Text>
+                  <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Projects</Text>
                   <View style={{ ...styles.divider, backgroundColor: '#999' }} />
                   <View style={{ marginTop: 8 }}>
                     {(projects || []).filter((p: any) => p.enabled).map((p: any, i: number) => (

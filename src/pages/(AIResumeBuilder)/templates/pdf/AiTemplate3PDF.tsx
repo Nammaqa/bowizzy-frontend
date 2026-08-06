@@ -50,6 +50,7 @@ const AiTemplate3PDF: React.FC<Props> = ({ data, primaryColor = '#2d3748' }) => 
           {/* Left sidebar */}
           <View style={{ width: SIDEBAR_WIDTH, paddingTop: 28, paddingHorizontal: 18 }}>
             <Text style={{ fontSize: 20, fontFamily: 'Helvetica-Bold', color: '#fff', marginBottom: 4 }}>{personal.firstName}</Text>
+            <Text style={{ fontSize: 20, fontFamily: 'Helvetica-Bold', color: '#fff', marginBottom: 4 }}>{personal.middleName}</Text>
             <Text style={{ fontSize: 20, fontFamily: 'Helvetica-Bold', color: '#fff', marginBottom: 12 }}>{personal.lastName}</Text>
             {/* Contact */}
             <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#e2e8f0', letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 14, marginBottom: 4 }}>Contact</Text>

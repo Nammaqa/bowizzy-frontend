@@ -130,7 +130,7 @@ const Template13PDF: React.FC<Template13PDFProps> = ({ data, primaryColor = '#11
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" style={[styles.page, { fontFamily: pdfFontFamily }]}>
         <ContinuationSpacer />
         <View style={styles.header}>
           <Text style={{ ...styles.name, fontFamily: pdfFontFamilyBold, color: primaryColor }}>{personal.firstName} {(personal.middleName || '')} {personal.lastName}</Text>
@@ -183,7 +183,7 @@ const Template13PDF: React.FC<Template13PDFProps> = ({ data, primaryColor = '#11
 
         <View style={{ marginTop: 12 }}>
           <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>CAREER OBJECTIVE</Text>
-          <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginTop: 0, marginBottom: 0 }} />
+          <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginTop: 0, marginBottom: 6 }} />
         </View>
         <View style={{ marginTop: 0 }}>
           {personal.aboutCareerObjective ? <Text style={[styles.objective, { marginTop: 0, marginBottom: 0, color: '#2b2a2a', textAlign: 'justify' }]}>{htmlToPlainText(trimTrailingHtml(personal.aboutCareerObjective))}</Text> : null}

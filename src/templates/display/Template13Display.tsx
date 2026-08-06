@@ -79,7 +79,7 @@ const renderDescription = (html?: string) => {
     <div style={{ marginTop: 6, color: '#2b2a2a' }}>
       {blocks.map((block, idx) => (
         <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', marginTop: idx > 0 ? 4 : 0 }}>
-          <span style={{ marginRight: 6, lineHeight: 1.4, width: 6 }}>•</span>
+          <span style={{ marginRight: 6, lineHeight: 1.4, width: block.ordered ? 16 : 6 }}>{block.ordered ? `${idx + 1}.` : '•'}</span>
           <div style={{ flex: 1, lineHeight: 1.4, textAlign: 'justify' }} dangerouslySetInnerHTML={{ __html: block.html }} />
         </div>
       ))}
@@ -159,7 +159,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
         <section style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '0 16px', alignItems: 'start' }}>
           <div style={{ gridColumn: '1 / -1', marginTop: 12 }}>
             <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: '#111827', fontWeight: 700 }}>CAREER OBJECTIVE</div>
-            <div style={{ height: 1, background: '#cfcfcf', marginTop: 0, marginBottom: 0, width: '100%' }} />
+            <div style={{ height: 1, background: '#cfcfcf', marginTop: 0, marginBottom: 6, width: '100%' }} />
           </div>
           <div style={{ gridColumn: '1 / -1', marginTop: 0 }}>
             {personal.aboutCareerObjective && (<div style={{ color: '#2b2a2a', lineHeight: 1.4, textAlign: 'justify' }}>{htmlToLines(personal.aboutCareerObjective).join(' ')}</div>)}
@@ -168,7 +168,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
           {experience.workExperiences.some(exp => exp.enabled) && (<>
             <div style={{ gridColumn: '1 / -1', marginTop: 12 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: primaryColor, fontWeight: 700 }}>EXPERIENCE</div>
-              <div style={{ height: 1, background: '#cfcfcf', marginTop: 0, marginBottom: 0, width: '100%' }} />
+              <div style={{ height: 1, background: '#cfcfcf', marginTop: 0, marginBottom: 6, width: '100%' }} />
             </div>
             <div style={{ gridColumn: '1 / -1', marginTop: 0 }}>
               {experience.workExperiences.filter(e => e.enabled).map((w, i) => (
@@ -186,7 +186,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
           {projects.some(p => p.enabled) && (<>
             <div style={{ gridColumn: '1 / -1', marginTop: 12 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: primaryColor, fontWeight: 700 }}>PROJECTS</div>
-              <div style={{ height: 1, background: '#cfcfcf', marginTop: 0, marginBottom: 0, width: '100%' }} />
+              <div style={{ height: 1, background: '#cfcfcf', marginTop: 0, marginBottom: 6, width: '100%' }} />
             </div>
             <div style={{ gridColumn: '1 / -1', marginTop: 0 }}>
               {projects && projects.filter(p => p.enabled).map((p, i) => (
@@ -210,7 +210,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
           {(education.higherEducation.some(edu => edu.enabled) || education.preUniversityEnabled || education.sslcEnabled) && (<>
             <div style={{ gridColumn: '1 / -1', marginTop: 12 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: primaryColor, fontWeight: 700 }}>EDUCATION</div>
-              <div style={{ height: 1, background: '#cfcfcf', marginTop: 0, marginBottom: 0, width: '100%' }} />
+              <div style={{ height: 1, background: '#cfcfcf', marginTop: 0, marginBottom: 6, width: '100%' }} />
             </div>
             <div style={{ gridColumn: '1 / -1', marginTop: 0 }}>
               {/* Higher Education (BE/Bachelor etc.) */}
@@ -260,7 +260,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
           {skillsLinks.skills.some(s => s.enabled && s.skillName) && (<>
             <div style={{ gridColumn: '1 / -1', marginTop: 12 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: primaryColor, fontWeight: 700 }}>SKILLS</div>
-              <div style={{ height: 1, background: '#cfcfcf', marginTop: 0, marginBottom: 0, width: '100%' }} />
+              <div style={{ height: 1, background: '#cfcfcf', marginTop: 0, marginBottom: 6, width: '100%' }} />
             </div>
             <div style={{ gridColumn: '1 / -1', marginTop: 0 }}>
               <div style={{ color: '#2b2a2a' }}>{skillsLinks.skills.filter(s => s.enabled && s.skillName).map(s => s.skillName).join(', ')}</div>
@@ -270,7 +270,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
           {certifications.some(c => c.enabled && (c.certificateTitle || c.providedBy)) && (<>
             <div style={{ gridColumn: '1 / -1', marginTop: 12 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: primaryColor, fontWeight: 700 }}>CERTIFICATIONS</div>
-              <div style={{ height: 1, background: '#cfcfcf', marginTop: 0, marginBottom: 0, width: '100%' }} />
+              <div style={{ height: 1, background: '#cfcfcf', marginTop: 0, marginBottom: 6, width: '100%' }} />
             </div>
             <div style={{ gridColumn: '1 / -1', marginTop: 0 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, color: '#2b2a2a' }}>

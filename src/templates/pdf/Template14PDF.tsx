@@ -106,7 +106,7 @@ const Template14PDF: React.FC<Template14PDFProps> = ({ data, primaryColor = '#11
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" style={[styles.page, { fontFamily: pdfFontFamily }]}>
         <ContinuationSpacer />
         <View style={styles.headerWrap}>
           <Text style={{ ...styles.name, fontFamily: pdfFontFamilyBold, color: primaryColor }}>{personal.firstName} {(personal.middleName || '')} {personal.lastName}</Text>

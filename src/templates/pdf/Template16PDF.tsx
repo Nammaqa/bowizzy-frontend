@@ -130,7 +130,7 @@ const Template16PDF: React.FC<Template16PDFProps> = ({ data, primaryColor = '#11
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" style={[styles.page, { fontFamily: pdfFontFamily }]}>
         <ContinuationSpacer />
         <View style={styles.headerRow}>
           <View>

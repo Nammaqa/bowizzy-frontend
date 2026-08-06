@@ -8,13 +8,17 @@ import { ContinuationSpacer, SidebarBackground } from '@/templates/utils/pdfCont
 import { trimTrailingHtml } from '@/templates/utils/richTextHtml';
 
 const styles = StyleSheet.create({
-  page: { flexDirection: 'row', padding: 0, fontSize: 10, },
-  sidebar: { width: 220, backgroundColor: '#f3f4f6', padding: 18, paddingBottom: 40 },
+  // paddingBottom lives on the page, not the sidebar/content columns —
+  // react-pdf only reliably reserves bottom space at a forced page break
+  // when it's page-level padding; a nested View's own paddingBottom is not
+  // consistently honored at the point content wraps onto the next page.
+  page: { flexDirection: 'row', padding: 0, paddingBottom: 40, fontSize: 10, },
+  sidebar: { width: 220, backgroundColor: '#f3f4f6', padding: 18 },
   name: { fontSize: 20, color: '#0f172a' },
   role: { fontSize: 11, marginTop: 6 },
   sectionHeading: { fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase', paddingTop: 10 },
   divider: { height: 1, marginTop: 6, width: '100%' },
-  content: { flex: 1, padding: 18, paddingLeft: 24, paddingBottom: 40 }
+  content: { flex: 1, padding: 18, paddingLeft: 24 }
 });
 
 const htmlToPlainText = (html?: string) => {
@@ -165,7 +169,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" style={[styles.page, { fontFamily: pdfFontFamily }]}>
         <SidebarBackground width={220} color="#f3f4f6" />
         <View style={styles.sidebar}>
           <Text style={{ ...styles.name, fontFamily: pdfFontFamilyBold, color: primaryColor }}>{personal.firstName} {(personal.middleName || '')} {personal.lastName}</Text>
