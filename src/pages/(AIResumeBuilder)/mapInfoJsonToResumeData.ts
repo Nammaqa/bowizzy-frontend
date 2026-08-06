@@ -1,5 +1,5 @@
 import type { ResumeData } from "@/types/resume";
-import { dropIncompleteSchoolEducation } from "./educationFilters";
+import { dropIncompleteSchoolEducation, type RawEducationRecord } from "./educationFilters";
 
 /**
  * Maps the infoJson from an AI session to the ResumeData structure
@@ -17,7 +17,7 @@ export function mapInfoJsonToResumeData(info: any): ResumeData {
   // SSLC/PUC entry, so drop them here too rather than only at review time —
   // otherwise `preUniversityEnabled` below turns the placeholder into a
   // rendered "Pre University (12th) / NA" row.
-  const eduList = dropIncompleteSchoolEducation(info.education || []);
+  const eduList = dropIncompleteSchoolEducation<RawEducationRecord>(info.education || []);
   const certs = info.certificates || [];
   const links = info.links || [];
   // `technical_summary_generated` is the field the JD review form edits, so it

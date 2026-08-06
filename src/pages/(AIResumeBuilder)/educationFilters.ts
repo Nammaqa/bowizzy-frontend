@@ -45,6 +45,23 @@ export function hasRealValue(value?: string | null): boolean {
   return !PLACEHOLDER_VALUES.has(normalized);
 }
 
+/** An education record as it arrives from the API, before it is mapped. */
+export interface RawEducationRecord {
+  education_id?: number | null;
+  education_type?: string;
+  institution_name?: string | null;
+  board_type?: string | null;
+  subject_stream?: string | null;
+  degree?: string | null;
+  field_of_study?: string | null;
+  university_name?: string | null;
+  start_year?: string | null;
+  end_year?: string | null;
+  currently_pursuing?: boolean;
+  result_format?: string | null;
+  result?: string | null;
+}
+
 /**
  * Drops SSLC/PUC entries the user never actually supplied. A school record is
  * only identified by its institution, so with no real institution name there is
