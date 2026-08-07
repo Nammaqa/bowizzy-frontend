@@ -172,7 +172,11 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
       <Page size="A4" style={[styles.page, { fontFamily: pdfFontFamily }]}>
         <SidebarBackground width={220} color="#f3f4f6" />
         <View style={styles.sidebar}>
-          <Text style={{ ...styles.name, fontFamily: pdfFontFamilyBold, color: primaryColor }}>{personal.firstName} {(personal.middleName || '')} {personal.lastName}</Text>
+          <View>
+            {personal.firstName ? <Text style={{ ...styles.name, fontFamily: pdfFontFamilyBold, color: primaryColor }}>{personal.firstName}</Text> : null}
+            {personal.middleName ? <Text style={{ ...styles.name, fontFamily: pdfFontFamilyBold, color: primaryColor }}>{personal.middleName}</Text> : null}
+            {personal.lastName ? <Text style={{ ...styles.name, fontFamily: pdfFontFamilyBold, color: primaryColor }}>{personal.lastName}</Text> : null}
+          </View>
           {role && <Text style={{ ...styles.role, fontFamily: pdfFontFamily, color: primaryColor }}>{role}</Text>}
 
           <View style={{ marginTop: 12 }}>
