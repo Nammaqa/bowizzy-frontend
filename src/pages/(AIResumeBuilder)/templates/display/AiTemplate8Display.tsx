@@ -34,7 +34,7 @@ const AiTemplate8Display: React.FC<Props> = ({ data, primaryColor = '#1e293b' })
     </div>
   );
   return (
-    <div style={{ width: '210mm', minHeight: '297mm', fontFamily: '"Source Sans 3", sans-serif', background: '#fff', padding: '28px 40px' }}>
+    <div style={{ width: '210mm', minHeight: '297mm', fontFamily: "Calibri, sans-serif", background: '#fff', padding: '28px 40px' }}>
       {/* Double-line header */}
       <div style={{ borderTop: `3px solid ${primaryColor}`, borderBottom: `1px solid ${primaryColor}`, padding: '14px 0', marginBottom: 8 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>

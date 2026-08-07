@@ -41,7 +41,7 @@ const AiTemplate6Display: React.FC<Props> = ({ data, primaryColor = '#4338ca' })
   const sectionTitle: React.CSSProperties = { fontSize: 10, fontWeight: 700, color: primaryColor, letterSpacing: 1, textTransform: 'uppercase' as const, marginBottom: 4 };
 
   return (
-    <div style={{ width: '210mm', minHeight: '297mm', fontFamily: "Poppins, sans-serif", background: '#fff' }}>
+    <div style={{ width: '210mm', minHeight: '297mm', fontFamily: "Calibri, sans-serif", background: '#fff' }}>
       {/* Top accent bar */}
       <div style={{ height: 6, backgroundColor: primaryColor }} />
 

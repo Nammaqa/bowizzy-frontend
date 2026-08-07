@@ -35,7 +35,7 @@ const fmtResult = (result?: string, format?: string) => {
   return format.toLowerCase() === 'percentage' ? `${result}%` : `${format}: ${result}`;
 };
 const styles = StyleSheet.create({
-  page: { paddingTop: 28, paddingBottom: 24, paddingLeft: 0, paddingRight: 0, fontSize: 9 },
+  page: { paddingTop: 28, paddingBottom: 24, paddingLeft: 0, paddingRight: 0, fontSize: 9, fontFamily: 'Helvetica' },
   header: { backgroundColor: '#1e3a5f', paddingVertical: 24, paddingHorizontal: 40, color: '#fff' },
   name: { fontSize: 28, fontFamily: 'Helvetica-Bold', color: '#fff', letterSpacing: 1 },
   subtitle: { fontSize: 10, color: '#c4d9f2', marginTop: 4 },

@@ -40,7 +40,7 @@ const AiTemplate5Display: React.FC<Props> = ({ data, primaryColor = '#0f766e' })
   );
 
   return (
-    <div style={{ width: '210mm', minHeight: '297mm', fontFamily: "Lato, sans-serif", background: '#fff', padding: '32px 40px' }}>
+    <div style={{ width: '210mm', minHeight: '297mm', fontFamily: "Calibri, sans-serif", background: '#fff', padding: '32px 40px' }}>
       {/* Header — split */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4, gap: 16 }}>
         <div style={{ flex: 1, minWidth: 0 }}>

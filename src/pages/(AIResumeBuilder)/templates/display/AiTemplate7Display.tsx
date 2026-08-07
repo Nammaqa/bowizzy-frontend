@@ -30,7 +30,7 @@ const AiTemplate7Display: React.FC<Props> = ({ data, primaryColor = '#374151' })
   const sectionStyle: React.CSSProperties = { fontSize: 10, fontWeight: 600, letterSpacing: 3, textTransform: 'uppercase' as const, color: primaryColor, marginTop: 16, marginBottom: 2 };
   const thinLine: React.CSSProperties = { height: 0.5, backgroundColor: '#d1d5db', width: '100%', marginBottom: 8 };
   return (
-    <div style={{ width: '210mm', minHeight: '297mm', fontFamily: '"DM Sans", sans-serif', background: '#fff', padding: '36px 44px' }}>
+    <div style={{ width: '210mm', minHeight: '297mm', fontFamily: "Calibri, sans-serif", background: '#fff', padding: '36px 44px' }}>
       {/* Header */}
       <div style={{ marginBottom: 6 }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, color: primaryColor, margin: 0, letterSpacing: 0.5 }}>
