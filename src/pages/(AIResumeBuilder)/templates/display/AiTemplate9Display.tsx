@@ -38,7 +38,7 @@ const AiTemplate9Display: React.FC<Props> = ({ data, primaryColor = '#334155' })
     </div>
   );
   return (
-    <div style={{ width: '210mm', minHeight: '297mm', fontFamily: '"Open Sans", sans-serif', background: '#fff' }}>
+    <div style={{ width: '210mm', minHeight: '297mm', fontFamily: "Calibri, sans-serif", background: '#fff' }}>
       {/* Top banner */}
       <div style={{ backgroundColor: primaryColor, padding: '24px 40px', display: 'flex', alignItems: 'flex-start', gap: 16 }}>
         <div style={{ width: 50, height: 50, borderRadius: '50%', backgroundColor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>

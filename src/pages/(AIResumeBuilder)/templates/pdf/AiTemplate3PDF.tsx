@@ -44,7 +44,7 @@ const AiTemplate3PDF: React.FC<Props> = ({ data, primaryColor = '#2d3748' }) => 
   const languages: string[] = (personal as any).languagesKnown || [];
   return (
     <Document>
-      <Page size="A4" style={{ paddingTop: 0, paddingBottom: 0, paddingLeft: 0, paddingRight: 0, fontSize: 9 }}>
+      <Page size="A4" style={{ paddingTop: 0, paddingBottom: 0, paddingLeft: 0, paddingRight: 0, fontSize: 9, fontFamily: 'Helvetica' }}>
         {/* Top padding on every page after the first — the sidebar/content sit flush
             against the page edge by design for page 1, but continuation pages need
             breathing room so wrapped content doesn't stick to the top edge. */}

@@ -45,9 +45,10 @@ const CERTIFICATE_TYPES = [
   "Other",
 ];
 const RESULT_FORMATS: { label: string; value: string }[] = [
+  { label: "Percentage", value: "Percentage" },
   { label: "CGPA", value: "CGPA" },
   { label: "GPA", value: "GPA" },
-  { label: "Percentage", value: "Percentage" },
+  { label: "Grade", value: "Grade" },
 ];
 
 const fieldClass =

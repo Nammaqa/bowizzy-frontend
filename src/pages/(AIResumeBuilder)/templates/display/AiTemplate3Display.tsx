@@ -35,7 +35,7 @@ const AiTemplate3Display: React.FC<Props> = ({ data, primaryColor = '#2d3748' })
   const mainSectionTitle: React.CSSProperties = { fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase' as const, color: primaryColor, marginBottom: 2, marginTop: 14 };
 
   return (
-    <div style={{ width: '210mm', minHeight: '297mm', fontFamily: "Nunito Sans, sans-serif", background: '#fff', display: 'flex' }}>
+    <div style={{ width: '210mm', minHeight: '297mm', fontFamily: "Calibri, sans-serif", background: '#fff', display: 'flex' }}>
       {/* Sidebar */}
       <div style={{ width: 170, backgroundColor: primaryColor, padding: '28px 18px', color: '#fff', flexShrink: 0 }}>
         <h1 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: 0 }}>{personal.firstName}</h1>

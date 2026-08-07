@@ -42,7 +42,7 @@ const AiTemplate2Display: React.FC<Props> = ({ data, primaryColor = '#1e3a5f' })
   const dividerStyle: React.CSSProperties = { height: 1.5, backgroundColor: primaryColor, width: '100%', marginBottom: 6 };
 
   return (
-    <div style={{ width: '210mm', minHeight: '297mm', fontFamily: "Inter, sans-serif", background: '#fff' }}>
+    <div style={{ width: '210mm', minHeight: '297mm', fontFamily: "Calibri, sans-serif", background: '#fff' }}>
       {/* Header band */}
       <div style={{ backgroundColor: primaryColor, padding: '24px 40px', color: '#fff' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: 1 }}>
