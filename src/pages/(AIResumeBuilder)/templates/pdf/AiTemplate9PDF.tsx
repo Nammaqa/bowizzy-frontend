@@ -29,6 +29,11 @@ const fmtDate = (s?: string) => {
   return String(s);
 };
 const fmtYear = (s?: string) => { if (!s) return ''; const m = String(s).match(/(\d{4})/); return m ? m[1] : String(s); };
+const fmtResult = (result?: string, format?: string) => {
+  if (!result) return '';
+  if (!format) return result;
+  return format.toLowerCase() === 'percentage' ? `${result}%` : `${format}: ${result}`;
+};
 interface Props { data: ResumeData; primaryColor?: string; }
 const SectionTitle = ({ title, color }: { title: string; color: string }) => (
   <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 16, marginBottom: 8, gap: 10 }}>
@@ -120,6 +125,7 @@ const AiTemplate9PDF: React.FC<Props> = ({ data, primaryColor = '#334155' }) => 
                   <Text style={{ fontSize: 9, color: '#64748b' }}>{edu.instituteName}</Text>
                   {edu.universityBoard ? <Text style={{ fontSize: 9, color: '#64748b' }}>{edu.universityBoard}</Text> : null}
                   <Text style={{ fontSize: 8.5, color: '#94a3b8' }}>{fmtYear(edu.startYear)} – {edu.currentlyPursuing ? 'Present' : fmtYear(edu.endYear)}</Text>
+                  {edu.result ? <Text style={{ fontSize: 8.5, color: '#94a3b8' }}>{fmtResult(edu.result, edu.resultFormat)}</Text> : null}
                 </View>
               ))}
               {education.preUniversityEnabled && education.preUniversity?.instituteName && (
@@ -127,6 +133,7 @@ const AiTemplate9PDF: React.FC<Props> = ({ data, primaryColor = '#334155' }) => 
                   <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#0f172a' }}>Pre University (12th)</Text>
                   <Text style={{ fontSize: 9, color: '#64748b' }}>{education.preUniversity.instituteName}</Text>
                   <Text style={{ fontSize: 8.5, color: '#94a3b8' }}>{fmtYear(education.preUniversity.yearOfPassing)}</Text>
+                  {education.preUniversity.result ? <Text style={{ fontSize: 8.5, color: '#94a3b8' }}>{fmtResult(education.preUniversity.result, education.preUniversity.resultFormat)}</Text> : null}
                 </View>
               )}
               {education.sslcEnabled && education.sslc?.instituteName && (
@@ -134,6 +141,7 @@ const AiTemplate9PDF: React.FC<Props> = ({ data, primaryColor = '#334155' }) => 
                   <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#0f172a' }}>SSLC (10th)</Text>
                   <Text style={{ fontSize: 9, color: '#64748b' }}>{education.sslc.instituteName}</Text>
                   <Text style={{ fontSize: 8.5, color: '#94a3b8' }}>{fmtYear(education.sslc.yearOfPassing)}</Text>
+                  {education.sslc.result ? <Text style={{ fontSize: 8.5, color: '#94a3b8' }}>{fmtResult(education.sslc.result, education.sslc.resultFormat)}</Text> : null}
                 </View>
               )}
             </View>

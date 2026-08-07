@@ -29,6 +29,11 @@ const fmtDate = (s?: string) => {
   return String(s);
 };
 const fmtYear = (s?: string) => { if (!s) return ''; const m = String(s).match(/(\d{4})/); return m ? m[1] : String(s); };
+const fmtResult = (result?: string, format?: string) => {
+  if (!result) return '';
+  if (!format) return result;
+  return format.toLowerCase() === 'percentage' ? `${result}%` : `${format}: ${result}`;
+};
 const styles = StyleSheet.create({
   page: { paddingTop: 28, paddingBottom: 24, paddingLeft: 0, paddingRight: 0, fontSize: 9 },
   header: { backgroundColor: '#1e3a5f', paddingVertical: 24, paddingHorizontal: 40, color: '#fff' },
@@ -126,6 +131,7 @@ const AiTemplate2PDF: React.FC<Props> = ({ data, primaryColor = '#1e3a5f' }) => 
               </View>
               <Text style={styles.itemSub}>{edu.instituteName}</Text>
               {edu.universityBoard ? <Text style={styles.itemSub}>{edu.universityBoard}</Text> : null}
+              {edu.result ? <Text style={styles.itemSub}>{fmtResult(edu.result, edu.resultFormat)}</Text> : null}
             </View>
           ))}
           {education.preUniversityEnabled && education.preUniversity?.instituteName && (
@@ -135,6 +141,7 @@ const AiTemplate2PDF: React.FC<Props> = ({ data, primaryColor = '#1e3a5f' }) => 
                 <Text style={styles.itemSub}>{fmtYear(education.preUniversity.yearOfPassing)}</Text>
               </View>
               <Text style={styles.itemSub}>{education.preUniversity.instituteName}</Text>
+              {education.preUniversity.result ? <Text style={styles.itemSub}>{fmtResult(education.preUniversity.result, education.preUniversity.resultFormat)}</Text> : null}
             </View>
           )}
           {education.sslcEnabled && education.sslc?.instituteName && (
@@ -144,6 +151,7 @@ const AiTemplate2PDF: React.FC<Props> = ({ data, primaryColor = '#1e3a5f' }) => 
                 <Text style={styles.itemSub}>{fmtYear(education.sslc.yearOfPassing)}</Text>
               </View>
               <Text style={styles.itemSub}>{education.sslc.instituteName}</Text>
+              {education.sslc.result ? <Text style={styles.itemSub}>{fmtResult(education.sslc.result, education.sslc.resultFormat)}</Text> : null}
             </View>
           )}
           {/* Skills */}

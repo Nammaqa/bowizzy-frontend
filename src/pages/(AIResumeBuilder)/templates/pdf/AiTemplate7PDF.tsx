@@ -29,6 +29,11 @@ const fmtDate = (s?: string) => {
   return String(s);
 };
 const fmtYear = (s?: string) => { if (!s) return ''; const m = String(s).match(/(\d{4})/); return m ? m[1] : String(s); };
+const fmtResult = (result?: string, format?: string) => {
+  if (!result) return '';
+  if (!format) return result;
+  return format.toLowerCase() === 'percentage' ? `${result}%` : `${format}: ${result}`;
+};
 interface Props { data: ResumeData; primaryColor?: string; }
 const SectionHeader = ({ title, color }: { title: string; color: string }) => (
   <>
@@ -109,6 +114,7 @@ const AiTemplate7PDF: React.FC<Props> = ({ data, primaryColor = '#374151' }) => 
               <Text style={{ fontSize: 9, color: '#6b7280' }}>{edu.instituteName}</Text>
               {edu.universityBoard ? <Text style={{ fontSize: 9, color: '#6b7280' }}>{edu.universityBoard}</Text> : null}
             </View>
+            {edu.result ? <Text style={{ fontSize: 9, color: '#6b7280' }}>{fmtResult(edu.result, edu.resultFormat)}</Text> : null}
           </View>
         ))}
         {education.preUniversityEnabled && education.preUniversity?.instituteName && (
@@ -121,6 +127,7 @@ const AiTemplate7PDF: React.FC<Props> = ({ data, primaryColor = '#374151' }) => 
               <Text style={{ fontSize: 9, color: '#6b7280' }}>{education.preUniversity.instituteName}</Text>
               <Text style={{ fontSize: 9, color: '#6b7280' }}>{education.preUniversity.boardType}</Text>
             </View>
+            {education.preUniversity.result ? <Text style={{ fontSize: 9, color: '#6b7280' }}>{fmtResult(education.preUniversity.result, education.preUniversity.resultFormat)}</Text> : null}
           </View>
         )}
         {education.sslcEnabled && education.sslc?.instituteName && (
@@ -130,6 +137,7 @@ const AiTemplate7PDF: React.FC<Props> = ({ data, primaryColor = '#374151' }) => 
               <Text style={{ fontSize: 8.5, color: '#9ca3af' }}>{fmtYear(education.sslc.yearOfPassing)}</Text>
             </View>
             <Text style={{ fontSize: 9, color: '#6b7280' }}>{education.sslc.instituteName}</Text>
+            {education.sslc.result ? <Text style={{ fontSize: 9, color: '#6b7280' }}>{fmtResult(education.sslc.result, education.sslc.resultFormat)}</Text> : null}
           </View>
         )}
         {skillsLinks.skills.some(s => s.enabled && s.skillName) && (
