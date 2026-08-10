@@ -29,6 +29,11 @@ const fmtDate = (s?: string) => {
   return String(s);
 };
 const fmtYear = (s?: string) => { if (!s) return ''; const m = String(s).match(/(\d{4})/); return m ? m[1] : String(s); };
+const fmtResult = (result?: string, format?: string) => {
+  if (!result) return '';
+  if (!format) return result;
+  return format.toLowerCase() === 'percentage' ? `${result}%` : `${format}: ${result}`;
+};
 const SIDEBAR_WIDTH = 170;
 interface Props { data: ResumeData; primaryColor?: string; }
 const AiTemplate3PDF: React.FC<Props> = ({ data, primaryColor = '#2d3748' }) => {
@@ -39,7 +44,7 @@ const AiTemplate3PDF: React.FC<Props> = ({ data, primaryColor = '#2d3748' }) => 
   const languages: string[] = (personal as any).languagesKnown || [];
   return (
     <Document>
-      <Page size="A4" style={{ paddingTop: 0, paddingBottom: 0, paddingLeft: 0, paddingRight: 0, fontSize: 9 }}>
+      <Page size="A4" style={{ paddingTop: 0, paddingBottom: 0, paddingLeft: 0, paddingRight: 0, fontSize: 9, fontFamily: 'Helvetica' }}>
         {/* Top padding on every page after the first — the sidebar/content sit flush
             against the page edge by design for page 1, but continuation pages need
             breathing room so wrapped content doesn't stick to the top edge. */}
@@ -73,6 +78,7 @@ const AiTemplate3PDF: React.FC<Props> = ({ data, primaryColor = '#2d3748' }) => 
                 <Text style={{ fontSize: 8, color: '#e2e8f0' }}>{edu.fieldOfStudy}</Text>
                 <Text style={{ fontSize: 8, color: '#e2e8f0' }}>{edu.instituteName}</Text>
                 {edu.universityBoard ? <Text style={{ fontSize: 8, color: '#e2e8f0' }}>{edu.universityBoard}</Text> : null}
+                {edu.result ? <Text style={{ fontSize: 8, color: '#e2e8f0' }}>{fmtResult(edu.result, edu.resultFormat)}</Text> : null}
               </View>
             ))}
             {education.preUniversityEnabled && education.preUniversity?.instituteName && (
@@ -82,6 +88,7 @@ const AiTemplate3PDF: React.FC<Props> = ({ data, primaryColor = '#2d3748' }) => 
                   <Text style={{ fontSize: 7, color: '#a0aec0' }}>{fmtYear(education.preUniversity.yearOfPassing)}</Text>
                 </View>
                 <Text style={{ fontSize: 8, color: '#e2e8f0' }}>{education.preUniversity.instituteName}</Text>
+                {education.preUniversity.result ? <Text style={{ fontSize: 8, color: '#e2e8f0' }}>{fmtResult(education.preUniversity.result, education.preUniversity.resultFormat)}</Text> : null}
               </View>
             )}
             {education.sslcEnabled && education.sslc?.instituteName && (
@@ -91,6 +98,7 @@ const AiTemplate3PDF: React.FC<Props> = ({ data, primaryColor = '#2d3748' }) => 
                   <Text style={{ fontSize: 7, color: '#a0aec0' }}>{fmtYear(education.sslc.yearOfPassing)}</Text>
                 </View>
                 <Text style={{ fontSize: 8, color: '#e2e8f0' }}>{education.sslc.instituteName}</Text>
+                {education.sslc.result ? <Text style={{ fontSize: 8, color: '#e2e8f0' }}>{fmtResult(education.sslc.result, education.sslc.resultFormat)}</Text> : null}
               </View>
             )}
             {/* Skills in sidebar */}

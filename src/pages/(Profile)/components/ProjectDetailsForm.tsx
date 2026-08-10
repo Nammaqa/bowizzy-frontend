@@ -52,7 +52,7 @@ export default function ProjectDetailsForm({
         {
           id: "1",
           projectTitle: "",
-          projectType: "",
+          projectType: "Personal",
           startDate: "",
           endDate: "",
           currentlyWorking: false,
@@ -222,9 +222,6 @@ export default function ProjectDetailsForm({
     const fieldErrors: Record<string, string> = {};
     if (!project.projectTitle) return fieldErrors;
 
-    if (!project.projectType) {
-      fieldErrors.projectType = "Project type is required";
-    }
     if (!project.startDate) {
       fieldErrors.startDate = "Start date is required";
     }
@@ -647,7 +644,7 @@ export default function ProjectDetailsForm({
     const newProject: Project = {
       id: Date.now().toString(),
       projectTitle: "",
-      projectType: "",
+      projectType: "Personal",
       startDate: "",
       endDate: "",
       currentlyWorking: false,
@@ -902,7 +899,7 @@ export default function ProjectDetailsForm({
                 {/* Project Type */}
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                    Project Type{isMandatory && <span className="text-red-500"> *</span>}
+                    Project Type
                   </label>
                   <div className="relative">
                     <select
@@ -914,10 +911,7 @@ export default function ProjectDetailsForm({
                           e.target.value
                         )
                       }
-                      className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm appearance-none bg-white pr-8 ${errors[`project-${index}-projectType`]
-                        ? "border-red-500 focus:ring-red-400"
-                        : "border-gray-300 focus:ring-orange-400 focus:border-transparent"
-                        }`}
+                      className="w-full px-3 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 text-xs sm:text-sm appearance-none bg-white pr-8 border-gray-300 focus:ring-orange-400 focus:border-transparent"
                     >
                       <option value="">Select Project Type</option>
                       <option value="Personal">Personal</option>
@@ -928,11 +922,6 @@ export default function ProjectDetailsForm({
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
-                  {errors[`project-${index}-projectType`] && (
-                    <p className="mt-1 text-xs text-red-500">
-                      {errors[`project-${index}-projectType`]}
-                    </p>
-                  )}
                 </div>
 
                 {/* Start Date */}

@@ -29,6 +29,11 @@ const fmtDate = (s?: string) => {
   return String(s);
 };
 const fmtYear = (s?: string) => { if (!s) return ''; const m = String(s).match(/(\d{4})/); return m ? m[1] : String(s); };
+const fmtResult = (result?: string, format?: string) => {
+  if (!result) return '';
+  if (!format) return result;
+  return format.toLowerCase() === 'percentage' ? `${result}%` : `${format}: ${result}`;
+};
 interface Props { data: ResumeData; primaryColor?: string; }
 const AiTemplate5PDF: React.FC<Props> = ({ data, primaryColor = '#0f766e' }) => {
   const { personal, experience, education, projects, skillsLinks, certifications } = data;
@@ -111,6 +116,7 @@ const AiTemplate5PDF: React.FC<Props> = ({ data, primaryColor = '#0f766e' }) => 
               <Text style={{ fontSize: 9, color: '#555' }}>{fmtYear(edu.startYear)} – {edu.currentlyPursuing ? 'Present' : fmtYear(edu.endYear)}</Text>
             </View>
             <Text style={{ fontSize: 9, color: '#555' }}>{edu.instituteName}</Text>          {edu.universityBoard ? <Text style={{ fontSize: 9, color: '#555' }}>{edu.universityBoard}</Text> : null}
+            {edu.result ? <Text style={{ fontSize: 9, color: '#555' }}>{fmtResult(edu.result, edu.resultFormat)}</Text> : null}
           </View>
         ))}
         {education.preUniversityEnabled && education.preUniversity?.instituteName && (
@@ -120,6 +126,7 @@ const AiTemplate5PDF: React.FC<Props> = ({ data, primaryColor = '#0f766e' }) => 
               <Text style={{ fontSize: 9, color: '#555' }}>{fmtYear(education.preUniversity.yearOfPassing)}</Text>
             </View>
             <Text style={{ fontSize: 9, color: '#555' }}>{education.preUniversity.instituteName}</Text>
+            {education.preUniversity.result ? <Text style={{ fontSize: 9, color: '#555' }}>{fmtResult(education.preUniversity.result, education.preUniversity.resultFormat)}</Text> : null}
           </View>
         )}
         {education.sslcEnabled && education.sslc?.instituteName && (
@@ -129,6 +136,7 @@ const AiTemplate5PDF: React.FC<Props> = ({ data, primaryColor = '#0f766e' }) => 
               <Text style={{ fontSize: 9, color: '#555' }}>{fmtYear(education.sslc.yearOfPassing)}</Text>
             </View>
             <Text style={{ fontSize: 9, color: '#555' }}>{education.sslc.instituteName}</Text>
+            {education.sslc.result ? <Text style={{ fontSize: 9, color: '#555' }}>{fmtResult(education.sslc.result, education.sslc.resultFormat)}</Text> : null}
           </View>
         )}
         {/* Skills */}

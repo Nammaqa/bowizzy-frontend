@@ -67,14 +67,14 @@ export default function Profile() {
   // Validation function for file
   const validateFile = (file) => {
     const validTypes = ["application/pdf"];
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    const maxSize = 2 * 1024 * 1024; // 2MB
 
     if (!validTypes.includes(file.type)) {
       return "Only PDF files are allowed";
     }
 
     if (file.size > maxSize) {
-      return "File size must be less than 10MB";
+      return "File size must be less than 2MB";
     }
 
     return "";
@@ -388,7 +388,7 @@ export default function Profile() {
                       <input
                         id="file-upload-input"
                         type="file"
-                        accept=".pdf,.doc,.docx"
+                        accept=".pdf,application/pdf"
                         onChange={handleFileSelect}
                         className="hidden"
                       />

@@ -14,6 +14,11 @@ const fmtDate = (s?: string) => {
   return String(s);
 };
 const fmtYear = (s?: string) => { if (!s) return ''; const m = String(s).match(/(\d{4})/); return m ? m[1] : String(s); };
+const fmtResult = (result?: string, format?: string) => {
+  if (!result) return '';
+  if (!format) return result;
+  return format.toLowerCase() === 'percentage' ? `${result}%` : `${format}: ${result}`;
+};
 interface Props { data: ResumeData; primaryColor?: string; }
 const AiTemplate1Display: React.FC<Props> = ({ data, primaryColor = '#1a1a1a' }) => {
   const { personal, experience, education, projects, skillsLinks, certifications } = data;
@@ -25,7 +30,7 @@ const AiTemplate1Display: React.FC<Props> = ({ data, primaryColor = '#1a1a1a' })
   const sectionStyle: React.CSSProperties = { fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase' as const, color: primaryColor, marginTop: 14 };
   const divider: React.CSSProperties = { height: 1, backgroundColor: primaryColor, width: '100%', marginTop: 2, marginBottom: 6 };
   return (
-    <div style={{ width: '210mm', minHeight: '297mm', fontFamily: "Raleway, sans-serif", background: '#fff', padding: '32px 40px' }}>
+    <div style={{ width: '210mm', minHeight: '297mm', fontFamily: "Calibri, sans-serif", background: '#fff', padding: '32px 40px' }}>
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: 4 }}>
         <h1 style={{ fontSize: 26, fontWeight: 700, color: primaryColor, margin: 0, letterSpacing: 1 }}>
@@ -95,6 +100,7 @@ const AiTemplate1Display: React.FC<Props> = ({ data, primaryColor = '#1a1a1a' })
           </div>
           <p style={{ fontSize: 10, color: '#555', margin: 0 }}>{edu.instituteName}</p>
           {edu.universityBoard && <p style={{ fontSize: 10, color: '#555', margin: 0 }}>{edu.universityBoard}</p>}
+          {edu.result && <p style={{ fontSize: 10, color: '#555', margin: 0 }}>{fmtResult(edu.result, edu.resultFormat)}</p>}
         </div>
       ))}
       {education.preUniversityEnabled && education.preUniversity?.instituteName && (
@@ -104,6 +110,7 @@ const AiTemplate1Display: React.FC<Props> = ({ data, primaryColor = '#1a1a1a' })
             <span style={{ fontSize: 9, color: '#555' }}>{fmtYear(education.preUniversity.yearOfPassing)}</span>
           </div>
           <p style={{ fontSize: 10, color: '#555', margin: 0 }}>{education.preUniversity.instituteName}</p>
+          {education.preUniversity.result && <p style={{ fontSize: 10, color: '#555', margin: 0 }}>{fmtResult(education.preUniversity.result, education.preUniversity.resultFormat)}</p>}
         </div>
       )}
       {education.sslcEnabled && education.sslc?.instituteName && (
@@ -113,6 +120,7 @@ const AiTemplate1Display: React.FC<Props> = ({ data, primaryColor = '#1a1a1a' })
             <span style={{ fontSize: 9, color: '#555' }}>{fmtYear(education.sslc.yearOfPassing)}</span>
           </div>
           <p style={{ fontSize: 10, color: '#555', margin: 0 }}>{education.sslc.instituteName}</p>
+          {education.sslc.result && <p style={{ fontSize: 10, color: '#555', margin: 0 }}>{fmtResult(education.sslc.result, education.sslc.resultFormat)}</p>}
         </div>
       )}
       {/* Skills */}

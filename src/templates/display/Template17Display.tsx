@@ -81,7 +81,11 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
     <div style={{ width: '210mm', minHeight: '297mm', fontFamily, background: '#fff', paddingTop: 24 }}>      <div style={{ display: 'flex' }}>
       {/* Left sidebar */}
       <aside style={{ width: 220, background: '#f3f4f6', padding: 24, boxSizing: 'border-box' }}>
-        <h2 style={{ margin: 0, fontSize: 20, color: primaryColor }}>{personal.firstName} {(personal.middleName || '')} {personal.lastName}</h2>
+        <h2 style={{ margin: 0, fontSize: 20, color: primaryColor, lineHeight: 1.3 }}>
+          {personal.firstName && <div>{personal.firstName}</div>}
+          {personal.middleName && <div>{personal.middleName}</div>}
+          {personal.lastName && <div>{personal.lastName}</div>}
+        </h2>
         {role && <div style={{ color: '#000', marginTop: 6, fontWeight: 700, fontSize: 11 }}>{role}</div>}
 
         <div style={{ marginTop: 20 }}>

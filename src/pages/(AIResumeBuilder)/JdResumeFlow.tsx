@@ -23,6 +23,7 @@ import {
   type JdCertificateItem,
   type JdLinkItem,
 } from "@/services/aiResumeService";
+import { dropIncompleteSchoolEducation, isSchoolEducation } from "./educationFilters";
 
 const LOADING_MESSAGES = [
   "Reading the job description...",
@@ -44,17 +45,11 @@ const CERTIFICATE_TYPES = [
   "Other",
 ];
 const RESULT_FORMATS: { label: string; value: string }[] = [
-  { label: "CGPA", value: "cgpa" },
-  { label: "Percentage", value: "percentage" },
+  { label: "Percentage", value: "Percentage" },
+  { label: "CGPA", value: "CGPA" },
+  { label: "GPA", value: "GPA" },
+  { label: "Grade", value: "Grade" },
 ];
-
-// School-level records have no degree, field of study or university, and only
-// their completion year is meaningful — all of that only applies to higher
-// education, so those inputs are hidden for these types.
-const SCHOOL_EDUCATION_TYPES = ["sslc", "puc"];
-
-const isSchoolEducation = (educationType?: string) =>
-  SCHOOL_EDUCATION_TYPES.includes((educationType || "").toLowerCase());
 
 const fieldClass =
   "w-full text-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400 bg-white placeholder-gray-400 transition disabled:bg-gray-100 disabled:text-gray-400";
@@ -143,6 +138,25 @@ function stripSchoolOnlyEducationFields(education: JdEducationItem[]): JdEducati
   );
 }
 
+/**
+ * The analyzer returns result_format as free text (e.g. "CGPA", "Percentage",
+ * inconsistently cased), but the review form's <select> only recognizes the
+ * exact lowercase values in RESULT_FORMATS. A case mismatch means the browser
+ * can't select any <option>, so the field renders as blank even though the
+ * value came back from the API — normalize it to the option value it matches.
+ */
+function normalizeResultFormats(education: JdEducationItem[]): JdEducationItem[] {
+  return education.map((edu) => {
+    if (!edu.result_format) return edu;
+    const match = RESULT_FORMATS.find(
+      (f) =>
+        f.value.toLowerCase() === edu.result_format!.toLowerCase() ||
+        f.label.toLowerCase() === edu.result_format!.toLowerCase()
+    );
+    return match ? { ...edu, result_format: match.value } : edu;
+  });
+}
+
 function normalizeJdData(raw: JdResumeData): JdResumeData {
   const rawAny = raw as any;
   const experiences: JdExperienceItem[] = Array.isArray(rawAny.work_experience)
@@ -159,7 +173,9 @@ function normalizeJdData(raw: JdResumeData): JdResumeData {
     technical_summary_generated: technicalSummary,
     work_experience: { experiences: enforceSingleCurrentExperience(experiences) },
     projects: mergeProjectDescriptions(raw.projects || []),
-    education: stripSchoolOnlyEducationFields(raw.education || []),
+    education: normalizeResultFormats(
+      stripSchoolOnlyEducationFields(dropIncompleteSchoolEducation(raw.education || []))
+    ),
     skills: raw.skills || [],
     ai_skills: raw.ai_skills || [],
     certificates: raw.certificates || [],
@@ -211,7 +227,13 @@ export default function JdResumeFlow({ sessionId, token, onComplete }: JdResumeF
             ? { projects: mergeProjectDescriptions(draft.data.projects) }
             : {}),
           ...(Array.isArray(draft.data.education)
-            ? { education: stripSchoolOnlyEducationFields(draft.data.education) }
+            ? {
+                education: normalizeResultFormats(
+                  stripSchoolOnlyEducationFields(
+                    dropIncompleteSchoolEducation(draft.data.education)
+                  )
+                ),
+              }
             : {}),
         });
         setStage("review");

@@ -16,6 +16,11 @@ const fmtDate = (s?: string) => {
   return String(s);
 };
 const fmtYear = (s?: string) => { if (!s) return ''; const m = String(s).match(/(\d{4})/); return m ? m[1] : String(s); };
+const fmtResult = (result?: string, format?: string) => {
+  if (!result) return '';
+  if (!format) return result;
+  return format.toLowerCase() === 'percentage' ? `${result}%` : `${format}: ${result}`;
+};
 
 interface Props { data: ResumeData; primaryColor?: string; }
 
@@ -35,7 +40,7 @@ const AiTemplate5Display: React.FC<Props> = ({ data, primaryColor = '#0f766e' })
   );
 
   return (
-    <div style={{ width: '210mm', minHeight: '297mm', fontFamily: "Lato, sans-serif", background: '#fff', padding: '32px 40px' }}>
+    <div style={{ width: '210mm', minHeight: '297mm', fontFamily: "Calibri, sans-serif", background: '#fff', padding: '32px 40px' }}>
       {/* Header — split */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4, gap: 16 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -108,6 +113,7 @@ const AiTemplate5Display: React.FC<Props> = ({ data, primaryColor = '#0f766e' })
           </div>
           <p style={{ fontSize: 9, color: '#555', margin: 0 }}>{edu.instituteName}</p>
           {edu.universityBoard && <p style={{ fontSize: 9, color: '#555', margin: 0 }}>{edu.universityBoard}</p>}
+          {edu.result && <p style={{ fontSize: 9, color: '#555', margin: 0 }}>{fmtResult(edu.result, edu.resultFormat)}</p>}
         </div>
       ))}
       {education.preUniversityEnabled && education.preUniversity?.instituteName && (
@@ -117,6 +123,7 @@ const AiTemplate5Display: React.FC<Props> = ({ data, primaryColor = '#0f766e' })
             <p style={{ fontSize: 9, color: '#555', margin: 0 }}>{fmtYear(education.preUniversity.yearOfPassing)}</p>
           </div>
           <p style={{ fontSize: 9, color: '#555', margin: 0 }}>{education.preUniversity.instituteName}</p>
+          {education.preUniversity.result && <p style={{ fontSize: 9, color: '#555', margin: 0 }}>{fmtResult(education.preUniversity.result, education.preUniversity.resultFormat)}</p>}
         </div>
       )}
       {education.sslcEnabled && education.sslc?.instituteName && (
@@ -126,6 +133,7 @@ const AiTemplate5Display: React.FC<Props> = ({ data, primaryColor = '#0f766e' })
             <p style={{ fontSize: 9, color: '#555', margin: 0 }}>{fmtYear(education.sslc.yearOfPassing)}</p>
           </div>
           <p style={{ fontSize: 9, color: '#555', margin: 0 }}>{education.sslc.instituteName} </p>
+          {education.sslc.result && <p style={{ fontSize: 9, color: '#555', margin: 0 }}>{fmtResult(education.sslc.result, education.sslc.resultFormat)}</p>}
         </div>
       )}
 
