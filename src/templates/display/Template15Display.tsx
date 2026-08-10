@@ -306,7 +306,7 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
               {projects.filter((p: any) => p.enabled).map((p: any, i: number) => (
                 <div key={i} style={{ marginBottom: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ fontWeight: 700 }}>{p.projectTitle}</div>
+                    <div style={{ fontWeight: 700, color: primaryColor }}>{p.projectTitle}</div>
                     <div style={{ color: '#111827', fontWeight: 700 }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</div>
                   </div>
                   {p.description && (
@@ -316,7 +316,7 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
                   )}
                   {p.rolesResponsibilities && (
                     <div style={{ marginTop: 4, paddingLeft: 10 }}>
-                      <div style={{ fontWeight: 700, fontSize: 11, color: primaryColor }}>Roles & Responsibilities:</div>
+                      <div style={{ fontWeight: 700, fontSize: 11, color: '#111827' }}>Roles & Responsibilities:</div>
                       {htmlToLines(p.rolesResponsibilities).map((ln: string, idx: number) => (
                         <div key={idx} style={{ marginTop: 2, color: '#444', textAlign: 'justify' }}>• {ln}</div>
                       ))}

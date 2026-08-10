@@ -442,13 +442,13 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
             {projects.filter((p: any) => p.enabled).map((p: any, i: number) => (
               <View key={i} style={{ marginBottom: 8 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>{p.projectTitle}</Text>
+                  <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold, color: primaryColor }}>{p.projectTitle}</Text>
                   <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</Text>
                 </View>
                 {p.description && renderBulletedParagraph(p.description)}
                 {p.rolesResponsibilities && (
                   <View style={{ marginTop: 4 }}>
-                    <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Roles & Responsibilities:</Text>
+                    <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, color: '#111827' }}>Roles & Responsibilities:</Text>
                     {renderBulletedParagraph(p.rolesResponsibilities)}
                   </View>
                 )}
