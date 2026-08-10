@@ -86,7 +86,7 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
           {personal.middleName && <div>{personal.middleName}</div>}
           {personal.lastName && <div>{personal.lastName}</div>}
         </h2>
-        {role && <div style={{ color: '#000', marginTop: 6, fontWeight: 700, fontSize: 11 }}>{role}</div>}
+        {role && <div style={{ color: primaryColor, marginTop: 6, fontWeight: 400, fontSize: 11 }}>{role}</div>}
 
         <div style={{ marginTop: 20 }}>
           <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1, color: primaryColor }}>PERSONAL DETAILS</div>

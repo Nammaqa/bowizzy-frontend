@@ -83,11 +83,11 @@ const Template14Display: React.FC<Template14DisplayProps> = ({
                 <>
                   <span>{contactParts.join(' | ')}</span>
                   {extraLinks.length > 0 && <span> | </span>}
-                  {linkedin && <a href={links?.linkedinProfile || (personal as any).linkedinProfile} target="_blank" rel="noreferrer" style={{ color: '#0a66c2', textDecoration: 'none' }}>{linkedin}</a>}
+                  {linkedin && <a href={links?.linkedinProfile || (personal as any).linkedinProfile} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>{linkedin}</a>}
                   {linkedin && (github || portfolio) && <span> | </span>}
-                  {github && <a href={links?.githubProfile || (personal as any).githubProfile} target="_blank" rel="noreferrer" style={{ color: '#111', textDecoration: 'none' }}>{github}</a>}
+                  {github && <a href={links?.githubProfile || (personal as any).githubProfile} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>{github}</a>}
                   {github && portfolio && <span> | </span>}
-                  {portfolio && <a href={links?.portfolioUrl} target="_blank" rel="noreferrer" style={{ color: '#111', textDecoration: 'none' }}>{portfolio}</a>}
+                  {portfolio && <a href={links?.portfolioUrl} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>{portfolio}</a>}
                 </>
               );
             })()}

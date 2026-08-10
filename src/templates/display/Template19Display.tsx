@@ -81,7 +81,7 @@ const Template19Display: React.FC<Template19DisplayProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h1 style={{ margin: 0, fontSize: 26, fontFamily: fontFamily, letterSpacing: 1, color: primaryColor }}>{personal.firstName} {(personal.middleName || '')} {personal.lastName}</h1>
-            {role && <div style={{ marginTop: 4, color: '#6b7280', fontSize: 12, fontWeight: 700 }}>{role}</div>}
+            {role && <div style={{ marginTop: 4, color: primaryColor, fontSize: 12, fontWeight: 400 }}>{role}</div>}
           </div>
 
           <div style={{ textAlign: 'right', color: '#374151', fontSize: 12 }}>

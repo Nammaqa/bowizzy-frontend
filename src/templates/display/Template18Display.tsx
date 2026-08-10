@@ -109,7 +109,7 @@ const Template18Display: React.FC<Template18DisplayProps> = ({
     <div style={{ width: '210mm', minHeight: '297mm', fontFamily: fontFamily, background: '#fff', padding: 24, boxSizing: 'border-box', fontSize: 11 }}>
       <header style={{ textAlign: 'center', marginBottom: 18 }}>
         <h1 style={{ margin: 0, fontSize: 28, letterSpacing: 1, color: primaryColor }}>{personal.firstName} {(personal.middleName || '')} {personal.lastName}</h1>
-        {role && <div style={{ marginTop: 6, color: '#000', fontSize: 12 }}>{role}</div>}
+        {role && <div style={{ marginTop: 6, color: primaryColor, fontSize: 12 }}>{role}</div>}
         {contactLine && <div style={{ marginTop: 10, color: '#374151', fontSize: 12 }}>{contactLine}</div>}
       </header>
 
