@@ -208,7 +208,7 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
             {personal.firstName}
             {personal.middleName ? ' ' + personal.middleName : ''}
             {personal.lastName ? ' ' + personal.lastName : ''}
-          </h1>        <div style={{ fontSize: '11px', color: '#111827', marginTop: 8, textAlign: 'left' }}>
+          </h1>        <div style={{ fontSize: '11px', color: primaryColor, marginTop: 8, textAlign: 'left' }}>
             {headerContactItems.filter(Boolean).join(' | ')}
           </div>
         </div>
