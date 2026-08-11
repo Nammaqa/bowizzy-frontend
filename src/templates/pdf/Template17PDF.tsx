@@ -212,7 +212,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
           {personal.aboutCareerObjective ? (
             <View>
               <View wrap={false} minPresenceAhead={40}>
-                <Text style={styles.sectionHeading}>About</Text>
+                <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>About</Text>
                 <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
               </View>
               <Text style={{ marginTop: 8, fontSize: 9, color: '#444', textAlign: 'justify' }}>{htmlToPlainText(trimTrailingHtml(personal.aboutCareerObjective)).replace(/\s{2,}/g, ' ')}</Text>
@@ -222,7 +222,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
           {skillsLinks.technicalSummaryEnabled && skillsLinks.technicalSummary ? (
             <View style={{ marginTop: personal.aboutCareerObjective ? 18 : 0 }}>
               <View wrap={false} minPresenceAhead={40}>
-                <Text style={styles.sectionHeading}>Technical Summary</Text>
+                <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Technical Summary</Text>
                 <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
               </View>
               {renderBulletedParagraph(skillsLinks.technicalSummary, { forceBullets: true })}
@@ -232,7 +232,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
           {experience.workExperiences.filter((w: any) => w.enabled).length > 0 && (
             <View style={{ marginTop: 18 }}>
               <View wrap={false} minPresenceAhead={40}>
-                <Text style={styles.sectionHeading}>Experience</Text>
+                <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Experience</Text>
                 <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
               </View>
               <View style={{ marginTop: 8 }}>
@@ -253,7 +253,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
           {projects.filter((p: any) => p.enabled).length > 0 && (
             <View style={{ marginTop: 18 }}>
               <View wrap={false} minPresenceAhead={40}>
-                <Text style={styles.sectionHeading}>Projects</Text>
+                <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Projects</Text>
                 <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
               </View>
               <View style={{ marginTop: 8 }}>
@@ -279,7 +279,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
           {(education.higherEducation.filter(edu => edu.enabled).length > 0 || education.preUniversityEnabled || education.sslcEnabled) && (
             <View style={{ marginTop: 18 }}>
               <View wrap={false} minPresenceAhead={40}>
-                <Text style={styles.sectionHeading}>Education</Text>
+                <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Education</Text>
                 <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
               </View>
               <View style={{ marginTop: 8 }}>
@@ -338,7 +338,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
           {(certifications || []).some((c: any) => c.enabled && c.certificateTitle) && (
             <View style={{ marginTop: 18 }}>
               <View wrap={false} minPresenceAhead={40}>
-                <Text style={styles.sectionHeading}>Achievements / Certifications</Text>
+                <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Achievements / Certifications</Text>
                 <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
               </View>
               <View style={{ marginTop: 8 }}>
