@@ -3,7 +3,7 @@ declare global {
   interface Window { Razorpay?: any; }
 }
 import React, { useRef, useEffect, Suspense, useState, useMemo } from "react";
-import { Send, Loader2, Bot, User, Download, Lock, Tag, Sparkles, ChevronDown, ChevronUp, Info, X, Unlock } from "lucide-react";
+import { Send, Loader2, Bot, User, Download, Lock, Tag, Sparkles, ChevronDown, ChevronUp, Info, X, Unlock, AlertCircle, RotateCcw } from "lucide-react";
 import { pdf } from '@react-pdf/renderer';
 import type { ChatSession } from "./types";
 import { aiTemplateRegistry } from './templates/aiTemplateRegistry';
@@ -521,6 +521,10 @@ interface ChatBoxProps {
   chipMessageId?: string | null;
   // Re-opens the mode guidelines pop-up
   onShowGuide?: () => void;
+  // Set only while a step has failed — drives the retry banner, and is cleared
+  // by the parent as soon as a step succeeds.
+  error?: string | null;
+  onRetry?: () => void;
   isJdPaid?: boolean;
   onJdPaymentSuccess?: () => void;
   onPaymentCancelled?: () => void;
@@ -544,6 +548,8 @@ export default function ChatBox({
   onChipUndo,
   chipMessageId,
   onShowGuide,
+  error,
+  onRetry,
   isJdPaid,
   onJdPaymentSuccess,
   onPaymentCancelled,
@@ -675,6 +681,38 @@ export default function ChatBox({
         className="hidden"
         accept=".pdf,.doc,.docx,.txt"
       />
+
+      {/* Retry banner — only while a step has actually failed. A successful
+          generation clears the error and sets infoJson, so it never lingers
+          over a finished resume. JD mode surfaces its own retry inside
+          JdResumeFlow, where restarting means the job description, not the chat. */}
+      {error && mode !== "jd" && !session?.infoJson && (
+        <div className="bg-red-50 border-t border-red-100 px-4 py-3">
+          <div className="max-w-2xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="flex items-center gap-2 text-sm font-medium text-red-600">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                {error}
+              </p>
+              <p className="text-xs text-red-400 mt-0.5 pl-6">
+                {started
+                  ? "Retrying clears this chat and starts again from the first question."
+                  : "Please try again."}
+              </p>
+            </div>
+            {onRetry && (
+              <button
+                onClick={onRetry}
+                disabled={isLoading}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-medium hover:bg-red-600 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Retry
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Input bar — only visible after start, never in JD mode (that flow
           finishes inside JdResumeFlow), and hidden once the resume has been
