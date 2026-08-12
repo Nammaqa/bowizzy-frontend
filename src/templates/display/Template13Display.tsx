@@ -168,7 +168,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
           {experience.workExperiences.some(exp => exp.enabled) && (<>
             <div style={{ gridColumn: '1 / -1', marginTop: 12 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: primaryColor, fontWeight: 700 }}>EXPERIENCE</div>
-              <div style={{ height: 1, background: primaryColor, marginTop: 0, marginBottom: 6, width: '100%' }} />
+              <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, marginBottom: '6px' }} />
             </div>
             <div style={{ gridColumn: '1 / -1', marginTop: 0 }}>
               {experience.workExperiences.filter(e => e.enabled).map((w, i) => (
@@ -210,7 +210,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
           {(education.higherEducation.some(edu => edu.enabled) || education.preUniversityEnabled || education.sslcEnabled) && (<>
             <div style={{ gridColumn: '1 / -1', marginTop: 12 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: primaryColor, fontWeight: 700 }}>EDUCATION</div>
-              <div style={{ height: 1, background: primaryColor, marginTop: 0, marginBottom: 6, width: '100%' }} />
+              <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, marginBottom: '6px' }} />
             </div>
             <div style={{ gridColumn: '1 / -1', marginTop: 0 }}>
               {/* Higher Education (BE/Bachelor etc.) */}
@@ -232,7 +232,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 700 }}>{education.preUniversity.instituteName || 'Pre University'}</div>
-                  <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
+                    <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>
                     Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}{education.preUniversity.boardType ? ` — ${education.preUniversity.boardType}` : ''}
@@ -246,7 +246,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 700 }}>{education.sslc.instituteName || 'SSLC'}</div>
-                  <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{formatResumeEducationDateRange(education.sslc)}</div>
+                    <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>{formatResumeEducationDateRange(education.sslc)}</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#111827', fontWeight: 700 }}>
                     SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}
@@ -260,7 +260,7 @@ const Template13Display: React.FC<Template13DisplayProps> = ({
           {skillsLinks.skills.some(s => s.enabled && s.skillName) && (<>
             <div style={{ gridColumn: '1 / -1', marginTop: 12 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: primaryColor, fontWeight: 700 }}>SKILLS</div>
-              <div style={{ height: 1, background: primaryColor, marginTop: 0, marginBottom: 6, width: '100%' }} />
+              <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, marginBottom: '6px' }} />
             </div>
             <div style={{ gridColumn: '1 / -1', marginTop: 0 }}>
               <div style={{ color: '#2b2a2a' }}>{skillsLinks.skills.filter(s => s.enabled && s.skillName).map(s => s.skillName).join(', ')}</div>
