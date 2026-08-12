@@ -101,7 +101,7 @@ const Template14Display: React.FC<Template14DisplayProps> = ({
           {experience.workExperiences.some(exp => exp.enabled) && (<>
             <div style={{ marginTop: 16 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: primaryColor, fontWeight: 700 }}>Work Experience</div>
-              <div style={{ height: 1.5, background: '#999', marginTop: 4, width: '100%' }} />
+               <hr style={{ border: 'none', borderTop: `1.5px solid ${primaryColor}`, marginTop: '4px' }} />
             </div>
 
             <div style={{ marginTop: 8 }}>
@@ -127,7 +127,7 @@ const Template14Display: React.FC<Template14DisplayProps> = ({
           {projects.some(p => p.enabled) && (<>
             <div style={{ marginTop: 16 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: primaryColor, fontWeight: 700 }}>Projects</div>
-              <div style={{ height: 1.5, background: '#999', marginTop: 4, width: '100%' }} />
+               <hr style={{ border: 'none', borderTop: `1.5px solid ${primaryColor}`, marginTop: '4px' }} />
             </div>
 
             <div style={{ marginTop: 8 }}>
@@ -153,7 +153,7 @@ const Template14Display: React.FC<Template14DisplayProps> = ({
           {(education.higherEducation.some(edu => edu.enabled) || education.preUniversityEnabled || education.sslcEnabled) && (<>
             <div style={{ marginTop: 16 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: primaryColor, fontWeight: 700 }}>Education</div>
-              <div style={{ height: 1.5, background: '#999', marginTop: 4, width: '100%' }} />
+              <hr style={{ border: 'none', borderTop: `1.5px solid ${primaryColor}`, marginTop: '4px' }} />
             </div>
 
             <div style={{ marginTop: 8 }}>
@@ -195,7 +195,7 @@ const Template14Display: React.FC<Template14DisplayProps> = ({
           {skillsLinks.skills.some(s => s.enabled && s.skillName) && (<>
             <div style={{ marginTop: 16 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: primaryColor, fontWeight: 700 }}>Skills</div>
-              <div style={{ height: 1.5, background: '#999', marginTop: 4, width: '100%' }} />
+              <hr style={{ border: 'none', borderTop: `1.5px solid ${primaryColor}`, marginTop: '4px' }} />
             </div>
             <div style={{ marginTop: 8, color: '#2b2a2a' }}>{skillsLinks.skills.filter(s => s.enabled && s.skillName).map((s, i) => <span key={i} style={{ marginRight: 6 }}>{s.skillName}{i < skillsLinks.skills.filter(s => s.enabled && s.skillName).length - 1 ? ',' : ''}</span>)}</div>
           </>)}
@@ -203,7 +203,7 @@ const Template14Display: React.FC<Template14DisplayProps> = ({
           {certifications.some(c => c.enabled && (c.certificateTitle || c.providedBy)) && (<>
             <div style={{ marginTop: 16 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: primaryColor, fontWeight: 700 }}>Certifications</div>
-              <div style={{ height: 1.5, background: '#999', marginTop: 4, width: '100%' }} />
+              <hr style={{ border: 'none', borderTop: `1.5px solid ${primaryColor}`, marginTop: '4px' }} />
             </div>
             <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6, color: '#2b2a2a' }}>
               {certifications.filter(c => c.enabled && (c.certificateTitle || c.providedBy)).map((c, i) => (

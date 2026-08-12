@@ -90,7 +90,8 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
 
         <div style={{ marginTop: 20 }}>
           <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1, color: primaryColor }}>PERSONAL DETAILS</div>
-          <div style={{ height: 1, background: '#999', marginTop: 6, marginBottom: 8 }} />
+          {/* <div style={{ height: 1, background: primaryColor, marginTop: 6, marginBottom: 8 }} /> */}
+          <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, marginTop: '6px', marginBottom: '8px' }} />
           <div style={{ color: '#000', fontSize: 11 }}>
             {personal.email && <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}><FiMail style={{ color: '#000' }} /><a href={`mailto:${personal.email}`} style={{ color: '#000', textDecoration: 'none' }}>{personal.email}</a></div>}
             {personal.mobileNumber && <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}><FiPhone style={{ color: '#000' }} /><a href={`tel:${personal.mobileNumber}`} style={{ color: '#000', textDecoration: 'none' }}>{personal.mobileNumber}</a></div>}
@@ -105,7 +106,7 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
         {(skillsLinks.skills || []).some(s => s.enabled && s.skillName) && (
           <div style={{ marginTop: 20 }}>
             <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1, color: primaryColor }}>SKILLS</div>
-            <div style={{ height: 1, background: '#999', marginTop: 6, marginBottom: 8 }} />
+            <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, marginTop: '6px', marginBottom: '8px' }} />
             <div style={{ color: '#000' }}>
               {(skillsLinks.skills || []).filter(s => s.enabled && s.skillName).map((s, i) => (
                 <div key={i} style={{ marginBottom: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, fontSize: 11 }}>
@@ -119,7 +120,7 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
 
         <div style={{ marginTop: 20 }}>
           <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1, color: primaryColor }}>LANGUAGES</div>
-          <div style={{ height: 1, background: '#999', marginTop: 6, marginBottom: 8 }} />
+          <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, marginTop: '6px', marginBottom: '8px' }} />
           <div style={{ color: '#000' }}>
             {(((personal as any).languagesKnown || (personal as any).languages || [])).map((l: string, i: number) => <div key={i} style={{ marginBottom: 6, fontSize: 11 }}>• {l}</div>)}
           </div>
@@ -133,7 +134,7 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
           <section>
             <div>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>About</div>
-              <div style={{ height: 1, background: '#ddd', marginTop: 6, width: '100%' }} />
+              <div style={{ height: 1, background: primaryColor, marginTop: 6, width: '100%' }} />
             </div>
             <div style={{ marginTop: 8, color: '#444', fontSize: 11, textAlign: 'justify' }}>
               {DOMPurify.sanitize(personal.aboutCareerObjective).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s{2,}/g, ' ').trim()}
@@ -145,7 +146,7 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
           <section style={{ marginTop: personal.aboutCareerObjective ? 18 : 0 }}>
             <div>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Technical Summary</div>
-              <div style={{ height: 1, background: '#ddd', marginTop: 6, width: '100%' }} />
+              <div style={{ height: 1, background: primaryColor, marginTop: 6, width: '100%' }} />
             </div>
             <div style={{ marginTop: 8, color: '#444', fontSize: 11 }}>
               <ul style={{ margin: 0, paddingLeft: 18 }}>
@@ -165,7 +166,7 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
             <>
               <div style={{ marginTop: 18 }}>
                 <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Experience</div>
-                <div style={{ height: 1, background: '#ddd', marginTop: 6, width: '100%' }} />
+                <div style={{ height: 1, background: primaryColor, marginTop: 6, width: '100%' }} />
               </div>
               <div style={{ marginTop: 8 }}>
                 {experience.workExperiences.filter((w: any) => w.enabled).map((w: any, i: number) => (
@@ -186,7 +187,7 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
             <>
               <div style={{ marginTop: 18 }}>
                 <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Projects</div>
-                <div style={{ height: 1, background: '#ddd', marginTop: 6, width: '100%' }} />
+                <div style={{ height: 1, background: primaryColor, marginTop: 6, width: '100%' }} />
               </div>
               <div style={{ marginTop: 8 }}>
                 {projects.filter((p: any) => p.enabled).map((p: any, i: number) => (
@@ -211,7 +212,7 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
           {(education.higherEducation.filter(edu => edu.enabled).length > 0 || education.preUniversityEnabled || education.sslcEnabled) && (<>
             <div style={{ marginTop: 18 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Education</div>
-              <div style={{ height: 1, background: '#ddd', marginTop: 6, width: '100%' }} />
+             <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, marginTop: '6px' }} />
             </div>
             <div style={{ marginTop: 8 }}>
               {education.higherEducation.filter(edu => edu.enabled).reverse().map((edu: any, i: number) => (
@@ -262,7 +263,7 @@ const Template17Display: React.FC<Template17DisplayProps> = ({
           {(certifications || []).some((c: any) => c.enabled && c.certificateTitle) && (<>
             <div style={{ marginTop: 18 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Achievements / Certifications</div>
-              <div style={{ height: 1, background: '#ddd', marginTop: 6, width: '100%' }} />
+              <div style={{ height: 1, background: primaryColor, marginTop: 6, width: '100%' }} />
             </div>
             <div style={{ marginTop: 8, color: '#444' }}>
               {(certifications || []).filter((c: any) => c.enabled && c.certificateTitle).map((c: any, i: number) => (

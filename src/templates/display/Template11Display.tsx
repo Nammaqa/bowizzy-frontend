@@ -221,7 +221,7 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
           {personal.aboutCareerObjective && personal.aboutCareerObjective.trim() !== '' && (
             <section style={{ marginBottom: 22 }}>
               <h2 style={{ fontSize: 13, fontWeight: 700, color: primaryColor, letterSpacing: 1.2, marginBottom: 8 }}>CAREER OBJECTIVE</h2>
-              <div style={{ height: 1, background: '#333', width: '100%', marginBottom: 12 }} />
+              <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, marginBottom: '12px' }} />
               <div
                 className="t11-justify"
                 style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', lineHeight: 1.6, textAlign: 'justify' }}
@@ -243,7 +243,7 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                 }}
               >
                 EXPERIENCE
-              </h2>                      <div style={{ height: 1, background: '#333', width: '100%', marginBottom: 12 }} />
+              </h2>                      <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, marginBottom: '12px' }} />
 
 
               {experience.workExperiences.filter(exp => exp.enabled).map((exp, idx) => (
@@ -272,17 +272,17 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
           {(education.higherEducation.some(edu => edu.enabled) || education.preUniversityEnabled || education.sslcEnabled) && (
             <section style={{ marginBottom: 22 }}>
               <h2 style={{ fontSize: 13, fontWeight: 700, color: primaryColor, letterSpacing: 1.2, marginBottom: 8 }}>EDUCATION</h2>
-              <div style={{ height: 1, background: '#333', width: '100%', marginBottom: 12 }} />
+              <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, marginBottom: '12px' }} />
               {education.higherEducation.some(edu => edu.enabled) && (
                 <>
                   {sortedHigherEducation.map((edu, idx) => (
                     <div key={idx} style={{ marginBottom: 10 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
                         <div style={{ fontSize: 11, fontWeight: 700, color: '#000000', flex: 1, marginRight: 8 }}>{edu.instituteName}</div>
-          <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear)} - Present` : formatHigherEducationRange(edu)}</div>
+                        <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{edu.currentlyPursuing ? `${formatResumeEducationMonthYear(edu.startYear)} - Present` : formatHigherEducationRange(edu)}</div>
                       </div>
                       <div style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', marginTop: 4 }}>
-                          {getFullDegreeName(edu.degree)}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}
+                        {getFullDegreeName(edu.degree)}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}
                       </div>
                       {edu.resultFormat && edu.result && (
                         <div style={{ marginTop: 6, color: '#000000', fontSize: 11 }}>{edu.resultFormat}: {edu.result}</div>
@@ -297,7 +297,7 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                 <div style={{ marginBottom: 10 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#000000', flex: 1, marginRight: 8 }}>{education.preUniversity.instituteName || 'Pre University'}</div>
-                  <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
+                    <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', marginTop: 4 }}>
                     Pre University (12th Standard){education.preUniversity.boardType ? ` — ${education.preUniversity.boardType}` : ''} {education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}
@@ -313,7 +313,7 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                 <div style={{ marginBottom: 10 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#000000', flex: 1, marginRight: 8 }}>{education.sslc.instituteName || 'SSLC'}</div>
-                  <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{formatResumeEducationDateRange(education.sslc)}</div>
+                    <div style={{ fontSize: 10, color: '#000000', fontWeight: 700 }}>{formatResumeEducationDateRange(education.sslc)}</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#000000', fontWeight: 'normal', marginTop: 4 }}>
                     SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}
@@ -341,7 +341,7 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
               >
                 PROJECTS
               </h2>
-              <div style={{ height: 1, background: '#333', width: '100%', marginBottom: 12 }} />
+              <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, marginBottom: '12px' }} />
 
               {projects
                 .filter((proj) => proj.enabled)
@@ -431,7 +431,7 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
           {certifications.filter(c => c.enabled && c.certificateTitle && c.certificateTitle.trim()).length > 0 && (
             <section style={{ marginBottom: 22 }}>
               <h2 style={{ fontSize: 13, fontWeight: 700, color: primaryColor, letterSpacing: 1.2, marginBottom: 8 }}>TECHNICAL CERTIFICATIONS</h2>
-              <div style={{ height: 1, background: '#333', width: '100%', marginBottom: 12 }} />
+               <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, marginBottom: '12px' }} />
               {certifications.filter(c => c.enabled && c.certificateTitle && c.certificateTitle.trim()).map((cert, idx) => (
                 <div key={idx} style={{ marginBottom: 10 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
@@ -458,7 +458,7 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
                 <h2 style={{ fontSize: 13, fontWeight: 700, color: primaryColor, letterSpacing: 1.2, marginBottom: 8 }}>
                   TECHNICAL SUMMARY
                 </h2>
-                <div style={{ height: 1, background: '#333', width: '100%', marginBottom: 12 }} />
+                <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, marginBottom: '12px' }} />
                 <ul style={{ margin: 0, paddingLeft: 18, fontSize: 11, color: '#000000', fontWeight: 'normal', lineHeight: 1.6 }}>
                   {htmlToLines(DOMPurify.sanitize(skillsLinks.technicalSummary)).map((line, idx) => (
                     <li key={idx} style={{ marginBottom: 4, listStyleType: 'disc', textAlign: 'justify' }}>
@@ -475,7 +475,7 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
               <h2 style={{ fontSize: 13, fontWeight: 700, color: primaryColor, letterSpacing: 1.2, marginBottom: 8 }}>
                 SKILLS
               </h2>
-              <div style={{ height: 1, background: '#333', width: '100%', marginBottom: 12 }} />
+               <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, marginBottom: '12px' }} />
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 0' }}>
                 {skillsLinks.skills
                   .filter(s => s.enabled && s.skillName)
@@ -497,7 +497,7 @@ const Template11Display: React.FC<Template11DisplayProps> = ({
               <h2 style={{ fontSize: 13, fontWeight: 700, color: primaryColor, letterSpacing: 1.2, marginBottom: 8 }}>
                 LANGUAGES
               </h2>
-              <div style={{ height: 1, background: '#333', width: '100%', marginBottom: 12 }} />
+               <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, marginBottom: '12px' }} />
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 0' }}>
                 {personal.languagesKnown.map((lang, idx) => (
                   <div key={idx} style={{ display: 'flex', alignItems: 'center', marginRight: 16, marginBottom: 4 }}>

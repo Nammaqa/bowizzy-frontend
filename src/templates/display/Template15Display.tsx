@@ -105,9 +105,9 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
   const contactNodes: any[] = [];
   if (mobile) contactNodes.push(mobile);
   if (email) contactNodes.push(email);
-  if (linkedin) contactNodes.push(<a href={(skillsLinks as any).links?.linkedinProfile || (personal as any).linkedinProfile} target="_blank" rel="noreferrer" style={{ color: '#0a66c2', textDecoration: 'none' }}>{extractHandle(linkedin)}</a>);
-  if (github) contactNodes.push(<a href={(skillsLinks as any).links?.githubProfile || (personal as any).githubProfile} target="_blank" rel="noreferrer" style={{ color: '#111', textDecoration: 'none' }}>{extractHandle(github)}</a>);
-  if (portfolio) contactNodes.push(<a href={(skillsLinks as any).links?.portfolioUrl} target="_blank" rel="noreferrer" style={{ color: '#000', textDecoration: 'none' }}>{extractHandle(portfolio)}</a>);
+  if (linkedin) contactNodes.push(<a href={(skillsLinks as any).links?.linkedinProfile || (personal as any).linkedinProfile} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>{extractHandle(linkedin)}</a>);
+  if (github) contactNodes.push(<a href={(skillsLinks as any).links?.githubProfile || (personal as any).githubProfile} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>{extractHandle(github)}</a>);
+  if (portfolio) contactNodes.push(<a href={(skillsLinks as any).links?.portfolioUrl} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>{extractHandle(portfolio)}</a>);
 
   return (
     <div style={{ width: '210mm', minHeight: '297mm', fontFamily: fontFamily, background: '#fff', fontSize: 11 }}>
@@ -130,7 +130,8 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
 
           <div style={{ marginTop: 12 }}>
             <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>OBJECTIVE</div>
-            <div style={{ height: 1, background: '#ddd', marginTop: 4, width: '100%' }} />
+
+            <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, marginTop: '4px' }} />
           </div>
 
           <div style={{ marginTop: 6 }}>
@@ -145,7 +146,7 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
           {(skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled) && (<>
             <div style={{ marginTop: 12 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>TECHNICAL SUMMARY</div>
-              <div style={{ height: 1, background: '#ddd', marginTop: 4, width: '100%' }} />
+              <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, marginTop: '4px' }} />
             </div>
             <div style={{ marginTop: 6 }}>
               {skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled && (
@@ -165,7 +166,7 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
           {(hasHigherEducation || hasPreUniversity || hasSSLC) && (<>
             <div style={{ marginTop: 12 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Education</div>
-              <div style={{ height: 1, background: '#ddd', marginTop: 4, width: '100%' }} />
+              <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, marginTop: '4px' }} />
             </div>
 
             <div style={{ marginTop: 8 }}>
@@ -177,7 +178,7 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
 
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-                  <div style={{ fontSize: 11, color: '#6b7280' }}>{edu.degree}{edu.fieldOfStudy ? ` — ${edu.fieldOfStudy}` : ''}</div>
+                    <div style={{ fontSize: 11, color: '#6b7280' }}>{edu.degree}{edu.fieldOfStudy ? ` — ${edu.fieldOfStudy}` : ''}</div>
                     {edu.resultFormat && edu.result ? (
                       <div style={{ fontWeight: 700, fontSize: 11, color: '#6b7280' }}>{edu.resultFormat}: {edu.result}</div>
                     ) : null}
@@ -190,7 +191,7 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 700 }}>{education.preUniversity.instituteName || 'Pre University'}</div>
-                  <div style={{ fontSize: 11, color: '#101113ff', fontWeight: 700 }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
+                    <div style={{ fontSize: 11, color: '#101113ff', fontWeight: 700 }}>{formatResumeEducationDateRange(education.preUniversity)}</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2, display: 'flex', justifyContent: 'space-between' }}>
                     Pre University (12th Standard){education.preUniversity.subjectStream ? ` — ${education.preUniversity.subjectStream}` : ''}
@@ -203,7 +204,7 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 700 }}>{education.sslc.instituteName || 'SSLC'}</div>
-                  <div style={{ fontSize: 11, color: '#101113ff', fontWeight: 700 }}>{formatResumeEducationDateRange(education.sslc)}</div>
+                    <div style={{ fontSize: 11, color: '#101113ff', fontWeight: 700 }}>{formatResumeEducationDateRange(education.sslc)}</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2, display: 'flex', justifyContent: 'space-between' }}>
                     SSLC (10th Standard){education.sslc.boardType ? ` — ${education.sslc.boardType}` : ''}
@@ -217,7 +218,7 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
           {skillsLinks.skills.some((s: any) => s.enabled && s.skillName) && (<>
             <div style={{ marginTop: 12 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Skills</div>
-              <div style={{ height: 1, background: '#ddd', marginTop: 4, width: '100%' }} />
+              <div style={{ height: 1, background: primaryColor, marginTop: 4, width: '100%' }} />
             </div>
             <div style={{ marginTop: 6 }}>
               {(() => {
@@ -255,7 +256,7 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
           {certifications.some(c => c.enabled && c.certificateTitle) && (<>
             <div style={{ marginTop: 12 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Certifications</div>
-              <div style={{ height: 1, background: '#ddd', marginTop: 4, width: '100%' }} />
+              <div style={{ height: 1, background: primaryColor, marginTop: 4, width: '100%' }} />
             </div>
             <div style={{ marginTop: 6 }}>{certifications.filter(c => c.enabled && c.certificateTitle).map((c, i) => <div key={i} style={{ marginBottom: 6, color: '#444' }}>{c.certificateTitle}{c.providedBy ? ` — ${c.providedBy}` : ''}</div>)}</div>
           </>)}
@@ -263,7 +264,7 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
           {experience.workExperiences.some(exp => exp.enabled) && (<>
             <div style={{ marginTop: 12 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>EXPERIENCE</div>
-              <div style={{ height: 1, background: '#ddd', marginTop: 4, width: '100%' }} />
+             <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, marginTop: '4px' }} />
             </div>
 
             <div style={{ marginTop: 8 }}>
@@ -300,7 +301,7 @@ const Template15Display: React.FC<Template15DisplayProps> = ({
           {projects.some(p => p.enabled) && (<>
             <div style={{ marginTop: 12 }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>ACADEMIC Projects</div>
-              <div style={{ height: 1, background: '#ddd', marginTop: 4, width: '100%' }} />
+             <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, marginTop: '4px' }} />
             </div>
             <div style={{ marginTop: 8 }}>
               {projects.filter((p: any) => p.enabled).map((p: any, i: number) => (
