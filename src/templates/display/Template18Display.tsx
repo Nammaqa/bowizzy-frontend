@@ -117,7 +117,7 @@ const Template18Display: React.FC<Template18DisplayProps> = ({
         <section style={{ marginTop: 8 }}>
           <div>
             <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Career Objective</div>
-            <div style={{ height: 1, background: '#ddd', marginTop: 6, width: '100%' }} />
+            <div style={{ height: 1, background: primaryColor, marginTop: 6, width: '100%' }} />
           </div>
           <div style={{ marginTop: 8, color: '#444' }}>{personal.aboutCareerObjective && <div style={{ textAlign: 'justify' }}>{DOMPurify.sanitize(personal.aboutCareerObjective).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\u00A0/g, ' ').replace(/ /g, ' ').trim()}</div>}</div>
         </section>
@@ -126,7 +126,7 @@ const Template18Display: React.FC<Template18DisplayProps> = ({
           <section style={{ marginTop: 18 }}>
             <div>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Work Experience</div>
-              <div style={{ height: 1, background: '#ddd', marginTop: 6, width: '100%' }} />
+              <div style={{ height: 1, background: primaryColor, marginTop: 6, width: '100%' }} />
             </div>
             <div style={{ marginTop: 8 }}>
               {experience.workExperiences.filter((w: any) => w.enabled).map((w: any, i: number) => (
@@ -162,7 +162,7 @@ const Template18Display: React.FC<Template18DisplayProps> = ({
           <section style={{ marginTop: 18 }}>
             <div>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Education</div>
-              <div style={{ height: 1, background: '#ddd', marginTop: 6, width: '100%' }} />
+              <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, marginTop: '6px' }} />
             </div>
             <div style={{ marginTop: 8 }}>
               {education.higherEducation.filter(edu => edu.enabled).reverse().map((edu: any, i: number) => (
@@ -207,7 +207,7 @@ const Template18Display: React.FC<Template18DisplayProps> = ({
           <section style={{ marginTop: 18 }}>
             <div>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Skills</div>
-              <div style={{ height: 1, background: '#ddd', marginTop: 6, width: '100%' }} />
+              <div style={{ height: 1, background: primaryColor, marginTop: 6, width: '100%' }} />
             </div>
             <div style={{ marginTop: 8 }}>
               <ul style={{ paddingLeft: 20, marginTop: 6, color: '#374151', listStyleType: 'disc', listStylePosition: 'outside' }}>
@@ -221,7 +221,7 @@ const Template18Display: React.FC<Template18DisplayProps> = ({
           <section style={{ marginTop: 18 }}>
             <div>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Certifications</div>
-              <div style={{ height: 1, background: '#ddd', marginTop: 6, width: '100%' }} />
+              <div style={{ height: 1, background: primaryColor, marginTop: 6, width: '100%' }} />
             </div>
             <div style={{ marginTop: 8 }}>
               {(certifications || []).filter((c: any) => c.enabled && c.certificateTitle).map((c: any, i: number) => (

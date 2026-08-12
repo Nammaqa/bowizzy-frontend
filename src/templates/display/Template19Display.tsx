@@ -97,7 +97,7 @@ const Template19Display: React.FC<Template19DisplayProps> = ({
         {personal.aboutCareerObjective && (
           <section style={{ textAlign: 'center', marginTop: 0 }}>
             <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700, marginBottom: 6 }}>CAREER OBJECTIVE</div>
-            <div style={{ height: 1, background: '#999', width: '100%' }} />
+            <div style={{ height: 1, background: primaryColor, width: '100%' }} />
             <div style={{ marginTop: 12, color: '#444', maxWidth: 720, marginLeft: 'auto', marginRight: 'auto', textAlign: 'left' }}>
               <div style={{ textAlign: 'justify' }}>{DOMPurify.sanitize(personal.aboutCareerObjective).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim()}</div>
             </div>
@@ -109,7 +109,7 @@ const Template19Display: React.FC<Template19DisplayProps> = ({
           <aside style={{ width: 260, paddingRight: 12 }}>
             {(skillsLinks.skills || []).some((s: any) => s.enabled && s.skillName) && (<>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Skills</div>
-              <div style={{ height: 1, background: '#999', marginTop: 6, width: '80%' }} />
+              <div style={{ height: 1, background: primaryColor, marginTop: 6, width: '80%' }} />
               <ul style={{ paddingLeft: 20, marginTop: 8, listStyleType: 'disc' }}>
                 {(skillsLinks.skills || []).filter((s: any) => s.enabled && s.skillName).map((s: any, i: number) => (<li key={i} style={{ marginBottom: 6 }}>{s.skillName}</li>))}
               </ul>
@@ -118,7 +118,7 @@ const Template19Display: React.FC<Template19DisplayProps> = ({
             {(education.higherEducation.some(edu => edu.enabled) || hasPreUniversity || hasSSLC) && (
               <div style={{ marginTop: 18 }}>
                 <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Education</div>
-                <div style={{ height: 1, background: '#999', marginTop: 6, width: '80%' }} />
+                <div style={{ height: 1, background: primaryColor, marginTop: 6, width: '80%' }} />
                 <div style={{ marginTop: 8 }}>
                   {[...education.higherEducation].filter(edu => edu.enabled).reverse().map((edu: any, i: number) => (
                     <div key={i} style={{ marginBottom: 12 }}>
@@ -157,7 +157,7 @@ const Template19Display: React.FC<Template19DisplayProps> = ({
             {(((personal as any).languagesKnown || (personal as any).languages || [])).filter((l: string) => l && l.trim()).length > 0 && (
               <div style={{ marginTop: 18 }}>
                 <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Language</div>
-                <div style={{ height: 1, background: '#999', marginTop: 6, width: '60%' }} />
+                <div style={{ height: 1, background: primaryColor, marginTop: 6, width: '60%' }} />
                 <div style={{ marginTop: 8 }}>
                   {(((personal as any).languagesKnown || (personal as any).languages || [])).filter((l: string) => l && l.trim()).map((l: string, i: number) => (<div key={i} style={{ marginBottom: 6 }}>• {l}</div>))}
                 </div>
@@ -167,7 +167,7 @@ const Template19Display: React.FC<Template19DisplayProps> = ({
             {(certifications || []).some((c: any) => c.enabled && c.certificateTitle) && (
               <div style={{ marginTop: 18 }}>
                 <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Certification</div>
-                <div style={{ height: 1, background: '#999', marginTop: 6, width: '80%' }} />
+                <div style={{ height: 1, background: primaryColor, marginTop: 6, width: '80%' }} />
                 <div style={{ marginTop: 8 }}>
                   {(certifications || []).filter((c: any) => c.enabled && c.certificateTitle).map((c: any, i: number) => (<div key={i} style={{ marginBottom: 6 }}>• {c.certificateTitle}{c.providedBy ? ` — ${c.providedBy}` : ''}</div>))}
                 </div>
@@ -180,7 +180,7 @@ const Template19Display: React.FC<Template19DisplayProps> = ({
           <div style={{ flex: 1 }}>
             {experience.workExperiences.some(exp => exp.enabled) && (<>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Professional Experience</div>
-              <div style={{ height: 1, background: '#999', marginTop: 6, width: '100%' }} />
+              <div style={{ height: 1, background: primaryColor, marginTop: 6, width: '100%' }} />
 
               <div style={{ marginTop: 8 }}>
                 {experience.workExperiences.filter((w: any) => w.enabled).map((w: any, i: number) => (
@@ -203,7 +203,7 @@ const Template19Display: React.FC<Template19DisplayProps> = ({
             {(projects || []).some((p: any) => p.enabled) && (
               <div style={{ marginTop: 24 }}>
                 <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.2, color: primaryColor, fontWeight: 700 }}>Projects</div>
-                <div style={{ height: 1, background: '#999', marginTop: 6, width: '100%' }} />
+                <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, marginTop: '6px' }} />
                 <div style={{ marginTop: 8 }}>
                   {(projects || []).filter((p: any) => p.enabled).map((p: any, i: number) => (
                     <div key={i} style={{ marginBottom: 18 }}>

@@ -150,7 +150,7 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
                 <Text style={{ color: '#2b2a2a', fontSize: 10, lineHeight: 1.3, textAlign: 'justify' }}>{htmlToPlainText(trimTrailingHtml(personal.aboutCareerObjective))}</Text>
               </View>
             </View>
-            {experience.workExperiences.some((exp: any) => exp.enabled) && <View style={{ height: 1, backgroundColor: '#aaa', width: '100%', marginVertical: 12 }} />}
+            {experience.workExperiences.some((exp: any) => exp.enabled) && <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginVertical: 12 }} />}
           </>
         ) : null}
 
@@ -176,7 +176,7 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
           </View>
 
           {/* divider after work experience, only if projects exist */}
-          {projects.some((p: any) => p.enabled) && <View style={{ height: 1, backgroundColor: '#aaa', width: '100%', marginVertical: 12 }} />}
+          {projects.some((p: any) => p.enabled) && <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginVertical: 12 }} />}
         </>)}
 
         {/* Projects Section */}
@@ -202,7 +202,7 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
 
         {hasEducation && (<>
           {/* divider before education */}
-          <View style={{ height: 1, backgroundColor: '#333', width: '100%', marginVertical: 12 }} />
+          <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginVertical: 12 }} />
 
           {/* Education */}
           <View style={{ height: 12 }} />
@@ -255,7 +255,7 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
 
         {skillsLinks.linksEnabled && (
           <>
-            <View style={{ height: 1, backgroundColor: '#333', width: '100%', marginVertical: 12 }} />
+            <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginVertical: 12 }} />
             <View style={styles.grid}>
               <View style={styles.leftCol}>
                 <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>LINKS</Text>
@@ -279,7 +279,7 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
 
         {hasSkills && (<>
           {/* divider before skills */}
-          <View style={{ height: 1, backgroundColor: '#333', width: '100%', marginVertical: 12 }} />
+          <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginVertical: 12 }} />
 
           <View style={{ height: 12 }} />
           <View style={styles.grid}>
@@ -289,7 +289,7 @@ const Template12PDF: React.FC<Template12PDFProps> = ({ data, primaryColor = '#11
         </>)}
 
         {hasCerts && (<>
-          <View style={{ height: 1, backgroundColor: '#333', width: '100%', marginVertical: 12 }} />
+          <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginVertical: 12 }} />
           <View style={styles.grid}>
             <View style={styles.leftCol}><Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>CERTIFICATIONS</Text></View>
             <View style={styles.rightCol}>

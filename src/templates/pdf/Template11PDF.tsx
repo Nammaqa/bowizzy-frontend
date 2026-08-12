@@ -512,7 +512,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
             <View style={{ marginBottom: 12 }}>
               <View minPresenceAhead={80} wrap={false}>
                 <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>CAREER OBJECTIVE</Text>
-                <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 6 }} />
+                <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginBottom: 6 }} />
               </View>
               {renderBulletedParagraph(trimTrailingHtml(personal.aboutCareerObjective), { fontSize: 10 })}
             </View>
@@ -526,7 +526,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
                   {i === 0 && (
                     <View style={{ marginBottom: 8 }}>
                       <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>EXPERIENCE</Text>
-                      <View style={{ height: 1, backgroundColor: '#333333', width: '100%' }} />
+                      <View style={{ height: 1, backgroundColor: primaryColor, width: '100%' }} />
                     </View>
                   )}
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
@@ -559,7 +559,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
             const eduHeading = (
               <View style={{ marginBottom: 8 }}>
                 <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>EDUCATION</Text>
-                <View style={{ height: 1, backgroundColor: '#333333', width: '100%' }} />
+                <View style={{ height: 1, backgroundColor: primaryColor, width: '100%' }} />
               </View>
             );
 
@@ -642,7 +642,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
                   {idx === 0 && (
                     <View style={{ marginBottom: 8 }}>
                       <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>PROJECTS</Text>
-                      <View style={{ height: 1, backgroundColor: '#333333', width: '100%' }} />
+                      <View style={{ height: 1, backgroundColor: primaryColor, width: '100%' }} />
                     </View>
                   )}
                   {/* Title + dates */}
@@ -684,7 +684,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
                   {idx === 0 && (
                     <View style={{ marginBottom: 8 }}>
                       <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>TECHNICAL CERTIFICATIONS</Text>
-                      <View style={{ height: 1, backgroundColor: '#333333', width: '100%' }} />
+                      <View style={{ height: 1, backgroundColor: primaryColor, width: '100%' }} />
                     </View>
                   )}
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -703,7 +703,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
             skillsLinks.technicalSummary.replace(/<[^>]*>/g, '').trim() !== '' && (
               <View style={{ marginBottom: 12 }} minPresenceAhead={60}>
                 <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>TECHNICAL SUMMARY</Text>
-                <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
+                <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginBottom: 8 }} />
                 {renderBulletedParagraph(skillsLinks.technicalSummary, { forceBullets: true })}
               </View>
             )}
@@ -712,7 +712,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
           {skillsLinks.skills.filter((s: any) => s.enabled && s.skillName).length > 0 && (
             <View style={{ marginBottom: 12 }}>
               <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>SKILLS</Text>
-              <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
+              <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginBottom: 8 }} />
               <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                 {skillsLinks.skills
                   .filter((s: any) => s.enabled && s.skillName)
@@ -732,7 +732,7 @@ const Template11PDF: React.FC<Template11PDFProps> = ({ data, primaryColor = '#11
           {personal.languagesKnown && personal.languagesKnown.length > 0 && (
             <View style={{ marginBottom: 12 }}>
               <Text style={{ fontSize: 13, fontFamily: pdfFontFamilyBold, color: primaryColor, letterSpacing: 1.2, marginBottom: 4 }}>LANGUAGES</Text>
-              <View style={{ height: 1, backgroundColor: '#333333', width: '100%', marginBottom: 8 }} />
+              <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginBottom: 8 }} />
               <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                 {personal.languagesKnown.map((lang: string, idx: number) => (
                   <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16, marginBottom: 4 }}>

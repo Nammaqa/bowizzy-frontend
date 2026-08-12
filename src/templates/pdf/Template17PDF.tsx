@@ -213,7 +213,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
             <View>
               <View wrap={false} minPresenceAhead={40}>
                 <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>About</Text>
-                <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
+                <View style={{ height: 1, backgroundColor: primaryColor, marginTop: 6, width: '100%' }} />
               </View>
               <Text style={{ marginTop: 8, fontSize: 9, color: '#444', textAlign: 'justify' }}>{htmlToPlainText(trimTrailingHtml(personal.aboutCareerObjective)).replace(/\s{2,}/g, ' ')}</Text>
             </View>
@@ -223,7 +223,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
             <View style={{ marginTop: personal.aboutCareerObjective ? 18 : 0 }}>
               <View wrap={false} minPresenceAhead={40}>
                 <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Technical Summary</Text>
-                <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
+                <View style={{ height: 1, backgroundColor: primaryColor, marginTop: 6, width: '100%' }} />
               </View>
               {renderBulletedParagraph(skillsLinks.technicalSummary, { forceBullets: true })}
             </View>
@@ -233,7 +233,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
             <View style={{ marginTop: 18 }}>
               <View wrap={false} minPresenceAhead={40}>
                 <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Experience</Text>
-                <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
+                <View style={{ height: 1, backgroundColor: primaryColor, marginTop: 6, width: '100%' }} />
               </View>
               <View style={{ marginTop: 8 }}>
                 {experience.workExperiences.filter((w: any) => w.enabled).map((w: any, i: number) => (
@@ -254,7 +254,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
             <View style={{ marginTop: 18 }}>
               <View wrap={false} minPresenceAhead={40}>
                 <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Projects</Text>
-                <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
+                <View style={{ height: 1, backgroundColor: primaryColor, marginTop: 6, width: '100%' }} />
               </View>
               <View style={{ marginTop: 8 }}>
                 {projects.filter((p: any) => p.enabled).map((p: any, i: number) => (
@@ -280,7 +280,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
             <View style={{ marginTop: 18 }}>
               <View wrap={false} minPresenceAhead={40}>
                 <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Education</Text>
-                <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
+                <View style={{ height: 1, backgroundColor: primaryColor, marginTop: 6, width: '100%' }} />
               </View>
               <View style={{ marginTop: 8 }}>
                 {education.higherEducation.filter(edu => edu.enabled).reverse().map((edu: any, i: number) => (
@@ -339,7 +339,7 @@ const Template17PDF: React.FC<Template17PDFProps> = ({ data, primaryColor = '#11
             <View style={{ marginTop: 18 }}>
               <View wrap={false} minPresenceAhead={40}>
                 <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Achievements / Certifications</Text>
-                <View style={{ height: 1, backgroundColor: '#ddd', marginTop: 6, width: '100%' }} />
+                <View style={{ height: 1, backgroundColor: primaryColor, marginTop: 6, width: '100%' }} />
               </View>
               <View style={{ marginTop: 8 }}>
                 {(certifications || []).filter((c: any) => c.enabled && c.certificateTitle).map((c: any, i: number) => (
