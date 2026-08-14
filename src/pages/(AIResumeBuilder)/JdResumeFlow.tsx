@@ -254,6 +254,10 @@ export default function JdResumeFlow({
       // Kept alongside the reviewed data too — retrying after a failure drops
       // back to the input stage, and the text has to be there waiting.
       if (draft?.jdText) setJdText(draft.jdText);
+      if (draft?.error) {
+        setError(draft.error);
+        setErrorKind(draft.errorKind === "incomplete" ? "incomplete" : "failed");
+      }
       if (draft?.data) {
         // Older drafts may predate the single-current-experience,
         // merged-project-description and school-education rules.
@@ -281,6 +285,13 @@ export default function JdResumeFlow({
               }
             : {}),
         });
+      }
+      // A refresh while the retry screen is up has to come back to the retry
+      // screen — otherwise the user lands in a review form full of the blank
+      // fields we just told them were a failure, with no way to try again.
+      if (draft?.stage === "error") {
+        setStage("error");
+      } else if (draft?.data) {
         setStage("review");
       }
     } catch { }
@@ -291,7 +302,15 @@ export default function JdResumeFlow({
   useEffect(() => {
     try {
       if (stage === "review" && data) {
-        localStorage.setItem(draftKey(sessionId), JSON.stringify({ data, jdText }));
+        localStorage.setItem(
+          draftKey(sessionId),
+          JSON.stringify({ data, jdText, stage, error, errorKind })
+        );
+      } else if (stage === "error") {
+        localStorage.setItem(
+          draftKey(sessionId),
+          JSON.stringify({ ...(data ? { data } : {}), jdText, stage, error, errorKind })
+        );
       } else if (stage === "input") {
         if (jdText.trim()) {
           localStorage.setItem(draftKey(sessionId), JSON.stringify({ jdText }));
@@ -300,7 +319,7 @@ export default function JdResumeFlow({
         }
       }
     } catch { }
-  }, [stage, data, jdText, sessionId]);
+  }, [stage, data, jdText, error, errorKind, sessionId]);
 
   useEffect(() => {
     if (stage !== "loading") return;
@@ -531,7 +550,7 @@ export default function JdResumeFlow({
             instead of forcing a retry that throws their content away. */}
         {data && (
           <button
-            onClick={() => { setError(null); setStage("review"); }}
+            onClick={() => setStage("review")}
             className="text-xs text-gray-400 hover:text-orange-500 underline underline-offset-2 transition"
           >
             {errorKind === "incomplete"
@@ -577,6 +596,33 @@ export default function JdResumeFlow({
         <h2 className="text-base font-semibold text-gray-800 mb-1">Review your tailored content</h2>
         <p className="text-sm text-gray-400">Make any edits you'd like, then save to continue.</p>
       </div>
+
+      {/* Carried over from the error screen when the user chose to review
+          partial content — the retry has to stay reachable here, including
+          after a refresh, or the blank fields become the only option. */}
+      {error && errorKind === "incomplete" && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-100 bg-red-50 px-4 py-3">
+          <p className="flex items-center gap-2 text-sm text-red-600">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            {error} Fill in the gaps below, or try generating again.
+          </p>
+          <button
+            onClick={handleRetry}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-medium hover:bg-red-600 active:scale-95 transition shrink-0"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* A save that failed and was sent back here for another attempt. */}
+      {error && errorKind === "failed" && (
+        <p className="flex items-center gap-1.5 text-xs text-red-500 justify-center">
+          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+          {error}
+        </p>
+      )}
 
       <SectionCard icon={<Sparkles className="w-4 h-4 text-orange-500" />} title="Technical Summary">
         <textarea

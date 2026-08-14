@@ -40,6 +40,45 @@ function formatDate(dateStr?: string | null): string {
   }
 }
 
+// ── Retry bookkeeping ─────────────────────────────────────────────────────────
+// Both of these survive a reload, because a refresh while the retry option is
+// on screen must not lose it — the chat would be stuck mid-way with no way out.
+
+/**
+ * Restarting a chat also clears it server-side, but when that request fails the
+ * abandoned messages are still stored and would come back on the next load with
+ * the fresh questions stacked underneath. Recording how many messages that
+ * attempt left behind lets us hide exactly those, and the count is dropped as
+ * soon as a server-side clear succeeds.
+ */
+function restartOffsetKey(sessionId: string): string {
+  return `ai_chat_restart_offset_${sessionId}`;
+}
+
+function readRestartOffset(sessionId: string): number {
+  try {
+    const offset = Number(localStorage.getItem(restartOffsetKey(sessionId)));
+    return Number.isFinite(offset) && offset > 0 ? offset : 0;
+  } catch { return 0; }
+}
+
+/** Hides the messages left over from an attempt the user restarted. */
+function afterRestart(sessionId: string, messages: ChatMessage[]): ChatMessage[] {
+  const offset = readRestartOffset(sessionId);
+  return offset > 0 ? messages.slice(offset) : messages;
+}
+
+function chatErrorKey(sessionId: string): string {
+  return `ai_chat_error_${sessionId}`;
+}
+
+function forgetRetryState(sessionId: string) {
+  try {
+    localStorage.removeItem(restartOffsetKey(sessionId));
+    localStorage.removeItem(chatErrorKey(sessionId));
+  } catch { /* storage unavailable */ }
+}
+
 // ── Question queue ────────────────────────────────────────────────────────────
 
 const HARDCODED_QUESTIONS = [
@@ -165,16 +204,23 @@ export default function AIBuilder() {
       try {
         const sessions = await getAiSessions(token);
         const newPaidSessions: Record<string, boolean> = {};
-        
+        const storedErrors: Record<string, string> = {};
+
         setChatSessions(
           sessions.map((s) => {
             if (s.is_paid) {
               newPaidSessions[String(s.id)] = true;
             }
+            // A failure the user hasn't resolved yet outlives the reload, so
+            // the retry option is still there when they come back.
+            const storedError = (() => {
+              try { return localStorage.getItem(chatErrorKey(String(s.id))); } catch { return null; }
+            })();
+            if (storedError) storedErrors[String(s.id)] = storedError;
             return {
               ...s,
               id: String(s.id),
-              messages: s.messages || [],
+              messages: afterRestart(String(s.id), s.messages || []),
               started: s.started || (s.mode === "jd" && !!s.infoJson),
               is_paid: s.is_paid ?? false,
               createdAt: s.createdAt,
@@ -184,6 +230,7 @@ export default function AIBuilder() {
           })
         );
         setPaidJdSessions(newPaidSessions);
+        setChatErrors(storedErrors);
       } catch (err) {
         console.error("Failed to fetch sessions", err);
       } finally {
@@ -206,16 +253,20 @@ export default function AIBuilder() {
   const activeChipState = currentSessionId ? chipStates[currentSessionId] : undefined;
   const activeError = currentSessionId ? chatErrors[currentSessionId] ?? null : null;
 
-  const setSessionError = (sessionId: string, message: string) =>
+  const setSessionError = (sessionId: string, message: string) => {
+    try { localStorage.setItem(chatErrorKey(sessionId), message); } catch { /* storage unavailable */ }
     setChatErrors((prev) => ({ ...prev, [sessionId]: message }));
+  };
 
-  const clearSessionError = (sessionId: string) =>
+  const clearSessionError = (sessionId: string) => {
+    try { localStorage.removeItem(chatErrorKey(sessionId)); } catch { /* storage unavailable */ }
     setChatErrors((prev) => {
       if (!(sessionId in prev)) return prev;
       const next = { ...prev };
       delete next[sessionId];
       return next;
     });
+  };
 
   // The mode belongs to the session, so the toggle must follow whichever
   // session is active. Sessions get selected automatically in two places (on
@@ -445,7 +496,7 @@ export default function AIBuilder() {
     if (session) setMode(session.mode);
     setSidebarOpen(false);
     try {
-      const chats = await getSessionChats(id, token);
+      const chats = afterRestart(id, await getSessionChats(id, token));
       setChatSessions((prev) =>
         prev.map((s) => s.id === id ? { ...s, messages: chats, started: chats?.length > 0 || (s.mode === "jd" && !!s.infoJson) } : s)
       );
@@ -456,6 +507,7 @@ export default function AIBuilder() {
     e.stopPropagation();
     try {
       await deleteAiSession(sessionId, token);
+      forgetRetryState(sessionId);
       setChatSessions((prev) => {
         const filtered = prev.filter((s) => s.id !== sessionId);
         if (currentSessionId === sessionId && filtered.length > 0) setCurrentSessionId(filtered[0].id);
@@ -470,6 +522,7 @@ export default function AIBuilder() {
   const handlePaymentCancelled = () => {
     if (!currentSessionId) return;
     const cancelledId = currentSessionId;
+    forgetRetryState(cancelledId);
     setChatSessions((prev) => {
       const filtered = prev.filter((s) => s.id !== cancelledId);
       if (currentSessionId === cancelledId && filtered.length > 0) setCurrentSessionId(filtered[0].id);
@@ -566,13 +619,21 @@ export default function AIBuilder() {
       )
     );
 
-    // Best-effort: without this the abandoned attempt replays alongside the new
-    // one when the chat is reopened, but a failure here must not block the
-    // restart the user just asked for — the local history is cleared either way.
+    // A failure here must not block the restart the user just asked for, so
+    // when the history can't be cleared server-side we note where the
+    // abandoned attempt ended and hide everything up to that point instead.
+    // Either way the user gets a chat that starts at the first question.
     try {
       await clearSessionChats(sessionId, token);
+      forgetRetryState(sessionId);
     } catch (err) {
       console.error("Failed to clear chat history on retry", err);
+      try {
+        const stored = await getSessionChats(sessionId, token);
+        localStorage.setItem(restartOffsetKey(sessionId), String(stored.length));
+      } catch (offsetErr) {
+        console.error("Failed to record restart offset", offsetErr);
+      }
     }
 
     try {
