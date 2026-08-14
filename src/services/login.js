@@ -39,6 +39,19 @@ export const verifyForgotPasswordOtp = async (email, otp) => {
   }
 };
 
+export const validateForgotPasswordOtp = async (email, otp) => {
+  try {
+    const response = await api.post("/auth/forgot-password/validate-otp", {
+      email,
+      otp,
+    });
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const changeForgotPassword = async (email, otp, newPassword) => {
   try {
     const response = await api.post("/auth/forgot-password/change-password", {
