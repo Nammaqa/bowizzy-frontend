@@ -18,6 +18,7 @@ export default function Register() {
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [hasCoupon, setHasCoupon] = useState(false); // user opted in to enter a coupon
   const [coupon, setCoupon] = useState("");
   const [couponStatus, setCouponStatus] = useState(""); // "valid" | "invalid" | ""
   const [couponMessage, setCouponMessage] = useState("");
@@ -744,37 +745,61 @@ export default function Register() {
 
                 {/* COUPON */}
                 <div className="col-span-12">
-                  <label>Coupon Code</label>
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex items-center gap-3">
                     <input
-                      value={coupon}
+                      type="checkbox"
+                      id="hasCoupon"
+                      checked={hasCoupon}
                       onChange={(e) => {
-                        setCoupon(e.target.value.trim());
-                        setCouponStatus("");
-                        setCouponMessage("");
+                        const checked = e.target.checked;
+                        setHasCoupon(checked);
+                        if (!checked) {
+                          // Clear any entered/validated coupon when the box is hidden
+                          setCoupon("");
+                          setCouponStatus("");
+                          setCouponMessage("");
+                        }
                       }}
-                      className="w-full px-4 py-3 border rounded-lg"
-                      placeholder="Enter coupon code"
                     />
-                    <button
-                      type="button"
-                      onClick={handleCouponCheck}
-                      disabled={checkingCoupon}
-                      className={`px-4 py-3 rounded-lg text-white font-medium ${
-                        checkingCoupon ? "bg-gray-400 cursor-not-allowed" : "bg-orange-500"
-                      }`}
-                    >
-                      {checkingCoupon ? "Checking..." : "Check"}
-                    </button>
+                    <label htmlFor="hasCoupon" className="text-sm cursor-pointer">
+                      I have a coupon code I wish to apply
+                    </label>
                   </div>
-                  {couponMessage && (
-                    <p
-                      className={`text-sm mt-2 ${
-                        couponStatus === "valid" ? "text-green-600" : "text-red-500"
-                      }`}
-                    >
-                      {couponMessage}
-                    </p>
+
+                  {hasCoupon && (
+                    <>
+                      <div className="flex gap-2 mt-3">
+                        <input
+                          value={coupon}
+                          onChange={(e) => {
+                            setCoupon(e.target.value.trim());
+                            setCouponStatus("");
+                            setCouponMessage("");
+                          }}
+                          className="w-full px-4 py-3 border rounded-lg"
+                          placeholder="Enter coupon code"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleCouponCheck}
+                          disabled={checkingCoupon}
+                          className={`px-4 py-3 rounded-lg text-white font-medium ${
+                            checkingCoupon ? "bg-gray-400 cursor-not-allowed" : "bg-orange-500"
+                          }`}
+                        >
+                          {checkingCoupon ? "Checking..." : "Check"}
+                        </button>
+                      </div>
+                      {couponMessage && (
+                        <p
+                          className={`text-sm mt-2 ${
+                            couponStatus === "valid" ? "text-green-600" : "text-red-500"
+                          }`}
+                        >
+                          {couponMessage}
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
 
