@@ -187,6 +187,8 @@ export default function Register() {
       setEmailVerified(true);
       setEmailOtpSent(false);
       setOtp("");
+      setFieldError("email", "");
+      setFormError("");
       setEmailVerifyStatus("success");
       setEmailVerifyMessage("Email verified successfully!");
     } catch (err: any) {
@@ -323,8 +325,11 @@ export default function Register() {
 
     if (!emailVerified) {
       setFieldError("email", "Please verify your email address before signing up.");
+      setFormError("");
       return;
     }
+
+    setFieldError("email", "");
 
     if (!agree) {
       setFormError("You must agree to the Terms and Conditions and Privacy Policy.");
