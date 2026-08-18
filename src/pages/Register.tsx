@@ -322,7 +322,7 @@ export default function Register() {
     }
 
     if (!emailVerified) {
-      setFormError("Please verify your email address before signing up.");
+      setFieldError("email", "Please verify your email address before signing up.");
       return;
     }
 
@@ -434,7 +434,7 @@ export default function Register() {
             <h2 className="text-2xl font-semibold mb-4">Create Account</h2>
 
             {/* Friendly top-level banner shown after a failed submit attempt */}
-            {submitAttempted && formError && (
+            {submitAttempted && formError && formError !== "Please verify your email address before signing up." && (
               <div className="mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
                 <svg className="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
@@ -973,7 +973,7 @@ export default function Register() {
 
               {/* Email not verified warning */}
               {email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !emailVerified && (
-                <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5">
+                <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2.5">
                   ⚠️ Please verify your email address before signing up.
                 </p>
               )}
