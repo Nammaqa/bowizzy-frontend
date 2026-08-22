@@ -178,7 +178,9 @@ export default function ForgotPassword() {
             Forgot Password
           </h2>
           <p className="text-sm text-gray-500 text-center mb-8">
-            Enter your email to receive a verification OTP.
+            {otpVerified
+    ? "Your email has been verified. Create your new password."
+    : "Enter your email to receive a verification OTP."}
           </p>
 
           <div className="space-y-6">
@@ -199,21 +201,25 @@ export default function ForgotPassword() {
                   }`}
                   placeholder="Enter your email"
                 />
-                <button
-                  type="submit"
-                  disabled={loadingAction === "send" || otpVerified}
-                  className={`sm:w-32 px-4 py-3 rounded-lg text-white font-medium flex items-center justify-center ${
-                    loadingAction === "send" || otpVerified ? "bg-gray-400 cursor-not-allowed" : "bg-orange-500 hover:bg-orange-600"
-                  }`}
-                >
-                  {loadingAction === "send" ? (
-                    <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : otpSent ? (
-                    "Resend"
-                  ) : (
-                    "Send OTP"
-                  )}
-                </button>
+                {!otpVerified && (
+  <button
+    type="submit"
+    disabled={loadingAction === "send"}
+    className={`sm:w-32 px-4 py-3 rounded-lg text-white font-medium flex items-center justify-center ${
+      loadingAction === "send"
+        ? "bg-gray-400 cursor-not-allowed"
+        : "bg-orange-500 hover:bg-orange-600"
+    }`}
+  >
+    {loadingAction === "send" ? (
+      <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+    ) : otpSent ? (
+      "Resend"
+    ) : (
+      "Send OTP"
+    )}
+  </button>
+)}
               </div>
               {emailError && <p className="text-red-500 text-sm">{emailError}</p>}
             </form>
