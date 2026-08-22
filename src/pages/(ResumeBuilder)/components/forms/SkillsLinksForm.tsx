@@ -689,7 +689,8 @@ export const SkillsLinksForm: React.FC<SkillsLinksFormProps> = ({
       // 2. Call the AI service
       const result = await enhanceTechnicalSummary(
         data.technicalSummary,
-        skillNames
+        skillNames,
+        token
       );
 
       // 3. Mark as used
