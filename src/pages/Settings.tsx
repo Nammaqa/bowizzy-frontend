@@ -9,7 +9,9 @@ import {
 } from "@/services/accountService";
 import {
   checkInterviewerBanStatus,
+  getMockInterviewUserType,
   getAcceptedMockInterviews,
+  isInterviewerUserResponse,
 } from "@/pages/(Interviews)/MockInterview/mockInterviewService";
 import { useNavigate } from "react-router-dom";
 
@@ -97,6 +99,7 @@ const Settings = () => {
   const [isLoadingAccountStatus, setIsLoadingAccountStatus] = useState(true);
   const [accountReviewStatus, setAccountReviewStatus] = useState<AccountReviewStatus>("active");
   const [isAdminReview, setIsAdminReview] = useState(false);
+  const [isInterviewer, setIsInterviewer] = useState(false);
   const [acceptedInterviews, setAcceptedInterviews] = useState<unknown[]>([]);
   const navigate = useNavigate();
 
@@ -125,9 +128,10 @@ const Settings = () => {
       }
 
       try {
-        const [statusResponse, acceptedResponse] = await Promise.all([
+        const [statusResponse, acceptedResponse, interviewerResponse] = await Promise.all([
           checkInterviewerBanStatus(userId, token),
           getAcceptedMockInterviews(userId, token),
+          getMockInterviewUserType(userId, token),
         ]);
         setIsAdminReview(
           statusResponse?.review_status === "under_review" &&
@@ -135,6 +139,7 @@ const Settings = () => {
         );
         setAccountReviewStatus(getReviewStatus(statusResponse) ?? nextStatus);
         setAcceptedInterviews(getAcceptedInterviews(acceptedResponse));
+        setIsInterviewer(isInterviewerUserResponse(interviewerResponse));
       } catch (error) {
         console.error("Failed to load account review details:", error);
       } finally {
@@ -330,7 +335,8 @@ const Settings = () => {
                   </button>
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-dashed border-amber-200 rounded-xl p-4 bg-amber-50/40">
+                {isInterviewer && (
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-dashed border-amber-200 rounded-xl p-4 bg-amber-50/40">
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <ShieldAlert className="w-5 h-5 text-amber-600" />
@@ -374,7 +380,8 @@ const Settings = () => {
                         ? "Activate Account"
                         : "Deactivate Account"}
                   </button>
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
