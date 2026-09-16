@@ -277,8 +277,9 @@ const MockInterviewBookingsPage = () => {
   const { userId: currentUserId } = getAuthUser();
   // Payment-pending bookings never surface — in any tab, count, or empty state.
   const paidBookings     = bookings.filter((b) => !isPaymentPendingBooking(b));
-  // Exclude ALL cancelled bookings from Upcoming & Past tabs.
-  const activeBookings   = paidBookings.filter((b) => !isCancelledBooking(b));
+  // Keep interviewer-cancelled bookings visible to the candidate; only hide
+  // bookings cancelled by the candidate from Upcoming & Past tabs.
+  const activeBookings   = paidBookings.filter((b) => !isCancelledByUser(b, currentUserId));
   // Cancelled tab: only show bookings the current user (candidate) cancelled.
   const cancelledBookings = paidBookings.filter((b) => isCancelledByUser(b, currentUserId));
   const pastBookings     = activeBookings.filter((b) => isPastBooking(b, now));
@@ -300,7 +301,9 @@ const MockInterviewBookingsPage = () => {
     const rawStatus    = booking.interview_status || "scheduled";
     const isCancelled  = isCancelledBooking(booking);
     const displayStatus =
-      !isCancelled && tab === "past" && booking.interviewer_id == null
+      rawStatus.toLowerCase() === "cancelled_by_interviewer"
+        ? "Confirmed"
+        : !isCancelled && tab === "past" && booking.interviewer_id == null
         ? "Expired"
         : !isCancelled && booking.interviewer_id == null
           ? "Waiting to be accepted"
