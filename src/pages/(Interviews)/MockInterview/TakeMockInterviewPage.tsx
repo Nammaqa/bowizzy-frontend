@@ -79,6 +79,14 @@ const getWeekdayDates = (): InterviewDate[] => {
   return dates;
 };
 
+const getDateValue = (date: Date) => date.toISOString().split("T")[0];
+
+const getMaxBookableDate = () => {
+  const date = new Date();
+  date.setDate(date.getDate() + 30);
+  return getDateValue(date);
+};
+
 const resolveResumeId = (resume: SavedResume, index: number) => {
   return (
     resume?.resume_template_id ??
@@ -213,6 +221,8 @@ const isSlotBooked = (bookings: any[], dateValue: string, slot: string) => {
 const TakeMockInterviewPage = () => {
   const navigate = useNavigate();
   const dates = useMemo(() => getWeekdayDates(), []);
+  const todayValue = useMemo(() => getDateValue(new Date()), []);
+  const maxBookableDate = useMemo(() => getMaxBookableDate(), []);
   const price = Number(import.meta.env.VITE_MOCK_INTERVIEW_PRICE || 299);
 
   const [mode, setMode] = useState<InterviewMode>("Online");
@@ -221,6 +231,7 @@ const TakeMockInterviewPage = () => {
   const [experienceYearsValue, setExperienceYearsValue] = useState(0);
   const [experienceMonthsValue, setExperienceMonthsValue] = useState(0);
   const [selectedDate, setSelectedDate] = useState(dates[0]?.value || "");
+  const [showMoreDates, setShowMoreDates] = useState(false);
   const [selectedTime, setSelectedTime] = useState("");
   const [skills, setSkills] = useState<string[]>([]);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
@@ -244,6 +255,18 @@ const TakeMockInterviewPage = () => {
   const [purchasedCredits, setPurchasedCredits] = useState<number>(0);
   const [creditsLoading, setCreditsLoading] = useState(true);
   const [usePurchasedCredits, setUsePurchasedCredits] = useState(true);
+
+  const selectedDateDetails = useMemo(() => {
+    const visibleDate = dates.find((date) => date.value === selectedDate);
+    if (visibleDate) return visibleDate;
+
+    const date = new Date(`${selectedDate}T00:00:00`);
+    return {
+      label: date.toLocaleDateString("en-IN", { weekday: "short" }),
+      value: selectedDate,
+      displayDate: date.toLocaleDateString("en-IN", { day: "2-digit", month: "short" }),
+    };
+  }, [dates, selectedDate]);
 
   const selectedRole = role === "Other" ? customRole.trim() : role;
   const experiencePayload = {
@@ -441,28 +464,28 @@ const TakeMockInterviewPage = () => {
     loadSavedResumes();
   }, []);
 
+  const loadBookedSlots = async () => {
+    try {
+      const { userId, token } = getAuthUser();
+      if (!userId || !token) return;
+
+      setLoadingBookedSlots(true);
+      setBookedSlotsError("");
+      const response = await getMockInterviewBookingSlots(userId, token);
+      setBookedSlots(normalizeBookings(response));
+    } catch (error: any) {
+      setBookedSlotsError(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Unable to check booked slots right now."
+      );
+    } finally {
+      setLoadingBookedSlots(false);
+    }
+  };
+
   useEffect(() => {
-    const loadBookedSlots = async () => {
-      try {
-        const { userId, token } = getAuthUser();
-        if (!userId || !token) return;
-
-        setLoadingBookedSlots(true);
-        setBookedSlotsError("");
-        const response = await getMockInterviewBookingSlots(userId, token);
-        setBookedSlots(normalizeBookings(response));
-      } catch (error: any) {
-        setBookedSlotsError(
-          error?.response?.data?.message ||
-            error?.message ||
-            "Unable to check booked slots right now."
-        );
-      } finally {
-        setLoadingBookedSlots(false);
-      }
-    };
-
-    loadBookedSlots();
+    void loadBookedSlots();
   }, []);
 
   useEffect(() => {
@@ -610,6 +633,7 @@ const TakeMockInterviewPage = () => {
         await confirmMockInterviewCreditBooking(userId, token, { mock_interview_id: mockInterviewId });
         window.dispatchEvent(new CustomEvent("credits:refresh"));
         setConfirmed(true);
+        await loadBookedSlots();
         navigate("/interviews/mock-interview/bookings");
         return;
       }
@@ -661,6 +685,7 @@ const TakeMockInterviewPage = () => {
               razorpay_signature: response.razorpay_signature,
             });
             setConfirmed(true);
+            await loadBookedSlots();
             navigate("/interviews/mock-interview/bookings");
           } catch (error: any) {
             setPaymentError(
@@ -878,6 +903,37 @@ const TakeMockInterviewPage = () => {
                     </span>
                   </button>
                 ))}
+              </div>
+
+              <div className="mt-4 flex min-w-0 items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowMoreDates((current) => !current)}
+                  className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-[#F26D3A]"
+                >
+                  <CalendarDays size={17} aria-hidden="true" />
+                  {showMoreDates ? "Hide later dates" : "Book for later date"}
+                </button>
+
+                {showMoreDates && (
+                  <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-[#D9D9D9] px-3 py-2">
+                    <span className="shrink-0 text-sm font-semibold text-[#3A3A3A]">Selected date:</span>
+                    <span className="text-sm font-bold text-[#F26D3A]">{selectedDateDetails.displayDate}</span>
+                    <input
+                      id="later-interview-date"
+                      aria-label="Select a later interview date"
+                      type="date"
+                      min={todayValue}
+                      max={maxBookableDate}
+                      value={selectedDate}
+                      onChange={(event) => {
+                        setSelectedDate(event.target.value);
+                        setSelectedTime("");
+                      }}
+                      className="ml-auto min-w-0 rounded-lg border border-[#E5E5E5] px-2 py-1 text-sm focus:border-[#F26D3A] focus:outline-none focus:ring-2 focus:ring-[#FFE0D0]"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
@@ -1106,7 +1162,7 @@ const TakeMockInterviewPage = () => {
                 <CalendarDays className="text-[#F26D3A]" size={18} />
                 <span className="text-[#666666]">Date:</span>
                 <strong className="ml-auto text-[#2F2F2F]">
-                  {dates.find((date) => date.value === selectedDate)?.displayDate || "-"}
+                  {selectedDateDetails?.displayDate || "-"}
                 </strong>
               </div>
               <div className="flex items-center gap-3">

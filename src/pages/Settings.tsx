@@ -12,6 +12,7 @@ import {
   getMockInterviewUserType,
   getAcceptedMockInterviews,
   isInterviewerUserResponse,
+  isInterviewerBannedResponse,
 } from "@/pages/(Interviews)/MockInterview/mockInterviewService";
 import { useNavigate } from "react-router-dom";
 
@@ -97,15 +98,17 @@ const Settings = () => {
   const [deactivateConfirmText, setDeactivateConfirmText] = useState("");
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [isLoadingAccountStatus, setIsLoadingAccountStatus] = useState(true);
-  const [accountReviewStatus, setAccountReviewStatus] = useState<AccountReviewStatus>("active");
+  const [accountReviewStatus , setAccountReviewStatus] = useState<AccountReviewStatus>("active");
   const [isAdminReview, setIsAdminReview] = useState(false);
+  const [isInterviewerBanned, setIsInterviewerBanned] = useState(false);
   const [isInterviewer, setIsInterviewer] = useState(false);
   const [acceptedInterviews, setAcceptedInterviews] = useState<unknown[]>([]);
   const navigate = useNavigate();
 
   const isAccountUnderReview = accountReviewStatus === "under_review";
   const hasAcceptedInterview = acceptedInterviews.length > 0;
-  const disableReviewAction = isAdminReview || hasAcceptedInterview;
+  const disableReviewAction =
+    isAdminReview || hasAcceptedInterview || isInterviewerBanned;
 
   useEffect(() => {
     let userData: Record<string, any> = {};
@@ -137,6 +140,7 @@ const Settings = () => {
           statusResponse?.review_status === "under_review" &&
             statusResponse?.admin_review === true
         );
+        setIsInterviewerBanned(isInterviewerBannedResponse(statusResponse));
         setAccountReviewStatus(getReviewStatus(statusResponse) ?? nextStatus);
         setAcceptedInterviews(getAcceptedInterviews(acceptedResponse));
         setIsInterviewer(isInterviewerUserResponse(interviewerResponse));
@@ -209,7 +213,7 @@ const Settings = () => {
             updateStoredReviewStatus(response, "under_review")
           );
           alert(
-            "Your account has been temporarily deactivated and is now under review. You can reactivate it whenever you are available again."
+            "Your account has been temporarily deactivated ."
           );
         }
       } else {
@@ -262,7 +266,7 @@ const Settings = () => {
                   ? "bg-amber-50 text-amber-600"
                   : "bg-green-50 text-green-600"
               }`}>
-                {accountReviewStatus === "under_review" ? "Deactivated" : "Active"}
+                Active
               </span>
             </div>
 
@@ -310,11 +314,6 @@ const Settings = () => {
                         Permanently delete your account and all of your data
                         including resumes, profiles, and interview history.
                       </p>
-                      {isAdminReview && (
-                        <p className="mt-2 text-xs font-medium text-amber-700">
-                          Your account is under admin review. Only an admin can activate it.
-                        </p>
-                      )}
                       {hasAcceptedInterview && (
                         <p className="mt-2 text-xs font-medium text-amber-700">
                           You have an accepted interview. Please complete it before changing your account status.
@@ -498,7 +497,9 @@ const Settings = () => {
             <p className="text-gray-600 text-sm leading-relaxed mb-6">
               {isAccountUnderReview
                 ? "This will set your account back to active and restore access. Type "
-                : "This will pause your account temporarily and move it under review. You can reactivate it later whenever you are available. Type "}
+                : "This will pause your account temporarily . You can reactivate it later whenever you are available.  "}
+              <br />
+              Type 
               <span className="font-bold text-gray-900">
                 {isAccountUnderReview ? "activate my account" : "deactivate my account"}
               </span>{" "}
