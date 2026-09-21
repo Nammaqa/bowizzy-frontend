@@ -157,7 +157,7 @@ const Settings = () => {
   const handleDeleteAccount = async () => {
     if (confirmText !== "delete my account") return;
     if (hasAcceptedInterview) {
-      alert("Please complete the accepted interview before deleting your account.");
+      alert("Please complete the  interview before deleting your account.");
       return;
     }
 
@@ -316,7 +316,7 @@ const Settings = () => {
                       </p>
                       {hasAcceptedInterview && (
                         <p className="mt-2 text-xs font-medium text-amber-700">
-                          You have an accepted interview. Please complete it before changing your account status.
+                          You have an  interview. Please complete it before changing your account status.
                         </p>
                       )}
                     </div>
@@ -358,10 +358,10 @@ const Settings = () => {
                       )}
                       {hasAcceptedInterview && (
                         <p className="mt-2 text-xs font-medium text-amber-700">
-                          You have an accepted interview. Please complete it before changing your account status.
+                          You have an  interview. Please complete it before changing your account status.
                         </p>
                       )}
-                    </div>
+                    </div>s
                   </div>
                   <button
                     onClick={() => setIsDeactivateModalOpen(true)}
