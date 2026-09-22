@@ -415,7 +415,7 @@ const MockInterviewBookingsPage = () => {
                   Join meeting
                 </a>
               )}
-              {!isCancelled && canCancelCandidateBooking(booking) && (
+              {tab === "upcoming" && !isCancelledByUser(booking, currentUserId) && (
                 <button
                   onClick={() => openCancelConfirmation(booking)}
                   disabled={cancellingId === id}
