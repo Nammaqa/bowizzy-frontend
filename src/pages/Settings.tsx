@@ -65,8 +65,22 @@ const getAcceptedInterviews = (response: unknown): unknown[] => {
   if (Array.isArray(responseObject.accepted_interviews)) {
     return responseObject.accepted_interviews;
   }
-  return Array.isArray(nestedResponse) ? nestedResponse : [];
+  return getAcceptedInterviews(nestedResponse);
 };
+
+const hasIncompleteAcceptedInterview = (interviews: unknown[]): boolean =>
+  interviews.some((interview) => {
+    if (!interview || typeof interview !== "object") return true;
+
+    const interviewObject = interview as Record<string, unknown>;
+    const status = String(
+      interviewObject.interview_status ?? interviewObject.status ?? ""
+    )
+      .trim()
+      .toLowerCase();
+
+    return status !== "confirmed" && status !== "completed";
+  });
 
 const updateStoredReviewStatus = (
   response: unknown,
@@ -106,7 +120,7 @@ const Settings = () => {
   const navigate = useNavigate();
 
   const isAccountUnderReview = accountReviewStatus === "under_review";
-  const hasAcceptedInterview = acceptedInterviews.length > 0;
+  const hasAcceptedInterview = hasIncompleteAcceptedInterview(acceptedInterviews);
   const disableReviewAction =
     isAdminReview || hasAcceptedInterview || isInterviewerBanned;
 
@@ -157,7 +171,7 @@ const Settings = () => {
   const handleDeleteAccount = async () => {
     if (confirmText !== "delete my account") return;
     if (hasAcceptedInterview) {
-      alert("Please complete the  interview before deleting your account.");
+      alert("Please complete or cancel the active interview before deleting your account.");
       return;
     }
 
@@ -361,7 +375,7 @@ const Settings = () => {
                           You have an  interview. Please complete it before changing your account status.
                         </p>
                       )}
-                    </div>s
+                    </div>
                   </div>
                   <button
                     onClick={() => setIsDeactivateModalOpen(true)}
