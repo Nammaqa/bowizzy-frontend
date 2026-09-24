@@ -220,12 +220,13 @@ const MockInterviewBookingsPage = () => {
   useEffect(() => { loadBookings(); }, []);
 
   const openCancelConfirmation = (booking: MockInterviewBooking) => {
+    if (isCancelledBooking(booking)) return;
     setCancelConfirmationBooking(booking);
   };
 
   const handleCancel = async (booking: MockInterviewBooking) => {
     const id = getBookingId(booking);
-    if (!id) return;
+    if (!id || isCancelledBooking(booking)) return;
     setCancelConfirmationBooking(booking);
   };
 
@@ -239,7 +240,7 @@ const MockInterviewBookingsPage = () => {
     setCancelConfirmationBooking(null);
 
     const id = getBookingId(booking);
-    if (!id) return;
+    if (!id || isCancelledBooking(booking)) return;
 
     try {
       const { userId, token } = getAuthUser();
@@ -415,7 +416,7 @@ const MockInterviewBookingsPage = () => {
                   Join meeting
                 </a>
               )}
-              {tab === "upcoming" && !isCancelledByUser(booking, currentUserId) && (
+              {tab === "upcoming" && !isCancelledBooking(booking) && !isCancelledByUser(booking, currentUserId) && (
                 <button
                   onClick={() => openCancelConfirmation(booking)}
                   disabled={cancellingId === id}

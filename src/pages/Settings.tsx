@@ -68,9 +68,9 @@ const getAcceptedInterviews = (response: unknown): unknown[] => {
   return getAcceptedInterviews(nestedResponse);
 };
 
-const hasIncompleteAcceptedInterview = (interviews: unknown[]): boolean =>
+const hasActiveAcceptedInterview = (interviews: unknown[]): boolean =>
   interviews.some((interview) => {
-    if (!interview || typeof interview !== "object") return true;
+    if (!interview || typeof interview !== "object") return false;
 
     const interviewObject = interview as Record<string, unknown>;
     const status = String(
@@ -78,8 +78,11 @@ const hasIncompleteAcceptedInterview = (interviews: unknown[]): boolean =>
     )
       .trim()
       .toLowerCase();
+    const endTime = String(interviewObject.end_time_utc ?? "").trim();
+    const hasFutureEndTime =
+      endTime !== "" && Date.parse(endTime) > Date.now();
 
-    return status !== "confirmed" && status !== "completed";
+    return status === "confirmed" || hasFutureEndTime;
   });
 
 const updateStoredReviewStatus = (
@@ -120,7 +123,7 @@ const Settings = () => {
   const navigate = useNavigate();
 
   const isAccountUnderReview = accountReviewStatus === "under_review";
-  const hasAcceptedInterview = hasIncompleteAcceptedInterview(acceptedInterviews);
+  const hasAcceptedInterview = hasActiveAcceptedInterview(acceptedInterviews);
   const disableReviewAction =
     isAdminReview || hasAcceptedInterview || isInterviewerBanned;
 
@@ -276,11 +279,11 @@ const Settings = () => {
                 Account Settings
               </h2>
               <span className={`text-xs font-bold rounded-full px-3 py-1 ${
-                accountReviewStatus === "under_review"
+                isInterviewerBanned || accountReviewStatus === "under_review"
                   ? "bg-amber-50 text-amber-600"
                   : "bg-green-50 text-green-600"
               }`}>
-                Active
+                {isInterviewerBanned ? "Deactive" : "Active"}
               </span>
             </div>
 
@@ -330,7 +333,7 @@ const Settings = () => {
                       </p>
                       {hasAcceptedInterview && (
                         <p className="mt-2 text-xs font-medium text-amber-700">
-                          You have an  interview. Please complete it before changing your account status.
+                          Please finish your active interview before deleting your account.
                         </p>
                       )}
                     </div>
@@ -372,7 +375,7 @@ const Settings = () => {
                       )}
                       {hasAcceptedInterview && (
                         <p className="mt-2 text-xs font-medium text-amber-700">
-                          You have an  interview. Please complete it before changing your account status.
+                          Please finish your active interview before deleting your account.
                         </p>
                       )}
                     </div>
