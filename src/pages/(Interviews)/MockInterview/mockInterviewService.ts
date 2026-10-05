@@ -306,6 +306,19 @@ export const checkInterviewerBanStatus = async (
   return response.data;
 };
 
+export const updateInterviewerBanStatus = async (
+  userId: string | number,
+  token: string,
+  isBanned: boolean
+) => {
+  const response = await api.patch(
+    `/users/${userId}/mock-interview/interviewer-ban-status`,
+    { is_banned: isBanned },
+    authHeaders(token)
+  );
+  return response.data;
+};
+
 export const isInterviewerBannedResponse = (value: any) =>
   value?.is_banned === true || String(value?.is_banned).toLowerCase() === "true";
 
