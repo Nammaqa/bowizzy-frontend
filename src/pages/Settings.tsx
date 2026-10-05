@@ -3,8 +3,6 @@ import { useEffect, useState } from "react";
 import DashNav from "@/components/dashnav/dashnav";
 import { Trash2, ShieldAlert, X, AlertTriangle } from "lucide-react";
 import {
-  activateAccount,
-  deactivateAccountTemporarily,
   deleteAccount,
 } from "@/services/accountService";
 import {
@@ -13,6 +11,7 @@ import {
   getAcceptedMockInterviews,
   isInterviewerUserResponse,
   isInterviewerBannedResponse,
+  updateInterviewerBanStatus,
 } from "@/pages/(Interviews)/MockInterview/mockInterviewService";
 import { useNavigate } from "react-router-dom";
 
@@ -85,28 +84,6 @@ const hasActiveAcceptedInterview = (interviews: unknown[]): boolean =>
     return status === "confirmed" || hasFutureEndTime;
   });
 
-const updateStoredReviewStatus = (
-  response: unknown,
-  fallbackStatus: AccountReviewStatus
-): AccountReviewStatus => {
-  let userData = {};
-
-  try {
-    userData = JSON.parse(localStorage.getItem("user") || "{}");
-  } catch (error) {
-    console.error("Failed to parse localStorage user data:", error);
-  }
-
-  const nextStatus = getReviewStatus(response) || fallbackStatus;
-
-  localStorage.setItem(
-    "user",
-    JSON.stringify({ ...userData, review_status: nextStatus })
-  );
-
-  return nextStatus;
-};
-
 const Settings = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
@@ -115,17 +92,21 @@ const Settings = () => {
   const [deactivateConfirmText, setDeactivateConfirmText] = useState("");
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [isLoadingAccountStatus, setIsLoadingAccountStatus] = useState(true);
-  const [accountReviewStatus , setAccountReviewStatus] = useState<AccountReviewStatus>("active");
+  const [accountReviewStatus, setAccountReviewStatus] = useState<AccountReviewStatus>("active");
   const [isAdminReview, setIsAdminReview] = useState(false);
   const [isInterviewerBanned, setIsInterviewerBanned] = useState(false);
+  const [deactivatedBy, setDeactivatedBy] = useState<string | null>(null);
   const [isInterviewer, setIsInterviewer] = useState(false);
   const [acceptedInterviews, setAcceptedInterviews] = useState<unknown[]>([]);
   const navigate = useNavigate();
 
   const isAccountUnderReview = accountReviewStatus === "under_review";
   const hasAcceptedInterview = hasActiveAcceptedInterview(acceptedInterviews);
-  const disableReviewAction =
-    isAdminReview || hasAcceptedInterview || isInterviewerBanned;
+  const canActivateInterviewerAccount =
+    isInterviewerBanned && deactivatedBy === "user";
+  const disableInterviewerAction =
+    isLoadingAccountStatus ||
+    (isInterviewerBanned ? !canActivateInterviewerAccount : hasAcceptedInterview);
 
   useEffect(() => {
     let userData: Record<string, any> = {};
@@ -158,6 +139,7 @@ const Settings = () => {
             statusResponse?.admin_review === true
         );
         setIsInterviewerBanned(isInterviewerBannedResponse(statusResponse));
+        setDeactivatedBy(statusResponse?.deactivated_by ?? null);
         setAccountReviewStatus(getReviewStatus(statusResponse) ?? nextStatus);
         setAcceptedInterviews(getAcceptedInterviews(acceptedResponse));
         setIsInterviewer(isInterviewerUserResponse(interviewerResponse));
@@ -203,7 +185,7 @@ const Settings = () => {
   };
 
   const handleDeactivateAccountTemporarily = async () => {
-    const expectedConfirmation = isAccountUnderReview
+    const expectedConfirmation = isInterviewerBanned
       ? "activate my account"
       : "deactivate my account";
 
@@ -216,35 +198,46 @@ const Settings = () => {
       const token = userData?.token;
 
       if (userId && token) {
-        if (disableReviewAction) {
+        if (disableInterviewerAction) {
           return;
         }
 
-        if (isAccountUnderReview) {
-          const response = await activateAccount(userId, token);
-          setAccountReviewStatus(updateStoredReviewStatus(response, "active"));
-          alert("Your account has been activated successfully.");
-        } else {
-          const response = await deactivateAccountTemporarily(userId, token);
-          setAccountReviewStatus(
-            updateStoredReviewStatus(response, "under_review")
-          );
-          alert(
-            "Your account has been temporarily deactivated ."
-          );
-        }
+        const nextBannedState = !isInterviewerBanned;
+        const response = await updateInterviewerBanStatus(
+          userId,
+          token,
+          nextBannedState
+        );
+        setIsInterviewerBanned(
+          response?.is_banned === undefined
+            ? nextBannedState
+            : isInterviewerBannedResponse(response)
+        );
+        setDeactivatedBy(
+          response?.deactivated_by ?? (nextBannedState ? "user" : null)
+        );
+        alert(
+          nextBannedState
+            ? "Your account has been temporarily deactivated."
+            : "Your account has been activated successfully."
+        );
       } else {
         navigate("/login", { replace: true });
       }
     } catch (error: any) {
       console.error("Error updating account review status:", error);
       if (error?.response?.status === 403) {
-        alert("Your account is under admin review. Only an admin can activate it.");
+        setIsInterviewerBanned(true);
+        setDeactivatedBy("admin");
+        alert(
+          error?.response?.data?.message ||
+            "Your account is deactivated by an admin and cannot be activated."
+        );
       } else if (error?.response?.status === 409) {
         alert("Please complete the active interview first.");
       } else {
         alert(
-          isAccountUnderReview
+          isInterviewerBanned
             ? "Failed to activate account. Please try again later."
             : "Failed to deactivate account temporarily. Please try again later."
         );
@@ -351,7 +344,7 @@ const Settings = () => {
                   </button>
                 </div>
 
-                {isInterviewer && (
+                {isInterviewer && !(isInterviewerBanned && deactivatedBy === "admin") && (
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-dashed border-amber-200 rounded-xl p-4 bg-amber-50/40">
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -359,14 +352,16 @@ const Settings = () => {
                     </div>
                     <div>
                       <h4 className="text-sm font-semibold text-gray-900">
-                        {isAccountUnderReview
-                          ? "Activate My Account"
+                        {isInterviewerBanned
+                          ? "Deactivated Account"
                           : "Temporarily Deactivate My Account"}
                       </h4>
                       <p className="text-xs text-gray-600 mt-1 max-w-sm leading-relaxed">
-                        {isAccountUnderReview
-                          ? "Your account is currently under review and temporarily inactive. Activate it when you are ready to resume access."
-                          : "Temporarily deactivate your account while you are away. Your account will be paused and can be activated again when you are available or whenever you want."}
+                        {isInterviewerBanned
+                          ? deactivatedBy === "admin"
+                            ? "Your account has been deactivated by an admin. You cannot activate it yourself."
+                            : "Your account is deactivated. Activate it when you are ready to resume access."
+                          : "Temporarily deactivate your account while you are away. You can activate it again whenever you are ready."}
                       </p>
                       {isAdminReview && (
                         <p className="mt-2 text-xs font-medium text-amber-700">
@@ -375,25 +370,27 @@ const Settings = () => {
                       )}
                       {hasAcceptedInterview && (
                         <p className="mt-2 text-xs font-medium text-amber-700">
-                          Please finish your active interview before deleting your account.
+                            Please finish your active interview before deactivating your account.
                         </p>
                       )}
                     </div>
                   </div>
                   <button
                     onClick={() => setIsDeactivateModalOpen(true)}
-                    disabled={isLoadingAccountStatus || disableReviewAction}
+                    disabled={disableInterviewerAction}
                     className="px-5 py-2 rounded-lg text-white text-sm font-medium shadow-sm cursor-pointer hover:shadow-md transform transition hover:-translate-y-0.5 flex-shrink-0 self-start sm:self-center disabled:cursor-not-allowed disabled:opacity-60"
                     style={{
-                      background: isAccountUnderReview
+                      background: isInterviewerBanned
                         ? "linear-gradient(180deg, #10b981 0%, #059669 100%)"
                         : "linear-gradient(180deg, #f59e0b 0%, #d97706 100%)",
                     }}
                   >
                     {isLoadingAccountStatus
                       ? "Loading..."
-                      : isAccountUnderReview
-                        ? "Activate Account"
+                      : isInterviewerBanned
+                        ? canActivateInterviewerAccount
+                          ? "Activate Account"
+                          : "Deactivated by Admin"
                         : "Deactivate Account"}
                   </button>
                   </div>
@@ -509,23 +506,23 @@ const Settings = () => {
             </div>
 
             <h3 className="text-lg font-bold text-gray-900 mb-2">
-              {isAccountUnderReview ? "Activate your account?" : "Temporarily deactivate your account?"}
+              {isInterviewerBanned ? "Activate your account?" : "Temporarily deactivate your account?"}
             </h3>
             <p className="text-gray-600 text-sm leading-relaxed mb-6">
-              {isAccountUnderReview
+              {isInterviewerBanned
                 ? "This will set your account back to active and restore access. Type "
                 : "This will pause your account temporarily . You can reactivate it later whenever you are available.  "}
               <br />
               Type 
               <span className="font-bold text-gray-900">
-                {isAccountUnderReview ? "activate my account" : "deactivate my account"}
+                {isInterviewerBanned ? "activate my account" : "deactivate my account"}
               </span>{" "}
               below to confirm.
             </p>
 
             <input
               type="text"
-              placeholder={isAccountUnderReview ? "activate my account" : "deactivate my account"}
+              placeholder={isInterviewerBanned ? "activate my account" : "deactivate my account"}
               value={deactivateConfirmText}
               onChange={(e) => setDeactivateConfirmText(e.target.value)}
               className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-[#FF8251] focus:ring-2 focus:ring-orange-100 outline-none transition-all mb-6 font-mono"
@@ -542,18 +539,18 @@ const Settings = () => {
               <button
                 onClick={handleDeactivateAccountTemporarily}
                 disabled={
-                  deactivateConfirmText !== (isAccountUnderReview ? "activate my account" : "deactivate my account") ||
+                  deactivateConfirmText !== (isInterviewerBanned ? "activate my account" : "deactivate my account") ||
                   isDeactivating
                 }
                 className={`px-6 py-2 text-white font-semibold rounded-xl text-sm ${
-                  deactivateConfirmText === (isAccountUnderReview ? "activate my account" : "deactivate my account") && !isDeactivating
+                  deactivateConfirmText === (isInterviewerBanned ? "activate my account" : "deactivate my account") && !isDeactivating
                     ? "cursor-pointer hover:shadow-lg transform transition hover:-translate-y-0.5"
                     : "opacity-40 cursor-not-allowed"
                 }`}
                 style={{
                   background:
-                    deactivateConfirmText === (isAccountUnderReview ? "activate my account" : "deactivate my account") && !isDeactivating
-                      ? isAccountUnderReview
+                    deactivateConfirmText === (isInterviewerBanned ? "activate my account" : "deactivate my account") && !isDeactivating
+                      ? isInterviewerBanned
                         ? "linear-gradient(180deg, #10b981 0%, #059669 100%)"
                         : "linear-gradient(180deg, #f59e0b 0%, #d97706 100%)"
                       : "#9ca3af",
@@ -563,9 +560,9 @@ const Settings = () => {
                 {isDeactivating ? (
                   <>
                     <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block mr-2" />
-                    {isAccountUnderReview ? "Activating..." : "Deactivating..."}
+                    {isInterviewerBanned ? "Activating..." : "Deactivating..."}
                   </>
-                ) : isAccountUnderReview ? (
+                ) : isInterviewerBanned ? (
                   "Activate Account"
                 ) : (
                   "Deactivate Account"
