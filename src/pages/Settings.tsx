@@ -365,7 +365,7 @@ const Settings = () => {
                       </p>
                       {isAdminReview && (
                         <p className="mt-2 text-xs font-medium text-amber-700">
-                          Your account is under admin review. Only an admin can activate it.
+                          {/* Your account is under admin review. Only an admin can activate it. */}
                         </p>
                       )}
                       {hasAcceptedInterview && (

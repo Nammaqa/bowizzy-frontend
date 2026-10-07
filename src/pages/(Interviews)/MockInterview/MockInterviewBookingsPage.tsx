@@ -37,7 +37,11 @@ const normalizeBookings = (response: any): MockInterviewBooking[] => {
 };
 
 const getBookingId = (b: MockInterviewBooking) =>
-  b?.mock_interview_id || b?.id || b?.booking_id;
+  b?.mock_interview_id ??
+  b?.mockInterviewId ??
+  b?.booking_id ??
+  b?.id ??
+  b?.interview_schedule_id;
 
 const getCandidateId = (b: MockInterviewBooking) =>
   b?.candidate_id || b?.candidateId || b?.candidate_user_id ||
