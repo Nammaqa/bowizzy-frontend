@@ -1,6 +1,6 @@
 import DashNav from "@/components/dashnav/dashnav";
 import { ArrowLeft, Star } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   getMockInterviewBookingById,
@@ -95,12 +95,18 @@ const normalizeBookings = (response: any): any[] => {
 
 /** Return a string/number interview ID from whichever key the API uses. */
 const getInterviewId = (interview: any, fallback?: string): string | number | undefined =>
-  interview?.interview_schedule_id ??
   interview?.mock_interview_id ??
   interview?.mockInterviewId ??
   interview?.booking_id ??
+  fallback ??
   interview?.id ??
-  fallback;
+  interview?.interview_schedule_id;
+
+const getInterviewScheduleId = (interview: any): string | number | undefined =>
+  interview?.interview_schedule_id ??
+  interview?.interviewScheduleId ??
+  interview?.schedule_id ??
+  interview?.scheduleId;
 
 /** Return a string/number candidate ID from whichever key the API uses. */
 const getCandidateId = (interview: any): string | number | undefined =>
@@ -118,21 +124,24 @@ const getCandidateId = (interview: any): string | number | undefined =>
   interview?.user?.id;
 
 /** Return a string/number interviewer ID from whichever key the API uses. */
-const getInterviewerId = (interview: any): string | number | undefined =>
-  interview?.interviewer_id ??
-  interview?.interviewerId ??
-  interview?.interviewer_user_id ??
-  interview?.interviewerUserId ??
-  interview?.assigned_interviewer_id ??
-  interview?.assignedInterviewerId ??
-  interview?.assigned_to ??
-  interview?.assignedTo ??
-  interview?.interviewer?.user_id ??
-  interview?.interviewer?.userId ??
-  interview?.interviewer?.interviewer_id ??
-  interview?.interviewer?.id ??
-  interview?.interviewer?.user?.user_id ??
-  interview?.interviewer?.user?.id;
+const getInterviewerId = (interview: any): string | number | undefined => {
+  return [
+    interview?.interviewer_id,
+    interview?.interviewerId,
+    interview?.interviewer_user_id,
+    interview?.interviewerUserId,
+    interview?.assigned_interviewer_id,
+    interview?.assignedInterviewerId,
+    interview?.assigned_to,
+    interview?.assignedTo,
+    interview?.interviewer?.user_id,
+    interview?.interviewer?.userId,
+    interview?.interviewer?.interviewer_id,
+    interview?.interviewer?.id,
+    interview?.interviewer?.user?.user_id,
+    interview?.interviewer?.user?.id,
+  ].find((value) => value !== null && value !== undefined && String(value).trim() !== "");
+};
 
 /**
  * Merge raw API shapes into a single normalised interview object that always
@@ -183,105 +192,99 @@ const InterviewerReviewsPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // IDs passed explicitly from the bookings list page via route state
+  // Candidate ID is passed from the bookings list as a fallback; booking IDs
+  // are always reloaded and verified from the API.
   const routeState = (location.state as any) ?? {};
-  const routeBooking: any | undefined = routeState?.booking;
   const routeCandidateId: string | number | undefined = routeState?.candidate_id;
-  const routeInterviewerId: string | number | undefined = routeState?.interviewer_id;
 
   const currentUser = JSON.parse(localStorage.getItem("user") ?? "{}");
   const currentUserId: string | number | undefined = currentUser?.user_id;
   const token: string | undefined = currentUser?.token;
 
-  // If we already have both IDs from route state, skip the fetch entirely.
-  // candidateId always has a fallback (currentUserId), so we only require
-  // routeInterviewerId to skip the fetch.
-  const alreadyHasIds =
-    Boolean(routeCandidateId ?? currentUserId) && Boolean(routeInterviewerId);
-
-  const [interview, setInterview] = useState<any>(
-    routeBooking
-      ? buildNormalisedInterview(
-          routeBooking,
-          undefined,
-          // Always supply currentUserId as candidate fallback — the logged-in
-          // user is always the candidate on this page.
-          routeCandidateId ?? currentUserId,
-          routeInterviewerId
-        )
-      : null
-  );
+  const [interview, setInterview] = useState<any>(null);
   const [ratings, setRatings] = useState<Record<string, number>>(initialRatings);
   const [comments, setComments] = useState<Record<string, string>>(initialComments);
-  const [loading, setLoading] = useState(!routeBooking && !alreadyHasIds);
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const hasFetched = useRef(false);
+  const interviewerId = interview?.interviewer_id;
+  const hasInterviewer =
+    interviewerId !== null &&
+    interviewerId !== undefined &&
+    String(interviewerId).trim() !== "" &&
+    Number.isFinite(Number(interviewerId)) &&
+    Number(interviewerId) > 0;
 
   // -------------------------------------------------------------------------
-  // Fetch interview if we don't already have it
+  // Load and verify the booking before showing the feedback form
   // -------------------------------------------------------------------------
 
   useEffect(() => {
-    // Skip if we already loaded from route state or have already fetched
-    if (!id || alreadyHasIds || hasFetched.current) return;
-
-    // If route gave us a booking and we can already extract both IDs, use it
-    if (routeBooking && getCandidateId(routeBooking) && getInterviewerId(routeBooking)) {
-      setInterview(buildNormalisedInterview(routeBooking));
+    if (!id) {
+      setError("Unable to find this interview. Please go back and try again.");
       setLoading(false);
       return;
     }
 
-    hasFetched.current = true;
+    let isActive = true;
 
     const fetchInterview = async () => {
       if (!currentUserId || !token) {
-        setError("Please log in again to load this interview.");
-        setLoading(false);
+        if (isActive) {
+          setError("Please log in again to load this interview.");
+          setLoading(false);
+        }
         return;
       }
 
       try {
         setLoading(true);
+        setError("");
 
-        // Primary fetch — single booking by ID
         const primaryResponse = await getMockInterviewBookingById(currentUserId, token, id);
         const primaryBooking = normalizeInterview(primaryResponse);
+        let matchingBooking: any;
 
-        const candidateId = getCandidateId(primaryBooking);
-        const interviewerId = getInterviewerId(primaryBooking);
-
-        if (candidateId && interviewerId) {
-          // Happy path — single fetch was enough
-          setInterview(buildNormalisedInterview(primaryBooking));
-          return;
+        if (!getInterviewerId(primaryBooking)) {
+          const bookingsResponse = await getMockInterviewBookings(currentUserId, token);
+          matchingBooking = normalizeBookings(bookingsResponse).find(
+            (item: any) => String(getInterviewId(item)) === String(id)
+          );
         }
 
-        // Fallback — search the full bookings list for the matching entry and
-        // merge it with the primary result to fill in the missing IDs.
-        const bookingsResponse = await getMockInterviewBookings(currentUserId, token);
-        const matchingBooking = normalizeBookings(bookingsResponse).find(
-          (item: any) => String(getInterviewId(item)) === String(id)
-        );
+        const resolvedInterviewerId =
+          getInterviewerId(primaryBooking) ??
+          getInterviewerId(matchingBooking);
 
-        setInterview(
-          buildNormalisedInterview(primaryBooking, matchingBooking)
-        );
+        if (isActive) {
+          setInterview(
+            buildNormalisedInterview(
+              primaryBooking,
+              matchingBooking,
+              routeCandidateId ?? currentUserId,
+              resolvedInterviewerId
+            )
+          );
+        }
       } catch (err: any) {
-        setError(
-          err?.response?.data?.message ??
-            err?.message ??
-            "Unable to load interview details."
-        );
+        if (isActive) {
+          setError(
+            err?.response?.data?.message ??
+              err?.message ??
+              "Unable to load interview details."
+          );
+        }
       } finally {
-        setLoading(false);
+        if (isActive) setLoading(false);
       }
     };
 
     fetchInterview();
-  }, [id, token, currentUserId, alreadyHasIds, routeBooking]);
+    return () => {
+      isActive = false;
+    };
+  }, [id, token, currentUserId, routeCandidateId]);
 
   // -------------------------------------------------------------------------
   // Handlers
@@ -296,7 +299,9 @@ const InterviewerReviewsPage = () => {
   const handleSubmit = async () => {
     setError("");
 
-    const interviewId = Number(getInterviewId(interview, id));
+    const mockInterviewId = Number(getInterviewId(interview, id));
+    const rawScheduleId = getInterviewScheduleId(interview);
+    const interviewScheduleId = Number(rawScheduleId ?? mockInterviewId);
 
     // Resolve candidate and interviewer IDs — route state takes precedence,
     // then normalised interview object, then fall back to current user for
@@ -305,16 +310,18 @@ const InterviewerReviewsPage = () => {
       routeCandidateId ??
       interview?.candidate_id ??
       currentUserId;
-    const rawInterviewerId =
-      routeInterviewerId ??
-      interview?.interviewer_id;
+    const rawInterviewerId = interview?.interviewer_id;
 
     const candidateId = rawCandidateId ? Number(rawCandidateId) : NaN;
     const interviewerId = rawInterviewerId ? Number(rawInterviewerId) : NaN;
 
     // Guard: interview ID
-    if (!interviewId || Number.isNaN(interviewId)) {
+    if (!mockInterviewId || Number.isNaN(mockInterviewId)) {
       setError("Unable to find this interview. Please go back and try again.");
+      return;
+    }
+    if (!interviewScheduleId || Number.isNaN(interviewScheduleId)) {
+      setError("Unable to find this interview schedule. Please go back and try again.");
       return;
     }
 
@@ -332,11 +339,8 @@ const InterviewerReviewsPage = () => {
       );
       return;
     }
-    if (!interviewerId || Number.isNaN(interviewerId)) {
-      setError(
-        "Could not identify the interviewer for this session. " +
-          "Please go back to your bookings and open the feedback form from there."
-      );
+    if (!hasInterviewer || !interviewerId || Number.isNaN(interviewerId)) {
+      setError("This booking has no assigned interviewer, so feedback cannot be submitted.");
       return;
     }
 
@@ -353,8 +357,8 @@ const InterviewerReviewsPage = () => {
     }
 
     const payload = {
-      interview_schedule_id: interviewId,
-      mock_interview_id: interviewId,
+      interview_schedule_id: interviewScheduleId,
+      mock_interview_id: mockInterviewId,
       candidate_id: candidateId,
       interviewer_id: interviewerId,
       professionalism_conduct: comments.professionalism_conduct,
@@ -380,8 +384,18 @@ const InterviewerReviewsPage = () => {
         state: { interviewerFeedbackSubmitted: true },
       });
     } catch (err: any) {
+      const apiMessage = err?.response?.data?.message;
+      if (
+        err?.response?.status === 409 &&
+        /only confirmed mock interviews can receive feedback/i.test(String(apiMessage ?? ""))
+      ) {
+        setError(
+          "We couldn't save your feedback just yet because the booking isn't marked as confirmed or completed in our system. If the interview has already wrapped up, please ensure the status is updated so you can submit your feedback!"
+        );
+        return;
+      }
       setError(
-        err?.response?.data?.message ??
+        apiMessage ??
           err?.message ??
           "Unable to submit feedback. Please try again."
       );
@@ -431,9 +445,23 @@ const InterviewerReviewsPage = () => {
             </div>
           </div>
 
-          {/* Error banner moved to footer (shows above submit button) */}
+          {loading && (
+            <p className="mt-4 rounded-2xl bg-blue-50 p-3 text-sm font-semibold text-blue-700">
+              Loading booking details…
+            </p>
+          )}
+          {!loading && !error && !hasInterviewer && (
+            <p
+              role="alert"
+              className="mt-4 rounded-2xl bg-amber-50 p-3 text-sm font-semibold text-amber-800"
+            >
+              This booking has no assigned interviewer, so feedback cannot be submitted.
+              Please contact support to have the booking assignment checked.
+            </p>
+          )}
 
           {/* Feedback sections */}
+          {!loading && hasInterviewer && (
           <div className="mt-4 space-y-3">
             {feedbackSections.map((section) => (
               <div
@@ -490,6 +518,7 @@ const InterviewerReviewsPage = () => {
               />
             </div>
           </div>
+          )}
 
           {/* Sticky footer */}
           <div className="sticky bottom-0 mt-4 flex flex-col gap-3 border-t border-[#EFEFEF] bg-white py-4">
@@ -505,7 +534,7 @@ const InterviewerReviewsPage = () => {
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={submitting || loading}
+                disabled={submitting || loading || !hasInterviewer}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#F26D3A] px-5 py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#e35f2f] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 <Star size={16} />
