@@ -63,7 +63,7 @@ export default function Login() {
         </div>
 
         <h1 className="text-4xl md:text-5xl font-semibold text-orange-700 leading-snug">
-          Prep for test-mains. <br /> Grow your career.
+          Prep for inteviews. <br /> Grow your career.
         </h1>
 
         <p className="text-sm text-gray-600">

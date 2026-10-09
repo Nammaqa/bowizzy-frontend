@@ -195,14 +195,14 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
             <View style={[styles.rightCol, { paddingRight: 12 }]}>
               {(skillsLinks.skills || []).some((s: any) => s.enabled && s.skillName) && (<>
                 <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Skills</Text>
-                <View style={{ ...styles.divider, backgroundColor: '#999' }} />
+                <View style={{ ...styles.divider, backgroundColor: primaryColor }} />
                 <View style={{ marginTop: 8 }}>{(skillsLinks.skills || []).filter((s: any) => s.enabled && s.skillName).map((s: any, i: number) => (<Text key={i} style={{ marginBottom: 6 }}>• {s.skillName}</Text>))}</View>
               </>)}
 
               {(education.higherEducation.some(edu => edu.enabled) || hasPreUniversity || hasSSLC) && (
                 <View style={{ marginTop: 12 }}>
                   <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Education</Text>
-                  <View style={{ ...styles.divider, backgroundColor: '#999' }} />
+                  <View style={{ ...styles.divider, backgroundColor: primaryColor }} />
                   <View style={{ marginTop: 8 }}>{[...education.higherEducation].filter(edu => edu.enabled).reverse().map((edu: any, i: number) => (
                     <View key={i} style={{ marginBottom: 8 }}>
                       <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold }}>{edu.instituteName}</Text>
@@ -241,7 +241,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
               {(((personal as any).languagesKnown || (personal as any).languages || [])).filter((l: string) => l && l.trim()).length > 0 && (
                 <View style={{ marginTop: 12 }}>
                   <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Language</Text>
-                  <View style={{ ...styles.divider, backgroundColor: '#999' }} />
+                  <View style={{ ...styles.divider, backgroundColor: primaryColor }} />
                   <View style={{ marginTop: 8 }}>{(((personal as any).languagesKnown || (personal as any).languages || [])).filter((l: string) => l && l.trim()).map((l: string, i: number) => (<Text key={i} style={{ marginBottom: 6 }}>• {l}</Text>))}</View>
                 </View>
               )}
@@ -249,7 +249,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
               {(certifications || []).some((c: any) => c.enabled && c.certificateTitle) && (
                 <View style={{ marginTop: 12 }}>
                   <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Certification</Text>
-                  <View style={{ ...styles.divider, backgroundColor: '#999' }} />
+                  <View style={{ ...styles.divider, backgroundColor: primaryColor }} />
                   <View style={{ marginTop: 8 }}>{(certifications || []).filter((c: any) => c.enabled && c.certificateTitle).map((c: any, i: number) => (<Text key={i} style={{ marginBottom: 6 }}>• {c.certificateTitle}{c.providedBy ? ` — ${c.providedBy}` : ''}</Text>))}</View>
                 </View>
               )}
@@ -260,7 +260,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
             <View style={styles.leftCol}>
               {experience.workExperiences.some((exp: any) => exp.enabled) && (<>
                 <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Professional Experience</Text>
-                <View style={{ ...styles.divider, backgroundColor: '#999' }} />
+                <View style={{ ...styles.divider, backgroundColor: primaryColor }} />
 
                 <View style={{ marginTop: 8 }}>
                   {experience.workExperiences.filter((w: any) => w.enabled).map((w: any, i: number) => (
@@ -306,7 +306,7 @@ const Template19PDF: React.FC<Template19PDFProps> = ({ data, primaryColor = '#11
               {(projects || []).some((p: any) => p.enabled) && (
                 <View style={{ marginTop: 12 }}>
                   <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Projects</Text>
-                  <View style={{ ...styles.divider, backgroundColor: '#999' }} />
+                  <View style={{ ...styles.divider, backgroundColor: primaryColor }} />
                   <View style={{ marginTop: 8 }}>
                     {(projects || []).filter((p: any) => p.enabled).map((p: any, i: number) => (
                       <View key={i} style={{ marginBottom: 10 }}>

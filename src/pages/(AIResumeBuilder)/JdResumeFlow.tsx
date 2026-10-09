@@ -11,6 +11,7 @@ import {
   Sparkles,
   ArrowRight,
   AlertCircle,
+  RotateCcw,
 } from "lucide-react";
 import {
   analyzeJobDescription,
@@ -182,6 +183,38 @@ function normalizeJdData(raw: JdResumeData): JdResumeData {
     links: raw.links || [],
   };
 }
+/**
+ * The analyzer answers 200 with a well-formed payload even when the model
+ * generated nothing, so empty AI-written content is the only signal that JD
+ * mode actually failed. Sections the profile has no entries for are skipped —
+ * empty there is correct, not a gap.
+ */
+function findGenerationGaps(data: JdResumeData): string[] {
+  const hasText = (lines?: string[]) =>
+    Array.isArray(lines) && lines.some((line) => line?.trim());
+
+  const gaps: string[] = [];
+
+  if (!data.technical_summary_generated?.trim()) gaps.push("technical summary");
+
+  const projects = data.projects || [];
+  if (projects.length > 0 && projects.some((p) => !hasText(p.enhanced_description))) {
+    gaps.push("project descriptions");
+  }
+
+  const experiences = data.work_experience?.experiences || [];
+  if (experiences.length > 0 && experiences.some((e) => !hasText(e.enhanced_description))) {
+    gaps.push("work experience descriptions");
+  }
+
+  return gaps;
+}
+
+function formatList(items: string[]): string {
+  if (items.length <= 1) return items[0] ?? "";
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
+
 //testign
 interface JdResumeFlowProps {
   sessionId: string;
@@ -190,16 +223,25 @@ interface JdResumeFlowProps {
   onComplete: (data: JdResumeData) => void;
 }
 
-type Stage = "input" | "loading" | "review" | "saving" | "success";
+type Stage = "input" | "loading" | "review" | "saving" | "error" | "success";
 
 function draftKey(sessionId: string): string {
   return `jd_resume_draft_${sessionId}`;
 }
 
-export default function JdResumeFlow({ sessionId, token, onComplete }: JdResumeFlowProps) {
+export default function JdResumeFlow({
+  sessionId,
+  token,
+  initialJdText,
+  onComplete,
+}: JdResumeFlowProps) {
   const [stage, setStage] = useState<Stage>("input");
-  const [jdText, setJdText] = useState("");
+  const [jdText, setJdText] = useState(initialJdText ?? "");
   const [error, setError] = useState<string | null>(null);
+  // "incomplete" means the request itself succeeded but came back without the
+  // AI-written content; "failed" means the call errored outright. They offer
+  // different ways out, so the error screen has to tell them apart.
+  const [errorKind, setErrorKind] = useState<"incomplete" | "failed">("failed");
   const [data, setData] = useState<JdResumeData | null>(null);
   const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
 
@@ -209,6 +251,13 @@ export default function JdResumeFlow({ sessionId, token, onComplete }: JdResumeF
       const raw = localStorage.getItem(draftKey(sessionId));
       if (!raw) return;
       const draft = JSON.parse(raw);
+      // Kept alongside the reviewed data too — retrying after a failure drops
+      // back to the input stage, and the text has to be there waiting.
+      if (draft?.jdText) setJdText(draft.jdText);
+      if (draft?.error) {
+        setError(draft.error);
+        setErrorKind(draft.errorKind === "incomplete" ? "incomplete" : "failed");
+      }
       if (draft?.data) {
         // Older drafts may predate the single-current-experience,
         // merged-project-description and school-education rules.
@@ -236,9 +285,14 @@ export default function JdResumeFlow({ sessionId, token, onComplete }: JdResumeF
               }
             : {}),
         });
+      }
+      // A refresh while the retry screen is up has to come back to the retry
+      // screen — otherwise the user lands in a review form full of the blank
+      // fields we just told them were a failure, with no way to try again.
+      if (draft?.stage === "error") {
+        setStage("error");
+      } else if (draft?.data) {
         setStage("review");
-      } else if (draft?.jdText) {
-        setJdText(draft.jdText);
       }
     } catch { }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -248,7 +302,15 @@ export default function JdResumeFlow({ sessionId, token, onComplete }: JdResumeF
   useEffect(() => {
     try {
       if (stage === "review" && data) {
-        localStorage.setItem(draftKey(sessionId), JSON.stringify({ data }));
+        localStorage.setItem(
+          draftKey(sessionId),
+          JSON.stringify({ data, jdText, stage, error, errorKind })
+        );
+      } else if (stage === "error") {
+        localStorage.setItem(
+          draftKey(sessionId),
+          JSON.stringify({ ...(data ? { data } : {}), jdText, stage, error, errorKind })
+        );
       } else if (stage === "input") {
         if (jdText.trim()) {
           localStorage.setItem(draftKey(sessionId), JSON.stringify({ jdText }));
@@ -257,7 +319,7 @@ export default function JdResumeFlow({ sessionId, token, onComplete }: JdResumeF
         }
       }
     } catch { }
-  }, [stage, data, jdText, sessionId]);
+  }, [stage, data, jdText, error, errorKind, sessionId]);
 
   useEffect(() => {
     if (stage !== "loading") return;
@@ -276,12 +338,30 @@ export default function JdResumeFlow({ sessionId, token, onComplete }: JdResumeF
       const result = await analyzeJobDescription(sessionId, jdText.trim(), token);
       // eslint-disable-next-line no-console
       console.log("[JD analyze] raw response:", result);
-      setData(normalizeJdData(result));
+      const normalized = normalizeJdData(result);
+
+      // A 200 with nothing written means the analyzer ran but produced no
+      // content — surface it as a failure so the user gets a retry, since
+      // otherwise it lands silently in review as blank fields.
+      const gaps = findGenerationGaps(normalized);
+      if (gaps.length > 0) {
+        console.warn("[JD analyze] incomplete generation:", gaps);
+        // Kept so the user can still review and fill it in by hand rather than
+        // being forced to retry.
+        setData(normalized);
+        setError(`We couldn't generate your ${formatList(gaps)}.`);
+        setErrorKind("incomplete");
+        setStage("error");
+        return;
+      }
+
+      setData(normalized);
       setStage("review");
     } catch (err) {
       console.error("Failed to analyze job description", err);
-      setError("We couldn't analyze this job description. Please try again.");
-      setStage("input");
+      setError("We couldn't analyze this job description.");
+      setErrorKind("failed");
+      setStage("error");
     }
   };
 
@@ -295,9 +375,22 @@ export default function JdResumeFlow({ sessionId, token, onComplete }: JdResumeF
       setStage("success");
     } catch (err) {
       console.error("Failed to save JD resume data", err);
-      setError("We couldn't save your changes. Please try again.");
-      setStage("review");
+      setError("We couldn't save your tailored resume content.");
+      setErrorKind("failed");
+      setStage("error");
     }
+  };
+
+  /**
+   * Starts the JD flow over from scratch: the analyzed/edited content and its
+   * draft are dropped, and the user lands back on the job description they
+   * pasted so they can simply run it again.
+   */
+  const handleRetry = () => {
+    setError(null);
+    setData(null);
+    try { localStorage.removeItem(draftKey(sessionId)); } catch { /* storage unavailable — the draft is re-written below anyway */ }
+    setStage("input");
   };
 
   // ── field update helpers ──────────────────────────────────────────────────
@@ -391,12 +484,6 @@ export default function JdResumeFlow({ sessionId, token, onComplete }: JdResumeF
           placeholder="Paste the job description here..."
           className="w-full text-sm p-3.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400 bg-white placeholder-gray-400 resize-none transition"
         />
-        {error && (
-          <p className="flex items-center gap-1.5 text-xs text-red-500">
-            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-            {error}
-          </p>
-        )}
         <button
           onClick={handleAnalyze}
           disabled={!jdText.trim()}
@@ -429,6 +516,48 @@ export default function JdResumeFlow({ sessionId, token, onComplete }: JdResumeF
         <p className="text-sm font-medium text-purple-600 bg-purple-50 px-4 py-2 rounded-full">
           {message}
         </p>
+      </div>
+    );
+  }
+
+  // ── error stage ──────────────────────────────────────────────────────────────
+  // Anything that fails in this flow lands here, so the user always has a way
+  // forward instead of a dead end. Retrying restarts from the job description.
+  if (stage === "error") {
+    return (
+      <div className="flex flex-col items-center justify-center text-center gap-4 py-16 max-w-md mx-auto">
+        <div className="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center">
+          <AlertCircle className="w-7 h-7 text-red-500" />
+        </div>
+        <div>
+          <h2 className="text-lg font-semibold text-gray-800 mb-1">
+            {errorKind === "incomplete" ? "Generation looks incomplete" : "Something went wrong"}
+          </h2>
+          <p className="text-sm text-gray-400 max-w-xs mx-auto">
+            {error ?? "We couldn't complete this step."} You can start over — the job description
+            you pasted will still be there.
+          </p>
+        </div>
+        <button
+          onClick={handleRetry}
+          className="flex items-center gap-2 px-8 py-2.5 rounded-xl bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 active:scale-95 transition"
+        >
+          <RotateCcw className="w-4 h-4" />
+          Retry
+        </button>
+        {/* Whatever came back is still worth something — the review form is
+            editable, so let the user fill in the gaps (or re-attempt the save)
+            instead of forcing a retry that throws their content away. */}
+        {data && (
+          <button
+            onClick={() => setStage("review")}
+            className="text-xs text-gray-400 hover:text-orange-500 underline underline-offset-2 transition"
+          >
+            {errorKind === "incomplete"
+              ? "Review what was generated anyway"
+              : "Go back to editing"}
+          </button>
+        )}
       </div>
     );
   }
@@ -467,6 +596,33 @@ export default function JdResumeFlow({ sessionId, token, onComplete }: JdResumeF
         <h2 className="text-base font-semibold text-gray-800 mb-1">Review your tailored content</h2>
         <p className="text-sm text-gray-400">Make any edits you'd like, then save to continue.</p>
       </div>
+
+      {/* Carried over from the error screen when the user chose to review
+          partial content — the retry has to stay reachable here, including
+          after a refresh, or the blank fields become the only option. */}
+      {error && errorKind === "incomplete" && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-100 bg-red-50 px-4 py-3">
+          <p className="flex items-center gap-2 text-sm text-red-600">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            {error} Fill in the gaps below, or try generating again.
+          </p>
+          <button
+            onClick={handleRetry}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-medium hover:bg-red-600 active:scale-95 transition shrink-0"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* A save that failed and was sent back here for another attempt. */}
+      {error && errorKind === "failed" && (
+        <p className="flex items-center gap-1.5 text-xs text-red-500 justify-center">
+          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+          {error}
+        </p>
+      )}
 
       <SectionCard icon={<Sparkles className="w-4 h-4 text-orange-500" />} title="Technical Summary">
         <textarea
@@ -859,13 +1015,6 @@ export default function JdResumeFlow({ sessionId, token, onComplete }: JdResumeF
             </div>
           ))}
         </SectionCard>
-      )}
-
-      {error && (
-        <p className="flex items-center gap-1.5 text-xs text-red-500 justify-center">
-          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-          {error}
-        </p>
       )}
 
       <button

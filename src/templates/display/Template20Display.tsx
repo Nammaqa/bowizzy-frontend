@@ -78,7 +78,7 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
         </div>
       </div>
 
-      <div style={{ height: 1, background: '#000', marginBottom: 16 }} />
+      <div style={{ height: 1, background: primaryColor, marginBottom: 16 }} />
 
       <div>
         {/* CONTACT row */}
@@ -104,7 +104,7 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
 
         {/* CAREER OBJECTIVE row */}
         {personal.aboutCareerObjective && (
-          <div style={{ height: 1, background: '#ddd', margin: '12px 0' }} />
+          <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`,margin: '12px 0' }} />
         )}
         {personal.aboutCareerObjective && (
           <div style={{ display: 'flex', alignItems: 'flex-start' }}>
@@ -128,7 +128,7 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
 
         {/* TECHNICAL SUMMARY row */}
         {skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled && (
-          <div style={{ height: 1, background: '#ddd', margin: '12px 0' }} />
+           <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`,margin: '12px 0' }} />
         )}
         {skillsLinks?.technicalSummary && skillsLinks?.technicalSummaryEnabled && (
           <div style={{ display: 'flex', alignItems: 'flex-start' }}>
@@ -153,7 +153,7 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
         )}
 
         {experience.workExperiences.filter((w: any) => w.enabled).length > 0 && (
-          <div style={{ height: 1, background: '#ddd', margin: '12px 0' }} />
+           <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`,margin: '12px 0' }} />
         )}
 
         {/* PROFESSIONAL EXPERIENCE row */}
@@ -191,7 +191,7 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
         )}
 
         {(education.higherEducation.some(edu => edu.enabled) || hasPreUniversity || hasSSLC) && (
-          <div style={{ height: 1, background: '#ddd', margin: '12px 0' }} />
+           <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`,margin: '12px 0' }} />
         )}
 
         {/* EDUCATION row */}
@@ -263,7 +263,7 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
         )}
 
         {(skillsLinks?.skills || []).some((s: any) => s.enabled && s.skillName) && (
-          <div style={{ height: 1, background: '#ddd', margin: '12px 0' }} />
+           <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`,margin: '12px 0' }} />
         )}
 
         {/* SKILLS row */}
@@ -291,7 +291,7 @@ const Template20Display: React.FC<Template20DisplayProps> = ({
         )}
 
         {(certifications || []).filter((c: any) => c.enabled && c.certificateTitle).length > 0 && (
-          <div style={{ height: 1, background: '#ddd', margin: '12px 0' }} />
+           <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`,margin: '12px 0' }} />
         )}
 
         {/* CERTIFICATES row */}

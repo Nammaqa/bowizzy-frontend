@@ -220,7 +220,7 @@ const Template16PDF: React.FC<Template16PDFProps> = ({ data, primaryColor = '#11
         {(education.higherEducation.some(edu => edu.enabled) || education.preUniversityEnabled || education.sslcEnabled) && (<>
           <View style={{ marginTop: 12 }}>
             <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Education</Text>
-            <View style={{ height: 1, backgroundColor: '#ddd', width: '100%', marginTop: 4, marginBottom: 0 }} />
+            <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginTop: 4, marginBottom: 0 }} />
           </View>
 
           <View style={{ marginTop: 8 }}>
@@ -270,7 +270,7 @@ const Template16PDF: React.FC<Template16PDFProps> = ({ data, primaryColor = '#11
         {(skillsLinks.skills || []).some((s: any) => s.enabled && s.skillName) && (<>
           <View style={{ marginTop: 12 }}>
             <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Skills</Text>
-            <View style={{ height: 1, backgroundColor: '#ddd', width: '100%', marginTop: 4, marginBottom: 0 }} />
+            <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginTop: 4, marginBottom: 0 }} />
           </View>
           <View style={{ marginTop: 6 }}>{(skillsLinks.skills || []).filter((s: any) => s.enabled && s.skillName).map((s: any, i: number) => (
             <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
@@ -282,7 +282,7 @@ const Template16PDF: React.FC<Template16PDFProps> = ({ data, primaryColor = '#11
 
         <View style={{ marginTop: 12 }}>
           <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Languages</Text>
-          <View style={{ height: 1, backgroundColor: '#ddd', width: '100%', marginTop: 4, marginBottom: 0 }} />
+          <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginTop: 4, marginBottom: 0 }} />
         </View>
         <View style={{ marginTop: 6 }}>{((personal as any).languagesKnown || (personal as any).languages || []).map((l: string, i: number) => (
           <View key={i} style={{ marginBottom: 4 }}>
@@ -293,7 +293,7 @@ const Template16PDF: React.FC<Template16PDFProps> = ({ data, primaryColor = '#11
         {(certifications || []).some((c: any) => c.enabled && c.certificateTitle) && (<>
           <View style={{ marginTop: 12 }}>
             <Text style={{ ...styles.sectionHeading, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Achievements / Certifications</Text>
-            <View style={{ height: 1, backgroundColor: '#ddd', width: '100%', marginTop: 4, marginBottom: 0 }} />
+            <View style={{ height: 1, backgroundColor: primaryColor, width: '100%', marginTop: 4, marginBottom: 0 }} />
           </View>
           <View style={{ marginTop: 6 }}>{(certifications || []).filter((c: any) => c.enabled && c.certificateTitle).map((c: any, i: number) => <Text key={i} style={{ fontSize: 10, color: '#444', marginBottom: 4 }}>{c.certificateTitle}{c.providedBy ? ` — ${c.providedBy}` : ''}</Text>)}</View>
         </>)}

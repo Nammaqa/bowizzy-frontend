@@ -196,6 +196,11 @@ const getInterviewStartDate = (interview: any) => {
   return date && !Number.isNaN(date.getTime()) ? date : null;
 };
 
+const isCancelledByCandidate = (interview: any) => {
+  const cancelledBy = String(interview?.cancelled_by || "").toLowerCase().trim();
+  return cancelledBy === "candidate" || cancelledBy.includes("candidate");
+};
+
 const isAvailableInterviewActive = (interview: any, currentDate: Date) => {
   const status = String(interview?.interview_status || interview?.status || "").toLowerCase();
   const startDate = getInterviewStartDate(interview);
@@ -203,6 +208,8 @@ const isAvailableInterviewActive = (interview: any, currentDate: Date) => {
   // An unpaid booking is never offered to interviewers.
   if (isPaymentPendingBooking(interview)) return false;
   if (status === "expired") return false;
+  // A candidate-cancelled booking shouldn't be offered as an available interview.
+  if (isCancelledByCandidate(interview)) return false;
   return startDate ? startDate > currentDate : true;
 };
 
@@ -293,6 +300,12 @@ const InterviewerDashboardPage = () => {
           return;
         }
 
+        const isUnderReview =
+          String(banStatus?.review_status || "")
+            .toLowerCase()
+            .trim()
+            .replace(/_/g, " ") === "under review";
+
         const response = await validateInterviewer(userId, token);
         setValidation(response);
 
@@ -318,30 +331,34 @@ const InterviewerDashboardPage = () => {
           setSkills(skillNames);
           setWorkingMonths(months);
 
-          try {
-            const [interviewsResponse, acceptedResponse] = await Promise.all([
-              fetchAvailableMockInterviews(userId, token, {
-                job_role: role,
-                experience_months: months,
-                skills: skillNames.join(","),
-              }),
-              getAcceptedMockInterviews(userId, token),
-            ]);
-            const currentDate = new Date();
-            setAvailableInterviews(
-              normalizeAvailableInterviews(interviewsResponse).filter((interview) =>
-                isAvailableInterviewActive(interview, currentDate)
-              )
-            );
-            setAcceptedInterviews(normalizeAvailableInterviews(acceptedResponse));
-          } catch (error: any) {
-            setInterviewsError(
-              error?.response?.data?.message ||
-              error?.message ||
-              "Unable to fetch interviews."
-            );
-          } finally {
+          if (isUnderReview) {
             setLoadingInterviews(false);
+          } else {
+            try {
+              const [interviewsResponse, acceptedResponse] = await Promise.all([
+                fetchAvailableMockInterviews(userId, token, {
+                  job_role: role,
+                  experience_months: months,
+                  skills: skillNames.join(","),
+                }),
+                getAcceptedMockInterviews(userId, token),
+              ]);
+              const currentDate = new Date();
+              setAvailableInterviews(
+                normalizeAvailableInterviews(interviewsResponse).filter((interview) =>
+                  isAvailableInterviewActive(interview, currentDate)
+                )
+              );
+              setAcceptedInterviews(normalizeAvailableInterviews(acceptedResponse));
+            } catch (error: any) {
+              setInterviewsError(
+                error?.response?.data?.message ||
+                error?.message ||
+                "Unable to fetch interviews."
+              );
+            } finally {
+              setLoadingInterviews(false);
+            }
           }
         }
       } catch (error: any) {
@@ -548,10 +565,10 @@ const InterviewerDashboardPage = () => {
               <ShieldX size={30} />
             </div>
             <h1 className="mt-5 text-3xl font-bold text-[#2F2F2F]">
-              Account banned
+              Account deactivated
             </h1>
             <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[#666666]">
-              Your interviewer account has been banned. You no longer have access to
+              Your interviewer account has been deactivated. You no longer have access to
               the interviewer dashboard or any interview actions. Please contact
               support if you believe this is a mistake.
             </p>
@@ -1180,7 +1197,7 @@ const InterviewerDashboardPage = () => {
         </div>
       )}
 
-      {/* Banned account popup */}
+      {/* Deactivated account popup */}
       {showBannedPopup && (
         <div
           className="fixed inset-0 z-[70] flex items-center justify-center p-4"
@@ -1190,9 +1207,9 @@ const InterviewerDashboardPage = () => {
             <div className="mx-auto inline-flex rounded-full bg-red-50 p-3 text-red-600">
               <ShieldX size={32} />
             </div>
-            <h3 className="mt-4 text-lg font-bold text-[#2F2F2F]">Account banned</h3>
+            <h3 className="mt-4 text-lg font-bold text-[#2F2F2F]">Account deactivated</h3>
             <p className="mt-2 text-sm text-[#666666]">
-              Your interviewer account has been banned. All interviewer actions are
+              Your interviewer account has been deactivated. All interviewer actions are
               disabled.
             </p>
             <button

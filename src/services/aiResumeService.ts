@@ -27,6 +27,7 @@ export async function getAiSessions(token: string): Promise<Pick<ChatSession, "i
     });
 }
 
+
 export async function createAiSession(mode: "jd" | "non-jd", sessionName: string, token: string): Promise<ChatSession> {
     const res = await api.post(
         "/sessions",
@@ -56,6 +57,18 @@ export async function startAiSession(sessionId: string, token: string): Promise<
         {},
         { headers: { Authorization: `Bearer ${token}` } }
     );
+}
+
+/**
+ * Wipes a session's chat history so the interview can be restarted in place.
+ * The session itself is kept — it has already been paid for, so deleting and
+ * recreating it would forfeit that payment. Callers must treat this as
+ * best-effort and clear their local messages regardless of the outcome.
+ */
+export async function clearSessionChats(sessionId: string, token: string): Promise<void> {
+    await api.delete(`/sessions/${sessionId}/chats`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
 }
 
 export async function getSessionChats(sessionId: string, token: string): Promise<ChatMessage[]> {

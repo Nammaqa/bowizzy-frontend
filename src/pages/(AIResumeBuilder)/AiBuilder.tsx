@@ -16,6 +16,7 @@ import {
   startAiSession,
   getSessionChats,
   createChat,
+  clearSessionChats,
 } from "@/services/aiResumeService";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -37,6 +38,45 @@ function formatDate(dateStr?: string | null): string {
   } catch {
     return dateStr;
   }
+}
+
+// ── Retry bookkeeping ─────────────────────────────────────────────────────────
+// Both of these survive a reload, because a refresh while the retry option is
+// on screen must not lose it — the chat would be stuck mid-way with no way out.
+
+/**
+ * Restarting a chat also clears it server-side, but when that request fails the
+ * abandoned messages are still stored and would come back on the next load with
+ * the fresh questions stacked underneath. Recording how many messages that
+ * attempt left behind lets us hide exactly those, and the count is dropped as
+ * soon as a server-side clear succeeds.
+ */
+function restartOffsetKey(sessionId: string): string {
+  return `ai_chat_restart_offset_${sessionId}`;
+}
+
+function readRestartOffset(sessionId: string): number {
+  try {
+    const offset = Number(localStorage.getItem(restartOffsetKey(sessionId)));
+    return Number.isFinite(offset) && offset > 0 ? offset : 0;
+  } catch { return 0; }
+}
+
+/** Hides the messages left over from an attempt the user restarted. */
+function afterRestart(sessionId: string, messages: ChatMessage[]): ChatMessage[] {
+  const offset = readRestartOffset(sessionId);
+  return offset > 0 ? messages.slice(offset) : messages;
+}
+
+function chatErrorKey(sessionId: string): string {
+  return `ai_chat_error_${sessionId}`;
+}
+
+function forgetRetryState(sessionId: string) {
+  try {
+    localStorage.removeItem(restartOffsetKey(sessionId));
+    localStorage.removeItem(chatErrorKey(sessionId));
+  } catch { /* storage unavailable */ }
 }
 
 // ── Question queue ────────────────────────────────────────────────────────────
@@ -138,6 +178,10 @@ export default function AIBuilder() {
   const [questionIndex, setQuestionIndex] = useState<Record<string, number>>({});
   const [chatAnswers, setChatAnswers] = useState<Record<string, SessionAnswers>>({});
   const [chipStates, setChipStates] = useState<Record<string, ChipState>>({});
+  // Set whenever a step of the interview fails, which is what surfaces the
+  // retry option. Keyed by session so an error in one chat doesn't follow the
+  // user into another, and always cleared once a step succeeds.
+  const [chatErrors, setChatErrors] = useState<Record<string, string>>({});
   const [paidJdSessions, setPaidJdSessions] = useState<Record<string, boolean>>({});
   // Guidelines pop-up — shown on entry, on every new chat, and on mode switch.
   // Seeded with the mode the landing page asked for so the JD guide doesn't
@@ -160,16 +204,23 @@ export default function AIBuilder() {
       try {
         const sessions = await getAiSessions(token);
         const newPaidSessions: Record<string, boolean> = {};
-        
+        const storedErrors: Record<string, string> = {};
+
         setChatSessions(
           sessions.map((s) => {
             if (s.is_paid) {
               newPaidSessions[String(s.id)] = true;
             }
+            // A failure the user hasn't resolved yet outlives the reload, so
+            // the retry option is still there when they come back.
+            const storedError = (() => {
+              try { return localStorage.getItem(chatErrorKey(String(s.id))); } catch { return null; }
+            })();
+            if (storedError) storedErrors[String(s.id)] = storedError;
             return {
               ...s,
               id: String(s.id),
-              messages: s.messages || [],
+              messages: afterRestart(String(s.id), s.messages || []),
               started: s.started || (s.mode === "jd" && !!s.infoJson),
               is_paid: s.is_paid ?? false,
               createdAt: s.createdAt,
@@ -179,6 +230,7 @@ export default function AIBuilder() {
           })
         );
         setPaidJdSessions(newPaidSessions);
+        setChatErrors(storedErrors);
       } catch (err) {
         console.error("Failed to fetch sessions", err);
       } finally {
@@ -199,6 +251,22 @@ export default function AIBuilder() {
 
   const currentSession = chatSessions.find((s) => s.id === currentSessionId);
   const activeChipState = currentSessionId ? chipStates[currentSessionId] : undefined;
+  const activeError = currentSessionId ? chatErrors[currentSessionId] ?? null : null;
+
+  const setSessionError = (sessionId: string, message: string) => {
+    try { localStorage.setItem(chatErrorKey(sessionId), message); } catch { /* storage unavailable */ }
+    setChatErrors((prev) => ({ ...prev, [sessionId]: message }));
+  };
+
+  const clearSessionError = (sessionId: string) => {
+    try { localStorage.removeItem(chatErrorKey(sessionId)); } catch { /* storage unavailable */ }
+    setChatErrors((prev) => {
+      if (!(sessionId in prev)) return prev;
+      const next = { ...prev };
+      delete next[sessionId];
+      return next;
+    });
+  };
 
   // The mode belongs to the session, so the toggle must follow whichever
   // session is active. Sessions get selected automatically in two places (on
@@ -428,7 +496,7 @@ export default function AIBuilder() {
     if (session) setMode(session.mode);
     setSidebarOpen(false);
     try {
-      const chats = await getSessionChats(id, token);
+      const chats = afterRestart(id, await getSessionChats(id, token));
       setChatSessions((prev) =>
         prev.map((s) => s.id === id ? { ...s, messages: chats, started: chats?.length > 0 || (s.mode === "jd" && !!s.infoJson) } : s)
       );
@@ -439,6 +507,7 @@ export default function AIBuilder() {
     e.stopPropagation();
     try {
       await deleteAiSession(sessionId, token);
+      forgetRetryState(sessionId);
       setChatSessions((prev) => {
         const filtered = prev.filter((s) => s.id !== sessionId);
         if (currentSessionId === sessionId && filtered.length > 0) setCurrentSessionId(filtered[0].id);
@@ -453,6 +522,7 @@ export default function AIBuilder() {
   const handlePaymentCancelled = () => {
     if (!currentSessionId) return;
     const cancelledId = currentSessionId;
+    forgetRetryState(cancelledId);
     setChatSessions((prev) => {
       const filtered = prev.filter((s) => s.id !== cancelledId);
       if (currentSessionId === cancelledId && filtered.length > 0) setCurrentSessionId(filtered[0].id);
@@ -475,6 +545,7 @@ export default function AIBuilder() {
 
   const handleStart = async () => {
     if (!currentSessionId) return;
+    clearSessionError(currentSessionId);
     try {
       await startAiSession(currentSessionId, token);
       const openingMsg: ChatMessage = {
@@ -498,7 +569,82 @@ export default function AIBuilder() {
       await createChat(currentSessionId, openingMsg.content, "user", null, token);
       setQuestionIndex((prev) => ({ ...prev, [currentSessionId]: 0 }));
       await appendBotMessage(currentSessionId, HARDCODED_QUESTIONS[0]);
-    } catch (err) { console.error("Failed to start session", err); }
+    } catch (err) {
+      console.error("Failed to start session", err);
+      setSessionError(currentSessionId, "We couldn't start this chat.");
+    }
+  };
+
+  /**
+   * Recovery path for a failed step: wipes the conversation and re-asks the
+   * first question, so the user restarts from a clean slate rather than
+   * continuing on top of a half-finished attempt. The session itself is kept —
+   * it's already been paid for.
+   */
+  const handleRetry = async () => {
+    if (!currentSessionId) return;
+    const sessionId = currentSessionId;
+    clearSessionError(sessionId);
+
+    // The session never started (the start call itself failed), so there is no
+    // conversation to clear — just try starting again.
+    const session = chatSessions.find((s) => s.id === sessionId);
+    if (!session?.started) {
+      await handleStart();
+      return;
+    }
+
+    setIsLoading(true);
+    setInputValue("");
+    setChatAnswers((prev) => { const n = { ...prev }; delete n[sessionId]; return n; });
+    setChipStates((prev) => { const n = { ...prev }; delete n[sessionId]; return n; });
+    setQuestionIndex((prev) => ({ ...prev, [sessionId]: 0 }));
+
+    const openingMsg: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      role: "user",
+      content: "Hi, I need help to build my resume.",
+      createdAt: new Date().toISOString(),
+    };
+    setChatSessions((prev) =>
+      prev.map((s) =>
+        s.id === sessionId
+          ? {
+              ...s,
+              messages: [openingMsg],
+              infoJson: null,
+              title: openingMsg.content,
+            }
+          : s
+      )
+    );
+
+    // A failure here must not block the restart the user just asked for, so
+    // when the history can't be cleared server-side we note where the
+    // abandoned attempt ended and hide everything up to that point instead.
+    // Either way the user gets a chat that starts at the first question.
+    try {
+      await clearSessionChats(sessionId, token);
+      forgetRetryState(sessionId);
+    } catch (err) {
+      console.error("Failed to clear chat history on retry", err);
+      try {
+        const stored = await getSessionChats(sessionId, token);
+        localStorage.setItem(restartOffsetKey(sessionId), String(stored.length));
+      } catch (offsetErr) {
+        console.error("Failed to record restart offset", offsetErr);
+      }
+    }
+
+    try {
+      await createChat(sessionId, openingMsg.content, "user", null, token);
+      await appendBotMessage(sessionId, HARDCODED_QUESTIONS[0]);
+    } catch (err) {
+      console.error("Failed to restart session", err);
+      setSessionError(sessionId, "We couldn't restart this chat.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // ── JD mode completion — bypasses the interview Q&A entirely ──────────────
@@ -564,6 +710,7 @@ export default function AIBuilder() {
     );
     setInputValue("");
     setIsLoading(true);
+    clearSessionError(sessionId);
 
     // Clear chips once user has responded
     setChipStates((prev) => { const n = { ...prev }; delete n[sessionId]; return n; });
@@ -617,6 +764,15 @@ export default function AIBuilder() {
         // confirm, so we ask the user to add it instead of listing chips.
         const category = QUESTION_CATEGORIES[nextQIndex];
         const chips = category ? await fetchCategoryChips(category) : null;
+
+        // The section couldn't be loaded, so there's no telling whether it's
+        // empty or just unreachable — asking either version of the question
+        // would be wrong. Stop and offer a retry instead.
+        if (category && chips === null) {
+          setSessionError(sessionId, "We couldn't load your profile details.");
+          return;
+        }
+
         const sectionIsEmpty = !!category && Array.isArray(chips) && chips.length === 0;
 
         const botMsgId = await appendBotMessage(
@@ -699,10 +855,12 @@ export default function AIBuilder() {
             sessionId,
             "I encountered an issue while generating your resume. Please try again or contact support."
           );
+          setSessionError(sessionId, "We couldn't generate your resume.");
         }
       }
     } catch (err) {
       console.error("Send message failed:", err);
+      setSessionError(sessionId, "Something went wrong while processing your answer.");
     } finally {
       setIsLoading(false);
     }
@@ -762,6 +920,9 @@ export default function AIBuilder() {
               onChipUndo={handleChipUndo}
               chipMessageId={activeChipState?.messageId ?? null}
               onShowGuide={() => setInfoModalMode(mode)}
+              error={activeError}
+              onRetry={handleRetry}
+              initialJdText={currentSession.jd_text}
               isJdPaid={!!paidJdSessions[currentSession.id]}
               onJdPaymentSuccess={() => setPaidJdSessions(prev => ({ ...prev, [currentSession.id]: true }))}
               onPaymentCancelled={handlePaymentCancelled}

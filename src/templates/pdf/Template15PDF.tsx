@@ -236,11 +236,11 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
   const portfolioLabel = portfolioPresent ? extractHandle(portfolioPresent) : null;
   const publicationLabel = publicationPresent ? extractHandle(publicationPresent) : null;
   const contactLinks = [
-    linkedinPresent && { href: normalizeLinkUrl(linkedinPresent), label: linkedinLabel, color: '#0a66c2' },
-    githubPresent && { href: normalizeLinkUrl(githubPresent), label: githubLabel, color: '#111' },
-    portfolioPresent && { href: normalizeLinkUrl(portfolioPresent), label: portfolioLabel, color: '#000' },
-    publicationPresent && { href: normalizeLinkUrl(publicationPresent), label: publicationLabel, color: '#000' },
-  ].filter(Boolean) as Array<{ href: string; label: string | null; color: string }>;
+    linkedinPresent && { href: normalizeLinkUrl(linkedinPresent), label: linkedinLabel },
+    githubPresent && { href: normalizeLinkUrl(githubPresent), label: githubLabel },
+    portfolioPresent && { href: normalizeLinkUrl(portfolioPresent), label: portfolioLabel },
+    publicationPresent && { href: normalizeLinkUrl(publicationPresent), label: publicationLabel },
+  ].filter(Boolean) as Array<{ href: string; label: string | null }>;
 
   return (
     <Document>
@@ -257,7 +257,7 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
             {contactLinks.map((link, index) => (
               <React.Fragment key={`${link.href}-${index}`}>
                 {index > 0 && <Text style={styles.contact}> | </Text>}
-                <Link src={link.href} style={{ ...styles.contact, color: link.color }}>
+                <Link src={link.href} style={{ ...styles.contact, textDecoration: 'none' }}>
                   {link.label || link.href}
                 </Link>
               </React.Fragment>
@@ -442,13 +442,13 @@ const Template15PDF: React.FC<Template15PDFProps> = ({ data, primaryColor = '#0b
             {projects.filter((p: any) => p.enabled).map((p: any, i: number) => (
               <View key={i} style={{ marginBottom: 8 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold }}>{p.projectTitle}</Text>
+                  <Text style={{ ...styles.itemTitle, fontFamily: pdfFontFamilyBold, color: primaryColor }}>{p.projectTitle}</Text>
                   <Text style={{ ...styles.itemSub, fontFamily: pdfFontFamilyBold }}>{formatMonthYear(p.startDate)} — {p.currentlyWorking ? 'Present' : formatMonthYear(p.endDate)}</Text>
                 </View>
                 {p.description && renderBulletedParagraph(p.description)}
                 {p.rolesResponsibilities && (
                   <View style={{ marginTop: 4 }}>
-                    <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, color: primaryColor }}>Roles & Responsibilities:</Text>
+                    <Text style={{ fontSize: 10, fontFamily: pdfFontFamilyBold, color: '#111827' }}>Roles & Responsibilities:</Text>
                     {renderBulletedParagraph(p.rolesResponsibilities)}
                   </View>
                 )}

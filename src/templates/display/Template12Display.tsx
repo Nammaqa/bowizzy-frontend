@@ -115,7 +115,7 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
           <div style={{ marginTop: 8, fontSize: 11, color: '#2b2a2a' }}>{[personal.email, personal.mobileNumber, personal.address].filter(Boolean).join(' | ')}</div>
         </div>
 
-        <hr style={{ border: 'none', borderTop: '1px solid #333', margin: '18px 0' }} />
+        <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, margin: '18px 0' }} />
 
         {personal.aboutCareerObjective && (
           <>
@@ -123,7 +123,7 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: primaryColor, fontWeight: 700 }}>Career Objective</div>
               <div style={{ color: '#2b2a2a', fontSize: 11, lineHeight: 1.5, textAlign: 'justify' }}>{htmlToLines(personal.aboutCareerObjective).join(' ')}</div>
             </div>
-            {experience.workExperiences.some(exp => exp.enabled) && <hr style={{ border: 'none', borderTop: '1px solid #aaa', margin: '18px 0' }} />}
+            {experience.workExperiences.some(exp => exp.enabled) && <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, margin: '18px 0' }} />}
           </>
         )}
 
@@ -145,7 +145,7 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
           </div>
 
           {/* Divider after Work Experience, before Projects */}
-          {projects.some(p => p.enabled) && <hr style={{ border: 'none', borderTop: '1px solid #aaa', margin: '18px 0' }} />}
+          {projects.some(p => p.enabled) && <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, margin: '18px 0' }} />}
         </>)}
 
         {/* Projects Section */}
@@ -167,7 +167,7 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
         </>)}
 
         {hasEducation && (<>
-          <hr style={{ border: 'none', borderTop: '1px solid #333', margin: '12px 0', width: '100%' }} />
+          <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, margin: '12px 0', width: '100%' }} />
 
           <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '16px', padding: '0 8px' }}>
             <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: primaryColor, fontWeight: 700 }}>Education</div>
@@ -215,7 +215,7 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
         </>)}
         {skillsLinks.linksEnabled && (
           <>
-            <hr style={{ border: 'none', borderTop: '1px solid #333', margin: '12px 0', width: '100%' }} />
+            <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, margin: '12px 0', width: '100%' }} />
             <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '16px', padding: '0 8px' }}>
               <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: primaryColor, fontWeight: 700 }}>Links</div>
               <div>
@@ -236,7 +236,7 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
         )}
 
         {hasSkills && (<>
-          <hr style={{ border: 'none', borderTop: '1px solid #333', margin: '12px 0', width: '100%' }} />
+          <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, margin: '12px 0', width: '100%' }} />
           <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '16px', padding: '0 8px' }}>
             <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: primaryColor, fontWeight: 700 }}>Skills</div>
             <div>
@@ -246,7 +246,7 @@ const Template12Display: React.FC<Template12DisplayProps> = ({
         </>)}
 
         {hasCerts && (<>
-          <hr style={{ border: 'none', borderTop: '1px solid #333', margin: '12px 0', width: '100%' }} />
+          <hr style={{ border: 'none', borderTop: `1px solid ${primaryColor}`, margin: '12px 0', width: '100%' }} />
           <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '16px', padding: '0 8px' }}>
             <div style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: 1.5, color: primaryColor, fontWeight: 700 }}>Certifications</div>
             <div>
