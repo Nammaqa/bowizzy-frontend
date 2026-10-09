@@ -553,7 +553,8 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({
         project.rolesResponsibilities,
         project.projectTitle,
         project.projectType,
-        project.description
+        project.description,
+        token
       );
 
       // 3. Mark as used

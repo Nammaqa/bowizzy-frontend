@@ -5,6 +5,7 @@ import Bowizzy from "../assets/bowizzy.png";
 import {
   changeForgotPassword,
   sendForgotPasswordOtp,
+  validateForgotPasswordOtp,
 } from "@/services/login";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -91,7 +92,7 @@ export default function ForgotPassword() {
     }
   };
 
-  const handleVerifyOtp = (e: React.FormEvent) => {
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage("");
     setMessageType("");
@@ -101,12 +102,27 @@ export default function ForgotPassword() {
       return;
     }
 
-    // The password-change endpoint performs the authoritative OTP check.
-    // Calling verify-otp first consumes the one-time code on the backend.
-    setOtpVerified(true);
-    setOtpError("");
-    setMessageType("success");
-    setMessage("OTP entered. Create your new password.");
+    try {
+      setLoadingAction("verify");
+      // validate-otp only checks the code, it does not consume it,
+      // so the same OTP is still usable by the change-password call.
+      const res = await validateForgotPasswordOtp(email, otp);
+
+      if (res?.valid) {
+        setOtpVerified(true);
+        setOtpError("");
+        setMessageType("success");
+        setMessage("OTP verified. Create your new password.");
+      } else {
+        setOtpVerified(false);
+        setOtpError(res?.message || "Invalid OTP. Please try again.");
+      }
+    } catch (err: any) {
+      setOtpVerified(false);
+      setOtpError(err?.response?.data?.message || "Invalid OTP. Please try again.");
+    } finally {
+      setLoadingAction("");
+    }
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
@@ -162,7 +178,9 @@ export default function ForgotPassword() {
             Forgot Password
           </h2>
           <p className="text-sm text-gray-500 text-center mb-8">
-            Enter your email to receive a verification OTP.
+            {otpVerified
+    ? "Your email has been verified. Create your new password."
+    : "Enter your email to receive a verification OTP."}
           </p>
 
           <div className="space-y-6">
@@ -183,21 +201,25 @@ export default function ForgotPassword() {
                   }`}
                   placeholder="Enter your email"
                 />
-                <button
-                  type="submit"
-                  disabled={loadingAction === "send" || otpVerified}
-                  className={`sm:w-32 px-4 py-3 rounded-lg text-white font-medium flex items-center justify-center ${
-                    loadingAction === "send" || otpVerified ? "bg-gray-400 cursor-not-allowed" : "bg-orange-500 hover:bg-orange-600"
-                  }`}
-                >
-                  {loadingAction === "send" ? (
-                    <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : otpSent ? (
-                    "Resend"
-                  ) : (
-                    "Send OTP"
-                  )}
-                </button>
+                {!otpVerified && (
+  <button
+    type="submit"
+    disabled={loadingAction === "send"}
+    className={`sm:w-32 px-4 py-3 rounded-lg text-white font-medium flex items-center justify-center ${
+      loadingAction === "send"
+        ? "bg-gray-400 cursor-not-allowed"
+        : "bg-orange-500 hover:bg-orange-600"
+    }`}
+  >
+    {loadingAction === "send" ? (
+      <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+    ) : otpSent ? (
+      "Resend"
+    ) : (
+      "Send OTP"
+    )}
+  </button>
+)}
               </div>
               {emailError && <p className="text-red-500 text-sm">{emailError}</p>}
             </form>

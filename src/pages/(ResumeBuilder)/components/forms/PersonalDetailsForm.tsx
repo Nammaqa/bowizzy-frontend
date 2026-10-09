@@ -312,7 +312,8 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
         data.aboutCareerObjective,
         skillNames,
         experiences,
-        projects
+        projects,
+        token
       );
 
       // 3. Mark as used

@@ -43,6 +43,11 @@ export default function Register() {
   const [countdown, setCountdown] = useState(3);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Whether the user has attempted to submit the form at least once.
+  // Used to decide when to show the "fill mandatory fields" banner and
+  // to make sure every error (including untouched fields) surfaces together.
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+
   useEffect(() => {
     if (showSuccess) {
       countdownRef.current = setInterval(() => {
@@ -77,6 +82,17 @@ export default function Register() {
 
   const setFieldError = (field, message) => {
     setErrors((prev) => ({ ...prev, [field]: message }));
+  };
+
+  // Returns the classNames to apply to an input so it highlights red when
+  // that field currently has a validation error.
+  const fieldClass = (field: keyof RegisterErrors, base = "") => {
+    const hasError = Boolean(errors[field]);
+    return `${base} ${
+      hasError
+        ? "border-red-500 bg-red-50 focus:ring-2 focus:ring-red-300"
+        : "border-gray-300"
+    }`;
   };
 
   const sanitizeName = (value) => value.replace(/[^A-Za-z\s]/g, "").trim();
@@ -171,6 +187,8 @@ export default function Register() {
       setEmailVerified(true);
       setEmailOtpSent(false);
       setOtp("");
+      setFieldError("email", "");
+      setFormError("");
       setEmailVerifyStatus("success");
       setEmailVerifyMessage("Email verified successfully!");
     } catch (err: any) {
@@ -212,9 +230,10 @@ export default function Register() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setFormError("");
+  // Runs every field's validation rule at once (used on submit) so that
+  // every error - including fields the user never touched - shows together.
+  const validateAll = (): RegisterErrors => {
+    const newErrors: RegisterErrors = {};
 
     const normalizedFirstName = firstName.trim();
     const normalizedMiddleName = middleName.trim();
@@ -224,32 +243,107 @@ export default function Register() {
     const normalizedLinkedinUsername = linkedinUsername.trim();
     const normalizedPassword = password.trim();
     const normalizedConfirmPassword = confirmPassword.trim();
+
+    if (isBlank(normalizedFirstName)) {
+      newErrors.firstName = "First name is required";
+    } else if (/[^A-Za-z\s]/.test(normalizedFirstName)) {
+      newErrors.firstName = "Only letters allowed";
+    } else if (normalizedFirstName.length > 32) {
+      newErrors.firstName = "Max 32 characters";
+    }
+
+    if (normalizedMiddleName && /[^A-Za-z\s]/.test(normalizedMiddleName)) {
+      newErrors.middleName = "Only letters allowed";
+    } else if (normalizedMiddleName.length > 32) {
+      newErrors.middleName = "Max 32 characters";
+    }
+
+    if (isBlank(normalizedLastName)) {
+      newErrors.lastName = "Last name is required";
+    } else if (/[^A-Za-z\s]/.test(normalizedLastName)) {
+      newErrors.lastName = "Only letters allowed";
+    } else if (normalizedLastName.length > 32) {
+      newErrors.lastName = "Max 32 characters";
+    }
+
+    if (isBlank(normalizedPhoneNumber)) {
+      newErrors.phone = "Phone number is required";
+    } else if (!/^[6-9]\d{9}$/.test(normalizedPhoneNumber)) {
+      newErrors.phone = "Enter a valid 10-digit phone number";
+    }
+
+    if (isBlank(dateOfBirth)) {
+      newErrors.dob = "Date of birth is required";
+    } else if (!isValidDob(dateOfBirth)) {
+      newErrors.dob = "You must be between 18 and 99 years old";
+    }
+
+    if (isBlank(normalizedEmail)) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      newErrors.email = "Enter a valid email address";
+    }
+
+    if (isBlank(normalizedLinkedinUsername)) {
+      newErrors.linkedin = "LinkedIn username is required";
+    }
+
+    if (isBlank(gender)) {
+      newErrors.gender = "Gender is required";
+    }
+
+    if (isBlank(normalizedPassword)) {
+      newErrors.password = "Password is required";
+    } else if (!validPassword(normalizedPassword)) {
+      newErrors.password = "Min 8 chars, 1 upper, 1 lower, 1 number, 1 symbol";
+    }
+
+    if (isBlank(normalizedConfirmPassword)) {
+      newErrors.confirmPassword = "Please confirm your password";
+    } else if (normalizedPassword !== normalizedConfirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+    }
+
+    setErrors(newErrors);
+    return newErrors;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setFormError("");
+    setSubmitAttempted(true);
+
+    // Validate every field at once so all errors show together, highlighted
+    // in place, instead of stopping at the first problem found.
+    const newErrors = validateAll();
+    const hasFieldErrors = Object.values(newErrors).some((msg) => Boolean(msg));
+
+    if (hasFieldErrors) {
+      setFormError("Please fill in all the mandatory fields marked with * correctly before signing up.");
+      return;
+    }
+
+    if (!emailVerified) {
+      setFieldError("email", "Please verify your email address before signing up.");
+      setFormError("");
+      return;
+    }
+
+    setFieldError("email", "");
+
+    if (!agree) {
+      setFormError("You must agree to the Terms and Conditions and Privacy Policy.");
+      return;
+    }
+
+    const normalizedEmail = email.trim();
+    const normalizedPassword = password.trim();
+    const normalizedFirstName = firstName.trim();
+    const normalizedMiddleName = middleName.trim();
+    const normalizedLastName = lastName.trim();
+    const normalizedPhoneNumber = phoneNumber.trim();
+    const normalizedLinkedinUsername = linkedinUsername.trim();
     const normalizedCoupon = coupon.trim();
-
-    if (isBlank(normalizedFirstName)) return setFormError("Please enter your first name.");
-    if (isBlank(normalizedLastName)) return setFormError("Please enter your last name.");
-    if (isBlank(normalizedPhoneNumber)) return setFormError("Please enter your phone number.");
-    if (isBlank(normalizedEmail)) return setFormError("Please enter your email address.");
-    if (isBlank(normalizedLinkedinUsername)) return setFormError("Please enter your LinkedIn username.");
-    if (!emailVerified) return setFormError("Please verify your email address before signing up.");
-
-    if (isBlank(gender)) return setFormError("Please select your gender.");
-    if (!agree) return setFormError("You must agree to the terms.");
-
-    if (normalizedPassword !== normalizedConfirmPassword)
-      return setFormError("Passwords do not match.");
-
-    if (!validPassword(normalizedPassword))
-      return setFormError("Password must be 8+ chars, include upper, lower, number, symbol.");
-
-    if (!/^[6-9]\d{9}$/.test(normalizedPhoneNumber))
-      return setFormError("Phone number must be valid.");
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail))
-      return setFormError("Enter a valid email address.");
-
-    if (!isValidDob(dateOfBirth))
-      return setFormError("You must be between 18 and 99 years old.");
 
     setLoading(true);
 
@@ -342,14 +436,26 @@ export default function Register() {
               <img src={Bowizzy} alt="Logo" className="w-32" />
             </div>
 
-            <h2 className="text-2xl font-semibold mb-10">Create Account</h2>
+            <h2 className="text-2xl font-semibold mb-4">Create Account</h2>
 
-            <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
+            {/* Friendly top-level banner shown after a failed submit attempt */}
+            {submitAttempted && formError && formError !== "Please verify your email address before signing up." && (
+              <div className="mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+                <svg className="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                <p className="text-sm text-red-700">{formError}</p>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off" noValidate>
               <div className="grid grid-cols-12 gap-4">
 
                 {/* FIRST NAME */}
                 <div className="col-span-12 lg:col-span-6">
-                  <label>First Name*</label>
+                  <label>
+                    First Name<span className="text-red-500">*</span>
+                  </label>
                   <input
                     value={firstName}
                     onChange={(e) => {
@@ -367,10 +473,10 @@ export default function Register() {
                       const val = sanitizeName(normalized).slice(0, 32);
                       setFirstName(val);
                     }}
-                    className="mt-2 w-full px-4 py-3 border rounded-lg"
+                    className={fieldClass("firstName", "mt-2 w-full px-4 py-3 border rounded-lg")}
                   />
                   {errors.firstName && (
-                    <p className="text-red-500 text-sm">{errors.firstName}</p>
+                    <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>
                   )}
                 </div>
 
@@ -392,16 +498,18 @@ export default function Register() {
                       const val = sanitizeName(normalized).slice(0, 32);
                       setMiddleName(val);
                     }}
-                    className="mt-2 w-full px-4 py-3 border rounded-lg"
+                    className={fieldClass("middleName", "mt-2 w-full px-4 py-3 border rounded-lg")}
                   />
                   {errors.middleName && (
-                    <p className="text-red-500 text-sm">{errors.middleName}</p>
+                    <p className="text-red-500 text-sm mt-1">{errors.middleName}</p>
                   )}
                 </div>
 
                 {/* LAST NAME */}
                 <div className="col-span-12">
-                  <label>Last Name*</label>
+                  <label>
+                    Last Name<span className="text-red-500">*</span>
+                  </label>
                   <input
                     value={lastName}
                     onChange={(e) => {
@@ -419,38 +527,45 @@ export default function Register() {
                       const val = sanitizeName(normalized).slice(0, 32);
                       setLastName(val);
                     }}
-                    className="mt-2 w-full px-4 py-3 border rounded-lg"
+                    className={fieldClass("lastName", "mt-2 w-full px-4 py-3 border rounded-lg")}
                   />
                   {errors.lastName && (
-                    <p className="text-red-500 text-sm">{errors.lastName}</p>
+                    <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>
                   )}
                 </div>
 
                 {/* PHONE */}
                 <div className="col-span-12">
-                  <label>Phone Number*</label>
+                  <label>
+                    Phone Number<span className="text-red-500">*</span>
+                  </label>
                   <input
                     value={phoneNumber}
                     onChange={(e) => {
                       const v = sanitizePhone(e.target.value.trim());
-                      if (v.length > 0 && !/^[6-9]/.test(v)) {
+                      if (isBlank(v)) {
+                        setFieldError("phone", "Phone number is required");
+                      } else if (!/^[6-9]/.test(v)) {
                         setFieldError("phone", "Must start with 6-9");
-                        return;
+                      } else if (v.length < 10) {
+                        setFieldError("phone", "Enter a valid 10-digit phone number");
                       } else {
                         setFieldError("phone", "");
                       }
                       setPhoneNumber(v);
                     }}
-                    className="mt-2 w-full px-4 py-3 border rounded-lg"
+                    className={fieldClass("phone", "mt-2 w-full px-4 py-3 border rounded-lg")}
                   />
                   {errors.phone && (
-                    <p className="text-red-500 text-sm">{errors.phone}</p>
+                    <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
                   )}
                 </div>
 
                 {/* DOB */}
                 <div className="col-span-12">
-                  <label>Date of Birth*</label>
+                  <label>
+                    Date of Birth<span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="date"
                     min={minDob}
@@ -459,22 +574,26 @@ export default function Register() {
                     onChange={(e) => {
                       const val = e.target.value;
                       setDateOfBirth(val);
-                      if (!isValidDob(val)) {
+                      if (isBlank(val)) {
+                        setFieldError("dob", "Date of birth is required");
+                      } else if (!isValidDob(val)) {
                         setFieldError("dob", "You must be between 18 and 99 years old");
                       } else {
                         setFieldError("dob", "");
                       }
                     }}
-                    className="mt-2 w-full px-4 py-3 border rounded-lg"
+                    className={fieldClass("dob", "mt-2 w-full px-4 py-3 border rounded-lg")}
                   />
                   {errors.dob && (
-                    <p className="text-red-500 text-sm">{errors.dob}</p>
+                    <p className="text-red-500 text-sm mt-1">{errors.dob}</p>
                   )}
                 </div>
 
                 {/* EMAIL */}
                 <div className="col-span-12">
-                  <label>Email*</label>
+                  <label>
+                    Email<span className="text-red-500">*</span>
+                  </label>
                   <div className="mt-2 flex gap-2 items-center">
                     <input
                       value={email}
@@ -483,7 +602,6 @@ export default function Register() {
                       onChange={(e) => {
                         const val = e.target.value.trim();
                         setEmail(val);
-                        if (errors.email) setFieldError("email", "");
 
                         // Reset verification if email changes
                         if (emailVerified && val !== verifiedEmailRef.current) {
@@ -501,17 +619,19 @@ export default function Register() {
                           setEmailVerifyMessage("");
                         }
 
-                        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+                        if (isBlank(val)) {
+                          setFieldError("email", "Email is required");
+                        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
                           setFieldError("email", "Invalid email address");
                         } else {
                           setFieldError("email", "");
                         }
                       }}
-                      className={`flex-1 px-4 py-3 border rounded-lg transition-colors ${
+                      className={
                         emailVerified
-                          ? "border-green-500 bg-green-50 text-gray-500 cursor-not-allowed"
-                          : "border-gray-300"
-                      }`}
+                          ? "flex-1 px-4 py-3 border rounded-lg transition-colors border-green-500 bg-green-50 text-gray-500 cursor-not-allowed"
+                          : fieldClass("email", "flex-1 px-4 py-3 border rounded-lg transition-colors")
+                      }
                       placeholder="Enter your email"
                     />
 
@@ -605,7 +725,6 @@ export default function Register() {
                           Resend
                         </button>
                       </div>
-                      {/* <p className="text-xs text-gray-500 mt-1">OTP sent to {email}. Check your inbox.</p> */}
                     </div>
                   )}
 
@@ -622,7 +741,9 @@ export default function Register() {
 
                 {/* LINKEDIN */}
                 <div className="col-span-12">
-                  <label>LinkedIn URL*</label>
+                  <label>
+                    LinkedIn URL<span className="text-red-500">*</span>
+                  </label>
                   <div className="mt-2 flex flex-col lg:flex-row">
                     <span className="px-3 py-3 border rounded-t-lg lg:rounded-t-none lg:rounded-l-lg bg-gray-100 flex items-center break-all lg:break-normal">
                       https://www.linkedin.com/in/
@@ -637,23 +758,30 @@ export default function Register() {
                             /^https?:\/\/(www\.)?linkedin\.com\/in\//,
                             ""
                           );
+                        } else if (isBlank(val)) {
+                          setFieldError("linkedin", "LinkedIn username is required");
                         } else {
                           setFieldError("linkedin", "");
                         }
                         const extracted = extractLinkedinUsername(val);
                         setLinkedinUsername(extracted);
                       }}
-                      className="w-full px-4 py-3 border border-t-0 lg:border-t lg:border-l-0 rounded-b-lg lg:rounded-b-none lg:rounded-r-lg"
+                      className={fieldClass(
+                        "linkedin",
+                        "w-full px-4 py-3 border border-t-0 lg:border-t lg:border-l-0 rounded-b-lg lg:rounded-b-none lg:rounded-r-lg"
+                      )}
                     />
                   </div>
                   {errors.linkedin && (
-                    <p className="text-red-500 text-sm">{errors.linkedin}</p>
+                    <p className="text-red-500 text-sm mt-1">{errors.linkedin}</p>
                   )}
                 </div>
 
                 {/* GENDER */}
                 <div className="col-span-12">
-                  <label>Gender*</label>
+                  <label>
+                    Gender<span className="text-red-500">*</span>
+                  </label>
                   <select
                     value={gender}
                     onChange={(e) => {
@@ -665,7 +793,7 @@ export default function Register() {
                         setFieldError("gender", "");
                       }
                     }}
-                    className="mt-2 w-full px-4 py-3 border rounded-lg"
+                    className={fieldClass("gender", "mt-2 w-full px-4 py-3 border rounded-lg")}
                   >
                     <option value="">Select</option>
                     <option value="male">Male</option>
@@ -673,13 +801,15 @@ export default function Register() {
                     <option value="non-binary">Non-Binary</option>
                   </select>
                   {errors.gender && (
-                    <p className="text-red-500 text-sm">{errors.gender}</p>
+                    <p className="text-red-500 text-sm mt-1">{errors.gender}</p>
                   )}
                 </div>
 
                 {/* PASSWORD */}
                 <div className="col-span-12">
-                  <label>Password*</label>
+                  <label>
+                    Password<span className="text-red-500">*</span>
+                  </label>
                   <div className="relative mt-2">
                     <input
                       type={showPassword ? "text" : "password"}
@@ -687,7 +817,9 @@ export default function Register() {
                       onChange={(e) => {
                         const val = e.target.value.trim();
                         setPassword(val);
-                        if (!validPassword(val)) {
+                        if (isBlank(val)) {
+                          setFieldError("password", "Password is required");
+                        } else if (!validPassword(val)) {
                           setFieldError(
                             "password",
                             "Min 8 chars, 1 upper, 1 lower, 1 number, 1 symbol"
@@ -696,7 +828,7 @@ export default function Register() {
                           setFieldError("password", "");
                         }
                       }}
-                      className="w-full px-4 py-3 border rounded-lg"
+                      className={fieldClass("password", "w-full px-4 py-3 border rounded-lg")}
                     />
                     <button
                       type="button"
@@ -707,13 +839,15 @@ export default function Register() {
                     </button>
                   </div>
                   {errors.password && (
-                    <p className="text-red-500 text-sm">{errors.password}</p>
+                    <p className="text-red-500 text-sm mt-1">{errors.password}</p>
                   )}
                 </div>
 
                 {/* CONFIRM PASSWORD */}
                 <div className="col-span-12">
-                  <label>Confirm Password*</label>
+                  <label>
+                    Confirm Password<span className="text-red-500">*</span>
+                  </label>
                   <div className="relative mt-2">
                     <input
                       type={showConfirm ? "text" : "password"}
@@ -721,14 +855,15 @@ export default function Register() {
                       onChange={(e) => {
                         const val = e.target.value.trim();
                         setConfirmPassword(val);
-                        if (password !== val) {
+                        if (isBlank(val)) {
+                          setFieldError("confirmPassword", "Please confirm your password");
+                        } else if (password !== val) {
                           setFieldError("confirmPassword", "Passwords do not match");
                         } else {
                           setFieldError("confirmPassword", "");
                         }
                       }}
-                      className="w-full px-4 py-3 border rounded-lg"
-                      required
+                      className={fieldClass("confirmPassword", "w-full px-4 py-3 border rounded-lg")}
                     />
                     <button
                       type="button"
@@ -739,7 +874,7 @@ export default function Register() {
                     </button>
                   </div>
                   {errors.confirmPassword && (
-                    <p className="text-red-500 text-sm">{errors.confirmPassword}</p>
+                    <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
                   )}
                 </div>
 
@@ -805,14 +940,13 @@ export default function Register() {
 
               </div>
 
-              {formError && <p className="text-red-500 text-sm">{formError}</p>}
-
               {/* AGREE */}
               <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
                   checked={agree}
                   onChange={(e) => setAgree(e.target.checked)}
+                  className={submitAttempted && !agree ? "outline outline-2 outline-red-400 rounded" : ""}
                 />
                 <p className="text-sm">
                   I agree to the{" "}
@@ -836,10 +970,15 @@ export default function Register() {
                   .
                 </p>
               </div>
+              {submitAttempted && !agree && (
+                <p className="text-red-500 text-sm -mt-4">
+                  You must agree to the Terms and Conditions and Privacy Policy.
+                </p>
+              )}
 
               {/* Email not verified warning */}
               {email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !emailVerified && (
-                <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5">
+                <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2.5">
                   ⚠️ Please verify your email address before signing up.
                 </p>
               )}
@@ -847,12 +986,10 @@ export default function Register() {
               {/* SUBMIT */}
               <button
                 type="submit"
-                disabled={!agree || loading || !emailVerified}
+                disabled={loading}
                 className={`w-full py-3 rounded-lg text-white font-medium flex items-center justify-center transition-colors ${
-                  agree && emailVerified
-                    ? "bg-gray-700 hover:bg-gray-800"
-                    : "bg-gray-300 cursor-not-allowed"
-                } ${loading ? "opacity-60 cursor-not-allowed" : ""}`}
+                  loading ? "bg-gray-400 opacity-60 cursor-not-allowed" : "bg-gray-700 hover:bg-gray-800"
+                }`}
               >
                 {loading ? (
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
